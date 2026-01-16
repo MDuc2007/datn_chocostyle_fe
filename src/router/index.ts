@@ -6,6 +6,10 @@ const routes: Array<RouteRecordRaw> = [
     path: '/admin/product',
     component: () => import('../pages/admin/product/ProductManager.vue')
   },
+  {
+    path: '/admin/product/create',
+    component: () => import('../pages/admin/product/AddProduct.vue')
+  },
   // 2. Quản lý hoá đơn
   {
     path: '/admin/invoice',
