@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-
 const routes: Array<RouteRecordRaw> = [
   // 1. Quản lý sản phẩm
   {
@@ -30,16 +29,19 @@ const routes: Array<RouteRecordRaw> = [
     path: '/admin/employee',
     component: () => import('../pages/admin/employee/EmployeeManager.vue')
   },
+  {
+    path: '/admin/employee/add',
+    name: 'add-employee',
+    component: () => import('../pages/admin/employee/AddEmployee.vue')
+  },
   // 6. Quản lý khách hàng
   {
     path: '/admin/customer',
     component: () => import('../pages/admin/customer/CustomerManager.vue')
   }
 ];
-
 const router = createRouter({
   history: createWebHistory(),
   routes
 });
-
 export default router;
