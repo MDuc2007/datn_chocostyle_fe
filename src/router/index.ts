@@ -9,6 +9,41 @@ const routes: Array<RouteRecordRaw> = [
     path: '/admin/product/create',
     component: () => import('../pages/admin/product/AddProduct.vue')
   },
+  // 1.1. Quản lý màu sắc
+  {
+    path: '/admin/color',
+    component: () => import('../pages/admin/product/ColorManager.vue')
+  },
+  // 1.2. Quản lý kích cỡ
+  {
+    path: '/admin/size',
+    component: () => import('../pages/admin/product/SizeManager.vue')
+  },
+  // 1.3. Quản lý chất liệu
+  {
+    path: '/admin/material',
+    component: () => import('../pages/admin/product/MaterialManager.vue')
+  },
+  // 1.4. Quản lý xuất xứ
+  {
+    path: '/admin/origin',
+    component: () => import('../pages/admin/product/OriginManager.vue')
+  },
+  //1.5 Quản lý phong cách mặc
+  {
+    path: '/admin/style',
+    component: () => import('../pages/admin/product/StyleManager.vue')
+  },
+  //1.6 Quản lý loại áo
+  {
+    path: '/admin/type',
+    component: () => import('../pages/admin/product/TypeManager.vue')
+  },
+  //1.7 Quản lý kiểu dáng
+  {
+    path: '/admin/shapetype',
+    component: () => import('../pages/admin/product/ShapeTypeManager.vue')
+  },
   // 2. Quản lý hoá đơn
   {
     path: '/admin/invoice',
