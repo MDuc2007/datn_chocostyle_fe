@@ -1,8 +1,8 @@
 <template>
     <div class="employee-page">
-        <div class="main-card">
+        
+        <div class="card-box">
             <h1 class="title">Quản lý nhân viên</h1>
-
             <section class="filters">
                 <div class="filter-row">
                     <input v-model="query" class="search" placeholder="Nhập tên, mã hoặc email..." />
@@ -13,8 +13,10 @@
                     </select>
                     <select v-model="filters.role">
                         <option value="all">Chức vụ: Tất cả</option>
-                        <option value="Admin">Quản lý</option>
-                        <option value="Staff">Nhân viên</option>
+                        <option value="Quản lý">Quản lý</option>
+                        <option value="Nhân viên">Nhân viên</option>
+                        <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
+                        <option value="Thủ kho">Thủ kho</option>
                     </select>
                     <select v-model="filters.status">
                         <option value="all">Trạng thái: Tất cả</option>
@@ -29,29 +31,32 @@
                     </div>
                 </div>
             </section>
+        </div>
 
+        <div class="card-box" style="margin-top: 20px;">
             <section class="table-wrap">
                 <table class="employees">
                     <thead>
                         <tr>
-                            <th>STT</th>
-                            <th>Ảnh</th>
-                            <th>Mã NV</th>
+                            <th style="width: 50px;">STT</th>
+                            <th style="width: 90px;">Ảnh</th>
+                            <th style="width: 100px;">Mã NV</th>
                             <th>Tên</th>
                             <th>Email</th>
-                            <th>SDT</th>
+                            <th style="width: 110px;">SDT</th>
                             <th>Địa chỉ</th>
-                            <th>Chức vụ</th>
-                            <th>Trạng thái</th>
-                            <th style="min-width: 90px;">Hành động</th>
+                            <th style="width: 140px;">Chức vụ</th>
+                            <th style="width: 110px;">Trạng thái</th>
+                            <th style="width: 100px;">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(e, index) in pagedEmployees" :key="e.id">
                             <td>{{ startIndex + index }}</td>
                             <td class="avatar-cell">
-                                <div class="avatar placeholder" :style="{backgroundColor: getRandomColor(index)}">
-                                    {{ e.avatarLetter || initials(e.name) }}
+                                <img v-if="e.avatar && e.avatar.length > 20" :src="e.avatar" class="avatar-img" />
+                                <div v-else class="avatar placeholder" :style="{backgroundColor: getRandomColor(index)}">
+                                    {{ initials(e.name) }}
                                 </div>
                             </td>
                             <td class="code">{{ e.code }}</td>
@@ -59,7 +64,7 @@
                             <td class="muted">{{ e.email }}</td>
                             <td>{{ e.phone }}</td>
                             <td class="muted small">{{ e.address }}</td>
-                            <td>{{ e.roleLabel }}</td>
+                            <td>{{ getRoleLabel(e.role) }}</td>
                             <td>
                                 <span :class="['status', getStatusClass(e.status)]">
                                     {{ getStatusLabel(e.status) }}
@@ -67,9 +72,7 @@
                             </td>
                             <td class="actions-cell">
                                 <div class="action-buttons">
-                                    <button class="btn-action edit" @click="openEditModal(e)" title="Chỉnh sửa">
-                                        ✏️
-                                    </button>
+                                    <button class="btn-action edit" @click="openEditModal(e)" title="Chỉnh sửa">✏️</button>
                                     <button class="btn-action lock" :class="{ 'is-locked': e.status !== 1 }" @click="toggleStatus(e)">
                                         <span v-if="e.status === 1">🔓</span>
                                         <span v-else>🔒</span>
@@ -93,68 +96,71 @@
                     <h3>Chỉnh sửa nhân viên</h3>
                     <button class="close-btn" @click="closeModal">×</button>
                 </div>
-
+                
                 <div class="modal-body">
                     <div class="avatar-section">
-                        <div class="avatar-circle">
-                            <img src="https://via.placeholder.com/100" alt="Avatar">
-                            <button class="remove-avatar">×</button>
+                        <div class="avatar-circle" @click="triggerFileInput">
+                            <img :src="editingEmployee.avatar || 'https://via.placeholder.com/100'" alt="Avatar">
+                            <input type="file" ref="fileInput" @change="handleFileUpload" class="hidden-input" accept="image/*" />
+                            <div class="overlay-edit">📷</div>
                         </div>
-                        <span class="upload-hint">PNG, JPG - Tối đa 5MB</span>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Mã nhân viên</label>
+                            <label>Mã NV</label>
                             <input v-model="editingEmployee.maNv" disabled class="disabled-input" />
                         </div>
+
                         <div class="form-group">
-                            <label>Tên nhân viên</label>
-                            <input v-model="editingEmployee.hoTen" />
+                            <div class="label-flex">
+                                <label>Tên</label>
+                                <span v-if="errors.hoTen" class="error-msg">{{ errors.hoTen }}</span>
+                            </div>
+                            <input v-model="editingEmployee.hoTen" :class="{ 'red-border': errors.hoTen }" />
                         </div>
 
                         <div class="form-group">
-                            <label>Email</label>
-                            <input v-model="editingEmployee.email" />
-                        </div>
-                        <div class="form-group">
-                            <label>SDT</label>
-                            <input v-model="editingEmployee.sdt" />
-                        </div>
-
-                        <div class="form-group">
-                            <label>Ngày sinh</label>
-                            <input type="date" v-model="editingEmployee.ngaySinh" />
-                        </div>
-                        <div class="form-group">
-                            <label>Tỉnh/Thành phố</label>
-                            <select class="form-select"><option>Hà Nội</option><option>TP.HCM</option></select>
+                            <div class="label-flex">
+                                <label>Email</label>
+                                <span v-if="errors.email" class="error-msg">{{ errors.email }}</span>
+                            </div>
+                            <input v-model="editingEmployee.email" :class="{ 'red-border': errors.email }" />
                         </div>
 
                         <div class="form-group">
-                            <label>Quận/Huyện</label>
-                            <select class="form-select"><option>Tất cả</option></select>
+                            <div class="label-flex">
+                                <label>SDT</label>
+                                <span v-if="errors.sdt" class="error-msg">{{ errors.sdt }}</span>
+                            </div>
+                            <input v-model="editingEmployee.sdt" :class="{ 'red-border': errors.sdt }" />
                         </div>
+
                         <div class="form-group">
-                            <label>Xã/Phường</label>
-                            <select class="form-select"><option>Tất cả</option></select>
+                            <div class="label-flex">
+                                <label>Ngày sinh</label>
+                                <span v-if="errors.ngaySinh" class="error-msg">{{ errors.ngaySinh }}</span>
+                            </div>
+                            <input type="date" v-model="editingEmployee.ngaySinh" :class="{ 'red-border': errors.ngaySinh }" />
                         </div>
 
                         <div class="form-group full-width">
-                            <label>Địa chỉ cụ thể</label>
-                            <input v-model="editingEmployee.diaChi" />
+                            <div class="label-flex">
+                                <label>Địa chỉ</label>
+                                <span v-if="errors.diaChi" class="error-msg">{{ errors.diaChi }}</span>
+                            </div>
+                            <input v-model="editingEmployee.diaChi" :class="{ 'red-border': errors.diaChi }" />
                         </div>
 
                         <div class="form-group">
                             <label>Chức vụ</label>
                             <select v-model="editingEmployee.vaiTro" class="form-select">
-                                <option value="Admin">Quản lý</option>
-                                <option value="Staff">Nhân viên</option>
+                                <option value="Quản lý">Quản lý (Admin)</option>
+                                <option value="Nhân viên">Nhân viên (Staff)</option>
                                 <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
                                 <option value="Thủ kho">Thủ kho</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label>Trạng thái</label>
                             <select v-model="editingEmployee.trangThai" class="form-select status-select">
@@ -165,7 +171,7 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="modal-footer">
                     <button class="btn btn-light" @click="closeModal">Hủy</button>
                     <button class="btn btn-orange" @click="saveEmployee">Lưu</button>
@@ -180,19 +186,67 @@ import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-// --- KHAI BÁO BIẾN ---
 const employees = ref([])
 const query = ref('')
 const filters = ref({ gender: 'all', role: 'all', status: 'all' })
-const perPage = ref(5)
+const perPage = ref(8)
 const page = ref(1)
 const router = useRouter()
 
-// Biến cho Modal
+// Modal & Edit State
 const showModal = ref(false)
-const editingEmployee = ref({}) // Object chứa thông tin đang sửa
+const editingEmployee = ref({})
+const fileInput = ref(null)
 
-// --- API & LOGIC ---
+const statusHistory = ref({}) 
+const errors = ref({})
+
+// --- HÀM VALIDATE CHO FORM SỬA ---
+function validateEditForm() {
+    errors.value = {}; 
+    let isValid = true;
+    const data = editingEmployee.value;
+
+    if (!data.hoTen || data.hoTen.trim() === '') {
+        errors.value.hoTen = "Tên trống"; isValid = false;
+    }
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.value.email = "Email sai"; isValid = false;
+    }
+    if (!data.sdt || !/^0\d{9}$/.test(data.sdt)) {
+        errors.value.sdt = "SĐT sai (10 số, đầu 0)"; isValid = false;
+    }
+    if (!data.diaChi) {
+        errors.value.diaChi = "Địa chỉ trống"; isValid = false;
+    }
+    if (!data.ngaySinh) {
+        errors.value.ngaySinh = "Chọn ngày sinh"; isValid = false;
+    } else {
+        const birthDate = new Date(data.ngaySinh);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        if (age < 18) { errors.value.ngaySinh = "Chưa đủ 18t"; isValid = false; }
+    }
+
+    return isValid;
+}
+
+// --- HELPERS & API ---
+function formatDateForInput(dateString) {
+    if (!dateString) return '';
+    return dateString.substring(0, 10);
+}
+
+function getRoleLabel(roleCode) {
+    switch (roleCode) {
+        case 'Admin': return 'Quản lý';
+        case 'Staff': return 'Nhân viên';
+        case 'Sales': return 'Nhân viên Bán hàng';
+        case 'StoreKeeper': return 'Thủ kho';
+        default: return roleCode;
+    }
+}
+
 const fetchEmployees = async () => {
     try {
         const response = await axios.get('http://localhost:8080/api/nhan-vien')
@@ -204,11 +258,11 @@ const fetchEmployees = async () => {
             phone: item.sdt,
             address: item.diaChi,
             role: item.chucVu,
-            roleLabel: item.chucVu,
-            status: item.trangThai, 
-            avatarLetter: item.avatarLetter,
-            // Thêm field ngày sinh để bind vào input date
-            dob: item.ngaySinh 
+            roleLabel: item.chucVu, 
+            status: item.trangThai,
+            dob: item.ngaySinh,
+            avatar: item.avatar,
+            gender: item.gioiTinh
         }))
     } catch (error) {
         console.error("Lỗi tải dữ liệu:", error)
@@ -219,10 +273,9 @@ onMounted(() => {
     fetchEmployees()
 })
 
-// --- LOGIC MODAL ---
+// --- MODAL ---
 function openEditModal(emp) {
-    // Copy dữ liệu từ dòng được chọn vào biến editingEmployee
-    // Lưu ý: format ngày sinh sang YYYY-MM-DD để input date hiển thị đúng
+    errors.value = {}; // Reset lỗi cũ
     editingEmployee.value = {
         id: emp.id,
         maNv: emp.code,
@@ -230,83 +283,102 @@ function openEditModal(emp) {
         email: emp.email,
         sdt: emp.phone,
         diaChi: emp.address,
-        vaiTro: emp.role,
+        vaiTro: emp.role, 
         trangThai: emp.status,
-        ngaySinh: emp.dob // Bạn cần đảm bảo Backend trả về định dạng yyyy-MM-dd
+        ngaySinh: formatDateForInput(emp.dob), 
+        avatar: emp.avatar
     }
-    showModal.value = true; // Hiện modal
+    showModal.value = true;
 }
 
-function closeModal() {
-    showModal.value = false;
+function closeModal() { showModal.value = false; }
+
+// --- UPLOAD ẢNH ---
+function triggerFileInput() { fileInput.value.click(); }
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Ảnh quá lớn (< 5MB)!"); return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => { editingEmployee.value.avatar = e.target.result; };
+        reader.readAsDataURL(file);
+    }
 }
 
+// --- LƯU DỮ LIỆU ---
 async function saveEmployee() {
+    if (!validateEditForm()) return; // Kiểm tra validate trước
+    
     try {
-        // Gửi API cập nhật
         await axios.put(`http://localhost:8080/api/nhan-vien/${editingEmployee.value.id}`, {
             hoTen: editingEmployee.value.hoTen,
             email: editingEmployee.value.email,
             sdt: editingEmployee.value.sdt,
             diaChi: editingEmployee.value.diaChi,
             vaiTro: editingEmployee.value.vaiTro,
-            trangThai: editingEmployee.value.trangThai, // 1: Đang làm, 0: Đã nghỉ
-            ngaySinh: editingEmployee.value.ngaySinh
+            trangThai: editingEmployee.value.trangThai,
+            ngaySinh: editingEmployee.value.ngaySinh,
+            avatar: editingEmployee.value.avatar
         });
-        
         alert("Cập nhật thành công!");
         closeModal();
-        fetchEmployees(); // Load lại bảng để thấy thay đổi
+        fetchEmployees();
     } catch (error) {
-        console.error("Lỗi lưu dữ liệu:", error);
-        alert("Có lỗi xảy ra khi lưu!");
+        console.error(error);
+        alert("Lỗi lưu dữ liệu!");
     }
 }
 
-// --- CÁC HÀM CŨ (TOGGLE, SEARCH...) GIỮ NGUYÊN ---
+// --- UTILS KHÁC ---
 async function toggleStatus(e) {
-    let newStatus = (e.status === 1) ? 2 : 1;
-    const originalStatus = e.status; 
-    e.status = newStatus; 
+    let newStatus = 1;
+    if (e.status !== 2) {
+        statusHistory.value[e.id] = e.status; 
+        newStatus = 2;
+    } else {
+        if (statusHistory.value.hasOwnProperty(e.id)) {
+            newStatus = statusHistory.value[e.id];
+        } else {
+            newStatus = 1; 
+        }
+    }
+    const originalStatus = e.status;
+    e.status = newStatus;
     try {
         await axios.put(`http://localhost:8080/api/nhan-vien/${e.id}`, { trangThai: newStatus });
-    } catch (error) { e.status = originalStatus; }
+        if (newStatus !== 2) delete statusHistory.value[e.id];
+    } catch (error) {
+        e.status = originalStatus;
+        alert("Lỗi cập nhật trạng thái!");
+    }
 }
+function addEmployee() { router.push('/admin/employee/add') }
+function getStatusLabel(status) { return status === 1 ? 'Đang làm' : (status === 0 ? 'Đã nghỉ' : 'Đã khóa'); }
+function getStatusClass(status) { return status === 1 ? 'active' : (status === 0 ? 'inactive' : 'locked'); }
+function initials(name) { if (!name) return ''; return name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase() }
+const colors = ['#f2d6d0', '#d0e1f2', '#d0f2d6', '#f2f0d0', '#e2d0f2'];
+function getRandomColor(index) { return colors[index % colors.length]; }
 
-function getStatusLabel(status) {
-    if (status === 1) return 'Đang làm';
-    if (status === 0) return 'Đã nghỉ'; // Đã chỉnh lại text theo ý bạn
-    if (status === 2) return 'Đã khóa';
-    return 'Không rõ';
-}
-function getStatusClass(status) {
-    if (status === 1) return 'active';
-    if (status === 0) return 'inactive';
-    if (status === 2) return 'locked';
-    return '';
-}
 const filtered = computed(() => {
     return employees.value.filter(e => {
-        const matchesQuery = query.value.trim() === '' || [e.name, e.code, e.email].some(f => f && f.toLowerCase().includes(query.value.toLowerCase()))
-        const matchesRole = filters.value.role === 'all' || e.role === filters.value.role
+        const matchesQuery = query.value.trim() === '' || 
+            [e.name, e.code, e.email].some(f => f && f.toLowerCase().includes(query.value.toLowerCase()));
+        const matchesRole = filters.value.role === 'all' || e.role === filters.value.role;
         let matchesStatus = true;
         if (filters.value.status === 'active') matchesStatus = e.status === 1;
         if (filters.value.status === 'inactive') matchesStatus = e.status === 0;
         if (filters.value.status === 'locked') matchesStatus = e.status === 2;
-        return matchesQuery && matchesRole && matchesStatus
+        let matchesGender = true;
+        if (filters.value.gender === 'male') { matchesGender = (e.gender === true); } 
+        else if (filters.value.gender === 'female') { matchesGender = (e.gender === false); }
+        return matchesQuery && matchesRole && matchesStatus && matchesGender;
     })
 })
-//Hàm thêm nhân viên mới
-function addEmployee() {
-    // Thay vì alert hoặc mở modal, ta chuyển hướng
-    router.push('/admin/employee/add')
-}
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage.value)))
 const startIndex = computed(() => (page.value - 1) * perPage.value + 1)
 const pagedEmployees = computed(() => filtered.value.slice((page.value - 1) * perPage.value, page.value * perPage.value))
-function initials(name) { if (!name) return ''; return name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase() }
-const colors = ['#f2d6d0', '#d0e1f2', '#d0f2d6', '#f2f0d0', '#e2d0f2'];
-function getRandomColor(index) { return colors[index % colors.length]; }
 function goPage(p) { page.value = p }
 function prevPage() { if (page.value > 1) page.value-- }
 function nextPage() { if (page.value < totalPages.value) page.value++ }
@@ -315,124 +387,94 @@ function exportExcel() { alert('Xuất Excel') }
 </script>
 
 <style scoped>
-/* GIỮ LẠI CSS CŨ CỦA BẠN */
-.employee-page { padding: 10px; font-family: 'Segoe UI', Roboto, sans-serif; color: #3b2b20; background-color: #f5f5f5; min-height: 100vh; }
-.main-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); max-width: 100%; margin: 0; }
+/* Reset padding cho trang */
+.employee-page { padding: 10px; font-family: 'Segoe UI', Roboto, sans-serif; color: #3b2b20; background-color: transparent; }
+
+/* CARD-BOX */
+.card-box {
+    background: #fff; border-radius: 8px; padding: 24px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+    max-width: 100%;
+}
+
 .title { font-size: 24px; margin-bottom: 24px; color: #6b3a2b; font-weight: 700; border-bottom: 2px solid #f0e6df; padding-bottom: 12px; }
-.filters { margin-bottom: 24px; }
+
+/* FILTERS */
+.filters { margin-bottom: 0; }
 .filters .filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .filters input.search { flex: 1; min-width: 250px; padding: 10px 14px; border: 1px solid #e0d8d0; border-radius: 6px; }
-.filters select { padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px; color: #3b2b20; cursor: pointer; }
+.filters select { padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px; }
 .actions { margin-left: auto; display: flex; gap: 10px; }
-.btn { padding: 10px 16px; border-radius: 6px; border: 0; cursor: pointer; font-weight: 600; transition: 0.2s; }
+.btn { padding: 10px 16px; border-radius: 6px; border: 0; cursor: pointer; font-weight: 600; }
 .btn-light { background: #f3ece6; color: #5a2e18; }
 .btn-success { background: #28a745; color: #fff; }
 .btn-primary { background: #c75a00; color: #fff; }
-.table-wrap { overflow-x: auto; }
-.employees { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
-.employees thead th { background: #6b3a2b; color: #fff; text-align: left; padding: 14px 16px; font-weight: 700; }
-.employees tbody td { padding: 14px 16px; border-bottom: 1px solid #f0e6df; vertical-align: middle; }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; background: #fff; min-height: 550px; display: flex; flex-direction: column; justify-content: space-between; }
+.employees { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.employees thead th { background: #6b3a2b; color: #fff; text-align: left; padding: 0 16px; font-weight: 700; height: 50px; }
+.employees tbody tr { height: 80px; border-bottom: 1px solid #f0e6df; }
+.employees tbody td { padding: 0 16px; vertical-align: middle; white-space: normal; word-break: break-word; line-height: 1.4; }
 .employees tbody tr:hover td { background: #fffaf6; }
-.avatar { width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #6b3a2b; }
-.code { font-weight: 600; color: #6b3a2b; }
-.muted { color: #6b655f; }
-.small { font-size: 12px; }
-.status { padding: 5px 12px; border-radius: 12px; color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+/* Avatar */
+.avatar-cell { width: 90px; }
+.avatar-img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid #eee; }
+.avatar.placeholder { width: 60px; height: 60px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #6b3a2b; font-size: 20px; }
+
+/* Status & Actions */
+.status { padding: 5px 12px; border-radius: 12px; color: #fff; font-size: 11px; font-weight: 600; display: inline-block; }
 .status.active { background: #27ae60; }
 .status.inactive { background: #e74c3c; }
 .status.locked { background: #7f8c8d; }
 .actions-cell .action-buttons { display: flex; align-items: center; gap: 12px; }
-.btn-action { background-color: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; padding: 4px; transition: all 0.2s ease; color: #95a5a6; }
-.btn-action.edit { color: #3498db; }
+.btn-action { background: transparent; border: none; font-size: 18px; cursor: pointer; color: #95a5a6; }
 .btn-action.edit:hover { color: #2980b9; transform: scale(1.1); }
-.btn-action.lock { color: #95a5a6; }
 .btn-action.lock.is-locked { color: #e74c3c; }
-.btn-action.lock:hover { transform: scale(1.1); }
-.pagination { display: flex; gap: 6px; justify-content: flex-end; padding-top: 20px; }
-.page { padding: 8px 14px; border-radius: 4px; background: #fff; border: 1px solid #d9d9d9; cursor: pointer; transition: 0.2s; }
-.page:hover { border-color: #6b3a2b; color: #6b3a2b; }
+
+/* Pagination */
+.pagination { display: flex; gap: 6px; justify-content: center; padding: 15px 0; border-top: 1px solid #eee; margin-top: auto; }
+.page { padding: 8px 14px; border-radius: 4px; background: #fff; border: 1px solid #d9d9d9; cursor: pointer; }
 .page.active { background: #6b3a2b; color: #fff; border-color: #6b3a2b; }
 
-/* --- CSS MỚI CHO MODAL (STYLE GIỐNG ẢNH) --- */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
+/* Modal CSS */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: white; width: 700px; max-width: 95%; border-radius: 12px; padding: 25px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.close-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #888; line-height: 1; }
+.avatar-section { display: flex; justify-content: center; margin-bottom: 20px; }
+.avatar-circle { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #eee; overflow: hidden; position: relative; cursor: pointer; }
+.avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+.hidden-input { display: none; }
+.overlay-edit { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: #fff; text-align: center; padding: 4px 0; font-size: 12px; display: none; }
+.avatar-circle:hover .overlay-edit { display: block; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: span 2; }
+.form-group input, .form-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+.btn-orange { background-color: #e67e22; color: white; }
 
-.modal-content {
-    background: white;
-    width: 700px;
-    max-width: 95%;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    position: relative;
-}
-
-.modal-header {
+/* CSS VALIDATE ERROR (LABEL CÙNG HÀNG VỚI LỖI) */
+.label-flex {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 6px;
 }
-.modal-header h3 { font-size: 20px; font-weight: 700; color: #333; margin: 0; }
-.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
 
-.avatar-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
+/* Chữ lỗi màu đỏ */
+.error-msg {
+    color: #e74c3c;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: 600;
 }
-.avatar-circle {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    position: relative;
-    margin-bottom: 8px;
-}
-.avatar-circle img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.remove-avatar {
-    position: absolute; top: 0; right: -5px;
-    background: #e74c3c; color: white;
-    border: none; border-radius: 50%;
-    width: 20px; height: 20px;
-    font-size: 12px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-}
-.upload-hint { font-size: 12px; color: #888; }
 
-/* Grid layout cho Form */
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-.form-group { display: flex; flex-direction: column; }
-.form-group.full-width { grid-column: span 2; }
-.form-group label { font-size: 13px; color: #666; margin-bottom: 6px; }
-.form-group input, .form-group select {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-}
-.form-group input:focus, .form-group select:focus { border-color: #e67e22; }
-.disabled-input { background-color: #f9f9f9; color: #888; cursor: not-allowed; }
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 24px;
-}
-.btn-orange {
-    background-color: #e67e22; /* Màu cam giống ảnh */
-    color: white;
+/* Viền đỏ cho input khi lỗi */
+.red-border {
+    border-color: #e74c3c !important;
+    background-color: #fff5f5;
 }
 </style>
