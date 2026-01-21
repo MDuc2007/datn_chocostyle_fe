@@ -75,6 +75,15 @@ const routes: Array<RouteRecordRaw> = [
     path: "/admin/promotion",
     component: () => import("../pages/admin/promotion/PromotionManager.vue"),
   },
+  {
+  path: '/admin/promotion/create',
+  component: () => import('../pages/admin/promotion/PromotionCreate.vue')
+},
+{
+  path: '/admin/promotion/:id/edit',
+  component: () => import('../pages/admin/promotion/PromotionEdit.vue')
+},
+
   // 5. Quản lý nhân viên
   {
     path: "/admin/employee",

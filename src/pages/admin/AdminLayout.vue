@@ -118,7 +118,6 @@
         </div>
       </nav>
 
-      <div class="logout">⎋ Log Out</div>
     </aside>
 
     <div class="main">
