@@ -103,6 +103,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "add-employee",
     component: () => import("../pages/admin/employee/AddEmployee.vue"),
   },
+  { 
+    path: '/admin/employee/edit/:id', // :id là tham số động
+    name: 'EditEmployee', 
+    component: () => import('../pages/admin/employee/EditEmployee.vue')
+  },
   // 6. Quản lý khách hàng
   {
     path: "/admin/customer",

@@ -38,7 +38,7 @@
                 <table class="employees">
                     <thead>
                         <tr>
-                            <th style="width: 50px;">STT</th>
+                            <th style="width: 30px;">STT</th>
                             <th style="width: 90px;">Ảnh</th>
                             <th style="width: 100px;">Mã NV</th>
                             <th>Tên</th>
@@ -73,12 +73,15 @@
                             <td class="actions-cell">
                                 <div class="action-buttons">
                                     <button class="btn-action edit" @click="openEditModal(e)" title="Chỉnh sửa">✏️</button>
-                                    <button class="btn-action lock" :class="{ 'is-locked': e.status !== 1 }" @click="toggleStatus(e)">
-                                        <span v-if="e.status === 1">🔓</span>
-                                        <span v-else>🔒</span>
-                                    </button>
+                                    <label class="switch">
+                                        <input type="checkbox" :checked="e.status === 1" @change="toggleStatus(e)">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
                             </td>
+                        </tr>
+                        <tr v-for="i in (perPage - pagedEmployees.length)" :key="'empty-' + i">
+                            <td colspan="10">&nbsp;</td>
                         </tr>
                     </tbody>
                 </table>
@@ -275,20 +278,21 @@ onMounted(() => {
 
 // --- MODAL ---
 function openEditModal(emp) {
-    errors.value = {}; // Reset lỗi cũ
-    editingEmployee.value = {
-        id: emp.id,
-        maNv: emp.code,
-        hoTen: emp.name,
-        email: emp.email,
-        sdt: emp.phone,
-        diaChi: emp.address,
-        vaiTro: emp.role, 
-        trangThai: emp.status,
-        ngaySinh: formatDateForInput(emp.dob), 
-        avatar: emp.avatar
-    }
-    showModal.value = true;
+    // errors.value = {}; // Reset lỗi cũ
+    // editingEmployee.value = {
+    //     id: emp.id,
+    //     maNv: emp.code,
+    //     hoTen: emp.name,
+    //     email: emp.email,
+    //     sdt: emp.phone,
+    //     diaChi: emp.address,
+    //     vaiTro: emp.role, 
+    //     trangThai: emp.status,
+    //     ngaySinh: formatDateForInput(emp.dob), 
+    //     avatar: emp.avatar
+    // }
+    // showModal.value = true;
+    router.push({ name: 'EditEmployee', params: { id: emp.id } });
 }
 
 function closeModal() { showModal.value = false; }
@@ -408,7 +412,7 @@ function exportExcel() { alert('Xuất Excel') }
 .btn { padding: 10px 16px; border-radius: 6px; border: 0; cursor: pointer; font-weight: 600; }
 .btn-light { background: #f3ece6; color: #5a2e18; }
 .btn-success { background: #28a745; color: #fff; }
-.btn-primary { background: #c75a00; color: #fff; }
+.btn-primary { background: #63391F; color: #fff; }
 
 /* TABLE */
 .table-wrap { overflow-x: auto; background: #fff; min-height: 550px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -431,7 +435,52 @@ function exportExcel() { alert('Xuất Excel') }
 .actions-cell .action-buttons { display: flex; align-items: center; gap: 12px; }
 .btn-action { background: transparent; border: none; font-size: 18px; cursor: pointer; color: #95a5a6; }
 .btn-action.edit:hover { color: #2980b9; transform: scale(1.1); }
-.btn-action.lock.is-locked { color: #e74c3c; }
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e74c3c; /* red for locked */
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #6b3a2b; /* brown for unlocked */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
 
 /* Pagination */
 .pagination { display: flex; gap: 6px; justify-content: center; padding: 15px 0; border-top: 1px solid #eee; margin-top: auto; }
@@ -454,7 +503,7 @@ function exportExcel() { alert('Xuất Excel') }
 .form-group.full-width { grid-column: span 2; }
 .form-group input, .form-group select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-.btn-orange { background-color: #e67e22; color: white; }
+.btn-orange { background-color: #63391F; color: white; }
 
 /* CSS VALIDATE ERROR (LABEL CÙNG HÀNG VỚI LỖI) */
 .label-flex {
