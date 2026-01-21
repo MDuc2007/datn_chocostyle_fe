@@ -14,16 +14,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/admin/product/AddProduct.vue"),
     props: true,
   },
-  {
-    path: "/admin/product/:id/details",
-    name: "ProductDetails",
-    component: () => import("../pages/admin/product/DetailProduct.vue"),
-  },
-  {
-    path: "/admin/chi-tiet-san-pham/edit/:id",
-    name: "EditDetailsProduct",
-    component: () => import("../pages/admin/product/EditDetailsProduct.vue"),
-  },
+  // {
+  //   path: "/admin/product/:id/details",
+  //   name: "ProductDetails",
+  //   component: () => import("../pages/admin/product/DetailProduct.vue"),
+  // },
+  // {
+  //   path: "/admin/chi-tiet-san-pham/edit/:id",
+  //   name: "EditDetailsProduct",
+  //   component: () => import("../pages/admin/product/EditDetailsProduct.vue"),
+  // },
 
   // 1.1. Quản lý màu sắc
   {
@@ -75,6 +75,15 @@ const routes: Array<RouteRecordRaw> = [
     path: "/admin/promotion",
     component: () => import("../pages/admin/promotion/PromotionManager.vue"),
   },
+  {
+  path: '/admin/promotion/create',
+  component: () => import('../pages/admin/promotion/PromotionCreate.vue')
+},
+{
+  path: '/admin/promotion/:id/edit',
+  component: () => import('../pages/admin/promotion/PromotionEdit.vue')
+},
+
   // 5. Quản lý nhân viên
   {
     path: "/admin/employee",
