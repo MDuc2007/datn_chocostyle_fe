@@ -70,6 +70,15 @@ const routes: Array<RouteRecordRaw> = [
     path: "/admin/voucher",
     component: () => import("../pages/admin/voucher/VoucherManager.vue"),
   },
+{
+  path: "/admin/voucher/create",
+  component: () => import("../pages/admin/voucher/VoucherCreate.vue")
+},
+{
+  path: "/admin/voucher/update/:id",
+  component: () => import("../pages/admin/voucher/VoucherUpdate.vue")
+},
+
   // 4. Quản lý đợt giảm giá
   {
     path: "/admin/promotion",
