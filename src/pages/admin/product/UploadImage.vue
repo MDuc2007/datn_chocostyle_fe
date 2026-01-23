@@ -1,14 +1,9 @@
 <template>
   <div>
-    <input type="file" multiple accept="image/*" @change="handleUpload" />
+    <input type="file" accept="image/*" @change="handleUpload" />
 
-    <div style="display:flex; gap:10px; margin-top:10px">
-      <img
-        v-for="url in imageUrls"
-        :key="url"
-        :src="url"
-        width="100"
-      />
+    <div v-if="previewUrl" style="margin-top: 10px">
+      <img :src="previewUrl" width="120" />
     </div>
   </div>
 </template>
@@ -16,26 +11,42 @@
 <script setup>
 import { ref } from "vue";
 
-const imageUrls = ref([]);
+const emit = defineEmits(["uploaded"]);
+
+const previewUrl = ref("");
 
 const handleUpload = async (e) => {
-  const files = e.target.files;
+  const file = e.target.files[0];
+  if (!file) return;
 
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "chocostyle_unsigned");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "chocostyle_unsigned");
 
+  try {
     const res = await fetch(
       "https://api.cloudinary.com/v1_1/dvsqk1vel/image/upload",
       {
         method: "POST",
-        body: formData
+        body: formData,
       }
     );
 
     const data = await res.json();
-    imageUrls.value.push(data.secure_url);
+
+    if (!data.secure_url) {
+      alert("Upload ảnh thất bại");
+      return;
+    }
+
+    // preview
+    previewUrl.value = data.secure_url;
+
+    // 🔥 GỬI URL CLOUDINARY CHO COMPONENT CHA
+    emit("uploaded", data.secure_url);
+  } catch (err) {
+    console.error(err);
+    alert("Lỗi upload ảnh");
   }
 };
 </script>

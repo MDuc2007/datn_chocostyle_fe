@@ -151,7 +151,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from "vue";
 import axios from "axios";
-
 const promotions = ref<any[]>([]);
 
 const pagination = reactive({
@@ -213,7 +212,7 @@ const resetFilter = () => {
 const toggleTrangThai = async (id: number) => {
   try {
     await axios.patch(`http://localhost:8080/api/promotions/${id}/toggle`);
-    fetchData(); 
+    fetchData();
   } catch (e) {
     console.error("Toggle thất bại", e);
   }
@@ -276,13 +275,13 @@ const changePage = (newPage: number) => {
 
 .table-panel {
   border-radius: 10px;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 .panel {
   max-width: 100%;
   background: #fff;
-  border-radius: 10px; 
+  border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
