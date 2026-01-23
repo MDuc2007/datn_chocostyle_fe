@@ -97,8 +97,7 @@
               </span>
             </td>
 
-            <td class="text-center">
-              <div class="discount-main">
+            <td class="text-center"><div class="discount-main">
                 <strong>
                   {{
                     item.loaiGiam === "PERCENT"
@@ -129,7 +128,7 @@
             </td>
 
             <td>
-              <span @click="goEdit(item.id)" style="cursor: pointer">✏️</span>
+              <span @click="goEdit(item.id)" style="cursor: pointer">✎</span>
               <label class="switch">
                 <input
                   type="checkbox"
@@ -208,8 +207,7 @@ const filter = reactive({
 });
 
 const isExpired = (item) => {
-  const today = new Date();
-  return today > new Date(item.ngayKetThuc);
+  const today = new Date();return today > new Date(item.ngayKetThuc);
 };
 
 const totalVoucher = computed(() => filteredList.value.length);
@@ -334,9 +332,7 @@ const toast = reactive({
   show: false,
   message: "",
   type: "success",
-});
-
-const showToast = (message, type = "success") => {
+});const showToast = (message, type = "success") => {
   toast.message = message;
   toast.type = type;
   toast.show = true;
@@ -523,9 +519,7 @@ onMounted(load);
 
 .voucher-table td.text-center {
   text-align: center;
-}
-
-.voucher-table td span {
+}.voucher-table td span {
   vertical-align: middle;
 }
 
@@ -722,8 +716,7 @@ onMounted(load);
   font-weight: 600;
   text-align: center;
   line-height: 1;
-}
-.modal-mask {
+}.modal-mask {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);

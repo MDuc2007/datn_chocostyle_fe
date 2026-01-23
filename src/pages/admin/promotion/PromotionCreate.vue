@@ -186,10 +186,31 @@
                   </button>
                 </td>
                 <td>{{ ct.maChiTietSanPham }}</td>
-                <td>{{ ct.idMauSac?.tenMauSac }}</td>
-                <td>{{ ct.idKichCo?.tenKichCo }}</td>
-                <td>{{ ct.idLoaiAo?.tenLoai }}</td>
-                <td>{{ ct.idKieuDang?.tenKieuDang }}</td>
+                <td>
+                  <span
+                    v-for="(mau, i) in ct.mauSacList"
+                    :key="i"
+                    class="badge me-1"
+                    :style="{ backgroundColor: mau.rgb }"
+                  >
+                    {{ mau.tenMauSac }}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    v-for="(kc, i) in ct.kichCoList"
+                    :key="i"
+                    class="badge bg-secondary me-1"
+                  >
+                    {{ kc }}
+                  </span>
+                </td>
+                <td>
+                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
+                </td>
+                <td>
+                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenKieuDang }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -350,10 +371,11 @@ const toggleSanPham = async (sp: any) => {
   selectedSanPhamIds.value.push(sp.id);
 
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/chi-tiet-san-pham/san-pham/${sp.id}`,
-    );
-    chiTietMap[sp.id] = res.data;
+    const res = await axios.get(`http://localhost:8080/api/san-pham/${sp.id}`);
+
+    const list = res.data.bienTheList || [];
+
+    chiTietMap[sp.id] = list;
   } catch (e) {
     console.error("Lỗi load biến thể", e);
   }
@@ -379,10 +401,14 @@ const toggleAllSanPham = async () => {
   for (const sp of sanPhamList) {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/chi-tiet-san-pham/san-pham/${sp.id}`,
+        `http://localhost:8080/api/san-pham/${sp.id}`,
       );
-      chiTietMap[sp.id] = res.data;
-      res.data.forEach((ct: any) => {
+
+      const list = res.data.bienTheList || [];
+
+      chiTietMap[sp.id] = list;
+
+      list.forEach((ct: any) => {
         if (!selectedChiTietIds.value.includes(ct.id)) {
           selectedChiTietIds.value.push(ct.id);
         }
@@ -393,11 +419,13 @@ const toggleAllSanPham = async () => {
   }
 };
 const isAllChiTietSelected = (spId: number) => {
-  const list = chiTietMap[spId] || [];
-  if (list.length === 0) return false;
+  const list = chiTietMap[spId];
+
+  if (!Array.isArray(list) || list.length === 0) return false;
 
   return list.every((ct) => selectedChiTietIds.value.includes(ct.id));
 };
+
 const toggleAllChiTiet = (spId: number) => {
   const list = chiTietMap[spId] || [];
 
@@ -433,16 +461,15 @@ const submit = async () => {
   }
 };
 
-
 const selectedChiTietIds = ref<number[]>([]);
 
 const toggleChiTiet = (ctId: number) => {
   const index = selectedChiTietIds.value.indexOf(ctId);
 
   if (index !== -1) {
-    selectedChiTietIds.value.splice(index, 1); 
+    selectedChiTietIds.value.splice(index, 1);
   } else {
-    selectedChiTietIds.value.push(ctId); 
+    selectedChiTietIds.value.push(ctId);
   }
 };
 

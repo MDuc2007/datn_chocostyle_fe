@@ -14,16 +14,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/admin/product/AddProduct.vue"),
     props: true,
   },
-  // {
-  //   path: "/admin/product/:id/details",
-  //   name: "ProductDetails",
-  //   component: () => import("../pages/admin/product/DetailProduct.vue"),
-  // },
-  // {
-  //   path: "/admin/chi-tiet-san-pham/edit/:id",
-  //   name: "EditDetailsProduct",
-  //   component: () => import("../pages/admin/product/EditDetailsProduct.vue"),
-  // },
+  {
+    path: "/admin/product/:id/details",
+    name: "ProductDetails",
+    component: () => import("../pages/admin/product/DetailProduct.vue"),
+  },
+  {
+    path: "/admin/chi-tiet-san-pham/:productId/edit/:id",
+    name: "EditDetailsProduct",
+    component: () => import("../pages/admin/product/EditDetailsProduct.vue"),
+  },
 
   // 1.1. Quản lý màu sắc
   {
@@ -62,30 +62,30 @@ const routes: Array<RouteRecordRaw> = [
   },
   // 2. Quản lý hoá đơn
   {
-    path: '/admin/invoice',
-    name: 'InvoiceList',
-    component: () => import('../pages/admin/invoice/InvoiceList.vue')
+    path: "/admin/invoice",
+    name: "InvoiceList",
+    component: () => import("../pages/admin/invoice/InvoiceList.vue"),
   },
   // 2.1 Chi tiết hóa đơn (Route mới)
   {
-    path: '/admin/invoice/:id',
-    name: 'InvoiceDetail',
-    component: () => import('../pages/admin/invoice/InvoiceDetail.vue'),
-    props: true // Cho phép nhận ID như một biến props
+    path: "/admin/invoice/:id",
+    name: "InvoiceDetail",
+    component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
+    props: true, // Cho phép nhận ID như một biến props
   },
   // 3. Quản lý phiếu giảm giá
   {
     path: "/admin/voucher",
     component: () => import("../pages/admin/voucher/VoucherManager.vue"),
   },
-{
-  path: "/admin/voucher/create",
-  component: () => import("../pages/admin/voucher/VoucherCreate.vue")
-},
-{
-  path: "/admin/voucher/update/:id",
-  component: () => import("../pages/admin/voucher/VoucherUpdate.vue")
-},
+  {
+    path: "/admin/voucher/create",
+    component: () => import("../pages/admin/voucher/VoucherCreate.vue"),
+  },
+  {
+    path: "/admin/voucher/update/:id",
+    component: () => import("../pages/admin/voucher/VoucherUpdate.vue"),
+  },
 
   // 4. Quản lý đợt giảm giá
   {
@@ -93,13 +93,13 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/admin/promotion/PromotionManager.vue"),
   },
   {
-  path: '/admin/promotion/create',
-  component: () => import('../pages/admin/promotion/PromotionCreate.vue')
-},
-{
-  path: '/admin/promotion/:id/edit',
-  component: () => import('../pages/admin/promotion/PromotionEdit.vue')
-},
+    path: "/admin/promotion/create",
+    component: () => import("../pages/admin/promotion/PromotionCreate.vue"),
+  },
+  {
+    path: "/admin/promotion/:id/edit",
+    component: () => import("../pages/admin/promotion/PromotionEdit.vue"),
+  },
 
   // 5. Quản lý nhân viên
   {
@@ -111,10 +111,10 @@ const routes: Array<RouteRecordRaw> = [
     name: "add-employee",
     component: () => import("../pages/admin/employee/AddEmployee.vue"),
   },
-  { 
-    path: '/admin/employee/edit/:id', // :id là tham số động
-    name: 'EditEmployee', 
-    component: () => import('../pages/admin/employee/EditEmployee.vue')
+  {
+    path: "/admin/employee/edit/:id", // :id là tham số động
+    name: "EditEmployee",
+    component: () => import("../pages/admin/employee/EditEmployee.vue"),
   },
   // 6. Quản lý khách hàng
   {

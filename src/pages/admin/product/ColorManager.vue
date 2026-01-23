@@ -1,5 +1,5 @@
 <template>
-  <div class="color-page">
+  <div class="header">
     <h2 class="title">QUẢN LÝ MÀU SẮC</h2>
 
     <div class="top-bar">
@@ -8,7 +8,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="Tìm kiếm màu sắc"
+          placeholder="Tìm kiếm màu sắc theo tên"
         />
       </div>
 
@@ -16,27 +16,28 @@
         <button @click="openModal"><span>＋</span> Thêm màu sắc</button>
       </div>
     </div>
-
+  </div>
+  <div class="color-page">
     <table class="color-table">
       <thead>
         <tr>
           <th>STT</th>
-          <th>ID</th>
           <th>Mã màu</th>
+          <th>RGB</th>
           <th>Tên màu</th>
+          <th>Ngày tạo</th>
           <th>Hành động</th>
         </tr>
       </thead>
-
       <tbody>
         <tr v-for="(item, index) in colors" :key="item.id">
-            <td>{{ index + 1 }}</td>
-          <td>{{ item.id }}</td>
-           <td>{{ item.code }}</td>
+          <td>{{ index + 1 }}</td>
+          <td>{{ item.code }}</td>
+          <td>{{ item.rgb }}</td>
           <td>{{ item.name }}</td>
+          <td>{{ formatDate(item.ngayTao) }}</td>
           <td class="action">
-            <button @click="editColor(item)" class="edit-btn">✏️</button>
-            <button @click="deleteColor(item)" class="delete-btn">🗑️</button>
+            <button @click="editColor(item)" class="edit-btn">👁️</button>
           </td>
         </tr>
       </tbody>
@@ -44,21 +45,31 @@
   </div>
 
   <div class="pagination">
-    <button>Previous</button>
+    <button><</button>
     <button class="active">1</button>
-    <button>Next</button>
+    <button>></button>
   </div>
 
   <!-- Modal -->
   <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
     <div class="modal" @click.stop>
-      <h3>{{ isEdit ? 'Sửa màu sắc' : 'Thêm màu sắc' }}</h3>
+      <h3>{{ isEdit ? "Sửa màu sắc" : "Thêm màu sắc" }}</h3>
+      <div class="color-input-group">
+        <input
+          type="color"
+          v-model="newColor.rgb"
+          class="color-picker"
+          style="width: 30%"
+        />
 
-      <input v-model="newColor.tenMauSac" placeholder="Nhập tên" />
+        <input v-model="newColor.tenMauSac" placeholder="Nhập tên màu" />
+      </div>
 
       <div class="modal-actions">
         <button @click="closeModal">Huỷ</button>
-        <button class="save-btn" @click="isEdit ? updateColor() : addColor()">{{ isEdit ? 'Cập nhật' : 'Lưu' }}</button>
+        <button class="save-btn" @click="isEdit ? updateColor() : addColor()">
+          {{ isEdit ? "Cập nhật" : "Lưu" }}
+        </button>
       </div>
     </div>
   </div>
@@ -77,15 +88,24 @@ const fetchColors = async () => {
     id: item.id,
     name: item.tenMauSac,
     code: item.maMauSac,
+    rgb: item.rgb,
+    ngayTao: item.ngayTao,
   }));
+};
+const formatDate = (date) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("vi-VN");
 };
 
 onMounted(fetchColors);
 
 const isModalOpen = ref(false);
 const newColor = ref({
-  tenMauSac: ''
+  tenMauSac: "",
+  rgb: "",
+  nguoiTao: "admin", // tạm thời
 });
+
 const isEdit = ref(false);
 const editingId = ref(null);
 
@@ -95,7 +115,11 @@ const openModal = () => {
 
 const closeModal = () => {
   isModalOpen.value = false;
-  newColor.value = { tenMauSac: '' };
+  newColor.value = {
+    tenMauSac: "",
+    rgb: "",
+    nguoiTao: "admin",
+  };
   isEdit.value = false;
   editingId.value = null;
 };
@@ -106,7 +130,11 @@ const addColor = async () => {
   await fetch("http://localhost:8080/api/mau-sac", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newColor.value),
+    body: JSON.stringify({
+      tenMauSac: newColor.value.tenMauSac,
+      rgb: newColor.value.rgb,
+      nguoiTao: "admin", // 👈 bắt buộc
+    }),
   });
 
   closeModal();
@@ -117,6 +145,7 @@ const editColor = (item) => {
   isEdit.value = true;
   editingId.value = item.id;
   newColor.value.tenMauSac = item.name;
+  newColor.value.rgb = item.rgb;
   openModal();
 };
 
@@ -126,7 +155,11 @@ const updateColor = async () => {
   await fetch(`http://localhost:8080/api/mau-sac/${editingId.value}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newColor.value),
+    body: JSON.stringify({
+      tenMauSac: newColor.value.tenMauSac,
+      rgb: newColor.value.rgb,
+      nguoiCapNhat: "admin",
+    }),
   });
 
   closeModal();
@@ -148,18 +181,39 @@ const deleteColor = async (item) => {
   background: #fff;
   padding: 20px;
   font-size: 14px;
+  margin-top: 10px;
+  box-shadow:
+    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
+    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
+  border-radius: 6px;
 }
 
 .title {
   color: #63391f;
   margin-bottom: 15px;
+  margin: 15px;
 }
 
+.header {
+  margin-bottom: 10px;
+  background: #fff;
+  box-shadow:
+    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
+    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
+  border-radius: 6px;
+}
 /* TOP BAR */
 .top-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
+}
+
+.add-btn {
+  margin: 15px;
 }
 
 .add-btn button {
@@ -336,5 +390,24 @@ const deleteColor = async (item) => {
 
 .modal-actions .save-btn:hover {
   background: #6b3f23;
+}
+.color-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.color-input-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.color-picker {
+  width: 100%;
+  height: 60px;
+  border: 2px solid #c7b2a3;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
 }
 </style>
