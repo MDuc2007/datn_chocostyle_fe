@@ -119,7 +119,22 @@ const routes: Array<RouteRecordRaw> = [
   // 6. Quản lý khách hàng
   {
     path: "/admin/customer",
-    component: () => import("../pages/admin/customer/CustomerManager.vue"),
+    name: "CustomerList",
+    component: () => import("../pages/admin/customer/CustomerManager.vue"), // File danh sách
+  },
+
+  // 2. Route hiển thị FORM THÊM MỚI (Trang con)
+  {
+    path: "/admin/customer/add",
+    name: "CustomerCreate",
+    component: () => import("../pages/admin/customer/CustomerCreate.vue"), // File thêm mới
+  },
+
+  {
+    // Đường dẫn có :id ở cuối
+    path: "/admin/customer/edit/:id",
+    name: "CustomerEdit",
+    component: () => import("../pages/admin/customer/CustomerEdit.vue"),
   },
 ];
 const router = createRouter({

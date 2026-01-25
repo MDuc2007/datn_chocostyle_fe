@@ -19,7 +19,7 @@
 
         <div class="row">
           <div class="col">
-            <label>Tên sản phẩm:</label>
+            <label>Tên sản phẩm <span class="required">*</span></label>
             <input
               v-model="tenSanPham"
               type="text"
@@ -28,7 +28,7 @@
           </div>
 
           <div class="col">
-            <label>Xuất xứ:</label>
+            <label>Xuất xứ <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedXuatXu">
                 <option value="">Chọn xuất xứ</option>
@@ -51,7 +51,7 @@
           </div>
 
           <div class="col">
-            <label>Loại áo:</label>
+            <label>Loại áo <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedLoaiAo">
                 <option value="">Chọn loại áo</option>
@@ -74,7 +74,7 @@
           </div>
 
           <div class="col">
-            <label>Kiểu dáng:</label>
+            <label>Kiểu dáng <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedKieuDang">
                 <option value="">Chọn kiểu dáng</option>
@@ -97,7 +97,7 @@
           </div>
 
           <div class="col">
-            <label>Phong cách mặc:</label>
+            <label>Phong cách mặc <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedPhongCach">
                 <option value="">Chọn phong cách</option>
@@ -120,7 +120,7 @@
           </div>
 
           <div class="col">
-            <label>Chất liệu:</label>
+            <label>Chất liệu <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedChatLieu">
                 <option value="">Chọn chất liệu</option>
@@ -144,7 +144,7 @@
         </div>
 
         <div class="col full">
-          <label>Mô tả sản phẩm:</label>
+          <label>Mô tả sản phẩm <span class="required">*</span></label>
           <textarea
             v-model="moTa"
             placeholder="Nhập thông tin mô tả"
@@ -153,7 +153,7 @@
 
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
-            <label>Màu sắc:</label>
+            <label>Màu sắc <span class="required">*</span></label>
             <button type="button" class="add-btn" @click="openModal('mau-sac')">
               <img src="/src/assets/icon/plus.svg" />
             </button>
@@ -168,7 +168,7 @@
 
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
-            <label>Kích cỡ:</label>
+            <label>Kích cỡ <span class="required">*</span></label>
             <button type="button" class="add-btn" @click="openModal('kich-co')">
               <img src="/src/assets/icon/plus.svg" />
             </button>
@@ -380,7 +380,7 @@
 
       <div class="modal-actions">
         <button @click="closeModal">Huỷ</button>
-        <button class="save-btn" @click="saveModal">Xong</button>
+        <button class="save-btn" @click="saveModal" >Xong</button>
       </div>
     </div>
   </div>
@@ -1598,5 +1598,10 @@ textarea {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
+}
+.required {
+  color: #e53935;
+  margin-left: 2px;
+  font-weight: 600;
 }
 </style>

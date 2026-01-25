@@ -2,7 +2,7 @@
   <div class="voucher-page">
     <div class="frame-top">
       <div class="header-row">
-        <h3>QUẢN LÝ PHIẾU GIẢM GIÁ</h3>
+        <h3 class="tittle">QUẢN LÝ PHIẾU GIẢM GIÁ</h3>
 
         <!-- <div class="total-voucher">
           Tổng số phiếu giảm giá:
@@ -97,7 +97,8 @@
               </span>
             </td>
 
-            <td class="text-center"><div class="discount-main">
+            <td class="text-center">
+              <div class="discount-main">
                 <strong>
                   {{
                     item.loaiGiam === "PERCENT"
@@ -128,7 +129,12 @@
             </td>
 
             <td>
-              <span @click="goEdit(item.id)" style="cursor: pointer">✎</span>
+              <span @click="goEdit(item.id)" style="cursor: pointer"
+                ><img
+                  src="/src/assets/icon/edit.svg"
+                  alt=""
+                  style="width: 20px; height: 20px"
+              /></span>
               <label class="switch">
                 <input
                   type="checkbox"
@@ -144,7 +150,9 @@
       </table>
 
       <div class="pagination">
-        <button :disabled="currentPage === 1" @click="currentPage--"><</button>
+        <button :disabled="currentPage === 1" @click="currentPage--">
+          <img src="/src/assets/icon/arrowRight.svg" alt="" />
+        </button>
 
         <button
           v-for="p in totalPages"
@@ -156,7 +164,7 @@
         </button>
 
         <button :disabled="currentPage === totalPages" @click="currentPage++">
-          >
+          <img src="/src/assets/icon/arrowLeft.svg" alt="" />
         </button>
       </div>
     </div>
@@ -179,8 +187,10 @@
       </div>
     </div>
   </div>
+
   <div v-if="toast.show" :class="['toast', toast.type]">
-    {{ toast.message }}
+    <span class="toast-icon">✔</span>
+    <span class="toast-text">{{ toast.message }}</span>
   </div>
 </template>
 
@@ -207,7 +217,8 @@ const filter = reactive({
 });
 
 const isExpired = (item) => {
-  const today = new Date();return today > new Date(item.ngayKetThuc);
+  const today = new Date();
+  return today > new Date(item.ngayKetThuc);
 };
 
 const totalVoucher = computed(() => filteredList.value.length);
@@ -332,7 +343,9 @@ const toast = reactive({
   show: false,
   message: "",
   type: "success",
-});const showToast = (message, type = "success") => {
+});
+
+const showToast = (message, type = "success") => {
   toast.message = message;
   toast.type = type;
   toast.show = true;
@@ -361,6 +374,10 @@ onMounted(load);
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.tittle {
+  color: #63391f;
 }
 
 .total-voucher {
@@ -519,7 +536,9 @@ onMounted(load);
 
 .voucher-table td.text-center {
   text-align: center;
-}.voucher-table td span {
+}
+
+.voucher-table td span {
   vertical-align: middle;
 }
 
@@ -716,7 +735,8 @@ onMounted(load);
   font-weight: 600;
   text-align: center;
   line-height: 1;
-}.modal-mask {
+}
+.modal-mask {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
@@ -766,20 +786,36 @@ onMounted(load);
   position: fixed;
   top: 20px;
   right: 20px;
-  min-width: 260px;
-  padding: 12px 18px;
+  min-width: 320px;
+  padding: 14px 16px;
   border-radius: 6px;
   font-size: 14px;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   z-index: 2000;
   animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .toast.success {
-  background: #43a047;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 5px solid #2e7d32;
 }
 
 .toast.error {
-  background: #e53935;
+  background: #fdecea;
+  color: #c62828;
+  border-left: 5px solid #c62828;
+}
+
+.toast-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.toast-text {
+  line-height: 1.4;
 }
 </style>

@@ -13,7 +13,19 @@
       </div>
 
       <div class="add-btn">
-        <button @click="openModal"><span>＋</span> Thêm kiểu dáng</button>
+        <button
+          @click="openModal"
+          style="
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 0;
+            cursor: pointer;
+            background-color: #63391f;
+            color: white;
+          "
+        >
+          <span>＋</span> Thêm kiểu dáng
+        </button>
       </div>
     </div>
   </div>
@@ -36,17 +48,28 @@
           <td>{{ item.name }}</td>
           <td>{{ formatDate(item.ngayTao) }}</td>
           <td class="action">
-            <button @click="editColor(item)" class="edit-btn">👁️</button>
+            <button @click="editColor(item)" class="edit-btn">
+              <img
+                src="/src/assets/icon/eye.svg"
+                alt=""
+                style="width: 20px; height: 20px"
+              />
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
-  </div>
-
-  <div class="pagination">
-    <button><</button>
-    <button class="active">1</button>
-    <button>></button>
+    <div class="pagination">
+      <button @click="previousPage" :disabled="currentPage === 0">
+        <img src="/src/assets/icon/arrowRight.svg" alt="" />
+      </button>
+      <div class="page-numbers">
+        <button class="page-btn">1</button>
+      </div>
+      <button @click="nextPage" :disabled="currentPage === totalPages - 1">
+        <img src="/src/assets/icon/arrowLeft.svg" alt="" />
+      </button>
+    </div>
   </div>
 
   <!-- Modal -->
@@ -165,8 +188,7 @@ const deleteColor = async (item) => {
   padding: 20px;
   font-size: 14px;
   margin-top: 10px;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -181,8 +203,7 @@ const deleteColor = async (item) => {
 .header {
   margin-bottom: 10px;
   background: #fff;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -373,5 +394,61 @@ const deleteColor = async (item) => {
 
 .modal-actions .save-btn:hover {
   background: #6b3f23;
+}
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 40px;
+  height: 40px;
+}
+
+.page-btn:hover:not(.active):not(:disabled) {
+  background: #f0f0f0;
+}
+
+.page-btn.active {
+  background: #63391f;
+  color: #fff;
+  border-color: #63391f;
+  font-weight: 600;
+}
+
+.page-btn.active:hover {
+  background: #63391f;
+}
+
+.page-btn:disabled {
+  background: transparent;
+  border: none;
+  cursor: default;
 }
 </style>

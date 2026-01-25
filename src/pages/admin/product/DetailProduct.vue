@@ -8,8 +8,10 @@
         <img src="/src/assets/icon/search.svg" class="search-icon" />
         <input
           class="search-input"
-          placeholder="Tìm biến thể theo tên"
+          placeholder="Tìm biến thể theo mã biến thể"
           v-model="keyword"
+          @input="handleSearch"
+          style="border: 1px solid #d6c3b4"
         />
       </div>
 
@@ -17,7 +19,11 @@
       <div class="filters">
         <div class="filter-item">
           <label>Màu sắc:</label>
-          <select v-model="selectedMauSacList">
+          <select
+            v-model="selectedMauSacList"
+            @change="handleColorChange"
+            style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
+          >
             <option value="">Tất cả</option>
             <option v-for="item in mauSacList" :key="item.id" :value="item.id">
               {{ item.tenMauSac }}
@@ -27,7 +33,11 @@
 
         <div class="filter-item">
           <label>Kích cỡ:</label>
-          <select v-model="selectedKichCoList">
+          <select
+            v-model="selectedKichCoList"
+            @change="handleSizeChange"
+            style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
+          >
             <option value="">Tất cả</option>
             <option v-for="item in kichCoList" :key="item.id" :value="item.id">
               {{ item.tenKichCo }}
@@ -56,26 +66,21 @@
       </thead>
 
       <tbody>
-        <tr v-for="(item, index) in filteredVariants" :key="index">
+        <tr v-for="(item, index) in variants" :key="item.id">
           <td>{{ index + 1 }}</td>
           <td>
             <img
-              v-if="item.hinhAnhUrls?.length"
-              :src="item.hinhAnhUrls[0]"
+              v-if="item.hinhAnh?.length"
+              :src="item.hinhAnh[0]"
               class="variant-img"
             />
           </td>
           <td>{{ item.maChiTietSanPham }}</td>
           <td>
-            <span v-for="(kc, i) in item.kichCoList" :key="i">
-              {{ kc }}<span v-if="i < item.kichCoList.length - 1">, </span>
-            </span>
+            {{ item.tenKichCo }}
           </td>
           <td>
-            <span v-for="(mau, i) in item.mauSacList" :key="i">
-              {{ mau.tenMauSac
-              }}<span v-if="i < item.mauSacList.length - 1">, </span>
-            </span>
+            {{ item.tenMauSac }}
           </td>
           <td>{{ item.soLuongTon }}</td>
           <td>{{ formatCurrency(item.giaNhap) }}</td>
@@ -99,6 +104,25 @@
         </tr>
       </tbody>
     </table>
+    <div class="pagination">
+      <button @click="previousPage" :disabled="currentPage === 0">
+        <img src="/src/assets/icon/arrowRight.svg" alt="" />
+      </button>
+      <button
+        v-for="page in visiblePages"
+        :key="page"
+        class="page-btn"
+        :class="{ active: page - 1 === currentPage }"
+        :disabled="page === '...'"
+        @click="goToPage(page - 1)"
+      >
+        {{ page }}
+      </button>
+
+      <button @click="nextPage" :disabled="currentPage === totalPages - 1">
+        <img src="/src/assets/icon/arrowLeft.svg" alt="" />
+      </button>
+    </div>
   </div>
 </template>
 
@@ -109,6 +133,10 @@ import axios from "axios";
 
 const router = useRouter();
 const route = useRoute();
+
+const currentPage = ref(0);
+const pageSize = ref(8);
+const totalPages = ref(0);
 
 const mauSacList = ref([]);
 const kichCoList = ref([]);
@@ -124,6 +152,82 @@ const fetchMauSac = async () => {
 const fetchKichCo = async () => {
   const res = await axios.get("http://localhost:8080/api/kich-co");
   kichCoList.value = res.data;
+};
+
+const fetchFilterData = async () => {
+  try {
+    const [originRes, materialRes] = await Promise.all([
+      axios.get("http://localhost:8080/api/mau-sac"),
+      axios.get("http://localhost:8080/api/kich-co"),
+    ]);
+
+    originList.value = originRes.data.data || originRes.data;
+    materialList.value = materialRes.data.data || materialRes.data;
+  } catch (error) {
+    console.error("Lỗi lấy dữ liệu filter:", error);
+  }
+};
+
+const handleColorChange = () => {
+  currentPage.value = 0;
+  fetchVariants();
+};
+
+const handleSizeChange = () => {
+  currentPage.value = 0;
+  fetchVariants();
+};
+
+const previousPage = () => {
+  if (currentPage.value > 0) {
+    currentPage.value--;
+    fetchVariants();
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value - 1) {
+    currentPage.value++;
+    fetchVariants();
+  }
+};
+
+const goToPage = (page) => {
+  if (page < 0 || page >= totalPages.value) return;
+  currentPage.value = page;
+  fetchVariants();
+};
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value + 1;
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+
+    if (current > 4) pages.push("...");
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (current < total - 3) pages.push("...");
+
+    pages.push(total);
+  }
+
+  return pages;
+});
+
+const handleSearch = () => {
+  currentPage.value = 0;
+  fetchVariants();
 };
 
 const productId = route.params.id;
@@ -145,20 +249,27 @@ const goToUpdate = (variantId) => {
 };
 
 const fetchVariants = async () => {
-  const res = await axios.get(
-    `http://localhost:8080/api/san-pham/${productId}`,
-  );
+  try {
+    const res = await axios.get(
+      "http://localhost:8080/api/chi-tiet-san-pham/filter",
+      {
+        params: {
+          productId: productId,
+          keyword: keyword.value || null,
+          mauSacId: selectedMauSacList.value || null,
+          kichCoId: selectedKichCoList.value || null,
+          page: currentPage.value,
+          size: pageSize.value,
+        },
+      },
+    );
 
-  tenSanPham.value = res.data.tenSanPham;
-  variants.value = res.data.bienTheList;
+    variants.value = res.data.content;
+    totalPages.value = res.data.totalPages;
+  } catch (error) {
+    console.error("Lỗi load CTSP:", error);
+  }
 };
-
-const filteredVariants = computed(() => {
-  if (!keyword.value) return variants.value;
-  return variants.value.filter((v) =>
-    v.maChiTietSanPham.toLowerCase().includes(keyword.value.toLowerCase()),
-  );
-});
 
 onMounted(() => {
   fetchVariants();
@@ -173,8 +284,7 @@ onMounted(() => {
   padding: 20px;
   font-size: 14px;
   margin-top: 10px;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -183,8 +293,7 @@ onMounted(() => {
 .header {
   margin-bottom: 10px;
   background: #fff;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -279,10 +388,6 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.pagination button:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -352,4 +457,28 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 14px;
 }
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  height: 40px;
+  width: 40px;
+}
+
+.page-btn.active {
+  background: #63391f;
+  color: #fff;
+  border-color: #63391f;
+  font-weight: 600;
+}
+
 </style>
