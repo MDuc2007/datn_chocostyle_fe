@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h2 class="title">SỬA SẢN PHẨM</h2>
+    <h2 class="title">SỬA BIẾN THỂ</h2>
 
     <div class="toast-container">
       <div
@@ -19,12 +19,12 @@
 
         <div class="row">
           <div class="col">
-            <label>Mã chi tiết sản phẩm:</label>
+            <label>Mã chi tiết sản phẩm <span class="required">*</span></label>
             <input type="text" :value="maCTSP" readonly />
           </div>
 
           <div class="col">
-            <label>Màu sắc:</label>
+            <label>Màu sắc <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedMauSacList">
                 <option value="">Chọn màu sắc</option>
@@ -40,7 +40,7 @@
           </div>
 
           <div class="col">
-            <label>Kích cỡ:</label>
+            <label>Kích cỡ <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedKichCoList">
                 <option value="">Chọn kích cỡ</option>
@@ -55,7 +55,7 @@
             </div>
           </div>
           <div class="col">
-            <label>Loại áo:</label>
+            <label>Loại áo <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedLoaiAo">
                 <option value="">Chọn loại áo</option>
@@ -71,7 +71,7 @@
           </div>
 
           <div class="col">
-            <label>Kiểu dáng:</label>
+            <label>Kiểu dáng <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedKieuDang">
                 <option value="">Chọn kiểu dáng</option>
@@ -87,7 +87,7 @@
           </div>
 
           <div class="col">
-            <label>Phong cách mặc:</label>
+            <label>Phong cách mặc <span class="required">*</span></label>
             <div class="select-box">
               <select v-model="selectedPhongCach">
                 <option value="">Chọn phong cách</option>
@@ -103,16 +103,16 @@
           </div>
 
           <div class="col">
-            <label>Số lượng tồn:</label>
-            <input type="number" v-model="soLuongTon" />
+            <label>Số lượng tồn <span class="required">*</span></label>
+            <input type="number" v-model.number="soLuongTon" />
           </div>
           <div class="col">
             <label>Giá bán:</label>
-            <input type="number" v-model="giaBan" />
+            <input type="number" v-model.number="giaBan" />
           </div>
           <div class="col">
             <label>Giá nhập:</label>
-            <input type="number" v-model="giaNhap" />
+            <input type="number" v-model.number="giaNhap" />
           </div>
         </div>
       </div>
@@ -133,9 +133,18 @@
         </p>
       </div>
     </div>
-    <button style="margin-top: 10px" class="save-btn" @click="openConfirmModal">
-      Lưu sản phẩm
-    </button>
+    <button class="save-btn" @click="handleOpenConfirm">Lưu sản phẩm</button>
+  </div>
+  <div v-if="showConfirmModal" class="modal-overlay">
+    <div class="modal">
+      <h3>Xác nhận cập nhật</h3>
+      <p>Bạn có muốn lưu thay đổi không?</p>
+
+      <div class="modal-actions">
+        <button @click="showConfirmModal = false">Hủy</button>
+        <button class="save-btn" @click="submitUpdate">Xác nhận</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -146,7 +155,8 @@ import { useRoute, useRouter } from "vue-router";
 /* ===== ROUTER ===== */
 const route = useRoute();
 const router = useRouter();
-const ctspId = route.params.id;
+const ctspId = Number(route.params.id);
+const showConfirmModal = ref(false);
 
 /* ===== API ===== */
 const API_BASE = "http://localhost:8080/api";
@@ -274,28 +284,75 @@ const onFileChange = async (e) => {
   isUploadingImage.value = false;
 };
 
-/* ===== SUBMIT UPDATE ===== */
-const openConfirmModal = async () => {
-  if (!selectedMauSacList.value || !selectedKichCoList.value) {
-    showNotification("Vui lòng chọn màu sắc và kích cỡ", "warning");
-    return;
+const validateForm = () => {
+  if (!selectedMauSacList.value) {
+    showNotification("Vui lòng chọn màu sắc", "warning");
+    return false;
   }
-  const sanPhamId = route.params.sanPhamId;
+
+  if (!selectedKichCoList.value) {
+    showNotification("Vui lòng chọn kích cỡ", "warning");
+    return false;
+  }
+
+  if (!selectedLoaiAo.value) {
+    showNotification("Vui lòng chọn loại áo", "warning");
+    return false;
+  }
+
+  if (!selectedKieuDang.value) {
+    showNotification("Vui lòng chọn kiểu dáng", "warning");
+    return false;
+  }
+
+  if (!selectedPhongCach.value) {
+    showNotification("Vui lòng chọn phong cách mặc", "warning");
+    return false;
+  }
+
+  if (soLuongTon.value === null || soLuongTon.value < 0) {
+    showNotification("Số lượng tồn phải ≥ 0", "warning");
+    return false;
+  }
+
+  if (!giaNhap.value || giaNhap.value <= 0) {
+    showNotification("Giá nhập phải lớn hơn 0", "warning");
+    return false;
+  }
+
+  if (!giaBan.value || giaBan.value <= 0) {
+    showNotification("Giá bán phải lớn hơn 0", "warning");
+    return false;
+  }
+
+  if (giaBan.value < giaNhap.value) {
+    showNotification("Giá bán không được nhỏ hơn giá nhập", "warning");
+    return false;
+  }
+
+  return true;
+};
+const handleOpenConfirm = () => {
+  if (!validateForm()) return;
+  showConfirmModal.value = true;
+};
+
+/* ===== SUBMIT UPDATE ===== */
+const submitUpdate = async () => {
+  showConfirmModal.value = false;
 
   const payload = {
-    id: ctspId || null,
-    idSanPham: sanPhamId,
+    id: ctspId,
+    idSanPham: route.params.sanPhamId,
     idMauSac: selectedMauSacList.value,
     idKichCo: selectedKichCoList.value,
     idLoaiAo: selectedLoaiAo.value,
     idKieuDang: selectedKieuDang.value,
     idPhongCachMac: selectedPhongCach.value,
-
     soLuongTon: soLuongTon.value,
     giaBan: giaBan.value,
     giaNhap: giaNhap.value,
     trangThai: soLuongTon.value > 0 ? 1 : 0,
-
     nguoiCapNhat: "admin",
     hinhAnh: imageUrl.value ? [imageUrl.value] : [],
   };
@@ -307,12 +364,12 @@ const openConfirmModal = async () => {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error(await res.text());
 
     showNotification("Cập nhật chi tiết sản phẩm thành công");
     setTimeout(() => router.back(), 1200);
-  } catch {
-    showNotification("Cập nhật thất bại", "error");
+  } catch (e) {
+    showNotification(e.message || "Cập nhật thất bại", "error");
   }
 };
 
@@ -990,5 +1047,10 @@ textarea {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
+}
+.required {
+  color: #e53935;
+  margin-left: 2px;
+  font-weight: 600;
 }
 </style>

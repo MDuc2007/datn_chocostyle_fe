@@ -28,7 +28,10 @@
 
         <div class="form-group">
           <label> Loại giảm <span class="required">*</span> </label>
-          <select v-model="form.loaiGiam">
+          <select
+            v-model="form.loaiGiam"
+            :disabled="voucherMeta.trangThai !== 'CHUA_DIEN_RA'"
+          >
             <option value="PERCENT">Giảm %</option>
             <option value="MONEY">Giảm tiền</option>
           </select>
@@ -40,6 +43,7 @@
             <input
               type="number"
               v-model.number="form.giaTri"
+              :disabled="voucherMeta.trangThai !== 'CHUA_DIEN_RA'"
               :class="{ error: errors.giaTri }"
             />
             <span class="suffix">
@@ -59,7 +63,10 @@
           <input
             type="number"
             v-model.number="form.giaTriToiDa"
-            :disabled="form.loaiGiam === 'MONEY'"
+            :disabled="
+              form.loaiGiam === 'MONEY' &&
+              voucherMeta.trangThai !== 'CHUA_DIEN_RA'
+            "
             :class="{ error: errors.giaTriToiDa }"
           />
           <small v-if="errors.giaTriToiDa" class="error-text">
@@ -153,6 +160,7 @@
                 type="checkbox"
                 :value="c.id"
                 v-model="selectedCustomerIds"
+                :disabled="cannotRemoveIds.includes(c.id)"
               />
             </td>
             <td>{{ i + 1 }}</td>
@@ -172,13 +180,16 @@
 
         <div class="modal-actions">
           <button class="btn-cancel" @click="showModal = false">Hủy</button>
-          <button class="btn-save" @click="submit">Xác nhận</button>
+          <button class="btn-save" @click="submit" :disabled="loading">
+            Xác nhận
+          </button>
         </div>
       </div>
     </div>
 
     <div v-if="toast.show" :class="['toast', toast.type]">
-      {{ toast.message }}
+      <span class="toast-icon">✔</span>
+      <span class="toast-text">{{ toast.message }}</span>
     </div>
   </div>
   <div v-if="loading" class="loading-overlay">
@@ -194,6 +205,7 @@ import axios from "axios";
 const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
+let originalTenPgg = "";
 
 const selectedCustomerIds = ref([]);
 
@@ -257,12 +269,50 @@ watch(
     if (v === "ALL") {
       selectedCustomerIds.value = [];
     }
-  }
+  },
 );
+
+const checkTenTrung = async () => {
+  if (form.tenPgg.trim() === originalTenPgg.trim()) {
+    return true;
+  }
+
+  try {
+    const res = await axios.get(
+      "http://localhost:8080/admin/voucher/check-name",
+      {
+        params: {
+          ten: form.tenPgg.trim(),
+          id: id,
+        },
+      },
+    );
+
+    if (res.data === true) {
+      errors.tenPgg = "Tên phiếu giảm giá đã tồn tại";
+      return false;
+    }
+
+    return true;
+  } catch {
+    showToast("Không kiểm tra được tên phiếu giảm giá", "error");
+    return false;
+  }
+};
 
 const validateForm = () => {
   let valid = true;
   Object.keys(errors).forEach((k) => (errors[k] = ""));
+
+  if (voucherMeta.trangThai === "DA_KET_THUC") {
+    showToast("Voucher đã kết thúc, không thể chỉnh sửa", "error");
+    return false;
+  }
+
+  if (voucherMeta.soLuongDaSuDung > form.soLuong) {
+    errors.soLuong = "Số lượng không được nhỏ hơn số đã sử dụng";
+    valid = false;
+  }
 
   if (!form.tenPgg || !form.tenPgg.trim()) {
     errors.tenPgg = "Tên phiếu giảm giá không được để trống";
@@ -310,8 +360,9 @@ const validateForm = () => {
     ) {
       errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
       valid = false;
-    } else if (form.giaTriToiDa < form.giaTri) {
-      errors.giaTriToiDa = "Giá trị tối đa phải ≥ giá trị giảm";
+    } else if (form.giaTriToiDa > form.dieuKienDonHang) {
+      errors.giaTriToiDa =
+        "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
       valid = false;
     }
   }
@@ -323,19 +374,44 @@ const validateForm = () => {
   ) {
     errors.dieuKienDonHang = "Điều kiện đơn hàng phải lớn hơn 0";
     valid = false;
-  } else if (form.dieuKienDonHang < form.giaTri) {
-    errors.dieuKienDonHang =
-      "Điều kiện đơn hàng phải ≥ giá trị giảm";
-    valid = false;
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  if (form.loaiGiam === "MONEY") {
+    if (form.dieuKienDonHang < form.giaTri) {
+      errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
+      valid = false;
+    }
+  }
+
+  if (form.loaiGiam === "PERCENT") {
+    if (form.giaTriToiDa > form.dieuKienDonHang) {
+      errors.giaTriToiDa =
+        "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
+      valid = false;
+    }
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startDate = new Date(form.ngayBatDau);
+  startDate.setHours(0, 0, 0, 0);
+
+  if (startDate < today) {
+    errors.ngayBatDau = "Ngày bắt đầu không được nhỏ hơn hôm nay";
+    valid = false;
+  }
 
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Vui lòng chọn ngày bắt đầu";
     valid = false;
-  } else if (form.ngayBatDau < today) {
-    errors.ngayBatDau = "Ngày bắt đầu không được nhỏ hơn hôm nay";
+  }
+
+  const endDate = new Date(form.ngayKetThuc);
+  endDate.setHours(0, 0, 0, 0);
+
+  if (endDate <= startDate) {
+    errors.ngayKetThuc = "Ngày kết thúc phải sau ngày bắt đầu";
     valid = false;
   }
 
@@ -347,6 +423,11 @@ const validateForm = () => {
     valid = false;
   }
 
+  if (endDate < today) {
+    errors.ngayKetThuc = "Ngày kết thúc không được nhỏ hơn hôm nay";
+    valid = false;
+  }
+
   if (form.soLuong === null || form.soLuong === "" || form.soLuong <= 0) {
     errors.soLuong = "Số lượng phải lớn hơn 0";
     valid = false;
@@ -355,19 +436,51 @@ const validateForm = () => {
     valid = false;
   }
 
+  if (form.soLuong > 100000) {
+    errors.soLuong = "Số lượng quá lớn";
+    valid = false;
+  }
+
+  if (
+    form.kieuApDung === "PERSONAL" &&
+    selectedCustomerIds.value.length > form.soLuong
+  ) {
+    showToast("Số khách hàng không được vượt quá số lượng voucher", "error");
+    valid = false;
+  }
+
   if (
     form.kieuApDung === "PERSONAL" &&
     selectedCustomerIds.value.length === 0
   ) {
-    alert("Vui lòng chọn ít nhất một khách hàng");
+    showToast("Vui lòng chọn ít nhất một khách hàng", "error");
     valid = false;
   }
 
   return valid;
 };
 
-const openConfirm = () => {
+const cannotRemoveIds = ref([]);
+
+watch(
+  selectedCustomerIds,
+  (newVal) => {
+    cannotRemoveIds.value.forEach((id) => {
+      if (!newVal.includes(id)) {
+        selectedCustomerIds.value = [...new Set([...newVal, id])];
+        showToast("Không thể bỏ khách hàng đã sử dụng voucher", "error");
+      }
+    });
+  },
+  { deep: true },
+);
+
+const openConfirm = async () => {
   if (!validateForm()) return;
+
+  const ok = await checkTenTrung();
+  if (!ok) return;
+
   showModal.value = true;
 };
 
@@ -382,10 +495,7 @@ const submit = async () => {
   };
 
   try {
-    await axios.put(
-      `http://localhost:8080/admin/voucher/${id}`,
-      payload
-    );
+    await axios.put(`http://localhost:8080/admin/voucher/${id}`, payload);
 
     showToast("Cập nhật phiếu giảm giá thành công", "success");
     setTimeout(() => router.push("/admin/voucher"), 1200);
@@ -408,10 +518,50 @@ const filteredCustomers = computed(() => {
 
 const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 
+const voucherMeta = reactive({
+  trangThai: "",
+  soLuongDaSuDung: 0,
+});
+
 onMounted(async () => {
   const res = await axios.get(`http://localhost:8080/admin/voucher/${id}`);
 
-  Object.assign(form, res.data);
+  const {
+    maPgg,
+    tenPgg,
+    kieuApDung,
+    loaiGiam,
+    giaTri,
+    giaTriToiDa,
+    dieuKienDonHang,
+    ngayBatDau,
+    ngayKetThuc,
+    soLuong,
+    trangThai,
+    soLuongDaSuDung,
+  } = res.data;
+
+  Object.assign(form, {
+    maPgg,
+    tenPgg,
+    kieuApDung,
+    loaiGiam,
+    giaTri,
+    giaTriToiDa,
+    dieuKienDonHang,
+    ngayBatDau,
+    ngayKetThuc,
+    soLuong,
+  });
+
+  originalTenPgg = tenPgg;
+
+  if (loaiGiam === "MONEY") {
+    form.giaTriToiDa = null;
+  }
+
+  voucherMeta.trangThai = trangThai;
+  voucherMeta.soLuongDaSuDung = soLuongDaSuDung;
 
   if (res.data.khachHangIds) {
     selectedCustomerIds.value = [...res.data.khachHangIds];
@@ -422,6 +572,7 @@ onMounted(async () => {
   });
 
   customers.value = cusRes.data.content;
+  cannotRemoveIds.value = res.data.khachHangDaSuDungIds || [];
 });
 
 const back = () => router.push("/admin/voucher");
@@ -615,21 +766,37 @@ const back = () => router.push("/admin/voucher");
   position: fixed;
   top: 20px;
   right: 20px;
-  min-width: 260px;
-  padding: 12px 18px;
+  min-width: 320px;
+  padding: 14px 16px;
   border-radius: 6px;
   font-size: 14px;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   z-index: 2000;
   animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .toast.success {
-  background: #43a047;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 5px solid #2e7d32;
 }
 
 .toast.error {
-  background: #e53935;
+  background: #fdecea;
+  color: #c62828;
+  border-left: 5px solid #c62828;
+}
+
+.toast-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.toast-text {
+  line-height: 1.4;
 }
 
 @keyframes slideIn {

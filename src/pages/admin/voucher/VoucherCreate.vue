@@ -12,7 +12,11 @@
 
         <div class="form-group">
           <label> Tên phiếu giảm giá <span class="required">*</span> </label>
-          <input v-model="form.tenPgg" :class="{ error: errors.tenPgg }" />
+          <input
+            v-model="form.tenPgg"
+            :class="{ error: errors.tenPgg }"
+            @blur="handleBlurTen"
+          />
           <small v-if="errors.tenPgg" class="error-text">
             {{ errors.tenPgg }}
           </small>
@@ -41,6 +45,7 @@
               type="number"
               v-model.number="form.giaTri"
               :class="{ error: errors.giaTri }"
+              @blur="validateGiaTri"
             />
             <span class="suffix">
               {{ form.loaiGiam === "PERCENT" ? "%" : "đ" }}
@@ -61,6 +66,7 @@
             v-model.number="form.giaTriToiDa"
             :disabled="form.loaiGiam === 'MONEY'"
             :class="{ error: errors.giaTriToiDa }"
+            @blur="validateGiaTriToiDa"
           />
           <small v-if="errors.giaTriToiDa" class="error-text">
             {{ errors.giaTriToiDa }}
@@ -73,6 +79,7 @@
             type="number"
             v-model.number="form.dieuKienDonHang"
             :class="{ error: errors.dieuKienDonHang }"
+            @blur="validateDieuKien"
           />
           <small v-if="errors.dieuKienDonHang" class="error-text">
             {{ errors.dieuKienDonHang }}
@@ -81,11 +88,7 @@
 
         <div class="form-group">
           <label> Ngày bắt đầu <span class="required">*</span> </label>
-          <input
-            type="date"
-            v-model="form.ngayBatDau"
-            :class="{ error: errors.ngayBatDau }"
-          />
+          <input type="date" v-model="form.ngayBatDau" @blur="validateNgay" />
           <small v-if="errors.ngayBatDau" class="error-text">
             {{ errors.ngayBatDau }}
           </small>
@@ -93,11 +96,7 @@
 
         <div class="form-group">
           <label> Ngày kết thúc <span class="required">*</span> </label>
-          <input
-            type="date"
-            v-model="form.ngayKetThuc"
-            :class="{ error: errors.ngayKetThuc }"
-          />
+          <input type="date" v-model="form.ngayKetThuc" @blur="validateNgay" />
           <small v-if="errors.ngayKetThuc" class="error-text">
             {{ errors.ngayKetThuc }}
           </small>
@@ -109,6 +108,7 @@
             type="number"
             v-model.number="form.soLuong"
             :class="{ error: errors.soLuong }"
+            @blur="validateSoLuong"
           />
           <small v-if="errors.soLuong" class="error-text">
             {{ errors.soLuong }}
@@ -172,13 +172,16 @@
 
         <div class="modal-actions">
           <button class="btn-cancel" @click="showModal = false">Hủy</button>
-          <button class="btn-save" @click="submit">Xác nhận</button>
+          <button class="btn-save" @click="submit" :disabled="loading">
+            Xác nhận
+          </button>
         </div>
       </div>
     </div>
 
     <div v-if="toast.show" :class="['toast', toast.type]">
-      {{ toast.message }}
+      <span class="toast-icon">✔</span>
+      <span class="toast-text">{{ toast.message }}</span>
     </div>
   </div>
   <div v-if="loading" class="loading-overlay">
@@ -241,138 +244,203 @@ const showToast = (message, type = "success") => {
 };
 
 watch(
-  () => form.loaiGiam,
+  () => form.kieuApDung,
   (v) => {
-    if (v === "MONEY") {
-      form.giaTriToiDa = null;
-      errors.giaTriToiDa = "";
+    if (v === "ALL") {
+      selectedCustomerIds.value = [];
     }
   },
 );
 
-const validateForm = () => {
-  let valid = true;
-  Object.keys(errors).forEach((k) => (errors[k] = ""));
+watch(
+  () => form.loaiGiam,
+  () => {
+    form.giaTri = null;
+    form.giaTriToiDa = null;
+    errors.giaTri = "";
+    errors.giaTriToiDa = "";
+  },
+);
+
+const handleBlurTen = async () => {
+  const ok = validateTenPgg();
+  if (!ok) return;
+  await checkTenTrung();
+};
+
+const validateTenPgg = () => {
+  errors.tenPgg = "";
 
   if (!form.tenPgg || !form.tenPgg.trim()) {
     errors.tenPgg = "Tên phiếu giảm giá không được để trống";
-    valid = false;
-  } else if (form.tenPgg.trim().length < 3) {
+    return false;
+  }
+
+  if (form.tenPgg.trim().length < 3) {
     errors.tenPgg = "Tên phải ít nhất 3 ký tự";
-    valid = false;
-  } else if (form.tenPgg.trim().length > 100) {
+    return false;
+  }
+
+  if (form.tenPgg.trim().length > 100) {
     errors.tenPgg = "Tên tối đa 100 ký tự";
-    valid = false;
+    return false;
   }
 
-  if (!form.kieuApDung) {
-    valid = false;
-  }
+  return true;
+};
 
-  if (!form.loaiGiam) {
-    valid = false;
-  }
+const checkTenTrung = async () => {
+  try {
+    const res = await axios.get(
+      "http://localhost:8080/admin/voucher/check-name",
+      {
+        params: { ten: form.tenPgg.trim() },
+      },
+    );
 
-  if (form.giaTri === null || form.giaTri === "" || form.giaTri <= 0) {
+    if (res.data === true) {
+      errors.tenPgg = "Tên phiếu giảm giá đã tồn tại";
+      return false;
+    }
+
+    return true;
+  } catch {
+    errors.tenPgg = "Không kiểm tra được tên phiếu giảm giá";
+    return false;
+  }
+};
+
+const validateGiaTri = () => {
+  errors.giaTri = "";
+
+  if (form.giaTri === null || form.giaTri <= 0) {
     errors.giaTri = "Giá trị giảm phải lớn hơn 0";
-    valid = false;
+    return false;
   }
+
+  if (form.loaiGiam === "PERCENT" && form.giaTri > 100) {
+    errors.giaTri = "Giảm % tối đa là 100";
+    return false;
+  }
+
+  if (form.loaiGiam === "MONEY" && form.giaTri < 1000) {
+    errors.giaTri = "Giảm tiền tối thiểu 1.000đ";
+    return false;
+  }
+
+  return true;
+};
+
+const validateGiaTriToiDa = () => {
+  errors.giaTriToiDa = "";
 
   if (form.loaiGiam === "PERCENT") {
-    if (form.giaTri > 100) {
-      errors.giaTri = "Giảm % tối đa là 100";
-      valid = false;
-    }
-  }
-
-  if (form.loaiGiam === "MONEY") {
-    if (form.giaTri < 1000) {
-      errors.giaTri = "Giảm tiền tối thiểu 1.000đ";
-      valid = false;
-    }
-  }
-
-  if (form.loaiGiam === "PERCENT") {
-    if (
-      form.giaTriToiDa === null ||
-      form.giaTriToiDa === "" ||
-      form.giaTriToiDa <= 0
-    ) {
+    if (form.giaTriToiDa === null || form.giaTriToiDa <= 0) {
       errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
-      valid = false;
-    } else if (form.giaTriToiDa < form.giaTri) {
-      errors.giaTriToiDa = "Giá trị tối đa phải ≥ giá trị giảm";
-      valid = false;
+      return false;
     }
   }
 
-  if (
-    form.dieuKienDonHang === null ||
-    form.dieuKienDonHang === "" ||
-    form.dieuKienDonHang <= 0
-  ) {
+  return true;
+};
+
+const validateDieuKien = () => {
+  errors.dieuKienDonHang = "";
+
+  if (form.dieuKienDonHang === null || form.dieuKienDonHang <= 0) {
     errors.dieuKienDonHang = "Điều kiện đơn hàng phải lớn hơn 0";
-    valid = false;
-  } else if (form.dieuKienDonHang < form.giaTri) {
-    errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
-    valid = false;
+    return false;
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
+    errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
+    return false;
+  }
+
+  return true;
+};
+
+const validateNgay = () => {
+  errors.ngayBatDau = "";
+  errors.ngayKetThuc = "";
 
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Vui lòng chọn ngày bắt đầu";
-    valid = false;
-  } else if (form.ngayBatDau < today) {
-    errors.ngayBatDau = "Ngày bắt đầu không được nhỏ hơn hôm nay";
-    valid = false;
+    return false;
   }
 
   if (!form.ngayKetThuc) {
     errors.ngayKetThuc = "Vui lòng chọn ngày kết thúc";
-    valid = false;
-  } else if (form.ngayKetThuc <= form.ngayBatDau) {
-    errors.ngayKetThuc = "Ngày kết thúc phải sau ngày bắt đầu";
-    valid = false;
+    return false;
   }
 
-  if (form.soLuong === null || form.soLuong === "" || form.soLuong <= 0) {
+  const start = new Date(form.ngayBatDau);
+  const end = new Date(form.ngayKetThuc);
+
+  if (end <= start) {
+    errors.ngayKetThuc = "Ngày kết thúc phải sau ngày bắt đầu";
+    return false;
+  }
+
+  return true;
+};
+
+const validateSoLuong = () => {
+  errors.soLuong = "";
+
+  if (form.soLuong === null || form.soLuong <= 0) {
     errors.soLuong = "Số lượng phải lớn hơn 0";
-    valid = false;
-  } else if (!Number.isInteger(form.soLuong)) {
+    return false;
+  }
+
+  if (!Number.isInteger(form.soLuong)) {
     errors.soLuong = "Số lượng phải là số nguyên";
-    valid = false;
+    return false;
+  }
+
+  return true;
+};
+
+const validateForm = async () => {
+  let valid = true;
+
+  if (!validateTenPgg()) valid = false;
+  if (!validateGiaTri()) valid = false;
+  if (!validateDieuKien()) valid = false;
+  if (!validateNgay()) valid = false;
+  if (!validateSoLuong()) valid = false;
+
+  if (valid) {
+    const ok = await checkTenTrung();
+    if (!ok) valid = false;
   }
 
   if (
     form.kieuApDung === "PERSONAL" &&
-    selectedCustomerIds.value.length === 0
+    selectedCustomerIds.value.length > form.soLuong
   ) {
-    alert("Vui lòng chọn ít nhất một khách hàng");
+    showToast("Số khách hàng không được vượt quá số lượng voucher", "error");
+    valid = false;
+  }
+
+  if (form.loaiGiam === "PERCENT") {
+    if (form.giaTriToiDa === null || form.giaTriToiDa <= 0) {
+      errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
+      valid = false;
+    }
+  }
+
+  if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
+    errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
     valid = false;
   }
 
   return valid;
 };
 
-const isAllChecked = computed(
-  () =>
-    filteredCustomers.value.length > 0 &&
-    filteredCustomers.value.every((c) =>
-      selectedCustomerIds.value.includes(c.id),
-    ),
-);
-
-const toggleAll = () => {
-  if (isAllChecked.value) {
-    selectedCustomerIds.value = [];
-  } else {
-    selectedCustomerIds.value = filteredCustomers.value.map((c) => c.id);
-  }
-};
-
-const openConfirm = () => {
-  if (!validateForm()) return;
+const openConfirm = async () => {
+  const ok = await validateForm();
+  if (!ok) return;
   showModal.value = true;
 };
 
@@ -412,12 +480,8 @@ const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
 onMounted(async () => {
   const res = await axios.get("http://localhost:8080/admin/voucher/next-code");
   form.maPgg = res.data;
-
   const cusRes = await axios.get("http://localhost:8080/api/khach-hang", {
-    params: {
-      page: 0,
-      size: 100,
-    },
+    params: { page: 0, size: 100 },
   });
   customers.value = cusRes.data.content;
 });
@@ -633,21 +697,37 @@ const back = () => router.push("/admin/voucher");
   position: fixed;
   top: 20px;
   right: 20px;
-  min-width: 260px;
-  padding: 12px 18px;
+  min-width: 320px;
+  padding: 14px 16px;
   border-radius: 6px;
   font-size: 14px;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   z-index: 2000;
   animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .toast.success {
-  background: #43a047;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 5px solid #2e7d32;
 }
 
 .toast.error {
-  background: #e53935;
+  background: #fdecea;
+  color: #c62828;
+  border-left: 5px solid #c62828;
+}
+
+.toast-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.toast-text {
+  line-height: 1.4;
 }
 
 @keyframes slideIn {

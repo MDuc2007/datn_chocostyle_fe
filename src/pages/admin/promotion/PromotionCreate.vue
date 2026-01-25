@@ -1,146 +1,102 @@
 <template>
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="card panel h-100">
-        <div class="card-body">
-          <h5 class="fw-bold text-uppercase mb-4">Thêm đợt giảm giá</h5>
+  <div class="promotion-layout">
+    <!-- LEFT -->
+    <div class="left-panel">
+      <div class="panel">
+        <h5 class="panel-title">Thêm đợt giảm giá</h5>
 
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">Tên đợt giảm giá</label>
-              <input v-model="form.tenDotGiamGia" class="form-control" />
-              <small v-if="errors.tenDotGiamGia" class="text-danger">
-                {{ errors.tenDotGiamGia }}
-              </small>
-            </div>
+        <div class="form-group">
+          <label>Tên đợt giảm giá</label>
+          <input v-model="form.tenDotGiamGia" />
+          <small v-if="errors.tenDotGiamGia">{{ errors.tenDotGiamGia }}</small>
+        </div>
 
-            <div class="col-12">
-              <label class="form-label">Giá trị giảm (%)</label>
-              <div class="input-group">
-                <input
-                  v-model.number="form.giaTriGiam"
-                  type="number"
-                  class="form-control"
-                  min="1"
-                  max="100"
-                />
-                <span class="input-group-text">%</span>
-              </div>
-              <small v-if="errors.giaTriGiam" class="text-danger">
-                {{ errors.giaTriGiam }}
-              </small>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Ngày bắt đầu</label>
-              <input
-                v-model="form.ngayBatDau"
-                type="date"
-                class="form-control"
-              />
-              <small v-if="errors.ngayBatDau" class="text-danger">
-                {{ errors.ngayBatDau }}
-              </small>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Ngày kết thúc</label>
-              <input
-                v-model="form.ngayKetThuc"
-                type="date"
-                class="form-control"
-                :min="form.ngayBatDau"
-              />
-              <small v-if="errors.ngayKetThuc" class="text-danger">
-                {{ errors.ngayKetThuc }}
-              </small>
-            </div>
+        <div class="form-group">
+          <label>Giá trị giảm (%)</label>
+          <div class="input-percent">
+            <input
+              type="number"
+              v-model.number="form.giaTriGiam"
+              min="1"
+              max="100"
+            />
+            <span>%</span>
           </div>
+          <small v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</small>
+        </div>
 
-          <div class="mt-4 d-flex justify-content-end gap-2">
-            <button class="btn btn-secondary" @click="back">Hủy</button>
-            <button class="btn btn-brown" @click="onClickSave">Lưu</button>
-          </div>
+        <div class="form-group">
+          <label>Ngày bắt đầu</label>
+          <input type="date" v-model="form.ngayBatDau" />
+          <small v-if="errors.ngayBatDau">{{ errors.ngayBatDau }}</small>
+        </div>
+
+        <div class="form-group">
+          <label>Ngày kết thúc</label>
+          <input
+            type="date"
+            v-model="form.ngayKetThuc"
+            :min="form.ngayBatDau"
+          />
+          <small v-if="errors.ngayKetThuc">{{ errors.ngayKetThuc }}</small>
+        </div>
+
+        <div class="actions">
+          <button class="btn-secondary" @click="back">Hủy</button>
+          <button class="btn-primary" @click="onClickSave">Lưu</button>
         </div>
       </div>
     </div>
 
-    <div class="col-md-7">
-      <div class="card panel h-100">
-        <div class="card-body">
-          <h5 class="fw-bold text-uppercase mb-3">Danh sách sản phẩm</h5>
-          <small v-if="errors.chiTiet" class="text-danger d-block mb-2">
-            {{ errors.chiTiet }}
-          </small>
-          <div
-            class="table-responsive"
-            style="max-height: 520px; overflow-y: auto"
-          >
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 60px">
-                    <button
-                      class="btn btn-sm"
-                      :class="
-                        isAllSanPhamSelected
-                          ? 'btn-success'
-                          : 'btn-outline-secondary'
-                      "
-                      @click="toggleAllSanPham"
-                    >
-                      {{ isAllSanPhamSelected ? "✓" : "+" }}
-                    </button>
-                  </th>
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <div class="panel">
+        <h5 class="panel-title">Danh sách sản phẩm</h5>
+        <small v-if="errors.chiTiet" class="error">{{ errors.chiTiet }}</small>
 
-                  <th style="width: 60px">STT</th>
-                  <th>Mã SP</th>
-                  <th>Tên sản phẩm</th>
-                  <th style="width: 90px">Ảnh</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(sp, index) in sanPhamList" :key="sp.id">
-                  <td>
-                    <button
-                      class="btn btn-sm"
-                      :class="
-                        selectedSanPhamIds.includes(sp.id)
-                          ? 'btn-success'
-                          : 'btn-outline-secondary'
-                      "
-                      @click="toggleSanPham(sp)"
-                    >
-                      {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
-                    </button>
-                  </td>
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ sp.maSp }}</td>
-                  <td>{{ sp.tenSp }}</td>
-                  <td>
-                    <img
-                      :src="sp.hinhAnh"
-                      style="width: 60px; height: 60px; object-fit: cover"
-                    />
-                  </td>
-                </tr>
-
-                <tr v-if="sanPhamList.length === 0">
-                  <td colspan="4" class="text-center text-muted">
-                    Không có sản phẩm
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead class="table-light">
+              <tr>
+                <th>
+                  <button class="btn-icon" @click="toggleAllSanPham">
+                    {{ isAllSanPhamSelected ? "✓" : "+" }}
+                  </button>
+                </th>
+                <th>STT</th>
+                <th>Mã SP</th>
+                <th>Tên sản phẩm</th>
+                <th>Ảnh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(sp, i) in sanPhamList" :key="sp.id">
+                <td>
+                  <button
+                    class="btn-icon"
+                    :class="{ active: selectedSanPhamIds.includes(sp.id) }"
+                    @click="toggleSanPham(sp)"
+                  >
+                    {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
+                  </button>
+                </td>
+                <td>{{ i + 1 }}</td>
+                <td>{{ sp.maSp }}</td>
+                <td>{{ sp.tenSp }}</td>
+                <td><img :src="sp.hinhAnh" /></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- BIẾN THỂ -->
   <div v-for="spId in selectedSanPhamIds" :key="spId" class="col-12">
-    <div class="card panel">
+    <div class="panel card">
       <div class="card-body">
-        <h5 class="fw-bold mb-3">
+        <h5 class="panel-title">
           Biến thể của sản phẩm:
           {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
         </h5>
@@ -149,7 +105,7 @@
           <table class="table table-bordered align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 60px">
+                <th>
                   <button
                     class="btn btn-sm"
                     :class="
@@ -162,7 +118,6 @@
                     {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
                   </button>
                 </th>
-
                 <th>Mã CTSP</th>
                 <th>Màu sắc</th>
                 <th>Kích cỡ</th>
@@ -188,21 +143,21 @@
                 <td>{{ ct.maChiTietSanPham }}</td>
                 <td>
                   <span
-                    v-for="(mau, i) in ct.mauSacList"
+                    v-for="(m, i) in ct.mauSacList"
                     :key="i"
                     class="badge me-1"
-                    :style="{ backgroundColor: mau.rgb }"
+                    :style="{ backgroundColor: m.rgb }"
                   >
-                    {{ mau.tenMauSac }}
+                    {{ m.tenMauSac }}
                   </span>
                 </td>
                 <td>
                   <span
-                    v-for="(kc, i) in ct.kichCoList"
+                    v-for="(k, i) in ct.kichCoList"
                     :key="i"
                     class="badge bg-secondary me-1"
                   >
-                    {{ kc }}
+                    {{ k }}
                   </span>
                 </td>
                 <td>
@@ -218,50 +173,24 @@
       </div>
     </div>
   </div>
-  <div v-if="showConfirm" class="modal fade show d-block" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Xác nhận</h5>
-          <button
-            type="button"
-            class="btn-close"
-            @click="showConfirm = false"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <p>Bạn có chắc chắn muốn thêm đợt giảm giá này không?</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="showConfirm = false">
-            Hủy
-          </button>
-          <button
-            class="btn btn-brown"
-            @click="
-              showConfirm = false;
-              submit();
-            "
-          >
-            Xác nhận
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div v-if="showSuccess" class="modal fade show d-block" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content text-center">
-        <div class="modal-body">
-          <h5 class="text-success mb-2">🎉 Thêm thành công</h5>
-          <p>Đợt giảm giá đã được tạo</p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal-backdrop fade show" v-if="showSuccess"></div>
 
-  <div class="modal-backdrop fade show" v-if="showConfirm"></div>
+  <!-- MODAL -->
+  <div v-if="showConfirm" class="modal">
+    <div class="modal-content">
+      <h4>Xác nhận</h4>
+      <p>Bạn có chắc chắn muốn thêm đợt giảm giá?</p>
+      <div class="modal-footer">
+        <button class="btn-secondary" @click="showConfirm = false">Hủy</button>
+        <button class="btn-primary" @click="submit()">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showSuccess" class="modal">
+    <div class="modal-content">
+      <h4 class="success">🎉 Thêm thành công</h4>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -269,6 +198,8 @@ import { reactive, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { computed } from "vue";
+// import "bootstrap/dist/css/bootstrap.css";
+// import "bootstrap-vue/dist/bootstrap-vue.css";
 const router = useRouter();
 
 const form = reactive({
@@ -477,18 +408,157 @@ const back = () => router.push("/admin/promotion");
 </script>
 
 <style scoped>
-.btn-brown {
-  background-color: #6f4e37;
-  color: #fff;
-  border: none;
+.promotion-layout {
+  display: flex;
+  gap: 20px;
+}
+.left-panel {
+  width: 35%;
+}
+.right-panel {
+  width: 65%;
 }
 
-.btn-brown:hover {
-  background-color: #5c3f2c;
+.panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
 }
-.table-header th {
-  background-color: #63391f;
+.panel-title {
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+.form-group input {
+  width: 95%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.form-group small {
+  color: red;
+}
+
+.input-percent {
+  display: flex;
+}
+.input-percent span {
+  padding: 8px 12px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-left: none;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: #6f4e37;
   color: #fff;
   border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+.btn-secondary {
+  background: #888;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+.table th,
+.table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+.table-light {
+  background: #f5f5f5;
+}
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #ddd;
+}
+
+img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #aaa;
+  background: #fff;
+  border-radius: 4px;
+}
+.btn-icon.active {
+  background: #28a745;
+  color: #fff;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 12px;
+}
+.bg-secondary {
+  background: #6c757d;
+}
+.me-1 {
+  margin-right: 4px;
+}
+
+.btn {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+}
+.btn-success {
+  background: #28a745;
+  color: #fff;
+  border-color: #28a745;
+}
+.btn-outline-secondary {
+  background: #fff;
+  color: #333;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 350px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.success {
+  color: #28a745;
 }
 </style>

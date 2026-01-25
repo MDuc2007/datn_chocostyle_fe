@@ -1,22 +1,15 @@
 <template>
   <div class="invoice-container">
-    <div class="page-header">
-      <h1 class="title">Quản lý hóa đơn</h1>
-      <div class="stats">Tổng số hóa đơn: <strong>{{ pagination.total }}</strong></div>
-    </div>
-
     <div class="card filter-section">
-      <div class="card-header">
-        <span class="icon">🔍</span> Bộ Lọc Tìm Kiếm
-      </div>
+      <div class="card-header"><span class="icon"></span> QUẢN LÝ HÓA ĐƠN</div>
       <div class="card-body">
         <div class="filter-grid">
           <div class="form-group">
             <label>Từ khóa</label>
-            <input 
-              v-model="filters.keyword" 
-              type="text" 
-              placeholder="Nhập Mã HĐ, Tên KH, SĐT..." 
+            <input
+              v-model="filters.keyword"
+              type="text"
+              placeholder="Nhập Mã HĐ, Tên KH, SĐT..."
               @input="handleSearch"
             />
           </div>
@@ -42,14 +35,22 @@
           </div>
           <div class="form-group">
             <label>Từ ngày</label>
-            <input v-model="filters.startDate" type="date" @change="fetchInvoices" />
+            <input
+              v-model="filters.startDate"
+              type="date"
+              @change="fetchInvoices"
+            />
           </div>
           <div class="form-group">
             <label>Đến ngày</label>
-            <input v-model="filters.endDate" type="date" @change="fetchInvoices" />
+            <input
+              v-model="filters.endDate"
+              type="date"
+              @change="fetchInvoices"
+            />
           </div>
         </div>
-        
+
         <div class="filter-actions">
           <button class="btn-reset" @click="resetFilters">🔄 Đặt lại</button>
         </div>
@@ -57,9 +58,6 @@
     </div>
 
     <div class="card table-section">
-      <div class="card-header">
-        <span class="icon">📋</span> Danh sách hóa đơn
-      </div>
       <div class="card-body">
         <div class="table-wrapper">
           <table class="custom-table">
@@ -67,7 +65,8 @@
               <tr>
                 <th>STT</th>
                 <th>Mã HĐ</th>
-                <th>Nhân viên</th> <th>Khách hàng</th>
+                <th>Nhân viên</th>
+                <th>Khách hàng</th>
                 <th>Ngày tạo</th>
                 <th>Tổng tiền</th>
                 <th>Loại đơn</th>
@@ -77,20 +76,22 @@
             </thead>
             <tbody>
               <tr v-if="invoices.length === 0">
-                <td colspan="9" class="text-center">Không tìm thấy dữ liệu phù hợp</td>
+                <td colspan="9" class="text-center">
+                  Không tìm thấy dữ liệu phù hợp
+                </td>
               </tr>
               <tr v-for="(hd, index) in invoices" :key="hd.id">
-                <td>{{ (pagination.page * pagination.size) + index + 1 }}</td>
+                <td>{{ pagination.page * pagination.size + index + 1 }}</td>
                 <td class="text-bold">{{ hd.maHoaDon }}</td>
-                
-                <td>{{ hd.tenNhanVien || '---' }}</td> 
 
-                <td>{{ hd.tenKhachHang || 'Khách lẻ' }}</td>
+                <td>{{ hd.tenNhanVien || "---" }}</td>
+
+                <td>{{ hd.tenKhachHang || "Khách lẻ" }}</td>
                 <td>{{ formatDate(hd.ngayTao) }}</td>
                 <td class="text-total">{{ formatCurrency(hd.tongTien) }}</td>
                 <td>
                   <span :class="hd.loaiDon === 1 ? 'tag-blue' : 'tag-orange'">
-                    {{ hd.loaiDon === 1 ? 'Tại quầy' : 'Online' }}
+                    {{ hd.loaiDon === 1 ? "Tại quầy" : "Online" }}
                   </span>
                 </td>
                 <td>
@@ -100,7 +101,7 @@
                 </td>
                 <td>
                   <button class="btn-view" @click="goToDetail(hd.id)">
-                      Chi tiết
+                    Chi tiết
                   </button>
                 </td>
               </tr>
@@ -108,43 +109,46 @@
           </table>
 
           <div class="pagination-controls" v-if="pagination.totalPages > 1">
-            <button 
-              class="btn-page" 
-              :disabled="pagination.page === 0" 
+            <button
+              class="btn-page"
+              :disabled="pagination.page === 0"
               @click="changePage(pagination.page - 1)"
             >
               &lt;
             </button>
 
-            <button 
-              v-for="p in visiblePages" 
+            <button
+              v-for="p in visiblePages"
               :key="p"
               class="btn-page"
-              :class="{ 'active': pagination.page === p }"
+              :class="{ active: pagination.page === p }"
               @click="changePage(p)"
             >
               {{ p + 1 }}
             </button>
 
-            <button 
-              class="btn-page" 
-              :disabled="pagination.page >= pagination.totalPages - 1" 
+            <button
+              class="btn-page"
+              :disabled="pagination.page >= pagination.totalPages - 1"
               @click="changePage(pagination.page + 1)"
             >
               &gt;
             </button>
           </div>
         </div>
-      </div> 
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import invoiceService from '../../../services/invoiceService'; // Đảm bảo đường dẫn import đúng
-import type { InvoiceResponse, InvoiceFilterParams } from '../../../types/invoice';
+import { ref, reactive, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import invoiceService from "../../../services/invoiceService"; // Đảm bảo đường dẫn import đúng
+import type {
+  InvoiceResponse,
+  InvoiceFilterParams,
+} from "../../../types/invoice";
 
 const router = useRouter();
 
@@ -152,17 +156,17 @@ const router = useRouter();
 const invoices = ref<InvoiceResponse[]>([]);
 const pagination = reactive({
   page: 0,
-  size: 8, 
+  size: 8,
   total: 0,
-  totalPages: 0
+  totalPages: 0,
 });
 
 const filters = reactive({
-  keyword: '',
+  keyword: "",
   trangThai: null,
   loaiDon: null,
   startDate: null,
-  endDate: null
+  endDate: null,
 });
 
 // --- HANDLE SEARCH (DEBOUNCE) ---
@@ -187,7 +191,8 @@ const visiblePages = computed(() => {
     if (current < delta) end = 4;
     if (current > total - delta - 1) start = total - 5;
   } else {
-    start = 0; end = total - 1;
+    start = 0;
+    end = total - 1;
   }
 
   const pages = [];
@@ -206,7 +211,7 @@ const fetchInvoices = async () => {
       trangThai: filters.trangThai,
       loaiDon: filters.loaiDon,
       startDate: filters.startDate,
-      endDate: filters.endDate
+      endDate: filters.endDate,
     };
 
     const res = await invoiceService.getAll(params);
@@ -224,8 +229,11 @@ const changePage = (newPage: number) => {
 };
 
 const resetFilters = () => {
-  filters.keyword = ''; filters.trangThai = null; filters.loaiDon = null;
-  filters.startDate = null; filters.endDate = null;
+  filters.keyword = "";
+  filters.trangThai = null;
+  filters.loaiDon = null;
+  filters.startDate = null;
+  filters.endDate = null;
   pagination.page = 0;
   fetchInvoices();
 };
@@ -235,37 +243,62 @@ const goToDetail = (id: number) => {
 };
 
 // --- FORMAT HELPER ---
-const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
-const formatDate = (dateStr: string) => dateStr ? new Date(dateStr).toLocaleDateString('vi-VN') : '';
+const formatCurrency = (val: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    val,
+  );
+const formatDate = (dateStr: string) =>
+  dateStr ? new Date(dateStr).toLocaleDateString("vi-VN") : "";
 const getStatusName = (stt: number) => {
-  const map: Record<number, string> = { 0: 'Chờ xác nhận', 1: 'Đã xác nhận', 2: 'Chờ giao hàng', 3: 'Đang giao', 4: 'Hoàn thành', 5: 'Đã hủy' };
-  return map[stt] || 'N/A';
+  const map: Record<number, string> = {
+    0: "Chờ xác nhận",
+    1: "Đã xác nhận",
+    2: "Chờ giao hàng",
+    3: "Đang giao",
+    4: "Hoàn thành",
+    5: "Đã hủy",
+  };
+  return map[stt] || "N/A";
 };
 const getStatusClass = (stt: number) => {
-  if (stt === 4) return 'tag-green';
-  if (stt === 5) return 'tag-red';
-  if (stt === 0) return 'tag-gray';
-  return 'tag-blue';
+  if (stt === 4) return "tag-green";
+  if (stt === 5) return "tag-red";
+  if (stt === 0) return "tag-gray";
+  return "tag-blue";
 };
 
-onMounted(() => { fetchInvoices(); });
+onMounted(() => {
+  fetchInvoices();
+});
 </script>
 
 <style scoped>
 /* --- 1. CÀI ĐẶT FONT CHỮ & MÀU NỀN --- */
-.invoice-container { 
-  padding: 25px; 
-  background-color: #F7F7F7; 
-  min-height: 100vh; 
-  font-family: 'Times New Roman', Times, serif; 
+.invoice-container {
+  padding: 25px;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+  font-family: "Times New Roman", Times, serif;
 }
 
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.main-title {
+  color: #603b2c;
+  font-size: 45px;
+  font-weight: 800;
+  margin: 0;
+}
 
 /* --- 2. STYLE CHO CARD (CỤC) --- */
-.card { 
-  background: #FFFFFF; 
-  border-radius: 8px; 
+.card {
+  background: #ffffff;
+  border-radius: 8px;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
   margin-bottom: 30px;
   border: none;
@@ -275,7 +308,7 @@ onMounted(() => { fetchInvoices(); });
 
 .card-header {
   font-weight: 700;
-  color: #63391F; 
+  color: #63391f;
   padding: 15px 20px;
   background-color: #fff;
   border-bottom: 1px solid #f0f0f0;
@@ -286,65 +319,197 @@ onMounted(() => { fetchInvoices(); });
 }
 
 /* --- 3. FILTER STYLES --- */
-.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-.form-group { display: flex; flex-direction: column; }
-.form-group label { font-size: 14px; color: #555; margin-bottom: 5px; font-weight: 600; }
-.form-group input, .form-group select { 
-  height: 38px; border: 1px solid #ddd; border-radius: 4px; padding: 0 10px; outline: none;
-  font-family: 'Times New Roman', Times, serif;
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
 }
-.form-group input:focus, .form-group select:focus { border-color: #63391F; }
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+.form-group label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  height: 38px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0 10px;
+  outline: none;
+  font-family: "Times New Roman", Times, serif;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #63391f;
+}
 
-.filter-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
-.btn-reset { 
-  background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; 
-  font-family: 'Times New Roman', Times, serif;
+.filter-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
 }
-.btn-reset:hover { background: #5a6268; }
+.btn-reset {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: "Times New Roman", Times, serif;
+}
+.btn-reset:hover {
+  background: #5a6268;
+}
 
 /* --- 4. TABLE STYLES --- */
-.custom-table { width: 100%; border-collapse: collapse; margin-top: 0; }
-.custom-table th { 
-  background: #F7F7F7; 
-  padding: 14px 12px; 
-  border-bottom: 2px solid #eee; 
-  text-align: left; 
-  font-size: 14px; 
-  font-weight: 700; 
-  color: #63391F; 
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
 }
-.custom-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 15px; }
-.text-center { text-align: center; }
-
-.title { font-size: 26px; color: #63391F; margin: 0; font-weight: 800; }
-.text-bold { font-weight: 700; color: #63391F; }
-.text-total { color: #d93025; font-weight: 700; }
-
-.btn-view { 
-  background: #333; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
-  font-family: 'Times New Roman', Times, serif; 
+.custom-table th {
+  background: #63391f;
+  padding: 14px 12px;
+  border-bottom: 2px solid #eee;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f7f7f7;
 }
-.btn-view:hover { background: #63391F; }
+.custom-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+  font-size: 15px;
+}
+.text-center {
+  text-align: center;
+}
+
+.title {
+  font-size: 26px;
+  color: #63391f;
+  margin: 0;
+  font-weight: 800;
+}
+.text-bold {
+  font-weight: 700;
+  color: #63391f;
+}
+.text-total {
+  color: #d93025;
+  font-weight: 700;
+}
+
+.btn-view {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: "Times New Roman", Times, serif;
+}
+.btn-view:hover {
+  background: #63391f;
+}
 
 /* Tags Status */
-.tag-blue { background: #e3f2fd; color: #0d47a1; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
-.tag-green { background: #e8f5e9; color: #1b5e20; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
-.tag-red { background: #ffebee; color: #b71c1c; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
-.tag-orange { background: #fff3e0; color: #e65100; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
-.tag-gray { background: #f5f5f5; color: #616161; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
+.tag-blue {
+  background: #e3f2fd;
+  color: #0d47a1;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tag-green {
+  background: #e8f5e9;
+  color: #1b5e20;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tag-red {
+  background: #ffebee;
+  color: #b71c1c;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tag-orange {
+  background: #fff3e0;
+  color: #e65100;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tag-gray {
+  background: #f5f5f5;
+  color: #616161;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
 
 /* --- 5. PAGINATION --- */
-.table-wrapper { position: relative; min-height: 520px; padding-bottom: 60px; }
-.pagination-controls { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; }
-.btn-page {
-  min-width: 32px; height: 32px; padding: 0 6px;
-  border: 1px solid #d9d9d9; background-color: #fff; color: #333;
-  border-radius: 4px; font-size: 15px; font-weight: 500; cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Times New Roman', Times, serif;
+.table-wrapper {
+  position: relative;
+  min-height: 520px;
+  padding-bottom: 60px;
 }
-.btn-page:hover:not(:disabled) { border-color: #63391F; color: #63391F; }
-.btn-page.active { background-color: #63391F; color: #fff; border-color: #63391F; font-weight: bold; }
-.btn-page:disabled { background-color: #f5f5f5; color: #ccc; cursor: not-allowed; border-color: #eee; }
+.pagination-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.btn-page {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid #d9d9d9;
+  background-color: #fff;
+  color: #333;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Times New Roman", Times, serif;
+}
+.btn-page:hover:not(:disabled) {
+  border-color: #63391f;
+  color: #63391f;
+}
+.btn-page.active {
+  background-color: #63391f;
+  color: #fff;
+  border-color: #63391f;
+  font-weight: bold;
+}
+.btn-page:disabled {
+  background-color: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+  border-color: #eee;
+}
 </style>

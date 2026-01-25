@@ -10,6 +10,7 @@
           placeholder="Tìm kiếm sản phẩm theo tên"
           v-model="keyword"
           @input="handleSearch"
+          style="border: 1px solid #d6c3b4"
         />
       </div>
       <div
@@ -17,7 +18,11 @@
         style="display: flex; align-items: center; gap: 10px"
       >
         <label for="">Xuất xứ:</label>
-        <select v-model="selectedOrigin" @change="handleOriginChange">
+        <select
+          v-model="selectedOrigin"
+          @change="handleOriginChange"
+          style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
+        >
           <option value="">Tất cả</option>
           <option v-for="item in originList" :key="item.id" :value="item.id">
             {{ item.tenXuatXu }}
@@ -25,7 +30,11 @@
         </select>
 
         <label for="">Chất liệu:</label>
-        <select v-model="selectedMaterial" @change="handleMaterialChange">
+        <select
+          v-model="selectedMaterial"
+          @change="handleMaterialChange"
+          style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
+        >
           <option value="">Tất cả</option>
           <option v-for="item in materialList" :key="item.id" :value="item.id">
             {{ item.tenChatLieu }}
@@ -33,7 +42,11 @@
         </select>
 
         <label for="">Trạng thái:</label>
-        <select v-model="selectedStatus" @change="handleFilterChange">
+        <select
+          v-model="selectedStatus"
+          @change="handleFilterChange"
+          style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
+        >
           <option value="">Tất cả</option>
           <option value="1">Đang bán</option>
           <option value="0">Hết hàng</option>
@@ -43,7 +56,18 @@
 
       <div class="add-btn">
         <router-link to="/admin/product/create">
-          <button><span>＋</span> Thêm sản phẩm</button>
+          <button
+            style="
+              padding: 10px 16px;
+              border-radius: 6px;
+              border: 0;
+              cursor: pointer;
+              background-color: #63391f;
+              color: white;
+            "
+          >
+            <span>＋</span> Thêm sản phẩm
+          </button>
         </router-link>
       </div>
     </div>
@@ -74,7 +98,15 @@
             <td>{{ item.origin }}</td>
             <td>{{ item.material }}</td>
             <td>{{ item.quantity }}</td>
-            <td>{{ formatCurrency(item.price) }}</td>
+            <td>
+              <span v-if="typeof item.price === 'number'">
+                {{ formatCurrency(item.price) }}
+              </span>
+              <span v-else-if="typeof item.price === 'string'">
+                {{ formatPriceRange(item.price) }}
+              </span>
+              <span v-else>0 ₫</span>
+            </td>
             <td>
               <img :src="item.image" />
             </td>
@@ -91,8 +123,8 @@
                   item.trangThai === 1
                     ? "Đang bán"
                     : item.trangThai === 0
-                      ? "Hết hàng"
-                      : "Ngừng bán"
+                    ? "Hết hàng"
+                    : "Ngừng bán"
                 }}
               </span>
             </td>
@@ -125,17 +157,30 @@
       </table>
     </div>
     <div class="pagination">
-      <button @click="previousPage" :disabled="currentPage === 0"><</button>
-      <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="currentPage === totalPages - 1">
+      <button @click="previousPage" :disabled="currentPage === 0">
+        <img src="/src/assets/icon/arrowRight.svg" alt="" />
+      </button>
+      <div class="page-numbers">
+        <button
+          v-for="page in visiblePages"
+          :key="page"
+          class="page-btn"
+          :class="{ active: page - 1 === currentPage }"
+          :disabled="page === '...'"
+          @click="page !== '...' && goToPage(page - 1)"
         >
+          {{ page }}
+        </button>
+      </div>
+      <button @click="nextPage" :disabled="currentPage === totalPages - 1">
+        <img src="/src/assets/icon/arrowLeft.svg" alt="" />
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 
@@ -170,30 +215,26 @@ const fetchProducts = async (
 ) => {
   try {
     const params = {
-      page: page,
-      size: size,
+      page,
+      size,
     };
 
     if (kw) params.keyword = kw;
     if (status !== "" && status !== null) params.status = parseInt(status);
-    if (originId !== "" && originId !== null && originId !== undefined)
-      params.idXuatXu = originId;
-    if (materialId !== "" && materialId !== null && materialId !== undefined)
-      params.idChatLieu = materialId;
+    if (originId) params.idXuatXu = originId;
+    if (materialId) params.idChatLieu = materialId;
 
     const res = await axios.get("http://localhost:8080/api/san-pham", {
       params,
     });
 
-    // res.data là một Page object
     const pageData = res.data;
     totalPages.value = pageData.totalPages || 1;
     currentPage.value = pageData.number || 0;
 
-    // Map dữ liệu từ response
     products.value = (pageData.content || []).map((item) => {
       let quantity = 0;
-      let price = 0;
+      let prices = [];
       let idXuatXu = "";
       let idChatLieu = "";
 
@@ -203,10 +244,21 @@ const fetchProducts = async (
           0,
         );
 
-        price = Math.min(...item.bienTheList.map((bt) => bt.giaBan || 0));
+        prices = item.bienTheList
+          .map((bt) => bt.giaBan)
+          .filter((p) => p != null);
       }
 
-      // Lấy ID xuất xứ từ danh sách
+      let price = null;
+
+      if (prices.length === 1) {
+        price = prices[0]; // 1 giá
+      } else if (prices.length > 1) {
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        price = min === max ? min : `${min}~${max}`; // khoảng giá
+      }
+
       if (item.tenXuatXu) {
         const origin = originList.value.find(
           (o) => o.tenXuatXu === item.tenXuatXu,
@@ -214,7 +266,6 @@ const fetchProducts = async (
         idXuatXu = origin?.id || "";
       }
 
-      // Lấy ID chất liệu từ danh sách
       if (item.tenChatLieu) {
         const material = materialList.value.find(
           (m) => m.tenChatLieu === item.tenChatLieu,
@@ -230,8 +281,8 @@ const fetchProducts = async (
         originId: idXuatXu,
         material: item.tenChatLieu,
         materialId: idChatLieu,
-        quantity: quantity,
-        price: price,
+        quantity,
+        price, // 👈 số HOẶC string "min~max"
         trangThai: item.trangThai,
         image: item.hinhAnh || "https://via.placeholder.com/50x60",
       };
@@ -303,6 +354,46 @@ const handleMaterialChange = () => {
   );
 };
 
+const goToPage = (page) => {
+  if (page < 0 || page >= totalPages.value) return;
+  currentPage.value = page;
+  fetchProducts(
+    page,
+    pageSize.value,
+    keyword.value,
+    selectedStatus.value,
+    selectedOrigin.value,
+    selectedMaterial.value,
+  );
+};
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value + 1;
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+
+    if (current > 4) pages.push("...");
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (current < total - 3) pages.push("...");
+
+    pages.push(total);
+  }
+
+  return pages;
+});
+
 const previousPage = () => {
   if (currentPage.value > 0) {
     currentPage.value--;
@@ -366,6 +457,21 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+const formatPriceRange = (value) => {
+  if (!value) return "0 ₫";
+
+  if (typeof value === "number") {
+    return formatCurrency(value);
+  }
+
+  if (typeof value === "string" && value.includes("~")) {
+    const [min, max] = value.split("~");
+    return `${formatCurrency(min)} ~ ${formatCurrency(max)}`;
+  }
+
+  return formatCurrency(value);
+};
+
 onMounted(() => {
   fetchFilterData();
   fetchProducts();
@@ -378,8 +484,7 @@ onMounted(() => {
   padding: 20px;
   font-size: 14px;
   margin-top: 10px;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -388,8 +493,7 @@ onMounted(() => {
 .header {
   margin-bottom: 10px;
   background: #fff;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
     rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
     rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
   border-radius: 6px;
@@ -458,7 +562,7 @@ onMounted(() => {
 
 /* ĐANG BÁN */
 .status.selling {
-  color: #2ecc71; /* xanh */
+  color: #63391f; /* xanh */
   font-weight: 600;
 }
 
@@ -490,11 +594,6 @@ onMounted(() => {
   cursor: pointer;
   border-radius: 4px;
 }
-
-.pagination button:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -623,5 +722,42 @@ input:checked + .slider:before {
 
 .table-wrapper::-webkit-scrollbar-track {
   background: #f5f5f5;
+}
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 40px;
+  height: 40px;
+}
+
+.page-btn:hover:not(.active):not(:disabled) {
+  background: #f0f0f0;
+}
+
+.page-btn.active {
+  background: #63391f;
+  color: #fff;
+  border-color: #63391f;
+  font-weight: 600;
+}
+
+.page-btn.active:hover {
+  background: #63391f;
+}
+
+.page-btn:disabled {
+  background: transparent;
+  border: none;
+  cursor: default;
 }
 </style>

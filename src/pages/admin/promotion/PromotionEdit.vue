@@ -1,227 +1,190 @@
 <template>
-  <div class="row g-3">
-    <div class="col-md-5">
-      <div class="card panel h-100">
-        <div class="card-body">
-          <h5 class="fw-bold text-uppercase mb-4">Chỉnh sửa đợt giảm giá</h5>
+  <div class="layout">
+    <!-- LEFT -->
+    <div class="left">
+      <div class="card">
+        <h5 class="title">Chỉnh sửa đợt giảm giá</h5>
 
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">Tên đợt giảm giá</label>
-              <input v-model="form.tenDotGiamGia" class="form-control" />
-              <small v-if="errors.tenDotGiamGia" class="text-danger">
-                {{ errors.tenDotGiamGia }}
-              </small>
-            </div>
+        <div class="form">
+          <div class="field">
+            <label>Tên đợt giảm giá</label>
+            <input v-model="form.tenDotGiamGia" />
+            <small v-if="errors.tenDotGiamGia" class="error">
+              {{ errors.tenDotGiamGia }}
+            </small>
+          </div>
 
-            <div class="col-12">
-              <label class="form-label">Giá trị giảm (%)</label>
-              <div class="input-group">
-                <input
-                  v-model.number="form.giaTriGiam"
-                  type="number"
-                  class="form-control"
-                  min="1"
-                  max="100"
-                />
-                <span class="input-group-text">%</span>
-              </div>
-              <small v-if="errors.giaTriGiam" class="text-danger">
-                {{ errors.giaTriGiam }}
-              </small>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Ngày bắt đầu</label>
+          <div class="field">
+            <label>Giá trị giảm (%)</label>
+            <div class="input-group">
               <input
-                v-model="form.ngayBatDau"
-                type="date"
-                class="form-control"
+                v-model.number="form.giaTriGiam"
+                type="number"
+                min="1"
+                max="100"
               />
-              <small v-if="errors.ngayBatDau" class="text-danger">
-                {{ errors.ngayBatDau }}
-              </small>
+              <span>%</span>
             </div>
-
-            <div class="col-12">
-              <label class="form-label">Ngày kết thúc</label>
-              <input
-                v-model="form.ngayKetThuc"
-                type="date"
-                class="form-control"
-                :min="form.ngayBatDau"
-              />
-              <small v-if="errors.ngayKetThuc" class="text-danger">
-                {{ errors.ngayKetThuc }}
-              </small>
-            </div>
+            <small v-if="errors.giaTriGiam" class="error">
+              {{ errors.giaTriGiam }}
+            </small>
           </div>
 
-          <div class="mt-4 d-flex justify-content-end gap-2">
-            <button class="btn btn-secondary" @click="back">Hủy</button>
-            <button class="btn btn-brown" @click="onClickSave">Lưu</button>
+          <div class="field">
+            <label>Ngày bắt đầu</label>
+            <input v-model="form.ngayBatDau" type="date" />
+            <small v-if="errors.ngayBatDau" class="error">
+              {{ errors.ngayBatDau }}
+            </small>
           </div>
+
+          <div class="field">
+            <label>Ngày kết thúc</label>
+            <input
+              v-model="form.ngayKetThuc"
+              type="date"
+              :min="form.ngayBatDau"
+            />
+            <small v-if="errors.ngayKetThuc" class="error">
+              {{ errors.ngayKetThuc }}
+            </small>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn cancel" @click="back">Hủy</button>
+          <button class="btn primary" @click="onClickSave">Lưu</button>
         </div>
       </div>
     </div>
-    <div class="col-md-7">
-      <div class="card panel h-100">
-        <div class="card-body">
-          <h5 class="fw-bold text-uppercase mb-3">Danh sách sản phẩm</h5>
-          <small v-if="errors.chiTiet" class="text-danger d-block mb-2">
-            {{ errors.chiTiet }}
-          </small>
 
-          <div
-            class="table-responsive"
-            style="max-height: 520px; overflow-y: auto"
-          >
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 60px">Chọn</th>
-                  <th style="width: 60px">STT</th>
-                  <th>Mã SP</th>
-                  <th>Tên sản phẩm</th>
-                  <th style="width: 90px">Ảnh</th>
-                </tr>
-              </thead>
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="card">
+        <h5 class="title">Danh sách sản phẩm</h5>
 
-              <tbody>
-                <tr v-for="(sp, index) in sanPhamList" :key="sp.id">
-                  <td>
-                    <button
-                      class="btn btn-sm"
-                      :class="
-                        selectedSanPhamIds.includes(sp.id)
-                          ? 'btn-success'
-                          : 'btn-outline-secondary'
-                      "
-                      @click="toggleSanPham(sp)"
-                    >
-                      {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
-                    </button>
-                  </td>
+        <small v-if="errors.chiTiet" class="error block">
+          {{ errors.chiTiet }}
+        </small>
 
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ sp.maSp }}</td>
-                  <td>{{ sp.tenSp }}</td>
-                  <td>
-                    <img
-                      :src="sp.hinhAnh"
-                      style="width: 60px; height: 60px; object-fit: cover"
-                    />
-                  </td>
-                </tr>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Chọn</th>
+                <th>STT</th>
+                <th>Mã SP</th>
+                <th>Tên sản phẩm</th>
+                <th>Ảnh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(sp, index) in sanPhamList" :key="sp.id">
+                <td>
+                  <button
+                    class="btn-icon"
+                    :class="{ active: selectedSanPhamIds.includes(sp.id) }"
+                    @click="toggleSanPham(sp)"
+                  >
+                    {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
+                  </button>
+                </td>
+                <td>{{ index + 1 }}</td>
+                <td>{{ sp.maSp }}</td>
+                <td>{{ sp.tenSp }}</td>
+                <td>
+                  <img :src="sp.hinhAnh" />
+                </td>
+              </tr>
 
-                <tr v-if="sanPhamList.length === 0">
-                  <td colspan="5" class="text-center text-muted">
-                    Không có sản phẩm
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              <tr v-if="sanPhamList.length === 0">
+                <td colspan="5" class="empty">Không có sản phẩm</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-    <div v-for="spId in selectedSanPhamIds" :key="spId" class="col-12">
-      <div class="card panel">
-        <div class="card-body">
-          <h5 class="fw-bold mb-3">
-            Biến thể của sản phẩm:
-            {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
-          </h5>
 
-          <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 60px">Chọn</th>
-                  <th>Mã CTSP</th>
-                  <th>Màu sắc</th>
-                  <th>Kích cỡ</th>
-                  <th>Loại áo</th>
-                  <th>Kiểu dáng</th>
-                </tr>
-              </thead>
+    <!-- VARIANTS -->
+    <div v-for="spId in selectedSanPhamIds" :key="spId" class="full">
+      <div class="card">
+        <h5 class="subtitle">
+          Biến thể:
+          {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
+        </h5>
 
-              <tbody>
-                <tr v-for="ct in chiTietMap[spId] || []" :key="ct.id">
-                  <td>
-                    <button
-                      class="btn btn-sm"
-                      :class="
-                        selectedChiTietIds.includes(ct.id)
-                          ? 'btn-success'
-                          : 'btn-outline-secondary'
-                      "
-                      @click="toggleChiTiet(ct.id)"
-                    >
-                      {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
-                    </button>
-                  </td>
+        <table>
+          <thead>
+            <tr>
+              <th>Chọn</th>
+              <th>Mã CTSP</th>
+              <th>Màu sắc</th>
+              <th>Kích cỡ</th>
+              <th>Loại áo</th>
+              <th>Kiểu dáng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="ct in chiTietMap[spId] || []" :key="ct.id">
+              <td>
+                <button
+                  class="btn-icon"
+                  :class="{ active: selectedChiTietIds.includes(ct.id) }"
+                  @click="toggleChiTiet(ct.id)"
+                >
+                  {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
+                </button>
+              </td>
 
-                  <td>{{ ct.maChiTietSanPham }}</td>
-                  <td>{{ ct.idMauSac?.tenMauSac }}</td>
-                  <td>{{ ct.idKichCo?.tenKichCo }}</td>
-                  <td>{{ ct.idLoaiAo?.tenLoai }}</td>
-                  <td>{{ ct.idKieuDang?.tenKieuDang }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              <td>{{ ct.maChiTietSanPham }}</td>
+
+              <td>
+                {{
+                  ct.mauSacList
+                    ?.map((ms: { tenMauSac: string }) => ms.tenMauSac)
+                    .join(", ")
+                }}
+              </td>
+
+              <td>
+                {{ ct.kichCoList?.join(", ") }}
+              </td>
+
+              <td>
+                {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
+              </td>
+
+              <td>
+                {{ sanPhamList.find((sp) => sp.id === spId)?.tenKieuDang }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+    <div v-if="showConfirm" class="modal">
+      <div class="modal-box">
+        <h4>Xác nhận</h4>
+        <p>Bạn có chắc chắn muốn cập nhật?</p>
+        <div class="actions">
+          <button class="btn cancel" @click="showConfirm = false">Hủy</button>
+          <button class="btn primary" @click="submit">Xác nhận</button>
         </div>
       </div>
     </div>
-  </div>
-  <div v-if="showConfirm" class="modal fade show d-block" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Xác nhận</h5>
-        <button
-          type="button"
-          class="btn-close"
-          @click="showConfirm = false"
-        ></button>
-      </div>
 
-      <div class="modal-body">
-        <p>Bạn có chắc chắn muốn cập nhật đợt giảm giá này không?</p>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" @click="showConfirm = false">
-          Hủy
-        </button>
-        <button
-          class="btn btn-brown"
-          @click="
-            showConfirm = false;
-            submit();
-          "
-        >
-          Xác nhận
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<div v-if="showSuccess" class="modal fade show d-block" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content text-center">
-      <div class="modal-body">
-        <h5 class="text-success mb-2">🎉 Cập nhật thành công</h5>
+    <div v-if="showSuccess" class="modal">
+      <div class="modal-box center">
+        <h4 class="success">🎉 Cập nhật thành công</h4>
         <p>Đợt giảm giá đã được cập nhật</p>
       </div>
     </div>
   </div>
-</div>
-
-<div class="modal-backdrop fade show" v-if="showConfirm || showSuccess"></div>
-
 </template>
+
 <script setup lang="ts">
 import { reactive, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -230,7 +193,6 @@ import axios from "axios";
 const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
-
 
 const sanPhamList = ref<any[]>([]);
 const selectedSanPhamIds = ref<number[]>([]);
@@ -252,7 +214,6 @@ const onClickSave = () => {
   if (!validate()) return;
   showConfirm.value = true;
 };
-
 
 const showSuccessModal = () => {
   showSuccess.value = true;
@@ -317,14 +278,13 @@ const fetchSanPham = async () => {
 
 const fetchChiTietBySpId = async (spId: number) => {
   if (chiTietMap[spId]) return;
-  try {
-    const res = await axios.get(
-      `http://localhost:8080/api/chi-tiet-san-pham/san-pham/${spId}`,
-    );
-    chiTietMap[spId] = res.data;
-  } catch (e) {
-    console.error("Lỗi tải chi tiết sản phẩm", e);
-  }
+
+  const res = await axios.get(`http://localhost:8080/api/san-pham/${spId}`);
+
+  chiTietMap[spId] = (res.data.bienTheList || []).map((ct: any) => ({
+    ...ct,
+    id: Number(ct.id), // 🔥 ÉP ID VỀ NUMBER
+  }));
 };
 
 onMounted(async () => {
@@ -338,23 +298,20 @@ onMounted(async () => {
     form.giaTriGiam = data.giaTriGiam;
     form.ngayBatDau = data.ngayBatDau;
     form.ngayKetThuc = data.ngayKetThuc;
+    selectedChiTietIds.value = data.chiTietSanPhamIds || [];
+    selectedSanPhamIds.value =
+      data.sanPhamApDung?.map((sp: any) => sp.idSp) || [];
+    selectedSanPhamIds.value =
+      data.sanPhamApDung?.map((sp: any) => sp.idSp) || [];
 
     selectedChiTietIds.value = data.chiTietSanPhamIds || [];
-    const spIds = new Set<number>();
 
-    for (const ctId of selectedChiTietIds.value) {
-      const resCt = await axios.get(
-        `http://localhost:8080/api/chi-tiet-san-pham/${ctId}`,
-      );
-      const spId = resCt.data.idSanPham.id;
-
-      spIds.add(spId);
-
+    // load biến thể theo SP
+    for (const spId of selectedSanPhamIds.value) {
       await fetchChiTietBySpId(spId);
     }
-
-    selectedSanPhamIds.value = Array.from(spIds);
   } catch (e) {
+    console.error(e);
     alert("Không tìm thấy thông tin đợt giảm giá");
   }
 });
@@ -394,27 +351,192 @@ const submit = async () => {
       chiTietSanPhamIds: selectedChiTietIds.value,
     };
 
-    await axios.put(
-      `http://localhost:8080/api/promotions/${id}`,
-      payload
-    );
+    await axios.put(`http://localhost:8080/api/promotions/${id}`, payload);
 
     showSuccessModal();
   } catch (e) {
     alert("Lỗi cập nhật đợt giảm giá");
   }
 };
-
 </script>
 
 <style scoped>
-.btn-brown {
-  background-color: #6f4e37;
-  color: #fff;
-  border: none;
+/* === LAYOUT === */
+.layout {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 16px;
 }
 
-.btn-brown:hover {
-  background-color: #5c3f2c;
+/* full row (variant) */
+.full {
+  grid-column: 1 / -1;
+  margin-top: 16px;
+}
+
+/* === CARD === */
+.card {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+}
+
+/* === TITLE === */
+.title {
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* === FORM === */
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.field input {
+  width: 95%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* === INPUT GROUP === */
+.input-group {
+  display: flex;
+}
+
+.input-group input {
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+}
+
+.input-group span {
+  padding: 6px 10px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+}
+
+/* === ACTIONS === */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* === BUTTON === */
+.btn {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: #6f4e37;
+  color: #fff;
+}
+
+.btn.cancel {
+  background: #ccc;
+}
+
+/* === ICON BUTTON === */
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+}
+
+.btn-icon.active {
+  background: #63391f;
+  color: #fff;
+  border-color: #63391f;
+}
+
+/* === TABLE === */
+.table-wrapper {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #63391f;
+  color: #fff;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+/* === IMAGE === */
+img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+}
+
+/* === ERROR === */
+.error {
+  color: #e74c3c;
+  font-size: 13px;
+}
+
+.block {
+  display: block;
+}
+
+.empty {
+  color: #888;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  width: 320px;
+}
+
+.modal-box.center {
+  text-align: center;
+}
+
+.success {
+  color: #198754;
 }
 </style>
