@@ -59,10 +59,14 @@
             <thead class="table-light">
               <tr>
                 <th>
-                  <button class="btn-icon" @click="toggleAllSanPham">
-                    {{ isAllSanPhamSelected ? "✓" : "+" }}
-                  </button>
-                </th>
+  <button 
+    class="btn-icon header-tick" 
+    :class="{ active: isAllSanPhamSelected }"
+    @click="toggleAllSanPham"
+  >
+    {{ isAllSanPhamSelected ? "✓" : "+" }}
+  </button>
+</th>
                 <th>STT</th>
                 <th>Mã SP</th>
                 <th>Tên sản phẩm</th>
@@ -106,18 +110,14 @@
             <thead class="table-light">
               <tr>
                 <th>
-                  <button
-                    class="btn btn-sm"
-                    :class="
-                      isAllChiTietSelected(spId)
-                        ? 'btn-success'
-                        : 'btn-outline-secondary'
-                    "
-                    @click="toggleAllChiTiet(spId)"
-                  >
-                    {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
-                  </button>
-                </th>
+  <button
+    class="btn-icon header-tick"
+    :class="{ active: isAllChiTietSelected(spId) }"
+    @click="toggleAllChiTiet(spId)"
+  >
+    {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
+  </button>
+</th>
                 <th>Mã CTSP</th>
                 <th>Màu sắc</th>
                 <th>Kích cỡ</th>
@@ -127,19 +127,15 @@
             </thead>
             <tbody>
               <tr v-for="ct in chiTietMap[spId]" :key="ct.id">
-                <td>
-                  <button
-                    class="btn btn-sm"
-                    :class="
-                      selectedChiTietIds.includes(ct.id)
-                        ? 'btn-success'
-                        : 'btn-outline-secondary'
-                    "
-                    @click="toggleChiTiet(ct.id)"
-                  >
-                    {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
-                  </button>
-                </td>
+               <td>
+  <button
+    class="btn-icon"
+    :class="{ active: selectedChiTietIds.includes(ct.id) }"
+    @click="toggleChiTiet(ct.id)"
+  >
+    {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
+  </button>
+</td>
                 <td>{{ ct.maChiTietSanPham }}</td>
                 <td>
                   <span
@@ -186,11 +182,15 @@
     </div>
   </div>
 
-  <div v-if="showSuccess" class="modal">
-    <div class="modal-content">
-      <h4 class="success">🎉 Thêm thành công</h4>
-    </div>
+<div class="toast-container">
+  <div
+    v-for="notif in notifications"
+    :key="notif.id"
+    class="toast success"
+  >
+    {{ notif.message }}
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -198,8 +198,7 @@ import { reactive, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { computed } from "vue";
-// import "bootstrap/dist/css/bootstrap.css";
-// import "bootstrap-vue/dist/bootstrap-vue.css";
+
 const router = useRouter();
 
 const form = reactive({
@@ -218,12 +217,27 @@ const errors = reactive({
 });
 
 const showConfirm = ref(false);
-const showSuccess = ref(false);
 
-const showSuccessModal = () => {
-  showSuccess.value = true;
+
+// 1. Khai báo mảng chứa thông báo
+const notifications = ref<{id: number, message: string}[]>([]);
+
+// 2. Hàm để đẩy thông báo vào mảng và tự xóa sau 3 giây
+const showNotification = (message: string) => {
+  const id = Date.now();
+  notifications.value.push({ id, message });
+  
   setTimeout(() => {
-    showSuccess.value = false;
+    notifications.value = notifications.value.filter(n => n.id !== id);
+  }, 3000);
+};
+
+// 3. Sửa lại hàm này để gọi thông báo thay vì hiện modal
+const showSuccessModal = () => {
+  showNotification("Thêm đợt giảm giá thành công"); // Hoặc "🎉 Thêm thành công"
+  
+  // Vẫn giữ logic chuyển trang sau 1.5s nếu cần
+  setTimeout(() => {
     router.push("/admin/promotion");
   }, 1500);
 };
@@ -460,7 +474,7 @@ const back = () => router.push("/admin/promotion");
 }
 
 .btn-primary {
-  background: #6f4e37;
+  background: #63391F;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -474,24 +488,73 @@ const back = () => router.push("/admin/promotion");
   border-radius: 4px;
 }
 
+/* Ép bảng dùng layout cố định để không bị lệch cột */
 .table {
   width: 100%;
   border-collapse: collapse;
-  text-align: center;
-}
-.table th,
-.table td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-.table-light {
-  background: #f5f5f5;
-}
-.table-bordered th,
-.table-bordered td {
-  border: 1px solid #ddd;
+  table-layout: fixed; /* Rất quan trọng: giúp cố định độ rộng cột */
 }
 
+/* Cố định độ rộng cột chứa nút Tick (Cột đầu tiên) */
+.table th:first-child,
+.table td:first-child {
+  width: 70px; /* Ép cột đầu tiên rộng đúng 70px */
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Các cột khác (STT, Mã, Ảnh) có thể cố định nếu cần */
+.table th:nth-child(2), .table td:nth-child(2) { width: 60px; } /* STT */
+.table th:last-child, .table td:last-child { width: 100px; }   /* Ảnh */
+
+/* Nội dung chung của ô */
+th, td {
+  padding: 12px 8px;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word; /* Tránh nội dung quá dài làm vỡ cột */
+  border-bottom: 1px solid #eee;
+}
+
+/* Căn giữa nút tròn bên trong ô */
+.btn-icon {
+  margin: 0 auto; /* Đảm bảo nút nằm chính giữa ô 70px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Các thuộc tính vòng tròn giữ nguyên như cũ */
+  width: 32px;
+  height: 32px;
+  border-radius: 50% !important;
+}
+
+/* Khi được chọn: Nền nâu, chữ trắng */
+.btn-icon.active {
+  background: #63391F !important;
+  border-color: #63391F !important;
+  color: #fff !important;
+}
+
+/* Hiệu ứng hover cho nút tròn */
+.btn-icon:hover {
+  border-color: #63391F;
+  box-shadow: 0 0 5px rgba(99, 57, 31, 0.3);
+}
+
+/* --- NÚT TICK TRÊN HEADER (NỀN NÂU) --- */
+.header-tick {
+  background: transparent !important;
+  border: 2px solid #fff !important;
+  color: #fff !important;
+  margin: 0 auto;
+}
+
+/* Khi chọn tất cả trên Header: Nghịch đảo màu (Nền trắng, chữ nâu) */
+.header-tick.active {
+  background: #fff !important;
+  color: #63391F !important;
+  border-color: #fff !important;
+}
 img {
   width: 60px;
   height: 60px;
@@ -499,18 +562,15 @@ img {
   border-radius: 4px;
 }
 
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #aaa;
-  background: #fff;
-  border-radius: 4px;
-}
-.btn-icon.active {
-  background: #28a745;
-  color: #fff;
-}
 
+
+/* Đồng bộ Header bảng */
+th {
+  background: #63391F;
+  color: #fff;
+  text-align: center;
+  vertical-align: middle;
+}
 .badge {
   padding: 4px 8px;
   border-radius: 12px;
@@ -558,7 +618,44 @@ img {
   justify-content: flex-end;
   gap: 10px;
 }
+
 .success {
   color: #28a745;
+}
+/* Container nằm cố định ở góc trên phải */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Style cho từng cái Toast giống ảnh mẫu */
+.toast {
+  min-width: 300px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #dcfce7; /* Xanh nhạt */
+  color: #166534;           /* Chữ xanh đậm */
+  font-size: 16px;
+  font-weight: 500;
+  border-left: 6px solid #22c55e; /* Thanh màu xanh lá đậm bên trái */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Hiệu ứng trượt từ phải vào */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

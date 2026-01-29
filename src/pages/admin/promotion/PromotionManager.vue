@@ -4,43 +4,51 @@
     <h2 class="title">QUẢN LÝ ĐỢT GIẢM GIÁ</h2>
 
     <div class="top-bar">
-      <!-- SEARCH -->
-      <div class="search-wrapper">
-        <img src="/src/assets/icon/search.svg" class="search-icon" />
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Tìm theo mã hoặc tên"
-          v-model="filter.keyword"
-        />
-      </div>
+  <!-- LEFT -->
+  <div class="left-actions">
+    <!-- SEARCH -->
+    <div class="search-wrapper">
+      <img src="/src/assets/icon/search.svg" class="search-icon" />
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Tìm theo mã hoặc tên"
+        v-model="filter.keyword"
+      />
+    </div>
 
-      <!-- FILTER -->
-      <div class="filters">
-        <label>Trạng thái:</label>
+    <!-- FILTER -->
+    <div class="filters">
+      <div class="filter-item">
+        <label>Trạng thái</label>
         <select v-model="filter.trangThai">
           <option value="">Tất cả</option>
           <option :value="1">Đang áp dụng</option>
           <option :value="2">Sắp diễn ra</option>
           <option :value="0">Đã kết thúc</option>
         </select>
-
-        <label>Từ ngày:</label>
-        <input type="date" v-model="filter.start" />
-
-        <label>Đến ngày:</label>
-        <input type="date" v-model="filter.end" />
       </div>
 
-      <!-- ADD -->
-      <div class="add-btn">
-        <button @click="$router.push('/admin/promotion/create')">
-          <span>＋</span> Thêm đợt giảm
-        </button>
+      <div class="filter-item">
+        <label>Từ ngày</label>
+        <input type="date" v-model="filter.start" />
+      </div>
+
+      <div class="filter-item">
+        <label>Đến ngày</label>
+        <input type="date" v-model="filter.end" />
       </div>
     </div>
   </div>
 
+  <!-- RIGHT -->
+  <div class="add-btn">
+    <button @click="$router.push('/admin/promotion/create')">
+      <span>＋</span> Thêm đợt giảm
+    </button>
+  </div>
+</div>
+  </div>
   <!-- ===== CONTENT ===== -->
   <div class="product-page">
     <!-- TABLE PANEL -->
@@ -82,25 +90,27 @@
             </td>
 
             <td class="action">
+               <label class="switch">
+                <input
+                  type="checkbox"
+                  :checked="p.trangThai !== 0"
+                  @change="toggleTrangThai(p.id)"
+                />
+
+                <span class="slider"></span>
+              </label>
               <span
                 class="icon edit"
                 @click="$router.push(`/admin/promotion/${p.id}/edit`)"
               >
-                <img
+                <img 
                   src="/src/assets/icon/edit.svg"
                   alt=""
                   style="width: 20px; height: 20px"
                 />
               </span>
 
-              <label class="switch">
-                <input
-                  type="checkbox"
-                  :checked="p.trangThai !== 0"
-                  @change="toggleTrangThai(p.id)"
-                />
-                <span class="slider"></span>
-              </label>
+             
             </td>
           </tr>
 
@@ -110,33 +120,36 @@
         </tbody>
       </table>
       <div class="pagination">
-        <!-- PREV -->
-        <button
-          @click="changePage(pagination.page - 1)"
-          :disabled="pagination.page === 0"
-        >
-          <img src="/src/assets/icon/arrowRight.svg" alt="" />
-        </button>
+      <!-- PREV -->
+<button
+  class="nav-btn"
+  @click="changePage(pagination.page - 1)"
+  :disabled="pagination.page === 0"
+>
+  &lt;
+</button>
 
-        <!-- PAGE NUMBERS -->
-        <button
-          v-for="p in visiblePages"
-          :key="p"
-          class="page-btn"
-          :class="{ active: p - 1 === pagination.page }"
-          :disabled="p === '...'"
-          @click="p !== '...' && changePage(p - 1)"
-        >
-          {{ p }}
-        </button>
+<!-- PAGE NUMBERS -->
+<button
+  v-for="p in visiblePages"
+  :key="p"
+  class="page-btn"
+  :class="{ active: p - 1 === pagination.page }"
+  :disabled="p === '...'"
+  @click="p !== '...' && changePage(p - 1)"
+>
+  {{ p }}
+</button>
 
-        <!-- NEXT -->
-        <button
-          @click="changePage(pagination.page + 1)"
-          :disabled="pagination.page >= pagination.totalPages - 1"
-        >
-          <img src="/src/assets/icon/arrowLeft.svg" alt="" />
-        </button>
+<!-- NEXT -->
+<button
+  class="nav-btn"
+  @click="changePage(pagination.page + 1)"
+  :disabled="pagination.page >= pagination.totalPages - 1"
+>
+  &gt;
+</button>
+
       </div>
     </div>
   </div>
@@ -222,8 +235,24 @@ watch(
 onMounted(fetchData);
 
 const toggleTrangThai = async (id: number) => {
-  await axios.patch(`http://localhost:8080/api/promotions/${id}/toggle`);
-  fetchData();
+  try {
+    // 1. Gọi API cập nhật
+    await axios.patch(`http://localhost:8080/api/promotions/${id}/toggle`);
+
+    // 2. Tìm và cập nhật ngay lập tức trên giao diện (Optional nhưng giúp giao diện mượt hơn)
+    const index = promotions.value.findIndex((p) => p.id === id);
+    if (index !== -1) {
+      // Nếu đang bật (khác 0) thì set về 0, ngược lại thì tạm set về 1 (fetchData sẽ lấy số chuẩn sau)
+      promotions.value[index].trangThai =
+        promotions.value[index].trangThai === 0 ? 1 : 0;
+    }
+
+    // 3. Load lại dữ liệu chuẩn từ server
+    await fetchData();
+  } catch (error) {
+    console.error("Lỗi khi toggle:", error);
+    alert("Không thể cập nhật trạng thái!");
+  }
 };
 
 const changePage = (p: number) => {
@@ -245,9 +274,8 @@ const statusText = (s: number) =>
 /* ===== HEADER PANEL ===== */
 .header {
   background: #fff;
-  border-radius: 6px;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em;
+  border-radius: 20px;
+  border: 1px solid #e5e5e5; /* 👈 viền mỏng */
   margin-bottom: 12px;
 }
 
@@ -259,14 +287,21 @@ const statusText = (s: number) =>
 .top-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+  padding: 0 15px 12px;
 }
+
+.left-actions {
+  display: flex;
+  align-items: flex-end;
+gap:12px;
+}
+
 
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
   width: 300px;
-  margin: 15px;
 }
 
 .search-icon {
@@ -275,49 +310,83 @@ const statusText = (s: number) =>
   left: 10px;
   transform: translateY(-50%);
 }
-
 .search-input {
   width: 100%;
+  height: 40px;
   padding: 8px 10px 8px 34px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
 /* ===== FILTER ===== */
 .filters {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px; /* 👈 GỌN HƠN */
+  align-items: flex-end;
 }
 
-.filters select,
-.filters input {
-  padding: 6px 10px;
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 160px;
+}
+
+.filter-item label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
+}
+
+.filter-item select,
+.filter-item input {
+  height: 40px; /* 👈 BẰNG SEARCH */
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #555555a4;
+  background: #fff;
+
 }
 
 /* ===== ADD ===== */
 .add-btn {
-  margin: 15px;
+  margin: 0;
+  align-self: flex-end; /* 👈 ép nút xuống cùng hàng */
 }
 
 .add-btn button {
-  padding: 6px 12px;
+  height: 40px;                 /* 👈 bằng input */
+  padding: 0 16px;              /* ngang vừa tay */
   border: 1px solid #ccc;
+  border-radius: 10px;          /* 👈 bo y hệt */
   background: #fff;
   cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #484848;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ===== TABLE PANEL ===== */
 .product-page {
   background: transparent;
 }
+.product-table thead tr {
+  border-bottom: 1.5px solid #e0e0e0;
+}
 
 .table-panel {
   background: #fff;
-  border-radius: 6px;
+  border-radius: 20px;
   padding: 10px;
-  box-shadow: rgba(0, 0, 0, 0.15) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.15) 0px 0.125em 0.5em;
+  border: 1px solid #e5e5e5; /* 👈 viền nhẹ */
 }
 
 .product-table {
@@ -326,15 +395,15 @@ const statusText = (s: number) =>
 }
 
 .product-table th {
-  background: #63391f;
-  color: #fff;
-  padding: 8px;
+  color: #000000;
+  padding: 20px 12px;
 }
 
 .product-table td {
-  padding: 8px;
+  padding: 18px 12px;
   border-bottom: 1px solid #ddd;
   text-align: center;
+  
 }
 
 .status.selling {
@@ -354,7 +423,7 @@ const statusText = (s: number) =>
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
 }
 
 .switch {
@@ -368,7 +437,7 @@ const statusText = (s: number) =>
 .slider {
   position: absolute;
   inset: 0;
-  background: #e74c3c;
+  background: #ccc;
   border-radius: 24px;
   transition: 0.3s;
 }
@@ -432,4 +501,40 @@ input:checked + .slider::before {
   background: transparent;
   color: #999;
 }
+
+.switch input:disabled + .slider {
+  background-color: #e74c3ccc !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.switch input:disabled ~ .slider {
+  pointer-events: none;
+}
+.nav-btn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #63391f;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.nav-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  background: #fff;
+}
+
 </style>
