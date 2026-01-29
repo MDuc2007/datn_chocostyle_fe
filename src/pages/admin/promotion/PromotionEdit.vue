@@ -1,6 +1,5 @@
 <template>
   <div class="layout">
-    <!-- LEFT -->
     <div class="left">
       <div class="card">
         <h5 class="title">Chỉnh sửa đợt giảm giá</h5>
@@ -8,7 +7,7 @@
         <div class="form">
           <div class="field">
             <label>Tên đợt giảm giá</label>
-            <input v-model="form.tenDotGiamGia" />
+            <input v-model="form.tenDotGiamGia" placeholder="Nhập tên đợt giảm giá..." />
             <small v-if="errors.tenDotGiamGia" class="error">
               {{ errors.tenDotGiamGia }}
             </small>
@@ -53,17 +52,16 @@
 
         <div class="actions">
           <button class="btn cancel" @click="back">Hủy</button>
-          <button class="btn primary" @click="onClickSave">Lưu</button>
+          <button class="btn primary" @click="onClickSave">Lưu thay đổi</button>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="right">
       <div class="card">
-        <h5 class="title">Danh sách sản phẩm</h5>
+        <h5 class="title">Danh sách sản phẩm áp dụng</h5>
 
-        <small v-if="errors.chiTiet" class="error block">
+        <small v-if="errors.chiTiet" class="error block" style="margin-bottom: 10px;">
           {{ errors.chiTiet }}
         </small>
 
@@ -71,7 +69,15 @@
           <table>
             <thead>
               <tr>
-                <th>Chọn</th>
+               <th>
+      <button 
+        class="btn-icon header-tick" 
+        :class="{ active: isAllSpSelected }"
+        @click="toggleAllSanPham"
+      >
+        {{ isAllSpSelected ? "✓" : "+" }}
+      </button>
+    </th>
                 <th>STT</th>
                 <th>Mã SP</th>
                 <th>Tên sản phẩm</th>
@@ -93,12 +99,11 @@
                 <td>{{ sp.maSp }}</td>
                 <td>{{ sp.tenSp }}</td>
                 <td>
-                  <img :src="sp.hinhAnh" />
+                  <img :src="sp.hinhAnh" alt="product" />
                 </td>
               </tr>
-
               <tr v-if="sanPhamList.length === 0">
-                <td colspan="5" class="empty">Không có sản phẩm</td>
+                <td colspan="5" class="empty">Đang tải danh sách sản phẩm...</td>
               </tr>
             </tbody>
           </table>
@@ -106,18 +111,24 @@
       </div>
     </div>
 
-    <!-- VARIANTS -->
     <div v-for="spId in selectedSanPhamIds" :key="spId" class="full">
       <div class="card">
         <h5 class="subtitle">
-          Biến thể:
-          {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
+          Biến thể của: {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
         </h5>
 
         <table>
           <thead>
             <tr>
-              <th>Chọn</th>
+             <th>
+      <button 
+        class="btn-icon header-tick" 
+        :class="{ active: isAllChiTietSelected(spId) }"
+        @click="toggleAllChiTiet(spId)"
+      >
+        {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
+      </button>
+    </th>
               <th>Mã CTSP</th>
               <th>Màu sắc</th>
               <th>Kích cỡ</th>
@@ -136,25 +147,16 @@
                   {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
                 </button>
               </td>
-
               <td>{{ ct.maChiTietSanPham }}</td>
-
               <td>
-                {{
-                  ct.mauSacList
-                    ?.map((ms: { tenMauSac: string }) => ms.tenMauSac)
-                    .join(", ")
-                }}
+                {{ ct.mauSacList?.map((ms: any) => ms.tenMauSac).join(", ") }}
               </td>
-
               <td>
                 {{ ct.kichCoList?.join(", ") }}
               </td>
-
               <td>
                 {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
               </td>
-
               <td>
                 {{ sanPhamList.find((sp) => sp.id === spId)?.tenKieuDang }}
               </td>
@@ -164,36 +166,40 @@
       </div>
     </div>
 
-    <!-- MODALS -->
-    <div v-if="showConfirm" class="modal">
-      <div class="modal-box">
-        <h4>Xác nhận</h4>
-        <p>Bạn có chắc chắn muốn cập nhật?</p>
-        <div class="actions">
-          <button class="btn cancel" @click="showConfirm = false">Hủy</button>
-          <button class="btn primary" @click="submit">Xác nhận</button>
-        </div>
+    <div class="toast-container">
+      <div
+        v-for="notif in notifications"
+        :key="notif.id"
+        class="toast success"
+      >
+        <span style="margin-right: 8px;">✔️</span> {{ notif.message }}
       </div>
     </div>
 
-    <div v-if="showSuccess" class="modal">
-      <div class="modal-box center">
-        <h4 class="success">🎉 Cập nhật thành công</h4>
-        <p>Đợt giảm giá đã được cập nhật</p>
+    <div v-if="showConfirm" class="modal">
+      <div class="modal-box">
+        <h4>Xác nhận hệ thống</h4>
+        <p>Bạn có chắc chắn muốn lưu các thay đổi cho đợt giảm giá này không?</p>
+        <div class="actions">
+          <button class="btn cancel" @click="showConfirm = false">Hủy bỏ</button>
+          <button class="btn primary" @click="submit">Đồng ý</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted,computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
+// 1. Khai báo các tiện ích
 const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
 
+// 2. Khai báo State dữ liệu
 const sanPhamList = ref<any[]>([]);
 const selectedSanPhamIds = ref<number[]>([]);
 const selectedChiTietIds = ref<number[]>([]);
@@ -204,24 +210,7 @@ const form = reactive({
   giaTriGiam: 1,
   ngayBatDau: "",
   ngayKetThuc: "",
-  chiTietSanPhamIds: [] as number[],
 });
-
-const showConfirm = ref(false);
-const showSuccess = ref(false);
-
-const onClickSave = () => {
-  if (!validate()) return;
-  showConfirm.value = true;
-};
-
-const showSuccessModal = () => {
-  showSuccess.value = true;
-  setTimeout(() => {
-    showSuccess.value = false;
-    back();
-  }, 1500);
-};
 
 const errors = reactive({
   tenDotGiamGia: "",
@@ -231,26 +220,95 @@ const errors = reactive({
   chiTiet: "",
 });
 
+// 3. Khai báo UI State (Modal & Toast)
+const showConfirm = ref(false);
+const notifications = ref<{id: number, message: string}[]>([]);
+
+// 4. Các hàm xử lý giao diện
+const showNotification = (message: string) => {
+  const id = Date.now();
+  notifications.value.push({ id, message });
+  setTimeout(() => {
+    notifications.value = notifications.value.filter(n => n.id !== id);
+  }, 3000);
+};
+
+const showSuccessModal = () => {
+  showConfirm.value = false;
+  showNotification("Cập nhật đợt giảm giá thành công");
+  setTimeout(() => {
+    back();
+  }, 1500);
+};
+
+const onClickSave = () => {
+  if (!validate()) return;
+  showConfirm.value = true;
+};
+
+// ... (các code cũ giữ nguyên)
+
+// --- LOGIC CHỌN TẤT CẢ SẢN PHẨM ---
+const isAllSpSelected = computed(() => {
+  return sanPhamList.value.length > 0 && 
+         selectedSanPhamIds.value.length === sanPhamList.value.length;
+});
+
+const toggleAllSanPham = async () => {
+  if (isAllSpSelected.value) {
+    // Nếu đang chọn hết thì bỏ chọn sạch
+    selectedSanPhamIds.value = [];
+    selectedChiTietIds.value = [];
+  } else {
+    // Chọn tất cả sản phẩm
+    selectedSanPhamIds.value = sanPhamList.value.map(sp => sp.id);
+    // Tải biến thể cho tất cả (nếu chưa có)
+    for (const sp of sanPhamList.value) {
+      await fetchChiTietBySpId(sp.id);
+    }
+  }
+};
+
+// --- LOGIC CHỌN TẤT CẢ BIẾN THỂ ---
+const isAllChiTietSelected = (spId: number) => {
+  const allIds = chiTietMap[spId]?.map(ct => ct.id) || [];
+  if (allIds.length === 0) return false;
+  return allIds.every(id => selectedChiTietIds.value.includes(id));
+};
+
+const toggleAllChiTiet = (spId: number) => {
+  const allIds = chiTietMap[spId]?.map(ct => ct.id) || [];
+  if (isAllChiTietSelected(spId)) {
+    // Bỏ chọn tất cả biến thể của SP này
+    selectedChiTietIds.value = selectedChiTietIds.value.filter(id => !allIds.includes(id));
+  } else {
+    // Thêm các ID chưa có vào mảng chọn
+    allIds.forEach(id => {
+      if (!selectedChiTietIds.value.includes(id)) {
+        selectedChiTietIds.value.push(id);
+      }
+    });
+  }
+};
+const back = () => router.push("/admin/promotion");
+
+// 5. Logic Nghiệp vụ & Validation
 const validate = () => {
   let valid = true;
-
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
 
   if (!form.tenDotGiamGia.trim()) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
     valid = false;
   }
-
   if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
   }
-
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Ngày bắt đầu không được để trống";
     valid = false;
   }
-
   if (!form.ngayKetThuc) {
     errors.ngayKetThuc = "Ngày kết thúc không được để trống";
     valid = false;
@@ -258,15 +316,14 @@ const validate = () => {
     errors.ngayKetThuc = "Ngày kết thúc phải ≥ ngày bắt đầu";
     valid = false;
   }
-
   if (selectedChiTietIds.value.length === 0) {
     errors.chiTiet = "Vui lòng chọn ít nhất 1 biến thể sản phẩm";
     valid = false;
   }
-
   return valid;
 };
 
+// 6. Gọi API
 const fetchSanPham = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/san-pham");
@@ -278,44 +335,32 @@ const fetchSanPham = async () => {
 
 const fetchChiTietBySpId = async (spId: number) => {
   if (chiTietMap[spId]) return;
-
-  const res = await axios.get(`http://localhost:8080/api/san-pham/${spId}`);
-
-  chiTietMap[spId] = (res.data.bienTheList || []).map((ct: any) => ({
-    ...ct,
-    id: Number(ct.id), // 🔥 ÉP ID VỀ NUMBER
-  }));
+  try {
+    const res = await axios.get(`http://localhost:8080/api/san-pham/${spId}`);
+    chiTietMap[spId] = (res.data.bienTheList || []).map((ct: any) => ({
+      ...ct,
+      id: Number(ct.id),
+    }));
+  } catch (e) {
+    console.error("Lỗi tải biến thể", e);
+  }
 };
 
-onMounted(async () => {
-  await fetchSanPham();
-
+const submit = async () => {
   try {
-    const res = await axios.get(`http://localhost:8080/api/promotions/${id}`);
-    const data = res.data;
-
-    form.tenDotGiamGia = data.tenDotGiamGia;
-    form.giaTriGiam = data.giaTriGiam;
-    form.ngayBatDau = data.ngayBatDau;
-    form.ngayKetThuc = data.ngayKetThuc;
-    selectedChiTietIds.value = data.chiTietSanPhamIds || [];
-    selectedSanPhamIds.value =
-      data.sanPhamApDung?.map((sp: any) => sp.idSp) || [];
-    selectedSanPhamIds.value =
-      data.sanPhamApDung?.map((sp: any) => sp.idSp) || [];
-
-    selectedChiTietIds.value = data.chiTietSanPhamIds || [];
-
-    // load biến thể theo SP
-    for (const spId of selectedSanPhamIds.value) {
-      await fetchChiTietBySpId(spId);
-    }
+    const payload = {
+      ...form,
+      chiTietSanPhamIds: selectedChiTietIds.value,
+    };
+    await axios.put(`http://localhost:8080/api/promotions/${id}`, payload);
+    showSuccessModal();
   } catch (e) {
+    alert("Lỗi server: Không thể cập nhật đợt giảm giá");
     console.error(e);
-    alert("Không tìm thấy thông tin đợt giảm giá");
   }
-});
+};
 
+// 7. Xử lý sự kiện chọn sản phẩm/biến thể
 const toggleSanPham = async (sp: any) => {
   const index = selectedSanPhamIds.value.indexOf(sp.id);
   if (index === -1) {
@@ -323,10 +368,9 @@ const toggleSanPham = async (sp: any) => {
     await fetchChiTietBySpId(sp.id);
   } else {
     selectedSanPhamIds.value.splice(index, 1);
-    const cts = chiTietMap[sp.id] || [];
-    const ctIds = cts.map((c) => c.id);
+    const ctIds = (chiTietMap[sp.id] || []).map((c) => c.id);
     selectedChiTietIds.value = selectedChiTietIds.value.filter(
-      (id) => !ctIds.includes(id),
+      (id) => !ctIds.includes(id)
     );
   }
 };
@@ -340,24 +384,30 @@ const toggleChiTiet = (ctId: number) => {
   }
 };
 
-const back = () => router.push("/admin/promotion");
-
-const submit = async () => {
-  if (!validate()) return;
-
+// 8. Khởi tạo dữ liệu khi Load trang
+onMounted(async () => {
+  await fetchSanPham();
   try {
-    const payload = {
-      ...form,
-      chiTietSanPhamIds: selectedChiTietIds.value,
-    };
+    const res = await axios.get(`http://localhost:8080/api/promotions/${id}`);
+    const data = res.data;
 
-    await axios.put(`http://localhost:8080/api/promotions/${id}`, payload);
+    form.tenDotGiamGia = data.tenDotGiamGia;
+    form.giaTriGiam = data.giaTriGiam;
+    form.ngayBatDau = data.ngayBatDau;
+    form.ngayKetThuc = data.ngayKetThuc;
+    
+    selectedSanPhamIds.value = data.sanPhamApDung?.map((sp: any) => sp.idSp) || [];
+    selectedChiTietIds.value = data.chiTietSanPhamIds || [];
 
-    showSuccessModal();
+    // Tải trước biến thể của các sản phẩm đã được áp dụng
+    for (const spId of selectedSanPhamIds.value) {
+      await fetchChiTietBySpId(spId);
+    }
   } catch (e) {
-    alert("Lỗi cập nhật đợt giảm giá");
+    console.error(e);
+    alert("Không tìm thấy thông tin đợt giảm giá này");
   }
-};
+});
 </script>
 
 <style scoped>
@@ -366,9 +416,11 @@ const submit = async () => {
   display: grid;
   grid-template-columns: 5fr 7fr;
   gap: 16px;
+  padding: 20px;
+  background-color: #f4f4f9;
+  min-height: 100vh;
 }
 
-/* full row (variant) */
 .full {
   grid-column: 1 / -1;
   margin-top: 16px;
@@ -377,104 +429,132 @@ const submit = async () => {
 /* === CARD === */
 .card {
   background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
-/* === TITLE === */
 .title {
-  font-weight: 600;
-  margin-bottom: 16px;
-  text-transform: uppercase;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
+  border-bottom: 2px solid #63391F;
+  padding-bottom: 8px;
 }
 
 .subtitle {
   font-weight: 600;
   margin-bottom: 12px;
+  color: #63391F;
 }
 
 /* === FORM === */
 .form {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .field label {
   display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #555;
 }
 
 .field input {
-  width: 95%;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
-/* === INPUT GROUP === */
 .input-group {
   display: flex;
 }
 
 .input-group input {
   border-right: none;
-  border-radius: 4px 0 0 4px;
+  border-radius: 6px 0 0 6px;
 }
 
 .input-group span {
-  padding: 6px 10px;
-  background: #eee;
-  border: 1px solid #ccc;
+  padding: 10px 15px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
   border-left: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
+  color: #666;
 }
 
-/* === ACTIONS === */
+/* === BUTTONS === */
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
-/* === BUTTON === */
 .btn {
-  padding: 6px 14px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 6px;
   border: none;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .btn.primary {
-  background: #6f4e37;
+  background: #63391F;
   color: #fff;
 }
 
 .btn.cancel {
-  background: #ccc;
+  background: #e0e0e0;
+  color: #333;
 }
 
-/* === ICON BUTTON === */
+.btn:hover {
+  opacity: 0.9;
+}
+
 .btn-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1px solid #999;
+  border: 1px solid #ccc;
   background: #fff;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-icon.active {
-  background: #63391f;
+  background: #63391F;
   color: #fff;
-  border-color: #63391f;
+  border-color: #63391F;
+}
+/* Nút tick trên header */
+.header-tick {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+  font-weight: bold;
 }
 
+.header-tick.active {
+  background: #fff;
+  color: #63391F; /* Màu nâu chủ đạo của bạn */
+}
+
+.header-tick:hover {
+  transform: scale(1.1);
+}
 /* === TABLE === */
 .table-wrapper {
-  max-height: 520px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -484,59 +564,91 @@ table {
 }
 
 th {
-  background: #63391f;
+  background: #63391F;
   color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-th,
-td {
-  padding: 8px;
+th, td {
+  padding: 12px;
   text-align: center;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
 }
 
-/* === IMAGE === */
 img {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   object-fit: cover;
+  border-radius: 4px;
 }
 
 /* === ERROR === */
 .error {
-  color: #e74c3c;
-  font-size: 13px;
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
-.block {
-  display: block;
+.block { display: block; }
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.empty {
-  color: #888;
+/* Style cho từng cái Toast giống ảnh mẫu */
+.toast {
+  min-width: 300px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #dcfce7; /* Xanh nhạt */
+  color: #166534;           /* Chữ xanh đậm */
+  font-size: 16px;
+  font-weight: 500;
+  border-left: 6px solid #22c55e; /* Thanh màu xanh lá đậm bên trái */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
 }
 
+/* Hiệu ứng trượt từ phải vào */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === MODAL === */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2000;
 }
 
 .modal-box {
   background: #fff;
-  padding: 20px;
-  border-radius: 6px;
-  width: 320px;
-}
-
-.modal-box.center {
+  padding: 30px;
+  border-radius: 12px;
+  width: 400px;
   text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
-.success {
-  color: #198754;
-}
+.modal-box h4 { margin-top: 0; color: #333; }
+.modal-box p { color: #666; line-height: 1.5; }
 </style>

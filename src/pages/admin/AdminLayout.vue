@@ -10,34 +10,43 @@
       </div>
 
       <nav class="menu">
+        <!-- ===== NHÓM CHÍNH ===== -->
         <div class="menu-group">
+          <router-link to="/admin" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/home.svg" style="width:30px;height:30px" />
+              <div>Trang chủ</div>
+            </div>
+          </router-link>
+
           <router-link to="/admin/statistic" class="menu-item">
             <div class="invoice">
-              <img
-                src="/src/assets//icon/report.svg"
-                alt=""
-                style="width: 30px; height: 30px"
-              />
+              <img src="/src/assets/icon/report.svg" style="width:30px;height:30px" />
               <div>Thống kê</div>
             </div>
           </router-link>
+
+          <router-link to="/admin/pos" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/cashier.svg" style="width:30px;height:30px" />
+              <div>Bán hàng tại quầy</div>
+            </div>
+          </router-link>
+
           <router-link to="/admin/invoice" class="menu-item">
             <div class="invoice">
-              <img
-                src="/src/assets//icon/invoice.svg"
-                alt=""
-                style="width: 30px; height: 30px"
-              />
+              <img src="/src/assets/icon/invoice.svg" style="width:30px;height:30px" />
               <div>Quản lý hóa đơn</div>
             </div>
           </router-link>
-          <div class="menu-item has-children" @click="goToProduct">
-            <img
-              src="/src/assets//icon/box.svg"
-              alt=""
-              style="width: 30px; height: 30px"
-            />
 
+          <!-- Quản lý sản phẩm -->
+          <div
+            class="menu-item has-children"
+            :class="{ active: isProductOpen }"
+            @click="goToProduct"
+          >
+            <img src="/src/assets/icon/box.svg" style="width:30px;height:30px" />
             <div>
               Quản lý sản phẩm
               <span class="arrow" :class="{ open: isProductOpen }">▾</span>
@@ -45,42 +54,27 @@
           </div>
 
           <div class="submenu" v-show="isProductOpen">
-            <router-link to="/admin/product" class="submenu-item">
-              Sản phẩm
-            </router-link>
-            <router-link to="/admin/color" class="submenu-item">
-              Màu sắc
-            </router-link>
-            <router-link to="/admin/size" class="submenu-item">
-              Kích cỡ
-            </router-link>
-            <router-link to="/admin/material" class="submenu-item">
-              Chất liệu
-            </router-link>
-            <router-link to="/admin/origin" class="submenu-item">
-              Xuất xứ
-            </router-link>
-            <router-link to="/admin/style" class="submenu-item">
-              Phong cách mặc
-            </router-link>
-            <router-link to="/admin/type" class="submenu-item">
-              Loại áo
-            </router-link>
-            <router-link to="/admin/shapetype" class="submenu-item">
-              Kiểu dáng
-            </router-link>
+            <router-link to="/admin/product" class="submenu-item">Sản phẩm</router-link>
+            <router-link to="/admin/color" class="submenu-item">Màu sắc</router-link>
+            <router-link to="/admin/size" class="submenu-item">Kích cỡ</router-link>
+            <router-link to="/admin/material" class="submenu-item">Chất liệu</router-link>
+            <router-link to="/admin/origin" class="submenu-item">Xuất xứ</router-link>
+            <router-link to="/admin/style" class="submenu-item">Phong cách mặc</router-link>
+            <router-link to="/admin/type" class="submenu-item">Loại áo</router-link>
+            <router-link to="/admin/shapetype" class="submenu-item">Kiểu dáng</router-link>
           </div>
         </div>
 
+        <!-- ===== KHUYẾN MẠI ===== -->
         <div class="menu-group">
-          <div class="menu-item has-children" @click="toggleDiscount">
-            <img
-              src="/src/assets//icon/pgg.svg"
-              alt=""
-              style="width: 30px; height: 30px"
-            />
+          <div
+            class="menu-item has-children"
+            :class="{ active: isDiscountOpen }"
+            @click="toggleDiscount"
+          >
+            <img src="/src/assets/icon/pgg.svg" style="width:30px;height:30px" />
             <div>
-              Quản lý giảm giá
+              Khuyến mại
               <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
             </div>
           </div>
@@ -94,13 +88,15 @@
             </router-link>
           </div>
         </div>
+
+        <!-- ===== TÀI KHOẢN ===== -->
         <div class="menu-group">
-          <div class="menu-item has-children" @click="toggleAccount">
-            <img
-              src="/src/assets//icon/user.svg"
-              alt=""
-              style="width: 30px; height: 30px"
-            />
+          <div
+            class="menu-item has-children"
+            :class="{ active: isAccountOpen }"
+            @click="toggleAccount"
+          >
+            <img src="/src/assets/icon/user.svg" style="width:30px;height:30px" />
             <div>
               Tài khoản
               <span class="arrow" :class="{ open: isAccountOpen }">▾</span>
@@ -117,15 +113,13 @@
           </div>
         </div>
       </nav>
-
-
     </aside>
 
     <div class="main">
       <header class="topbar">
         <div class="top-icons">
-          <img src="/src/assets/icon/notification.svg" alt="" />
-          <img src="/src/assets/icon/user.svg" alt="">
+          <img src="/src/assets/icon/notification.svg" />
+          <img src="/src/assets/icon/user.svg" />
         </div>
       </header>
 
@@ -135,6 +129,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
@@ -170,7 +165,7 @@ const toggleAccount = () => {
 
 /* ================= SIDEBAR ================= */
 .sidebar {
-  width: 260px;
+  width: 270px;
   background: #fff;
   border-right: 1px solid #ddd;
   display: flex;
@@ -189,7 +184,7 @@ const toggleAccount = () => {
 }
 
 .logo {
-  width: 120px;
+  width: 200px;
 }
 
 /* ================= MENU ================= */
@@ -216,54 +211,65 @@ const toggleAccount = () => {
 /* hover + active menu cha */
 .menu-item:hover,
 .router-link-active {
-  background: #6b3f2a;
+  background:
+    linear-gradient(
+      90deg,
+      #c89b6d 0%,
+      #6b3f23 100%
+    );
+  position: relative;
   color: #fff;
+}
+
+.menu-item:hover::after,
+.router-link-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
 }
 
 /* ================= SUBMENU ================= */
 
 /* ❌ bỏ thụt lề để thẳng hàng menu cha */
 .menu-group .submenu {
-  padding-left: 0;
-  margin-top: 4px;
+  position: relative;
+  margin-left: 20px;
+  border-left: 2px solid #ddd; /* đường kẻ dọc */
 }
+
 
 /* item menu con */
+/* item menu con – mỗi item 1 dòng */
 .submenu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 8px 15px;
-  color: #555;
-  text-decoration: none;
+  display: block;              /* 🔥 QUAN TRỌNG */
+  padding: 8px 15px 8px 20px;
   font-size: 14px;
-  position: relative;
-  gap: 40px;
+  font-weight: 400;
+  color: #333;
+  text-decoration: none;
+  margin: 2px 0;               /* sát nhưng không dính */
 }
 
-/* 🔵 chấm tròn */
-.submenu-item::before {
-  content: "•";
-  font-size: 28px;
-  color: #6b3f2a;
-  position: relative;
-  left: 10px;
-}
+
 
 /* hover menu con */
 .submenu-item:hover {
-  background: #6b3f2a;
-  color: #fff;
-  border-radius: 6px;
+  background: rgba(200, 155, 109, 0.25); /* vàng mờ */
+  color: #333;
+  font-weight: 600;
+  border-radius: 4px;
 }
+
 
 /* active menu con */
 .submenu-item.router-link-active {
-  background: #6b3f2a;
-  color: #fff;
-  border-radius: 6px;
+  background: transparent;
+  color: #000;
+  font-weight: 600;
 }
+
 
 /* chấm tròn đổi màu khi hover/active */
 .submenu-item:hover::before,
@@ -286,10 +292,28 @@ const toggleAccount = () => {
 .arrow.open {
   transform: rotate(180deg);
 }
+/* menu cha active – giữ gradient sau khi click */
+.menu-item.active {
+  background: linear-gradient(
+    90deg,
+    #c89b6d 0%,
+    #6b3f23 100%
+  );
+  color: #fff;
+  position: relative;
+}
+
+.menu-item.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+}
 
 /* ================= MAIN ================= */
 .main {
-  margin-left: 260px;
+  margin-left: 270px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -300,7 +324,7 @@ const toggleAccount = () => {
 .topbar {
   position: fixed;
   top: 0;
-  left: 260px;
+  left: 270px;
   right: 0;
   background: #fff;
   padding: 20px;
@@ -318,11 +342,16 @@ const toggleAccount = () => {
 }
 
 .content {
-  margin-top: 80px;
+  margin-top: 65px;
   padding: 20px;
   height: calc(100vh - 80px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
+.admin-layout {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 </style>
