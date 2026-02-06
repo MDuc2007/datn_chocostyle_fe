@@ -4,50 +4,51 @@
     <h2 class="title">QUẢN LÝ ĐỢT GIẢM GIÁ</h2>
 
     <div class="top-bar">
-  <!-- LEFT -->
-  <div class="left-actions">
-    <!-- SEARCH -->
-    <div class="search-wrapper">
-      <img src="/src/assets/icon/search.svg" class="search-icon" />
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Tìm theo mã hoặc tên"
-        v-model="filter.keyword"
-      />
+      <!-- LEFT -->
+      <div class="left-actions">
+        <!-- SEARCH -->
+        <div class="search-wrapper">
+          <img src="/src/assets/icon/search.svg" class="search-icon" />
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Tìm theo mã hoặc tên"
+            v-model="filter.keyword"
+          />
+        </div>
+
+        <!-- FILTER -->
+        <div class="filters">
+          <div class="filter-item">
+            <label>Trạng thái</label>
+            <select v-model="filter.trangThai">
+              <option value="">Tất cả</option>
+              <option :value="1">Đang áp dụng</option>
+              <option :value="2">Sắp diễn ra</option>
+              <option :value="0">Đã kết thúc</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Từ ngày</label>
+            <input type="date" v-model="filter.start" />
+          </div>
+
+          <div class="filter-item">
+            <label>Đến ngày</label>
+            <input type="date" v-model="filter.end" />
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+
+      <div class="add-btn">
+        <button @click="$router.push('/admin/promotion/create')">
+          <span>＋</span> Thêm đợt giảm
+        </button>
+      </div>
     </div>
-
-    <!-- FILTER -->
-    <div class="filters">
-      <div class="filter-item">
-        <label>Trạng thái</label>
-        <select v-model="filter.trangThai">
-          <option value="">Tất cả</option>
-          <option :value="1">Đang áp dụng</option>
-          <option :value="2">Sắp diễn ra</option>
-          <option :value="0">Đã kết thúc</option>
-        </select>
-      </div>
-
-      <div class="filter-item">
-        <label>Từ ngày</label>
-        <input type="date" v-model="filter.start" />
-      </div>
-
-      <div class="filter-item">
-        <label>Đến ngày</label>
-        <input type="date" v-model="filter.end" />
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="add-btn">
-    <button @click="$router.push('/admin/promotion/create')">
-      <span>＋</span> Thêm đợt giảm
-    </button>
-  </div>
-</div>
   </div>
   <!-- ===== CONTENT ===== -->
   <div class="product-page">
@@ -90,7 +91,7 @@
             </td>
 
             <td class="action">
-               <label class="switch">
+              <label class="switch">
                 <input
                   type="checkbox"
                   :checked="p.trangThai !== 0"
@@ -103,14 +104,12 @@
                 class="icon edit"
                 @click="$router.push(`/admin/promotion/${p.id}/edit`)"
               >
-                <img 
+                <img
                   src="/src/assets/icon/edit.svg"
                   alt=""
                   style="width: 20px; height: 20px"
                 />
               </span>
-
-             
             </td>
           </tr>
 
@@ -120,36 +119,35 @@
         </tbody>
       </table>
       <div class="pagination">
-      <!-- PREV -->
-<button
-  class="nav-btn"
-  @click="changePage(pagination.page - 1)"
-  :disabled="pagination.page === 0"
->
-  &lt;
-</button>
+        <!-- PREV -->
+        <button
+          class="nav-btn"
+          @click="changePage(pagination.page - 1)"
+          :disabled="pagination.page === 0"
+        >
+          &lt;
+        </button>
 
-<!-- PAGE NUMBERS -->
-<button
-  v-for="p in visiblePages"
-  :key="p"
-  class="page-btn"
-  :class="{ active: p - 1 === pagination.page }"
-  :disabled="p === '...'"
-  @click="p !== '...' && changePage(p - 1)"
->
-  {{ p }}
-</button>
+        <!-- PAGE NUMBERS -->
+        <button
+          v-for="p in visiblePages"
+          :key="p"
+          class="page-btn"
+          :class="{ active: p - 1 === pagination.page }"
+          :disabled="p === '...'"
+          @click="p !== '...' && changePage(p - 1)"
+        >
+          {{ p }}
+        </button>
 
-<!-- NEXT -->
-<button
-  class="nav-btn"
-  @click="changePage(pagination.page + 1)"
-  :disabled="pagination.page >= pagination.totalPages - 1"
->
-  &gt;
-</button>
-
+        <!-- NEXT -->
+        <button
+          class="nav-btn"
+          @click="changePage(pagination.page + 1)"
+          :disabled="pagination.page >= pagination.totalPages - 1"
+        >
+          &gt;
+        </button>
       </div>
     </div>
   </div>
@@ -294,9 +292,8 @@ const statusText = (s: number) =>
 .left-actions {
   display: flex;
   align-items: flex-end;
-gap:12px;
+  gap: 12px;
 }
-
 
 /* ===== SEARCH ===== */
 .search-wrapper {
@@ -348,7 +345,6 @@ gap:12px;
   font-size: 14px;
   color: #555555a4;
   background: #fff;
-
 }
 
 /* ===== ADD ===== */
@@ -358,10 +354,10 @@ gap:12px;
 }
 
 .add-btn button {
-  height: 40px;                 /* 👈 bằng input */
-  padding: 0 16px;              /* ngang vừa tay */
+  height: 40px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
   border: 1px solid #ccc;
-  border-radius: 10px;          /* 👈 bo y hệt */
+  border-radius: 10px; /* 👈 bo y hệt */
   background: #fff;
   cursor: pointer;
 
@@ -403,20 +399,34 @@ gap:12px;
   padding: 18px 12px;
   border-bottom: 1px solid #ddd;
   text-align: center;
-  
 }
-
+.status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+/* Đang áp dụng */
 .status.selling {
   color: #2ecc71;
-  font-weight: 600;
+  background: #eafaf1; /* xanh nhạt */
+  border-color: #b7e6c9;
 }
+
+/* Sắp diễn ra */
 .status.upcoming {
   color: #f39c12;
-  font-weight: 600;
+  background: #fff4e5; /* cam nhạt */
+  border-color: #f7d9a6;
 }
+
+/* Đã kết thúc */
 .status.stopped {
   color: #e74c3c;
-  font-weight: 600;
+  background: #fdecea; /* đỏ nhạt */
+  border-color: #f5b7b1;
 }
 
 .action {
@@ -536,5 +546,4 @@ input:checked + .slider::before {
   opacity: 0.4;
   background: #fff;
 }
-
 </style>

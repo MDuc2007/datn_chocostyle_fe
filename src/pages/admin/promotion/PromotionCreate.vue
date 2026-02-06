@@ -7,21 +7,26 @@
 
         <div class="form-group">
           <label>Tên đợt giảm giá</label>
-          <input v-model="form.tenDotGiamGia" />
+          <input
+            v-model="form.tenDotGiamGia"
+            placeholder="Nhập tên đợt giảm giá"
+          />
           <small v-if="errors.tenDotGiamGia">{{ errors.tenDotGiamGia }}</small>
         </div>
-
         <div class="form-group">
           <label>Giá trị giảm (%)</label>
-          <div class="input-percent">
+
+          <div class="percent-wrapper">
             <input
               type="number"
               v-model.number="form.giaTriGiam"
               min="1"
               max="100"
+              class="percent-input"
             />
-            <span>%</span>
+            <span class="percent-symbol">%</span>
           </div>
+
           <small v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</small>
         </div>
 
@@ -52,6 +57,13 @@
     <div class="right-panel">
       <div class="panel">
         <h5 class="panel-title">Danh sách sản phẩm</h5>
+
+        <input
+          v-model="searchKeyword"
+          class="search-input"
+          placeholder="Tìm theo mã hoặc tên sản phẩm..."
+        />
+
         <small v-if="errors.chiTiet" class="error">{{ errors.chiTiet }}</small>
 
         <div class="table-wrapper">
@@ -59,22 +71,22 @@
             <thead class="table-light">
               <tr>
                 <th>
-  <button 
-    class="btn-icon header-tick" 
-    :class="{ active: isAllSanPhamSelected }"
-    @click="toggleAllSanPham"
-  >
-    {{ isAllSanPhamSelected ? "✓" : "+" }}
-  </button>
-</th>
+                  <button
+                    class="btn-icon header-tick"
+                    :class="{ active: isAllSanPhamSelected }"
+                    @click="toggleAllSanPham"
+                  >
+                    {{ isAllSanPhamSelected ? "✓" : "+" }}
+                  </button>
+                </th>
                 <th>STT</th>
-                <th>Mã SP</th>
+                <th>Mã sản phẩm</th>
                 <th>Tên sản phẩm</th>
                 <th>Ảnh</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(sp, i) in sanPhamList" :key="sp.id">
+              <tr v-for="(sp, i) in filteredSanPhamList" :key="sp.id">
                 <td>
                   <button
                     class="btn-icon"
@@ -98,74 +110,74 @@
 
   <!-- BIẾN THỂ -->
   <div v-for="spId in selectedSanPhamIds" :key="spId" class="col-12">
-    <div class="panel card">
+    <div class="panel-card">
       <div class="card-body">
         <h5 class="panel-title">
           Biến thể của sản phẩm:
           {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
         </h5>
 
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>
-  <button
-    class="btn-icon header-tick"
-    :class="{ active: isAllChiTietSelected(spId) }"
-    @click="toggleAllChiTiet(spId)"
-  >
-    {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
-  </button>
-</th>
-                <th>Mã CTSP</th>
-                <th>Màu sắc</th>
-                <th>Kích cỡ</th>
-                <th>Loại áo</th>
-                <th>Kiểu dáng</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ct in chiTietMap[spId]" :key="ct.id">
-               <td>
-  <button
-    class="btn-icon"
-    :class="{ active: selectedChiTietIds.includes(ct.id) }"
-    @click="toggleChiTiet(ct.id)"
-  >
-    {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
-  </button>
-</td>
-                <td>{{ ct.maChiTietSanPham }}</td>
-                <td>
-                  <span
-                    v-for="(m, i) in ct.mauSacList"
-                    :key="i"
-                    class="badge me-1"
-                    :style="{ backgroundColor: m.rgb }"
-                  >
-                    {{ m.tenMauSac }}
-                  </span>
-                </td>
-                <td>
-                  <span
-                    v-for="(k, i) in ct.kichCoList"
-                    :key="i"
-                    class="badge bg-secondary me-1"
-                  >
-                    {{ k }}
-                  </span>
-                </td>
-                <td>
-                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
-                </td>
-                <td>
-                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenKieuDang }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <!-- ❌ bỏ table-wrapper + table-responsive -->
+        <table class="variant">
+          <thead>
+            <tr>
+              <th>
+                <button
+                  class="btn-icon header-tick"
+                  :class="{ active: isAllChiTietSelected(spId) }"
+                  @click="toggleAllChiTiet(spId)"
+                >
+                  {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
+                </button>
+              </th>
+              <th>Mã chi tiết sản phẩm</th>
+              <th>Màu sắc</th>
+              <th>Kích cỡ</th>
+              <th>Loại áo</th>
+              <th>Kiểu dáng</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="ct in chiTietMap[spId]" :key="ct.id">
+              <td>
+                <button
+                  class="btn-icon"
+                  :class="{ active: selectedChiTietIds.includes(ct.id) }"
+                  @click="toggleChiTiet(ct.id)"
+                >
+                  {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
+                </button>
+              </td>
+
+              <td>{{ ct.maChiTietSanPham }}</td>
+
+              <td>
+                <span v-for="(m, i) in ct.mauSacList" :key="i">
+                  {{ m.tenMauSac }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  v-for="(k, i) in ct.kichCoList"
+                  :key="i"
+                  class="badge bg-secondary me-1"
+                >
+                  {{ k }}
+                </span>
+              </td>
+
+              <td>
+                {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
+              </td>
+
+              <td>
+                {{ sanPhamList.find((sp) => spId === sp.id)?.tenKieuDang }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -182,15 +194,11 @@
     </div>
   </div>
 
-<div class="toast-container">
-  <div
-    v-for="notif in notifications"
-    :key="notif.id"
-    class="toast success"
-  >
-    {{ notif.message }}
+  <div class="toast-container">
+    <div v-for="notif in notifications" :key="notif.id" class="toast success">
+      {{ notif.message }}
+    </div>
   </div>
-</div>
 </template>
 
 <script setup lang="ts">
@@ -218,24 +226,23 @@ const errors = reactive({
 
 const showConfirm = ref(false);
 
-
 // 1. Khai báo mảng chứa thông báo
-const notifications = ref<{id: number, message: string}[]>([]);
+const notifications = ref<{ id: number; message: string }[]>([]);
 
 // 2. Hàm để đẩy thông báo vào mảng và tự xóa sau 3 giây
 const showNotification = (message: string) => {
   const id = Date.now();
   notifications.value.push({ id, message });
-  
+
   setTimeout(() => {
-    notifications.value = notifications.value.filter(n => n.id !== id);
+    notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 3000);
 };
 
 // 3. Sửa lại hàm này để gọi thông báo thay vì hiện modal
 const showSuccessModal = () => {
   showNotification("Thêm đợt giảm giá thành công"); // Hoặc "🎉 Thêm thành công"
-  
+
   // Vẫn giữ logic chuyển trang sau 1.5s nếu cần
   setTimeout(() => {
     router.push("/admin/promotion");
@@ -282,6 +289,19 @@ const validate = () => {
 
   return valid;
 };
+const searchKeyword = ref("");
+
+const filteredSanPhamList = computed(() => {
+  if (!searchKeyword.value.trim()) return sanPhamList;
+
+  const kw = searchKeyword.value.toLowerCase();
+
+  return sanPhamList.filter(
+    (sp) =>
+      sp.maSp?.toLowerCase().includes(kw) ||
+      sp.tenSp?.toLowerCase().includes(kw),
+  );
+});
 
 const sanPhamList = reactive<any[]>([]);
 
@@ -327,42 +347,52 @@ const toggleSanPham = async (sp: any) => {
 };
 const isAllSanPhamSelected = computed(() => {
   return (
-    sanPhamList.length > 0 &&
-    selectedSanPhamIds.value.length === sanPhamList.length
+    filteredSanPhamList.value.length > 0 &&
+    filteredSanPhamList.value.every((sp) =>
+      selectedSanPhamIds.value.includes(sp.id),
+    )
   );
 });
 const toggleAllSanPham = async () => {
   if (isAllSanPhamSelected.value) {
-    selectedSanPhamIds.value = [];
-    selectedChiTietIds.value = [];
-    Object.keys(chiTietMap).forEach((k) => delete chiTietMap[+k]);
+    filteredSanPhamList.value.forEach((sp) => {
+      const index = selectedSanPhamIds.value.indexOf(sp.id);
+      if (index !== -1) selectedSanPhamIds.value.splice(index, 1);
+
+      delete chiTietMap[sp.id];
+    });
+
+    selectedChiTietIds.value = selectedChiTietIds.value.filter(
+      (id) =>
+        !Object.values(chiTietMap)
+          .flat()
+          .some((ct) => ct.id === id),
+    );
+
     return;
   }
 
-  selectedSanPhamIds.value = sanPhamList.map((sp) => sp.id);
-  selectedChiTietIds.value = [];
-  Object.keys(chiTietMap).forEach((k) => delete chiTietMap[+k]);
+  for (const sp of filteredSanPhamList.value) {
+    if (!selectedSanPhamIds.value.includes(sp.id)) {
+      selectedSanPhamIds.value.push(sp.id);
+    }
 
-  for (const sp of sanPhamList) {
-    try {
+    if (!chiTietMap[sp.id]) {
       const res = await axios.get(
         `http://localhost:8080/api/san-pham/${sp.id}`,
       );
 
-      const list = res.data.bienTheList || [];
-
-      chiTietMap[sp.id] = list;
-
-      list.forEach((ct: any) => {
-        if (!selectedChiTietIds.value.includes(ct.id)) {
-          selectedChiTietIds.value.push(ct.id);
-        }
-      });
-    } catch (e) {
-      console.error("Lỗi load CTSP", e);
+      chiTietMap[sp.id] = res.data.bienTheList || [];
     }
+
+    chiTietMap[sp.id].forEach((ct: any) => {
+      if (!selectedChiTietIds.value.includes(ct.id)) {
+        selectedChiTietIds.value.push(ct.id);
+      }
+    });
   }
 };
+
 const isAllChiTietSelected = (spId: number) => {
   const list = chiTietMap[spId];
 
@@ -427,21 +457,41 @@ const back = () => router.push("/admin/promotion");
   gap: 20px;
 }
 .left-panel {
-  width: 35%;
+  width: 40%;
 }
 .right-panel {
-  width: 65%;
+  width: 60%;
 }
 
 .panel {
+  height: 510px;
   background: #fff;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 20px;
   padding: 20px;
+  display: flex;
+  flex-direction: column; /* 🔥 rất quan trọng */
+  margin-bottom: 20px;
+}
+.panel-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column; /* 🔥 rất quan trọng */
 }
 .panel-title {
   font-weight: 700;
+  font-size: 25px;
   margin-bottom: 15px;
+  margin-top: 1px;
+}
+.panel-card {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
 }
 
 .form-group {
@@ -449,9 +499,11 @@ const back = () => router.push("/admin/promotion");
 }
 .form-group input {
   width: 95%;
+  height: 30px;
   padding: 8px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 10px;
+  margin-top: 15px;
 }
 .form-group small {
   color: red;
@@ -466,6 +518,31 @@ const back = () => router.push("/admin/promotion");
   border: 1px solid #ccc;
   border-left: none;
 }
+.percent-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 1px;
+}
+
+.percent-input {
+  width: 100%;
+  height: 30px;
+  padding-right: 30px;
+  padding-left: 8px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+.percent-symbol {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-weight: 600;
+  pointer-events: none;
+  margin-top: 8px;
+}
 
 .actions {
   display: flex;
@@ -474,87 +551,144 @@ const back = () => router.push("/admin/promotion");
 }
 
 .btn-primary {
-  background: #63391F;
+  width: 100px;
+  height: 40px;
+  background: #63391f;
   color: #fff;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 10px;
+  margin-top: 1px;
 }
 .btn-secondary {
+  width: 100px;
+  height: 40px;
   background: #888;
   color: #fff;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 10px;
+  margin-top: 1px;
 }
-
-/* Ép bảng dùng layout cố định để không bị lệch cột */
 .table {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed; /* Rất quan trọng: giúp cố định độ rộng cột */
+  border-collapse: separate;
+  border-spacing: 0;
+  flex: 1;
 }
 
-/* Cố định độ rộng cột chứa nút Tick (Cột đầu tiên) */
+.table tbody {
+  display: block;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.table thead,
+.table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.table-wrapper {
+  position: relative;
+  flex: 1;
+  margin-top: 10px;
+
+  border-radius: 16px;
+  border: 1px solid #ddd;
+  background: #fff;
+
+  overflow: hidden; /* 🔥 QUAN TRỌNG: giữ bo góc */
+  display: flex;
+  flex-direction: column;
+}
+
+.table-wrapper::before {
+  content: "";
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+}
+
 .table th:first-child,
 .table td:first-child {
-  width: 70px; /* Ép cột đầu tiên rộng đúng 70px */
+  width: 70px;
   text-align: center;
   vertical-align: middle;
 }
+.table thead th:first-child {
+  border-top-left-radius: 16px;
+}
 
-/* Các cột khác (STT, Mã, Ảnh) có thể cố định nếu cần */
-.table th:nth-child(2), .table td:nth-child(2) { width: 60px; } /* STT */
-.table th:last-child, .table td:last-child { width: 100px; }   /* Ảnh */
+.table thead th:last-child {
+  border-top-right-radius: 16px;
+}
 
-/* Nội dung chung của ô */
-th, td {
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 60px;
+} /* STT */
+.table th:last-child,
+.table td:last-child {
+  width: 100px;
+} /* Ảnh */
+
+th,
+td {
   padding: 12px 8px;
   text-align: center;
   vertical-align: middle;
-  word-wrap: break-word; /* Tránh nội dung quá dài làm vỡ cột */
+  word-wrap: break-word;
   border-bottom: 1px solid #eee;
 }
 
-/* Căn giữa nút tròn bên trong ô */
 .btn-icon {
-  margin: 0 auto; /* Đảm bảo nút nằm chính giữa ô 70px */
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Các thuộc tính vòng tròn giữ nguyên như cũ */
   width: 32px;
   height: 32px;
   border-radius: 50% !important;
+  border: 1px solid #ccc;
 }
 
-/* Khi được chọn: Nền nâu, chữ trắng */
 .btn-icon.active {
-  background: #63391F !important;
-  border-color: #63391F !important;
+  background: #63391f !important;
+  border-color: #63391f !important;
   color: #fff !important;
 }
 
-/* Hiệu ứng hover cho nút tròn */
 .btn-icon:hover {
-  border-color: #63391F;
+  border-color: #63391f;
   box-shadow: 0 0 5px rgba(99, 57, 31, 0.3);
 }
-
-/* --- NÚT TICK TRÊN HEADER (NỀN NÂU) --- */
-.header-tick {
-  background: transparent !important;
-  border: 2px solid #fff !important;
-  color: #fff !important;
-  margin: 0 auto;
+.search-input {
+  width: 95%;
+  height: 30px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  outline: none;
+  font-size: 14px;
 }
 
-/* Khi chọn tất cả trên Header: Nghịch đảo màu (Nền trắng, chữ nâu) */
-.header-tick.active {
-  background: #fff !important;
-  color: #63391F !important;
-  border-color: #fff !important;
+.search-input:focus {
+  border-color: #63391f;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.15);
 }
+
 img {
   width: 60px;
   height: 60px;
@@ -562,24 +696,18 @@ img {
   border-radius: 4px;
 }
 
-
-
-/* Đồng bộ Header bảng */
 th {
-  background: #63391F;
-  color: #fff;
+  color: #000000;
   text-align: center;
   vertical-align: middle;
 }
 .badge {
   padding: 4px 8px;
   border-radius: 12px;
-  color: #fff;
+  color: #000000;
   font-size: 12px;
 }
-.bg-secondary {
-  background: #6c757d;
-}
+
 .me-1 {
   margin-right: 4px;
 }
@@ -622,7 +750,6 @@ th {
 .success {
   color: #28a745;
 }
-/* Container nằm cố định ở góc trên phải */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -632,22 +759,18 @@ th {
   flex-direction: column;
   gap: 10px;
 }
-
-/* Style cho từng cái Toast giống ảnh mẫu */
 .toast {
   min-width: 300px;
   padding: 16px 24px;
   border-radius: 8px;
-  background-color: #dcfce7; /* Xanh nhạt */
-  color: #166534;           /* Chữ xanh đậm */
+  background-color: #dcfce7;
+  color: #166534;
   font-size: 16px;
   font-weight: 500;
-  border-left: 6px solid #22c55e; /* Thanh màu xanh lá đậm bên trái */
+  border-left: 6px solid #22c55e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: slideIn 0.3s ease-out;
 }
-
-/* Hiệu ứng trượt từ phải vào */
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -657,5 +780,56 @@ th {
     transform: translateX(0);
     opacity: 1;
   }
+}
+.table thead th {
+  color: #000000 !important;
+}
+/* ===== TABLE BIẾN THỂ ===== */
+.variant {
+  width: 100%;
+  border-collapse: separate; /* 🔥 để bo góc được */
+  border-spacing: 0;
+  table-layout: auto;
+
+  border: 1px solid #ddd; /* ✅ viền ngoài */
+  border-radius: 16px; /* ✅ bo góc */
+  overflow: hidden; /* ✅ cắt góc thead */
+  background: #fff;
+}
+
+.variant th,
+.variant td {
+  padding: 10px 8px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  border-bottom: 1px solid #eee; /* line giữa các row */
+}
+
+/* bỏ line dưới cùng */
+.variant tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* cột mã cho phép wrap */
+.variant td:nth-child(2) {
+  white-space: normal;
+}
+
+/* thead */
+
+.variant thead th {
+  color: #000000;
+  font-weight: 600;
+}
+
+/* bo góc trên cho thead */
+.variant thead th:first-child {
+  border-top-left-radius: 16px;
+}
+
+.variant thead th:last-child {
+  border-top-right-radius: 16px;
 }
 </style>

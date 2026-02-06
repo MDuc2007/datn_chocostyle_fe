@@ -16,17 +16,14 @@
     <div class="form-wrapper">
       <div class="left">
         <h4>Thông tin cơ bản:</h4>
-
+        <div class="col">
+          <input type="hidden" :value="maCTSP" readonly />
+        </div>
         <div class="row">
-          <div class="col">
-            <label>Mã chi tiết sản phẩm <span class="required">*</span></label>
-            <input type="text" :value="maCTSP" readonly />
-          </div>
-
           <div class="col">
             <label>Màu sắc <span class="required">*</span></label>
             <div class="select-box">
-              <select v-model="selectedMauSacList">
+              <select v-model="selectedMauSacList" disabled>
                 <option value="">Chọn màu sắc</option>
                 <option
                   v-for="item in mauSacList"
@@ -42,7 +39,7 @@
           <div class="col">
             <label>Kích cỡ <span class="required">*</span></label>
             <div class="select-box">
-              <select v-model="selectedKichCoList">
+              <select v-model="selectedKichCoList" disabled>
                 <option value="">Chọn kích cỡ</option>
                 <option
                   v-for="item in kichCoList"
@@ -57,7 +54,7 @@
           <div class="col">
             <label>Loại áo <span class="required">*</span></label>
             <div class="select-box">
-              <select v-model="selectedLoaiAo">
+              <select v-model="selectedLoaiAo" disabled>
                 <option value="">Chọn loại áo</option>
                 <option
                   v-for="item in loaiAoList"
@@ -73,7 +70,7 @@
           <div class="col">
             <label>Kiểu dáng <span class="required">*</span></label>
             <div class="select-box">
-              <select v-model="selectedKieuDang">
+              <select v-model="selectedKieuDang" disabled>
                 <option value="">Chọn kiểu dáng</option>
                 <option
                   v-for="item in kieuDangList"
@@ -89,7 +86,7 @@
           <div class="col">
             <label>Phong cách mặc <span class="required">*</span></label>
             <div class="select-box">
-              <select v-model="selectedPhongCach">
+              <select v-model="selectedPhongCach" disabled>
                 <option value="">Chọn phong cách</option>
                 <option
                   v-for="item in phongCachList"
@@ -330,6 +327,11 @@ const validateForm = () => {
     return false;
   }
 
+  if (!imageUrl.value) {
+    showNotification("Vui lòng chọn ảnh cho biến thể", "warning");
+    return false;
+  }
+
   return true;
 };
 const handleOpenConfirm = () => {
@@ -408,7 +410,8 @@ onMounted(async () => {
 
 .form-wrapper {
   display: flex;
-  gap: 20px;
+  gap: 50px;
+  margin-left: 20px;
 }
 
 .left {
@@ -518,7 +521,7 @@ textarea {
 }
 
 .image-box {
-  width: 205px;
+  width: 280px;
   aspect-ratio: 1;
   background: #e8e0d8;
   border: 2px dashed #c7b2a3;
@@ -527,12 +530,12 @@ textarea {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  height: 205px;
+  height: 280px;
 }
 
 .image-box img {
-  width: 200px;
-  height: 200px;
+  width: 280px;
+  height: 280px;
   object-fit: cover;
   border-radius: 6px;
 }
@@ -556,6 +559,7 @@ textarea {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s;
+  margin-left: 20px;
 }
 
 .save-btn:hover:not(:disabled) {

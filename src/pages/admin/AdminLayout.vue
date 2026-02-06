@@ -12,30 +12,41 @@
       <nav class="menu">
         <!-- ===== NHÓM CHÍNH ===== -->
         <div class="menu-group">
-          <router-link to="/admin" class="menu-item">
+          <router-link to="/admin/dashboard" class="menu-item">
             <div class="invoice">
-              <img src="/src/assets/icon/home.svg" style="width:30px;height:30px" />
+              <img
+                src="/src/assets/icon/home.svg"
+                style="width: 30px; height: 30px"
+              />
               <div>Trang chủ</div>
             </div>
           </router-link>
 
           <router-link to="/admin/statistic" class="menu-item">
             <div class="invoice">
-              <img src="/src/assets/icon/report.svg" style="width:30px;height:30px" />
+              <img
+                src="/src/assets/icon/report.svg"
+                style="width: 30px; height: 30px"
+              />
               <div>Thống kê</div>
             </div>
           </router-link>
-
-          <router-link to="/admin/pos" class="menu-item">
+          <router-link to="/admin/sales" class="menu-item">
             <div class="invoice">
-              <img src="/src/assets/icon/cashier.svg" style="width:30px;height:30px" />
+              <img
+                src="/src/assets/icon/cashier.svg"
+                style="width: 30px; height: 30px"
+              />
               <div>Bán hàng tại quầy</div>
             </div>
           </router-link>
 
           <router-link to="/admin/invoice" class="menu-item">
             <div class="invoice">
-              <img src="/src/assets/icon/invoice.svg" style="width:30px;height:30px" />
+              <img
+                src="/src/assets/icon/invoice.svg"
+                style="width: 30px; height: 30px"
+              />
               <div>Quản lý hóa đơn</div>
             </div>
           </router-link>
@@ -46,7 +57,10 @@
             :class="{ active: isProductOpen }"
             @click="goToProduct"
           >
-            <img src="/src/assets/icon/box.svg" style="width:30px;height:30px" />
+            <img
+              src="/src/assets/icon/box.svg"
+              style="width: 30px; height: 30px"
+            />
             <div>
               Quản lý sản phẩm
               <span class="arrow" :class="{ open: isProductOpen }">▾</span>
@@ -54,14 +68,33 @@
           </div>
 
           <div class="submenu" v-show="isProductOpen">
-            <router-link to="/admin/product" class="submenu-item">Sản phẩm</router-link>
-            <router-link to="/admin/color" class="submenu-item">Màu sắc</router-link>
-            <router-link to="/admin/size" class="submenu-item">Kích cỡ</router-link>
-            <router-link to="/admin/material" class="submenu-item">Chất liệu</router-link>
-            <router-link to="/admin/origin" class="submenu-item">Xuất xứ</router-link>
-            <router-link to="/admin/style" class="submenu-item">Phong cách mặc</router-link>
-            <router-link to="/admin/type" class="submenu-item">Loại áo</router-link>
-            <router-link to="/admin/shapetype" class="submenu-item">Kiểu dáng</router-link>
+            <router-link to="/admin/product" class="submenu-item"
+              >Sản phẩm</router-link
+            >
+            <router-link to="/admin/product/details" class="submenu-item"
+              >Biến thể sản phẩm</router-link
+            >
+            <router-link to="/admin/origin" class="submenu-item"
+              >Xuất xứ</router-link
+            >
+            <router-link to="/admin/material" class="submenu-item"
+              >Chất liệu</router-link
+            >
+            <router-link to="/admin/color" class="submenu-item"
+              >Màu sắc</router-link
+            >
+            <router-link to="/admin/size" class="submenu-item"
+              >Kích cỡ</router-link
+            >
+            <router-link to="/admin/style" class="submenu-item"
+              >Phong cách mặc</router-link
+            >
+            <router-link to="/admin/type" class="submenu-item"
+              >Loại áo</router-link
+            >
+            <router-link to="/admin/shapetype" class="submenu-item"
+              >Kiểu dáng</router-link
+            >
           </div>
         </div>
 
@@ -72,7 +105,10 @@
             :class="{ active: isDiscountOpen }"
             @click="toggleDiscount"
           >
-            <img src="/src/assets/icon/pgg.svg" style="width:30px;height:30px" />
+            <img
+              src="/src/assets/icon/pgg.svg"
+              style="width: 30px; height: 30px"
+            />
             <div>
               Khuyến mại
               <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
@@ -96,7 +132,10 @@
             :class="{ active: isAccountOpen }"
             @click="toggleAccount"
           >
-            <img src="/src/assets/icon/user.svg" style="width:30px;height:30px" />
+            <img
+              src="/src/assets/icon/user.svg"
+              style="width: 30px; height: 30px"
+            />
             <div>
               Tài khoản
               <span class="arrow" :class="{ open: isAccountOpen }">▾</span>
@@ -112,14 +151,50 @@
             </router-link>
           </div>
         </div>
+        <div class="menu-group">
+          <div class="menu-item has-children" @click="toggleSchedule">
+            <img
+              src="/src/assets/icon/calendar.svg"
+              alt=""
+              style="width: 30px; height: 30px"
+              onerror="
+                this.src =
+                  'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'
+              "
+            />
+            <div>
+              Quản lý lịch làm việc
+              <span class="arrow" :class="{ open: isScheduleOpen }">▾</span>
+            </div>
+          </div>
+
+          <div class="submenu" v-show="isScheduleOpen">
+            <router-link to="/admin/shift" class="submenu-item">
+              Ca làm việc
+            </router-link>
+            <router-link to="/admin/schedule" class="submenu-item">
+              Lịch làm việc
+            </router-link>
+          </div>
+        </div>
       </nav>
     </aside>
 
     <div class="main">
       <header class="topbar">
         <div class="top-icons">
-          <img src="/src/assets/icon/notification.svg" />
-          <img src="/src/assets/icon/user.svg" />
+          <img src="/src/assets/icon/notification.svg" class="icon" />
+          <div class="user-icon-wrapper" @click="toggleUserMenu">
+            <img src="/src/assets/icon/user.svg" class="icon" />
+            <transition name="fade">
+              <div v-if="isUserMenuOpen" class="user-menu">
+                <p @click="viewProfile" class="menu-item">Xem thông tin</p>
+                <button @click="logout" class="menu-item logout">
+                  Đăng xuất
+                </button>
+              </div>
+            </transition>
+          </div>
         </div>
       </header>
 
@@ -139,6 +214,11 @@ const router = useRouter();
 const isDiscountOpen = ref(false);
 const isAccountOpen = ref(false);
 const isProductOpen = ref(false);
+const isUserMenuOpen = ref(false);
+const isScheduleOpen = ref(false);
+const toggleSchedule = () => {
+  isScheduleOpen.value = !isScheduleOpen.value;
+};
 
 const goToProduct = () => {
   isProductOpen.value = !isProductOpen.value;
@@ -154,6 +234,20 @@ const toggleDiscount = () => {
 const toggleAccount = () => {
   isAccountOpen.value = !isAccountOpen.value;
 };
+
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value;
+};
+
+const viewProfile = () => {
+  alert("Chức năng xem thông tin người dùng đang được phát triển.");
+};
+
+const logout = () => {
+  localStorage.removeItem("user");
+  // alert("Đã xóa token! Hãy thử bấm Đăng nhập lại.");
+  window.location.reload();
+};
 </script>
 
 <style scoped>
@@ -161,6 +255,16 @@ const toggleAccount = () => {
   display: flex;
   min-height: 100vh;
   background: #f6f6f6;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
 }
 
 /* ================= SIDEBAR ================= */
@@ -211,12 +315,7 @@ const toggleAccount = () => {
 /* hover + active menu cha */
 .menu-item:hover,
 .router-link-active {
-  background:
-    linear-gradient(
-      90deg,
-      #c89b6d 0%,
-      #6b3f23 100%
-    );
+  background: linear-gradient(90deg, #c89b6d 0%, #6b3f23 100%);
   position: relative;
   color: #fff;
 }
@@ -231,50 +330,34 @@ const toggleAccount = () => {
 }
 
 /* ================= SUBMENU ================= */
-
-/* ❌ bỏ thụt lề để thẳng hàng menu cha */
 .menu-group .submenu {
   position: relative;
   margin-left: 20px;
-  border-left: 2px solid #ddd; /* đường kẻ dọc */
+  border-left: 2px solid #ddd;
 }
 
-
-/* item menu con */
-/* item menu con – mỗi item 1 dòng */
 .submenu-item {
-  display: block;              /* 🔥 QUAN TRỌNG */
+  display: block;
   padding: 8px 15px 8px 20px;
   font-size: 14px;
   font-weight: 400;
   color: #333;
   text-decoration: none;
-  margin: 2px 0;               /* sát nhưng không dính */
+  margin: 2px 0;
 }
 
-
-
-/* hover menu con */
 .submenu-item:hover {
-  background: rgba(200, 155, 109, 0.25); /* vàng mờ */
+  background: rgba(200, 155, 109, 0.25);
   color: #333;
   font-weight: 600;
   border-radius: 4px;
+  width: 130px;
 }
 
-
-/* active menu con */
 .submenu-item.router-link-active {
   background: transparent;
   color: #000;
   font-weight: 600;
-}
-
-
-/* chấm tròn đổi màu khi hover/active */
-.submenu-item:hover::before,
-.submenu-item.router-link-active::before {
-  color: #fff;
 }
 
 /* ================= HAS CHILD ================= */
@@ -292,13 +375,9 @@ const toggleAccount = () => {
 .arrow.open {
   transform: rotate(180deg);
 }
-/* menu cha active – giữ gradient sau khi click */
+
 .menu-item.active {
-  background: linear-gradient(
-    90deg,
-    #c89b6d 0%,
-    #6b3f23 100%
-  );
+  background: linear-gradient(90deg, #c89b6d 0%, #6b3f23 100%);
   color: #fff;
   position: relative;
 }
@@ -349,9 +428,51 @@ const toggleAccount = () => {
   display: flex;
   flex-direction: column;
 }
-.admin-layout {
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+.user-icon-wrapper {
+  position: relative;
+  cursor: pointer;
 }
 
+.user-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  z-index: 1000;
+  min-width: 150px;
+}
+
+.user-menu p,
+.user-menu button {
+  margin: 0;
+  padding: 10px;
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  width: 130px;
+}
+
+.user-menu p:last-child,
+.user-menu button:last-child {
+  border-bottom: none;
+}
+
+.user-menu p:hover,
+.user-menu button:hover {
+  background: #f9f9f9;
+  color: #000;
+  font-weight: 500;
+  width: 130px;
+  font-weight: bold;
+}
 </style>

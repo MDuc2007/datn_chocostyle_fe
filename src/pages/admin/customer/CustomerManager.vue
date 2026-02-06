@@ -1,59 +1,63 @@
 <template>
   <div class="page-container">
-    <div class="header-filter-wrapper">
-      <div class="page-header">
-        <h2 class="page-title">QUẢN LÝ KHÁCH HÀNG</h2>
-        <div class="total-badge">
-          Tổng số: <b>{{ stats.totalCustomers || 0 }}</b>
-        </div>
-      </div>
+    <div class="card-section filter-card form-page-animation">
+      <h2 class="page-title">QUẢN LÝ KHÁCH HÀNG</h2>
 
-      <div class="card-section filter-card form-page-animation">
-        <div class="filter-header">
-          <span class="filter-icon"></span>
-        </div>
-
-        <div class="filter-controls">
-          <div class="search-group">
-            <div class="form-item search-box">
-              <label>Từ khóa</label>
-              <input
-                v-model="keyword"
-                @input="debouncedSearch"
-                type="text"
-                class="form-input"
-                placeholder="Tìm theo tên, email"
-              />
-            </div>
-
-            <div class="form-item status-box">
-              <label>Trạng thái</label>
-              <select
-                class="form-select"
-                v-model="selectedStatus"
-                @change="fetchCustomers"
+      <div class="filter-controls">
+        <div class="left-controls">
+          <div class="search-box input-wrapper">
+            <i class="search-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#9CA3AF"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               >
-                <option :value="null">Tất cả</option>
-                <option :value="1">Hoạt động</option>
-                <option :value="0">Không hoạt động</option>
-              </select>
-            </div>
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </i>
+
+            <input
+              v-model="keyword"
+              @input="debouncedSearch"
+              type="text"
+              class="form-input ps-icon"
+              placeholder="Tìm theo mã hoặc tên"
+            />
           </div>
 
-          <div class="button-group">
-            <button class="btn btn-outline" @click="resetFilters">
-              Đặt lại
-            </button>
-            <!-- <button class="btn btn-outline" @click="exportExcel">
-              Xuất Excel
-            </button> -->
-            <button
-              class="btn btn-primary"
-              @click="$router.push('/admin/customer/add')"
+          <div class="status-box input-wrapper">
+            <span class="label-inside">Trạng thái</span>
+            <select
+              class="form-select"
+              v-model="selectedStatus"
+              @change="fetchCustomers"
             >
-              + Thêm mới
-            </button>
+              <option :value="null">Tất cả</option>
+              <option :value="1">Hoạt động</option>
+              <option :value="0">Ngừng hoạt động</option>
+            </select>
           </div>
+        </div>
+
+        <div class="right-controls">
+          <button class="btn btn-outline" @click="resetFilters">Đặt lại</button>
+          <button class="btn btn-outline" @click="exportExcel">
+            Xuất Excel
+          </button>
+
+          <button
+            class="btn btn-primary"
+            @click="$router.push('/admin/customer/add')"
+          >
+            + Thêm mới
+          </button>
         </div>
       </div>
     </div>
@@ -63,14 +67,14 @@
         <table class="custom-table">
           <thead>
             <tr>
-              <th width="50" class="text-center">STT</th>
-              <th width="100">Mã KH</th>
-              <th style="min-width: 160px">Tên khách hàng</th>
-              <th style="min-width: 180px">Email</th>
-              <th width="120">SĐT</th>
-              <th style="min-width: 250px">Địa chỉ chính</th>
+              <th width="60" class="text-center">STT</th>
+              <th width="120">Mã KH</th>
+              <th style="min-width: 180px">Tên khách hàng</th>
+              <th style="min-width: 200px">Email</th>
+              <th width="140">SĐT</th>
+              <th style="min-width: 250px">Địa chỉ</th>
               <th width="150" class="text-center">Trạng thái</th>
-              <th width="110" class="text-center">Hành động</th>
+              <th width="120" class="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -87,53 +91,45 @@
                 </td>
 
                 <td>
-                  <b style="color: #63391f">{{ c.maKhachHang }}</b>
+                  <span class="text-dark-bold">{{ c.maKhachHang }}</span>
                 </td>
 
                 <td>
-                  <span class="fw-bold text-dark">{{ c.tenKhachHang }}</span>
+                  <span class="text-dark-bold">{{ c.tenKhachHang }}</span>
                 </td>
 
                 <td>
-                  <span class="text-muted">{{ c.email }}</span>
+                  <span class="text-muted truncate-text" :title="c.email">{{
+                    c.email
+                  }}</span>
                 </td>
 
                 <td>{{ c.soDienThoai }}</td>
 
                 <td class="address-cell">
-                  <div v-if="c.diaChiChinh" class="address-wrapper">
-                    <span class="badge-tag-mini">Mặc định</span>
-                    <span class="addr-text" :title="c.diaChiChinh">
-                      {{ c.diaChiChinh }}
-                    </span>
+                  <div
+                    v-if="c.diaChiChinh"
+                    class="address-text"
+                    :title="c.diaChiChinh"
+                  >
+                    {{ c.diaChiChinh }}
                   </div>
-                  <div v-else class="empty-addr">-- Chưa thiết lập --</div>
+                  <div v-else class="text-muted italic">--</div>
                 </td>
 
                 <td class="text-center">
                   <span
                     :class="[
-                      'status-badge',
-                      isActive(c) ? 'active' : 'inactive',
+                      'status-text',
+                      isActive(c) ? 'text-active' : 'text-inactive',
                     ]"
                   >
-                    {{ isActive(c) ? "Hoạt động" : "Ngừng" }}
+                    {{ isActive(c) ? "Đang hoạt động" : "Ngừng hoạt động" }}
                   </span>
                 </td>
 
                 <td class="text-center">
                   <div class="actions-group">
-                    <button
-                      class="btn-icon btn-edit"
-                      title="Chỉnh sửa"
-                      @click="$router.push(`/admin/customer/edit/${c.id}`)"
-                    >
-                      <img
-                        src="/src/assets/icon/edit.svg"
-                        alt=""
-                        style="width: 20px; height: 20px"
-                      />
-                    </button>
                     <label class="switch" title="Đổi trạng thái">
                       <input
                         type="checkbox"
@@ -142,6 +138,31 @@
                       />
                       <span class="slider round"></span>
                     </label>
+
+                    <button
+                      class="btn-icon-edit"
+                      title="Chỉnh sửa"
+                      @click="$router.push(`/admin/customer/edit/${c.id}`)"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                        ></path>
+                        <path
+                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                        ></path>
+                      </svg>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -162,7 +183,7 @@
           :disabled="currentPage === 1"
           @click="changePage(currentPage - 1)"
         >
-          <img src="/src/assets/icon/arrowRight.svg" alt="" />
+          &lt;
         </button>
         <template v-for="page in visiblePages" :key="page">
           <button
@@ -180,7 +201,7 @@
           :disabled="currentPage >= totalPages"
           @click="changePage(currentPage + 1)"
         >
-          <img src="/src/assets/icon/arrowLeft.svg" alt="" />
+          &gt;
         </button>
       </div>
     </div>
@@ -214,10 +235,8 @@
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
-// --- STATE ---
 const keyword = ref("");
 const customers = ref([]);
-const stats = ref({ totalCustomers: 0 });
 const currentPage = ref(1);
 const totalPages = ref(1);
 const selectedStatus = ref(null);
@@ -234,11 +253,8 @@ const modal = ref({
 });
 const API_URL = "http://localhost:8080/api/khach-hang";
 
-// --- HELPERS ---
-// Cập nhật: Kiểm tra theo trường trangThai (1: Hoạt động, 0: Khóa)
 const isActive = (c) => Number(c.trangThai) === 1;
 
-// --- API ---
 const fetchCustomers = async () => {
   loading.value = true;
   try {
@@ -250,13 +266,8 @@ const fetchCustomers = async () => {
         status: selectedStatus.value,
       },
     });
-    // Dữ liệu từ Page<KhachHangResponse>
     customers.value = res.data.content || [];
     totalPages.value = res.data.totalPages || 1;
-
-    // Cập nhật nhanh số lượng tổng từ phân trang
-    if (res.data.totalElements !== undefined)
-      stats.value.totalCustomers = res.data.totalElements;
   } catch (e) {
     showToast("Không thể tải danh sách khách hàng", "error");
     console.error(e);
@@ -265,29 +276,16 @@ const fetchCustomers = async () => {
   }
 };
 
-const fetchStats = async () => {
-  try {
-    // Gọi API stats đã sửa trong Controller
-    const res = await axios.get(`${API_URL}/stats`);
-    stats.value = res.data;
-  } catch (e) {
-    console.error("Lỗi tải thống kê:", e);
-  }
-};
-
 const exportExcel = () => {
   window.location.href = `${API_URL}/export?keyword=${keyword.value}`;
 };
 
-// --- ACTIONS ---
 const handleToggleClick = (event, customer) => {
-  event.preventDefault(); // Ngăn checkbox tự thay đổi trước khi xác nhận
+  event.preventDefault();
   modal.value = {
     show: true,
     title: "Xác nhận thay đổi",
-    message: `Bạn có chắc muốn ${
-      isActive(customer) ? "Khóa" : "Mở khóa"
-    } tài khoản khách hàng "${customer.tenKhachHang}"?`,
+    message: `Bạn có chắc muốn ${isActive(customer) ? "Khóa" : "Mở khóa"} tài khoản khách hàng "${customer.tenKhachHang}"?`,
     action: "TOGGLE",
     id: customer.id,
   };
@@ -296,11 +294,9 @@ const handleToggleClick = (event, customer) => {
 const handleModalConfirm = async () => {
   try {
     if (modal.value.action === "TOGGLE") {
-      // Gọi đúng API @PutMapping("/{id}/toggle-status")
       await axios.put(`${API_URL}/${modal.value.id}/toggle-status`);
       showToast("Cập nhật trạng thái thành công");
       await fetchCustomers();
-      await fetchStats();
     }
   } catch (e) {
     const errorMsg = e.response?.data?.message || "Cập nhật thất bại";
@@ -311,7 +307,6 @@ const handleModalConfirm = async () => {
 
 const closeModal = () => (modal.value.show = false);
 
-// --- SEARCH & PAGINATION ---
 const debouncedSearch = () => {
   clearTimeout(searchTimeout.value);
   searchTimeout.value = setTimeout(() => {
@@ -356,344 +351,353 @@ const showToast = (msg, type = "success") => {
 
 onMounted(() => {
   fetchCustomers();
-  fetchStats();
 });
 </script>
-zz
+
 <style scoped>
-/* --- 1. COLOR PALETTE --- */
-:root {
-  --primary-brown: #63391f;
-  --success-green: #10b981;
-  --danger-red: #ef4444;
-  --bg-gray: #f8fafc;
-  --text-main: #333;
-  --text-muted: #6b7280;
-}
-
+/* NOTE: moved global CSS variables to `src/style.css` to avoid leaking styles app-wide */
+:deep(.page-container),
 .page-container {
-
+  --primary-brown: #63391f; /* Màu nâu thương hiệu của bạn */
+  --primary-light: #fdf8f6; /* Màu nền nhạt khi hover */
+  --text-main: #484848; /* Màu chữ xám đậm */
+  --border-color: #e0e0e0; /* Màu viền */
+  --success-green: #2ecc71; /* Màu xanh cho trạng thái hoạt động */
+  --danger-red: #e74c3c; /* Màu đỏ cho ngừng hoạt động */
 }
-.filter-card {
-  background: transparent;
-  padding: 0;
-  box-shadow: none;
-}
-/* --- HEADER & CARDS --- */
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1px;
-}
-.page-title {
-  color: #63391f;
-}
-.total-badge {
-  background: #fdf8f6;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #63391f;
-  border: 1px solid rgba(99, 57, 31, 0.25);
-  white-space: nowrap;
-}
-
 .card-section {
   background: #ffffff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
-}
-.header-filter-wrapper {
-  background: #fff;
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-  margin-bottom: 24px;
+  overflow: hidden;
 }
 
-/* --- FILTER --- */
-.filter-header {
+.filter-card {
+  padding: 24px;
+}
+
+.page-title {
+  /* 1. Font chữ có chân (Serif) để giống ảnh mẫu */
+  font-family: "Times New Roman", Times, serif;
+
+  /* 2. Kích thước và độ đậm */
+  font-size: 24px; /* Tăng nhẹ kích thước */
+  font-weight: 700; /* Độ đậm vừa phải nhưng sắc nét */
+
+  /* 3. Màu sắc: Ảnh mẫu dùng màu đen hoặc nâu cực đậm */
   color: #63391f;
-  margin-bottom: 20px;
-  font-size: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-controls {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: 10px;
+
+  /* 4. Định dạng chữ */
+  text-transform: uppercase;
+  letter-spacing: 1px; /* Khoảng cách giữa các chữ cái rộng hơn một chút */
+
+  /* 5. Căn lề: Để sát lề trái và tạo khoảng cách với ô tìm kiếm bên dưới */
+  margin: 10px 0 25px 5px;
+  display: block;
 }
 
-.form-item label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 6px;
-  min-height: 18px;
+.filter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0 15px 12px;
 }
+
+.left-controls {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  align-items: flex-end;
+}
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.label-inside {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.search-box {
+  position: relative;
+  width: 300px;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  z-index: 1;
+}
+
 .form-input,
 .form-select {
-  box-sizing: border-box;
-  width: 100%;
-  height: 42px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
   padding: 0 12px;
+  font-size: 14px;
   outline: none;
   transition: all 0.2s;
+  color: #555;
+  background-color: #fff;
+}
+.form-input.ps-icon {
+  padding-left: 36px;
 }
 .form-input:focus,
 .form-select:focus {
-  border-color: #63391f;
+  border-color: var(--primary-brown);
   box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
 }
-.button-group {
+.status-box {
+  width: 160px;
+}
+
+.right-controls {
   display: flex;
-  justify-content: flex-end;
-  gap: 5px;
-  padding-top: 1px;
+  gap: 10px;
+  align-self: flex-end;
 }
 .btn {
   height: 40px;
-  padding: 0 20px;
-  border-radius: 6px;
+  padding: 0 16px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.2s;
-  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .btn-primary {
-  background-color: #63391f;
-  color: #fff;
+  background-color: #ffffff;
+  color: var(--text-main);
+  border: 1px solid #ccc;
 }
 .btn-primary:hover {
-  background-color: #4e2c18;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+  background-color: #f9f9f9;
 }
 .btn-outline {
   background-color: #fff;
-  color: #63391f;
-  border: 1px solid #63391f;
+  color: var(--text-main);
+  border: 1px solid #ccc;
 }
 .btn-outline:hover {
+  border-color: var(--primary-brown);
   background-color: #fdf8f6;
 }
 
-/* --- TABLE (UPDATED CLEAN STYLE) --- */
-.table-responsive {
-  overflow-x: auto; /* Cho phép cuộn ngang nếu màn hình bé */
+/* --- BẢNG DỮ LIỆU TỐI ƯU --- */
+.table-card {
+  padding: 10px;
 }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .custom-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1000px; /* Đảm bảo bảng không bị bóp méo khi màn hình nhỏ */
+  min-width: 1000px;
+  table-layout: fixed; /* Cố định layout để đảm bảo width chính xác */
 }
+
+.custom-table thead tr {
+  border-bottom: 1.5px solid #e0e0e0;
+}
+
 .custom-table th {
-  background-color: #63391f;
-  color: #ffffff;
+  background-color: #fff;
+  color: #000000;
   font-weight: 700;
-  padding: 16px 12px;
+  padding: 20px 12px;
   text-align: left;
-  font-size: 13px;
-  text-transform: uppercase;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap; /* Tiêu đề không xuống dòng */
-}
-.custom-table td {
-  padding: 12px 12px;
-  border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
-  color: #4b5563;
-  vertical-align: middle; /* Căn giữa theo chiều dọc */
+}
+
+.custom-table td {
+  padding: 18px 12px;
+  font-size: 14px;
+  color: #484848;
+  vertical-align: middle; /* Căn giữa nội dung theo chiều dọc */
+  border-bottom: 1px solid var(--border-color);
 }
 .custom-table tbody tr:hover {
-  background-color: #fafafa;
+  background-color: #f9fafb;
 }
-.fw-bold {
-  font-weight: 600;
-}
-.text-muted {
-  color: #9ca3af !important;
-  font-size: 13px;
-}
-.text-dark {
+
+.text-dark-bold {
   color: #111827;
-}
-
-/* === STATUS BADGE === */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  min-width: 90px; /* Thu nhỏ lại chút cho gọn */
-}
-.status-badge.active {
-  background-color: #d1fae5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
-.status-badge.inactive {
-  background-color: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-/* === CỘT ĐỊA CHỈ (ĐÃ UPDATE) === */
-/* Không set max-width nữa để nó tự giãn */
-.address-wrapper {
-  display: flex;
-  flex-direction: column; /* Xếp chồng badge và text */
-  gap: 4px;
-  align-items: flex-start;
-}
-
-/* Badge mặc định kiểu mới: Nhỏ gọn, tinh tế hơn */
-.badge-tag-mini {
-  font-size: 10px;
-  background-color: #eff6ff; /* Xanh dương siêu nhạt */
-  color: #3b82f6; /* Xanh dương */
-  border: 1px solid #dbeafe;
-  padding: 1px 6px;
-  border-radius: 3px;
   font-weight: 600;
-  text-transform: uppercase;
-  display: inline-block;
+}
+.text-center {
+  text-align: center !important;
 }
 
-.addr-text {
-  font-size: 13.5px;
-  color: #374151;
-  line-height: 1.4;
-  /* Giới hạn 2 dòng cho gọn */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+/* Xử lý nhảy dòng Trạng thái */
+.status-text {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap; /* Không cho phép xuống dòng */
+}
+.text-active {
+  color: var(--success-green);
+}
+.text-inactive {
+  color: var(--danger-red);
+}
+
+/* Xử lý tràn chữ cho Email và Địa chỉ */
+.truncate-text,
+.address-text {
+  display: block;
+  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-.empty-addr {
-  font-style: italic;
-  color: #9ca3af;
-  font-size: 13px;
+  text-overflow: ellipsis; /* Hiện dấu ... khi text quá dài */
 }
 
-/* === SWITCH & ACTIONS === */
+.address-cell {
+  max-width: 0; /* Cần thiết để text-overflow hoạt động trong table-layout fixed */
+}
+
 .actions-group {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
 }
+
+.btn-icon-edit {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #484848;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-icon-edit:hover {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+}
+
 .switch {
   position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-} /* Thu nhỏ switch xíu */
+  width: 50px;
+  height: 24px;
+}
 .switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+  display: none;
 }
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #e5e7eb;
-  transition: 0.4s;
-  border-radius: 20px;
+  inset: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
 }
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.4s;
+  transition: 0.3s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 input:checked + .slider {
-  background-color: #10b981;
+  background-color: var(--primary-brown);
 }
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(26px);
 }
 
-.btn-icon {
-  width: 32px;
-  height: 32px; /* Bé lại chút cho vừa ô hành động */
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  font-size: 14px;
-}
-.btn-icon:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Các phần khác giữ nguyên (Pagination, Modal, Toast) */
 .pagination-footer {
   display: flex;
   justify-content: center;
-  gap: 6px;
-  margin-top: 24px;
+  gap: 10px;
+  padding: 20px 0;
 }
 .p-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
-  color: #4b5563;
-  font-weight: 500;
+  color: var(--primary-brown);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: 0.2s;
 }
 .p-btn.active {
-  background: #63391f;
-  border-color: #63391f;
+  background: var(--primary-brown);
+  border-color: var(--primary-brown);
   color: #fff;
 }
-.p-btn:hover:not(.active):not(:disabled) {
-  background: #f9fafb;
-  border-color: #d1d5db;
+.p-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  border: none;
+  background: transparent;
+}
+
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background-color: #ecfdf5;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 6px solid #10b981;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 300px;
+}
+.toast-content {
+  color: #065f46;
+  font-weight: 700;
+  font-size: 15px;
+}
+.toast-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #065f46;
+  opacity: 0.7;
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -702,11 +706,10 @@ input:checked + .slider:before {
 .confirm-box {
   background: #fff;
   padding: 30px;
-  border-radius: 12px;
+  border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
 }
 .confirm-actions {
   margin-top: 24px;
@@ -715,11 +718,11 @@ input:checked + .slider:before {
   gap: 12px;
 }
 .btn-confirm {
-  background: #10b981;
+  background: var(--primary-brown);
   color: #fff;
   border: none;
   padding: 10px 24px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
 }
@@ -728,70 +731,18 @@ input:checked + .slider:before {
   color: #374151;
   border: none;
   padding: 10px 24px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
 }
 
-.toast-notification {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background: #fff;
-  padding: 16px 20px;
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #10b981;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 500;
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
 }
-.toast-close {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 18px;
-  color: #9ca3af;
-}
-.header-filter-wrapper .card-section {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-}
-.header-filter-wrapper label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 6px;
-  display: block;
-}
-.search-group .form-item label {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-}
-.form-item {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.search-group {
-  display: grid;
-  grid-template-columns: 3fr 1.2fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.search-group .form-item label {
-  height: 18px;
-  line-height: 18px;
-  margin-bottom: 6px;
-}
-
-.search-group .form-item {
-  align-self: start;
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
 }
 </style>

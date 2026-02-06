@@ -1,15 +1,26 @@
 <template>
   <div class="edit-employee-page">
     <div class="toast-container">
-      <div
-        v-for="notif in notifications"
-        :key="notif.id"
-        class="toast"
-        :class="notif.type"
-      >
-        {{ notif.message }}
-      </div>
+      <TransitionGroup name="toast">
+        <div
+          v-for="notif in notifications"
+          :key="notif.id"
+          class="toast"
+          :class="notif.type"
+        >
+          <span v-if="notif.type === 'success'" style="font-size: 18px"
+            >✅</span
+          >
+          <span v-if="notif.type === 'error'" style="font-size: 18px">❌</span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"
+            >⚠️</span
+          >
+
+          <span class="toast-msg">{{ notif.message }}</span>
+        </div>
+      </TransitionGroup>
     </div>
+
     <div class="header-bar">
       <h2 class="title">Nhân viên / Cập nhật nhân viên</h2>
       <button class="btn-back" @click="goBack">Quay lại</button>
@@ -79,12 +90,44 @@
 
           <div class="grid-row">
             <div class="form-group">
-              <label>Số CCCD <span class="req">*</span></label>
+              <div class="label-flex">
+                <label>Email <span class="req">*</span></label>
+                <span v-if="errors.email" class="error-msg">{{
+                  errors.email
+                }}</span>
+              </div>
               <input
-                v-model="form.cccd"
-                :class="{ 'red-border': errors.cccd }"
+                v-model="form.email"
+                :class="{ 'red-border': errors.email }"
               />
             </div>
+
+            <div class="form-group">
+              <div class="label-flex">
+                <label>Ngày sinh <span class="req">*</span></label>
+                <span v-if="errors.ngaySinh" class="error-msg">{{
+                  errors.ngaySinh
+                }}</span>
+              </div>
+              <input
+                type="date"
+                v-model="form.ngaySinh"
+                :class="{ 'red-border': errors.ngaySinh }"
+              />
+            </div>
+          </div>
+
+          <div class="grid-row">
+            <div class="form-group">
+              <div class="label-flex">
+                <label>Số Điện Thoại <span class="req">*</span></label>
+                <span v-if="errors.sdt" class="error-msg">{{
+                  errors.sdt
+                }}</span>
+              </div>
+              <input v-model="form.sdt" :class="{ 'red-border': errors.sdt }" />
+            </div>
+
             <div class="form-group">
               <label>Giới tính <span class="req">*</span></label>
               <div class="radio-group">
@@ -102,66 +145,6 @@
 
           <div class="grid-row">
             <div class="form-group">
-              <label>Ngày sinh <span class="req">*</span></label>
-              <input
-                type="date"
-                v-model="form.ngaySinh"
-                :class="{ 'red-border': errors.ngaySinh }"
-              />
-            </div>
-            <div class="form-group">
-              <label>Email <span class="req">*</span></label>
-              <input
-                v-model="form.email"
-                :class="{ 'red-border': errors.email }"
-              />
-            </div>
-          </div>
-
-          <div class="grid-row-3">
-            <div class="form-group">
-              <label>Tỉnh/Thành phố <span class="req">*</span></label>
-              <select v-model="selectedCity" @change="onCityChange">
-                <option :value="null">Chọn Tỉnh/TP</option>
-                <option v-for="c in listCity" :key="c.code" :value="c">
-                  {{ c.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Quận/Huyện <span class="req">*</span></label>
-              <select v-model="selectedDistrict" @change="onDistrictChange">
-                <option :value="null">Chọn Quận/Huyện</option>
-                <option v-for="d in listDistrict" :key="d.code" :value="d">
-                  {{ d.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Xã/Phường <span class="req">*</span></label>
-              <select v-model="selectedWard">
-                <option :value="null">Chọn Xã/Phường</option>
-                <option v-for="w in listWard" :key="w.code" :value="w">
-                  {{ w.name }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group full-width">
-            <label>Địa chỉ cụ thể <span class="req">*</span></label>
-            <input
-              v-model="form.diaChiCuThe"
-              :class="{ 'red-border': errors.diaChi }"
-            />
-          </div>
-
-          <div class="grid-row">
-            <div class="form-group">
-              <label>Số Điện Thoại <span class="req">*</span></label>
-              <input v-model="form.sdt" :class="{ 'red-border': errors.sdt }" />
-            </div>
-            <div class="form-group">
               <label>Chức vụ</label>
               <select v-model="form.vaiTro">
                 <option value="Nhân viên">Nhân viên</option>
@@ -170,9 +153,7 @@
                 <option value="Thủ kho">Thủ kho</option>
               </select>
             </div>
-          </div>
 
-          <div class="grid-row">
             <div class="form-group">
               <label>Trạng thái</label>
               <select v-model="form.trangThai" class="status-select">
@@ -181,6 +162,73 @@
                 <option :value="2">Đã khóa</option>
               </select>
             </div>
+          </div>
+
+          <div class="grid-row-3">
+            <div class="form-group">
+              <label>Tỉnh/Thành phố <span class="req">*</span></label>
+              <select
+                v-model="selectedCity"
+                @change="onCityChange"
+                :class="{ 'red-border': errors.tinhThanh }"
+              >
+                <option :value="null">Chọn Tỉnh/TP</option>
+                <option v-for="c in listCity" :key="c.code" :value="c">
+                  {{ c.name }}
+                </option>
+              </select>
+              <span v-if="errors.tinhThanh" class="error-msg">{{
+                errors.tinhThanh
+              }}</span>
+            </div>
+            <div class="form-group">
+              <label>Quận/Huyện <span class="req">*</span></label>
+              <select
+                v-model="selectedDistrict"
+                @change="onDistrictChange"
+                :class="{ 'red-border': errors.quanHuyen }"
+              >
+                <option :value="null">Chọn Quận/Huyện</option>
+                <option v-for="d in listDistrict" :key="d.code" :value="d">
+                  {{ d.name }}
+                </option>
+              </select>
+              <span v-if="errors.quanHuyen" class="error-msg">{{
+                errors.quanHuyen
+              }}</span>
+            </div>
+            <div class="form-group">
+              <label>Xã/Phường <span class="req">*</span></label>
+              <select
+                v-model="selectedWard"
+                :class="{ 'red-border': errors.xaPhuong }"
+              >
+                <option :value="null">Chọn Xã/Phường</option>
+                <option v-for="w in listWard" :key="w.code" :value="w">
+                  {{ w.name }}
+                </option>
+              </select>
+              <span v-if="errors.xaPhuong" class="error-msg">{{
+                errors.xaPhuong
+              }}</span>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <div class="label-flex">
+              <label
+                >Địa chỉ cụ thể (Số nhà, đường)
+                <span class="req">*</span></label
+              >
+              <span v-if="errors.diaChiCuThe" class="error-msg">{{
+                errors.diaChiCuThe
+              }}</span>
+            </div>
+            <input
+              v-model="form.diaChiCuThe"
+              :class="{ 'red-border': errors.diaChiCuThe }"
+              placeholder="VD: Số 10, Ngõ 5..."
+            />
           </div>
 
           <div class="footer-actions">
@@ -214,13 +262,12 @@ const selectedWard = ref(null);
 const form = ref({
   maNv: "",
   hoTen: "",
-  cccd: "",
   gioiTinh: true,
   ngaySinh: "",
   email: "",
   sdt: "",
   diaChiCuThe: "",
-  vaiTro: "Staff",
+  vaiTro: "Nhân viên",
   ngayVaoLam: "",
   avatar: "",
   trangThai: 1,
@@ -232,56 +279,42 @@ const errors = ref({});
 // Toast notifications
 const notifications = ref([]);
 const showNotification = (message, type = "success") => {
-  const id = Date.now();
+  const id = Date.now() + Math.random();
   notifications.value.push({ message, type, id });
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 4000);
 };
 
-// 1. Load Data khi vào trang
+// 1. Load Data
 onMounted(async () => {
   try {
-    // A. Load API Hành chính trước
     const resAddr = await axios.get(
       "https://provinces.open-api.vn/api/?depth=3",
     );
     listCity.value = resAddr.data;
 
-    // B. Load thông tin nhân viên theo ID trên URL
     const empId = route.params.id;
-    if (empId) {
-      await fetchEmployeeDetail(empId);
-    }
+    if (empId) await fetchEmployeeDetail(empId);
   } catch (e) {
     console.error("Lỗi khởi tạo:", e);
   }
 });
 
-// 2. Hàm lấy chi tiết và Map vào Form
-// --- SỬA LOGIC MAP DỮ LIỆU ---
+// 2. Fetch & Map Data
 async function fetchEmployeeDetail(id) {
   try {
     const res = await axios.get(`http://localhost:8080/api/nhan-vien/${id}`);
     const data = res.data;
 
-    // Map dữ liệu từ API vào Form
     form.value = {
       ...data,
-
-      // 1. SỬA LỖI NGÀY: Cắt chuỗi để lấy yyyy-MM-dd
       ngaySinh: formatDateForInput(data.ngaySinh),
       ngayVaoLam: formatDateForInput(data.ngayVaoLam),
-
-      // 2. SỬA LỖI CHỨC VỤ:
-      // Backend trả về 'chucVu', nhưng v-model là 'vaiTro' nên phải gán thủ công
       vaiTro: data.chucVu,
-
-      // Map địa chỉ cụ thể
       diaChiCuThe: data.diaChiCuThe,
     };
 
-    // --- Logic Map Địa chỉ (Giữ nguyên) ---
     if (data.tinhThanhId) {
       selectedCity.value = listCity.value.find(
         (c) => c.code == data.tinhThanhId,
@@ -308,24 +341,21 @@ async function fetchEmployeeDetail(id) {
   }
 }
 
-// --- HÀM MỚI: FORMAT NGÀY CHO INPUT DATE ---
 function formatDateForInput(dateStr) {
   if (!dateStr) return "";
-  // Nếu dateStr dạng '2026-01-18T00:00:00' -> cắt lấy 10 ký tự đầu là '2026-01-18'
   return dateStr.substring(0, 10);
 }
-// Hàm format riêng cho hiển thị: dd-MM-yyyy
+
 function formatDateVN(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-
-  const day = String(date.getDate()).padStart(2, "0"); // Lấy ngày, thêm số 0 nếu < 10
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Lấy tháng (tháng bắt đầu từ 0)
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-
   return `${day}-${month}-${year}`;
 }
-// 3. Logic Combobox (Giống trang Add)
+
+// 3. Logic Combobox
 function onCityChange() {
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
@@ -337,30 +367,83 @@ function onDistrictChange() {
   selectedWard.value = null;
 }
 
-// 4. Validate & Submit (Gần giống trang Add nhưng gọi PUT)
+// 4. Validate & Submit
 function validateForm() {
   errors.value = {};
   let isValid = true;
+
+  // Validate Tên
   if (!form.value.hoTen?.trim()) {
     errors.value.hoTen = "Tên trống";
     isValid = false;
   }
-  // ... (Copy phần validate từ AddEmployee sang đây) ...
+
+  // Validate Email & SDT
+  if (
+    !form.value.email ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)
+  ) {
+    errors.value.email = "Email sai";
+    isValid = false;
+  }
+  if (!form.value.sdt || !/^0\d{9}$/.test(form.value.sdt)) {
+    errors.value.sdt = "SĐT sai";
+    isValid = false;
+  }
+
+  // Validate Địa chỉ cụ thể
+  if (!form.value.diaChiCuThe) {
+    errors.value.diaChiCuThe = "Địa chỉ cụ thể trống";
+    isValid = false;
+  }
+
+  // Validate Tỉnh/Huyện/Xã (QUAN TRỌNG)
+  if (!selectedCity.value) {
+    errors.value.tinhThanh = "Chưa chọn Tỉnh";
+    isValid = false;
+  }
+  if (!selectedDistrict.value && selectedCity.value) {
+    errors.value.quanHuyen = "Chưa chọn Huyện";
+    isValid = false;
+  }
+  if (!selectedWard.value && selectedDistrict.value) {
+    errors.value.xaPhuong = "Chưa chọn Xã";
+    isValid = false;
+  }
+
+  // Validate Ngày sinh
+  if (!form.value.ngaySinh) {
+    errors.value.ngaySinh = "Chọn ngày sinh";
+    isValid = false;
+  } else {
+    if (
+      new Date().getFullYear() - new Date(form.value.ngaySinh).getFullYear() <
+      18
+    ) {
+      errors.value.ngaySinh = "Chưa đủ 18 tuổi";
+      isValid = false;
+    }
+  }
+
   return isValid;
 }
 
 async function submitForm() {
-  if (!validateForm()) return;
+  // 👇 THÊM DÒNG NÀY ĐỂ HIỆN TOAST KHI LỖI 👇
+  if (!validateForm()) {
+    showNotification("Vui lòng kiểm tra lại thông tin!", "warning");
+    return;
+  }
 
   const payload = {
     ...form.value,
+    diaChiCuThe: form.value.diaChiCuThe,
     tinhThanhId: selectedCity.value?.code,
     tinhThanh: selectedCity.value?.name,
     quanHuyenId: selectedDistrict.value?.code,
     quanHuyen: selectedDistrict.value?.name,
     xaPhuongId: selectedWard.value?.code,
     xaPhuong: selectedWard.value?.name,
-    diaChiCuThe: form.value.diaChiCuThe,
   };
 
   try {
@@ -368,13 +451,15 @@ async function submitForm() {
       `http://localhost:8080/api/nhan-vien/${form.value.id}`,
       payload,
     );
-    showNotification("Cập nhật thành công!");
+
+    showNotification("Cập nhật nhân viên thành công!", "success");
+
     setTimeout(() => {
       router.push("/admin/employee");
-    }, 1500);
+    }, 1500); // Đợi 1.5 giây để người dùng kịp đọc thông báo
   } catch (error) {
     console.error(error);
-    showNotification("Lỗi cập nhật!", "error");
+    showNotification("Lỗi cập nhật! Vui lòng thử lại.", "error");
   }
 }
 
@@ -387,43 +472,26 @@ function triggerFileInput() {
 }
 function handleFileUpload(event) {
   const file = event.target.files[0];
-  if (file) {
+  if (file && file.size <= 5 * 1024 * 1024) {
     const reader = new FileReader();
     reader.onload = (e) => {
       form.value.avatar = e.target.result;
     };
     reader.readAsDataURL(file);
+  } else {
+    showNotification("Ảnh quá lớn (<5MB)", "error");
   }
 }
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
-  return d.toLocaleString("vi-VN"); // Format: 10:30:00 18/01/2026
+  return d.toLocaleString("vi-VN");
 }
 </script>
 
 <style scoped>
-/* Copy toàn bộ CSS từ AddEmployee.vue sang đây */
-/* Thêm CSS cho phần ngày tháng */
-.timestamp-info {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #666;
-  background: #f8f9fa;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px dashed #ddd;
-}
-.timestamp-info p {
-  margin: 4px 0;
-}
-.timestamp-info span {
-  font-weight: 600;
-  color: #333;
-}
-
-/* ... CSS cũ ... */
-.add-employee-page {
+/* Copy Style giống AddEmployee */
+.edit-employee-page {
   font-family: "Segoe UI", sans-serif;
 }
 .header-bar {
@@ -444,12 +512,14 @@ function formatDate(dateStr) {
   cursor: pointer;
   text-decoration: underline;
 }
+
 .main-card {
   background: #fff;
   border-radius: 8px;
   padding: 30px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
+
 .form-layout {
   display: flex;
   gap: 40px;
@@ -469,6 +539,8 @@ function formatDate(dateStr) {
   font-weight: 700;
   color: #333;
 }
+
+/* Avatar */
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
@@ -491,12 +563,22 @@ function formatDate(dateStr) {
 }
 .avatar-circle:hover {
   border-color: #8b4513;
-} /* Thêm hover viền nâu */
+}
 .avatar-circle img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+.file-input-hidden {
+  display: none;
+}
+.hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+/* Form Elements */
 .form-group {
   margin-bottom: 15px;
   display: flex;
@@ -519,12 +601,18 @@ select {
   border-radius: 6px;
   font-size: 14px;
   outline: none;
+  transition: 0.2s;
+}
+input:focus,
+select:focus {
+  border-color: #63391f;
 }
 .input-disabled {
   background-color: #f0f0f0;
   color: #888;
   cursor: not-allowed;
 }
+
 .grid-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -535,6 +623,10 @@ select {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
 }
+.full-width {
+  grid-column: 1 / -1;
+}
+
 .footer-actions {
   display: flex;
   justify-content: flex-end;
@@ -551,6 +643,8 @@ select {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* Error & Validation */
 .label-flex {
   display: flex;
   justify-content: space-between;
@@ -567,11 +661,43 @@ select {
   border-color: #e74c3c !important;
   background-color: #fff5f5;
 }
-.file-input-hidden {
-  display: none;
+
+/* Timestamp Box */
+.timestamp-info {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px dashed #ddd;
+}
+.timestamp-info p {
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.timestamp-info span {
+  font-weight: 600;
+  color: #333;
 }
 
-/* ===== TOAST NOTIFICATION ===== */
+/* Radio Group */
+.radio-group {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  height: 42px;
+}
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+/* Toast Notification */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -579,57 +705,42 @@ select {
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
 }
-
 .toast {
   pointer-events: auto;
-  min-width: 300px;
-  padding: 14px 20px;
-  border-radius: 4px; /* Bo góc nhẹ */
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  /* Đổ bóng mềm mại */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-  /* Animation trượt vào */
-  animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-
-  /* Màu nền mặc định */
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   background: #fff;
+  animation: slideInRight 0.3s forwards;
 }
-
-.toast-leave-active {
-  animation: fadeOut 0.3s ease forwards;
-}
-
-/* 1. SUCCESS (Giống ảnh mẫu của bạn) */
 .toast.success {
-  background-color: #e8f5e9; /* Nền xanh nhạt */
-  border-left: 6px solid #43a047; /* Viền trái xanh đậm */
-  color: #2e7d32; /* Chữ xanh đậm */
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
 }
-
-/* 2. ERROR */
 .toast.error {
-  background-color: #ffebee; /* Nền đỏ nhạt */
-  border-left: 6px solid #e53935; /* Viền trái đỏ đậm */
-  color: #c62828;
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
 }
-
-/* 3. WARNING */
 .toast.warning {
-  background-color: #fff3e0; /* Nền cam nhạt */
-  border-left: 6px solid #fb8c00; /* Viền trái cam đậm */
-  color: #ef6c00;
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
 }
-
-/* KEYFRAMES */
+.toast-msg {
+  color: #333;
+}
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -638,12 +749,6 @@ select {
   to {
     transform: translateX(0);
     opacity: 1;
-  }
-}
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateX(20px);
   }
 }
 </style>

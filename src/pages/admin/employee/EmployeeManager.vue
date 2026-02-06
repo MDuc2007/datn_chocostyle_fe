@@ -1,159 +1,212 @@
 <template>
-  <div class="employee-page">
-    <div class="card-box">
-      <h2 class="title">QUẢN LÝ NHÂN VIÊN</h2>
-      <section class="filters">
-        <div class="filter-row">
-          <input
-            v-model="query"
-            class="search"
-            placeholder="Nhập tên, mã hoặc email..."
-          />
-          <select v-model="filters.gender">
-            <option value="all">Giới tính: Tất cả</option>
-            <option value="male">Nam</option>
-            <option value="female">Nữ</option>
-          </select>
-          <select v-model="filters.role">
-            <option value="all">Chức vụ: Tất cả</option>
-            <option value="Quản lý">Quản lý</option>
-            <option value="Nhân viên">Nhân viên</option>
-            <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
-            <option value="Thủ kho">Thủ kho</option>
-          </select>
-          <select v-model="filters.status">
-            <option value="all">Trạng thái: Tất cả</option>
+  <div class="page-container">
+    <div class="card-section filter-card form-page-animation">
+      <div class="filter-card-header">
+        <h2 class="card-title">QUẢN LÝ NHÂN VIÊN</h2>
+        <div class="header-actions">
+          <div class="total-badge small">
+            Tổng số: <b>{{ employees.length || 0 }}</b>
+          </div>
+          <button class="btn btn-primary" @click="addEmployee">
+            + Thêm nhân viên
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="left-filters">
+          <div class="search-input">
+            <span class="search-icon">🔍</span>
+            <input
+              v-model="query"
+              type="text"
+              placeholder="Tìm theo tên, mã hoặc email"
+            />
+          </div>
+
+          <select class="mini-select" v-model="filters.status">
+            <option value="all">Tất cả</option>
             <option value="active">Đang làm</option>
             <option value="inactive">Đã nghỉ</option>
             <option value="locked">Đã khóa</option>
           </select>
-          <div class="actions">
-            <button class="btn btn-light" @click="resetFilters">Đặt lại</button>
-            <button class="btn btn-success" @click="exportExcel">
-              Xuất Excel
-            </button>
-            <button class="btn btn-primary" @click="addEmployee">
-              Thêm mới
-            </button>
-          </div>
         </div>
-      </section>
+
+        <div class="right-actions">
+          <button class="btn btn-outline" @click="resetFilters">Đặt lại</button>
+          <button class="btn btn-outline" @click="exportExcel">
+            Xuất Excel
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="card-box" style="margin-top: 20px">
-      <section class="table-wrap">
-        <table class="employees">
+    <div class="card-section table-card form-page-animation">
+      <div class="table-responsive">
+        <table class="custom-table">
           <thead>
             <tr>
-              <th style="width: 30px">STT</th>
-              <th style="width: 90px">Ảnh</th>
-              <th style="width: 100px">Mã NV</th>
-              <th>Tên</th>
-              <th>Email</th>
-              <th style="width: 110px">SDT</th>
-              <th>Địa chỉ</th>
-              <th style="width: 140px">Chức vụ</th>
-              <th style="width: 110px">Trạng thái</th>
-              <th style="width: 100px">Hành động</th>
+              <th width="50" class="text-center">STT</th>
+              <th width="80" class="text-center">Ảnh</th>
+              <th width="100">Mã NV</th>
+              <th style="min-width: 200px">Tên</th>
+              <th style="min-width: 180px">Email</th>
+              <th width="110">SDT</th>
+              <th style="min-width: 200px">Địa chỉ</th>
+              <th width="120">Chức vụ</th>
+              <th width="110" class="text-center">Trạng thái</th>
+              <th width="110" class="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="pagedEmployees.length === 0">
-              <td
-                colspan="10"
-                style="text-align: center; font-weight: 600; color: #666"
-              >
+              <td colspan="10" class="text-center py-5 text-muted">
                 Không có dữ liệu nhân viên
               </td>
             </tr>
-            <tr v-for="(e, index) in pagedEmployees" :key="e.id">
-              <td>{{ startIndex + index }}</td>
-              <td class="avatar-cell">
-                <img
-                  v-if="e.avatar && e.avatar.length > 20"
-                  :src="e.avatar"
-                  class="avatar-img"
-                />
-                <div
-                  v-else
-                  class="avatar placeholder"
-                  :style="{ backgroundColor: getRandomColor(index) }"
-                >
-                  {{ initials(e.name) }}
-                </div>
-              </td>
-              <td class="code">{{ e.code }}</td>
-              <td class="fw-bold">{{ e.name }}</td>
-              <td class="muted">{{ e.email }}</td>
-              <td>{{ e.phone }}</td>
-              <td class="muted small">{{ e.address }}</td>
-              <td>{{ getRoleLabel(e.role) }}</td>
-              <td>
-                <span :class="['status', getStatusClass(e.status)]">
-                  {{ getStatusLabel(e.status) }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <div class="action-buttons">
-                  <button
-                    class="btn-action edit"
-                    @click="openEditModal(e)"
-                    title="Chỉnh sửa"
+
+            <template v-else>
+              <tr v-for="(e, i) in pagedEmployees" :key="e.id">
+                <td class="text-center text-muted">
+                  <b>{{ startIndex + i }}</b>
+                </td>
+
+                <td class="text-center">
+                  <img
+                    v-if="e.avatar && e.avatar.length > 20"
+                    :src="e.avatar"
+                    class="avatar-img"
+                  />
+                  <div
+                    v-else
+                    class="avatar-placeholder"
+                    :style="{ backgroundColor: getRandomColor(i) }"
                   >
-                    ✏️
-                  </button>
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="e.status === 1"
-                      @change="toggleStatus(e)"
-                    />
-                    <span class="slider"></span>
-                  </label>
-                </div>
+                    {{ initials(e.name) }}
+                  </div>
+                </td>
+
+                <td>
+                  <b style="color: #63391f">{{ e.code }}</b>
+                </td>
+
+                <td>
+                  <span class="fw-bold text-dark">{{ e.name }}</span>
+                </td>
+
+                <td>
+                  <span class="text-muted">{{ e.email }}</span>
+                </td>
+
+                <td>{{ e.phone }}</td>
+
+                <td class="text-muted small">{{ e.address }}</td>
+
+                <td>{{ getRoleLabel(e.role) }}</td>
+
+                <td class="text-center">
+                  <span :class="['status-badge', getStatusClass(e.status)]">
+                    {{ getStatusLabel(e.status) }}
+                  </span>
+                </td>
+
+                <td class="text-center">
+                  <div class="actions-group">
+                    <label class="switch" title="Đổi trạng thái">
+                      <input
+                        type="checkbox"
+                        :checked="e.status === 1"
+                        @change="toggleStatus(e)"
+                      />
+                      <span class="slider round"></span>
+                    </label>
+
+                    <button
+                      class="btn-icon btn-edit"
+                      title="Chỉnh sửa"
+                      @click="openEditModal(e)"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="3"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          fill="none"
+                        />
+                        <path
+                          d="M8 15.5L15 8.5"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M14.5 6.5L17.5 9.5"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+
+            <tr v-if="!loading && pagedEmployees.length === 0">
+              <td colspan="10" class="text-center py-5 text-muted">
+                Không tìm thấy dữ liệu
               </td>
             </tr>
           </tbody>
         </table>
-        <div class="pagination-wrapper" v-if="totalPages > 1">
-          <div class="custom-pagination">
-            <button
-              class="nav-btn"
-              :disabled="page === 0"
-              @click="changePage(page - 1)"
-            >
-              &laquo;
-            </button>
+      </div>
 
-            <template v-for="(p, index) in visiblePages" :key="index">
-              <span v-if="p === '...'" class="dots">...</span>
-
-              <button
-                v-else
-                class="page-num"
-                :class="{ active: page === p - 1 }"
-                @click="changePage(p - 1)"
-              >
-                {{ p }}
-              </button>
-            </template>
-
-            <button
-              class="nav-btn"
-              :disabled="page >= totalPages - 1"
-              @click="changePage(page + 1)"
-            >
-              &raquo;
-            </button>
-          </div>
-        </div>
-      </section>
+      <div class="pagination-footer" v-if="totalPages > 1">
+        <button
+          class="p-btn"
+          :disabled="page === 0"
+          @click="changePage(page - 1)"
+        >
+          &lt;
+        </button>
+        <template v-for="p in visiblePages" :key="p">
+          <button
+            v-if="p !== '...'"
+            class="p-btn number"
+            :class="{ active: p === page + 1 }"
+            @click="changePage(p - 1)"
+          >
+            {{ p }}
+          </button>
+          <span v-else class="dots">...</span>
+        </template>
+        <button
+          class="p-btn"
+          :disabled="page >= totalPages - 1"
+          @click="changePage(page + 1)"
+        >
+          &gt;
+        </button>
+      </div>
     </div>
 
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-content">
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content form-page-animation">
         <div class="modal-header">
-          <h3>Chỉnh sửa nhân viên</h3>
+          <h3 style="color: #63391f; margin: 0">Chỉnh sửa nhân viên</h3>
           <button class="close-btn" @click="closeModal">×</button>
         </div>
 
@@ -256,18 +309,16 @@
             <div class="form-group">
               <label>Chức vụ</label>
               <select v-model="editingEmployee.vaiTro" class="form-select">
-                <option value="Quản lý">Quản lý (Admin)</option>
-                <option value="Nhân viên">Nhân viên (Staff)</option>
+                <option value="Quản lý">Quản lý</option>
+                <option value="Nhân viên">Nhân viên</option>
                 <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
                 <option value="Thủ kho">Thủ kho</option>
               </select>
             </div>
+
             <div class="form-group">
               <label>Trạng thái</label>
-              <select
-                v-model="editingEmployee.trangThai"
-                class="form-select status-select"
-              >
+              <select v-model="editingEmployee.trangThai" class="form-select">
                 <option :value="1">Đang làm việc</option>
                 <option :value="0">Đã nghỉ việc</option>
                 <option :value="2">Đã khóa</option>
@@ -392,21 +443,7 @@ onMounted(() => {
 
 // --- MODAL ---
 function openEditModal(emp) {
-  // errors.value = {}; // Reset lỗi cũ
-  // editingEmployee.value = {
-  //     id: emp.id,
-  //     maNv: emp.code,
-  //     hoTen: emp.name,
-  //     email: emp.email,
-  //     sdt: emp.phone,
-  //     diaChi: emp.address,
-  //     vaiTro: emp.role,
-  //     trangThai: emp.status,
-  //     ngaySinh: formatDateForInput(emp.dob),
-  //     avatar: emp.avatar
-  // }
-  // showModal.value = true;
-  router.push({ name: "EditEmployee", params: { id: emp.id } });
+  router.push(`/admin/employee/edit/${emp.id}`);
 }
 
 function closeModal() {
@@ -434,7 +471,7 @@ function handleFileUpload(event) {
 
 // --- LƯU DỮ LIỆU ---
 async function saveEmployee() {
-  if (!validateEditForm()) return; // Kiểm tra validate trước
+  if (!validateEditForm()) return;
 
   try {
     await axios.put(
@@ -545,14 +582,13 @@ function changePage(newPage) {
 }
 const visiblePages = computed(() => {
   const total = totalPages.value;
-  const current = page.value + 1; // page đang là 0-index, chuyển sang 1-index để tính
-  const delta = 2; // Số trang hiện xung quanh trang hiện tại
+  const current = page.value + 1;
+  const delta = 2;
   const range = [];
   const rangeWithDots = [];
   let l;
 
   for (let i = 1; i <= total; i++) {
-    // Luôn hiện trang 1, trang cuối, và các trang xung quanh current
     if (
       i === 1 ||
       i === total ||
@@ -587,212 +623,335 @@ function exportExcel() {
 </script>
 
 <style scoped>
-/* Styles from ProductManager adapted for EmployeeManager */
-
-.product-page {
-  background: #fff;
-  padding: 20px;
-  font-size: 14px;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  margin-top: 10px;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
-    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
-  border-radius: 6px;
+/* --- 1. COLOR PALETTE --- */
+:root {
+  --primary-brown: #63391f;
+  --success-green: #10b981;
+  --danger-red: #ef4444;
+  --bg-gray: #f8fafc;
+  --text-main: #333;
+  --text-muted: #6b7280;
 }
 
-.header {
-  margin-bottom: 10px;
-  background: #fff;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
-    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
-  border-radius: 6px;
+.page-container {
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+  color: #333;
 }
 
-.title {
-  color: #63391f;
-  margin-bottom: 15px;
-  margin: 15px;
-}
-
-/* TOP BAR */
-.top-bar {
+/* --- HEADER & CARDS --- */
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 24px;
 }
-
-.filters select {
-  margin-right: 8px;
-  padding: 6px 10px;
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #63391f;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 0.5px;
 }
-
-.add-btn {
-  position: relative;
-  margin: 15px;
-}
-
-.add-btn button {
+.total-badge {
   background: #fff;
-  border: 1px solid #ccc;
-  padding: 6px 12px;
-  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #63391f;
+  border: 1px solid #63391f;
+  box-shadow: 0 2px 4px rgba(99, 57, 31, 0.1);
 }
 
-/* TABLE */
-.product-table {
-  width: 100%;
-  border-collapse: collapse;
+.card-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  margin-bottom: 24px;
 }
 
-.product-table th {
-  background: #63391f;
-  color: #fff;
-  padding: 8px;
-}
-
-.product-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-.product-table img {
-  width: 40px;
-  height: auto;
-}
-
-/* Status colors like ProductManager */
-.status.active {
-  color: #2ecc71; /* xanh */
-  font-weight: 600;
-}
-
-.status.inactive {
-  color: #e74c3c; /* đỏ */
-  font-weight: 600;
-}
-
-.status.locked {
-  color: #7f8c8d; /* xám */
-  font-weight: 600;
-}
-
-/* PAGINATION */
-.pagination-wrapper {
-  display: flex;
-  justify-content: center; /* Căn giữa */
-  padding: 20px 0;
-}
-
-.custom-pagination {
+/* --- FILTER --- */
+.filter-header {
+  color: #63391f;
+  margin-bottom: 20px;
+  font-size: 15px;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px; /* Khoảng cách giữa các nút rộng hơn chút */
-  font-family: "Segoe UI", sans-serif;
+  gap: 8px;
+}
+.filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.search-group {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 5px;
 }
 
-/* Style chung cho nút số và nút điều hướng */
-.page-num,
-.nav-btn {
-  width: 36px; /* Nút hình vuông */
-  height: 36px;
-  border: 1px solid #e0e0e0; /* Viền xám nhạt */
-  background-color: #fff; /* Nền trắng */
-  color: #999; /* Chữ/Icon màu xám */
-  border-radius: 4px; /* Bo góc nhẹ giống ảnh */
+/* New inline filter row to match screenshot */
+.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.left-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.right-actions {
+  display: flex;
+  gap: 10px;
+}
+.search-input {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 360px;
+  box-shadow: none;
+}
+.search-input input {
+  border: none;
+  outline: none;
+  padding: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+.search-icon {
+  margin-right: 8px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+.mini-select {
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 0 10px;
+  background: #fff;
+}
+.mini-date {
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 4px 10px;
+  background: #fff;
+}
+
+/* Filter card header (title inside card) */
+.filter-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 18px;
+  color: #63391f;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.total-badge.small {
+  background: transparent;
+  border: 1px solid rgba(99, 57, 31, 0.08);
+  padding: 6px 12px;
+  border-radius: 14px;
+  color: var(--primary-brown);
+  font-weight: 600;
+}
+
+.form-item label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+.form-input,
+.form-select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0 12px;
+  outline: none;
+  transition: all 0.2s;
+}
+.form-input:focus,
+.form-select:focus {
+  border-color: #63391f;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
+}
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 20px;
+}
+.btn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13.5px;
   cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+.btn-primary {
+  background-color: #63391f;
+  color: #fff;
+}
+.btn-primary:hover {
+  background-color: #4e2c18;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.btn-outline {
+  background-color: #fff;
+  color: #63391f;
+  border: 1px solid #63391f;
+}
+.btn-outline:hover {
+  background-color: #fdf8f6;
+}
+
+/* --- TABLE (UPDATED CLEAN STYLE) --- */
+.table-responsive {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1300px;
+  table-layout: auto;
+}
+.custom-table th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 700;
+  padding: 14px 10px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.custom-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+  color: #4b5563;
+  vertical-align: middle;
+  height: auto;
+}
+.custom-table tbody tr:hover {
+  background-color: #fafafa;
+}
+.fw-bold {
+  font-weight: 600;
+}
+.text-muted {
+  color: #9ca3af !important;
+  font-size: 13px;
+}
+.text-dark {
+  color: #111827;
+}
+.text-center {
+  text-align: center;
+}
+.py-5 {
+  padding: 20px 0;
+}
+.small {
+  font-size: 13px;
+}
+
+/* === AVATAR === */
+.avatar-img {
+  width: 45px;
+  height: 45px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  display: block;
+}
+.avatar-placeholder {
+  width: 45px;
+  height: 45px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-  font-weight: 600;
+  font-weight: 700;
+  color: #fff;
   font-size: 14px;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
-/* Hiệu ứng khi di chuột vào nút chưa active */
-.page-num:hover:not(.active),
-.nav-btn:hover:not(:disabled) {
-  border-color: #63391f;
-  color: #63391f;
+/* === STATUS BADGE === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 90px;
+  background: none !important;
+  border: none !important;
+}
+.status-badge.active {
+  color: #059669;
+}
+.status-badge.inactive {
+  color: #dc2626;
+}
+.status-badge.locked {
+  color: #6b7280;
 }
 
-/* Style cho nút ĐANG CHỌN (Active) - Màu nâu */
-.page-num.active {
-  background-color: #63391f; /* Màu nâu thương hiệu */
-  border-color: #63391f;
-  color: #fff; /* Chữ trắng */
-  box-shadow: 0 2px 5px rgba(99, 57, 31, 0.2); /* Đổ bóng nhẹ cho nổi */
+/* === SWITCH & ACTIONS === */
+.actions-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
-
-/* Style cho nút điều hướng bị vô hiệu hóa (Disabled) */
-.nav-btn:disabled {
-  background-color: #f9f9f9;
-  color: #ccc;
-  border-color: #eee;
-  cursor: not-allowed;
-}
-
-/* Style cho icon mũi tên kép (Font to hơn chút cho cân đối) */
-.nav-btn {
-  font-size: 18px;
-  line-height: 1;
-  padding-bottom: 2px; /* Căn chỉnh lại tâm */
-}
-
-/* Dấu ... */
-.dots {
-  color: #999;
-  padding: 0 5px;
-  font-weight: bold;
-}
-/* SEARCH BAR */
-.search-wrapper {
-  position: relative;
-  width: 300px;
-  margin: 15px;
-}
-
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  font-size: 16px;
-  color: #666;
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 10px 8px 34px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  font-size: 14px;
-}
-
-.search-input:focus {
-  border-color: #6b3f2a;
-}
-
-/* Switch Toggle */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 24px;
+  width: 46px;
+  height: 26px;
 }
-
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
-
 .slider {
   position: absolute;
   cursor: pointer;
@@ -800,246 +959,120 @@ function exportExcel() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #e74c3c; /* red for locked */
+  background-color: #d9534f;
   transition: 0.4s;
-  border-radius: 24px;
+  border-radius: 20px;
 }
-
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 20px;
+  width: 20px;
   left: 3px;
   bottom: 3px;
   background-color: white;
   transition: 0.4s;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
-
 input:checked + .slider {
-  background-color: #6b3a2b; /* brown for unlocked */
+  background-color: #63391f;
 }
-
 input:checked + .slider:before {
-  transform: translateX(26px);
+  transform: translateX(20px);
 }
 
-/* ACTION COLUMN */
-.action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 60px;
-}
-
-.action .icon {
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.product-page {
-  height: calc(100vh - 200px);
-  display: flex;
-  flex-direction: column;
-}
-
-.table-wrapper {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.product-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.table-wrapper::-webkit-scrollbar {
-  width: 6px;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #bbb;
-  border-radius: 4px;
-}
-
-.table-wrapper::-webkit-scrollbar-track {
-  background: #f5f5f5;
-}
-
-/* Original styles for compatibility */
-.employee-page {
-  padding: 10px;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  color: #3b2b20;
-  background-color: transparent;
-}
-
-.card-box {
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
   background: #fff;
+  color: #63391f;
   border-radius: 8px;
-  padding: 24px;
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
-  max-width: 100%;
-}
-
-.filters {
-  margin-bottom: 0;
-}
-.filters .filter-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.filters input.search {
-  flex: 1;
-  min-width: 250px;
-  padding: 10px 14px;
-  border: 1px solid #e0d8d0;
-  border-radius: 6px;
-}
-.filters select {
-  padding: 10px;
-  border: 1px solid #d6c3b4;
-  border-radius: 6px;
-}
-.actions {
-  margin-left: auto;
-  display: flex;
-  gap: 10px;
-}
-.btn {
-  padding: 10px 16px;
-  border-radius: 6px;
-  border: 0;
   cursor: pointer;
-  font-weight: 600;
-}
-.btn-light {
-  background: #f3ece6;
-  color: #5a2e18;
-}
-.btn-success {
-  background: #28a745;
-  color: #fff;
-}
-.btn-primary {
-  background: #63391f;
-  color: #fff;
-}
-
-.table-wrap {
-  overflow-x: auto;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.employees {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  table-layout: fixed;
-}
-.employees thead th {
-  background: #6b3a2b;
-  color: #fff;
-  text-align: left;
-  padding: 0 16px;
-  font-weight: 700;
-  height: 50px;
-}
-.employees tbody tr {
-  height: 80px;
-}
-.employees tbody td {
-  padding: 0 16px;
-  vertical-align: middle;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.4;
-}
-
-.avatar-cell {
-  width: 90px;
-}
-.avatar-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 1px solid #eee;
-}
-.avatar.placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  color: #6b3a2b;
-  font-size: 20px;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
-
-.actions-cell .action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.btn-action {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #95a5a6;
-}
-.btn-action.edit:hover {
-  color: #2980b9;
+.btn-icon:hover {
+  border-color: #63391f;
+  color: #63391f;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(99, 57, 31, 0.08);
   transform: scale(1.1);
 }
+.btn-edit {
+  border-color: transparent;
+}
+.btn-edit:hover {
+  border-color: #63391f;
+}
+.btn-edit {
+  color: #63391f;
+}
 
-.page {
-  padding: 8px 14px;
-  border-radius: 4px;
+/* === PAGINATION === */
+.pagination-footer {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+.p-btn {
+  width: 36px;
+  height: 36px;
   background: #fff;
-  border: 1px solid #d9d9d9;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   cursor: pointer;
+  color: #4b5563;
+  font-weight: 500;
+  transition: 0.2s;
 }
-.page.active {
-  background: #6b3a2b;
+.p-btn.active {
+  background: #63391f;
+  border-color: #63391f;
   color: #fff;
-  border-color: #6b3a2b;
+}
+.p-btn:hover:not(.active):not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+.p-btn:disabled {
+  background: #f9f9f9;
+  color: #ccc;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+.dots {
+  color: #999;
+  padding: 0 5px;
+  font-weight: bold;
 }
 
+/* === MODAL === */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 999;
 }
 .modal-content {
-  background: white;
-  width: 700px;
-  max-width: 95%;
+  background: #fff;
+  padding: 30px;
   border-radius: 12px;
-  padding: 25px;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 600px;
+  max-width: 95%;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 .modal-header {
   display: flex;
@@ -1075,8 +1108,8 @@ input:checked + .slider:before {
   height: 100%;
   object-fit: cover;
 }
-.hidden-input {
-  display: none;
+.avatar-circle:hover .overlay-edit {
+  display: block;
 }
 .overlay-edit {
   position: absolute;
@@ -1090,13 +1123,14 @@ input:checked + .slider:before {
   font-size: 12px;
   display: none;
 }
-.avatar-circle:hover .overlay-edit {
-  display: block;
+.hidden-input {
+  display: none;
 }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  margin-top: 20px;
 }
 .form-group {
   display: flex;
@@ -1105,12 +1139,44 @@ input:checked + .slider:before {
 .form-group.full-width {
   grid-column: span 2;
 }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
 .form-group input,
 .form-group select {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  margin-top: 5px;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #63391f;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
+  outline: none;
+}
+.disabled-input {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+.label-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.error-msg {
+  color: #ef4444;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 600;
+}
+.red-border {
+  border-color: #ef4444 !important;
+  background-color: #fff5f5;
 }
 .modal-footer {
   display: flex;
@@ -1120,27 +1186,15 @@ input:checked + .slider:before {
   border-top: 1px solid #eee;
   padding-top: 20px;
 }
+.modal-footer .btn {
+  padding: 10px 24px;
+}
+.btn-light {
+  background: #f3f4f6;
+  color: #374151;
+}
 .btn-orange {
   background-color: #63391f;
   color: white;
-}
-
-.label-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.error-msg {
-  color: #e74c3c;
-  font-size: 12px;
-  font-style: italic;
-  font-weight: 600;
-}
-
-.red-border {
-  border-color: #e74c3c !important;
-  background-color: #fff5f5;
 }
 </style>
