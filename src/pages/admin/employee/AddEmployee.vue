@@ -1,19 +1,25 @@
 <template>
   <div class="add-employee-page">
     <div class="toast-container">
-      <div
-        v-for="notif in notifications"
-        :key="notif.id"
-        class="toast"
-        :class="notif.type"
-      >
-        <span v-if="notif.type === 'success'">✅</span>
-        <span v-if="notif.type === 'error'">❌</span>
-        <span v-if="notif.type === 'warning'">⚠️</span>
-
-        <span style="margin-left: 8px">{{ notif.message }}</span>
-      </div>
+      <TransitionGroup name="toast">
+        <div
+          v-for="notif in notifications"
+          :key="notif.id"
+          class="toast"
+          :class="notif.type"
+        >
+          <span v-if="notif.type === 'success'" style="font-size: 18px"
+            >✅</span
+          >
+          <span v-if="notif.type === 'error'" style="font-size: 18px">❌</span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"
+            >⚠️</span
+          >
+          <span class="toast-msg">{{ notif.message }}</span>
+        </div>
+      </TransitionGroup>
     </div>
+
     <div class="header-bar">
       <h2 class="title">Nhân viên / Thêm nhân viên</h2>
       <button class="btn-back" @click="goBack">Quay lại</button>
@@ -27,7 +33,6 @@
       <div class="form-layout">
         <div class="left-col">
           <h3 class="section-header">Thông tin nhân viên</h3>
-
           <div class="avatar-wrapper">
             <div class="avatar-circle" @click="triggerFileInput">
               <img v-if="form.avatar" :src="form.avatar" alt="Avatar Preview" />
@@ -42,12 +47,6 @@
             </div>
             <p class="hint">Nhấn vào hình để tải ảnh</p>
           </div>
-
-          <!-- <div class="form-group">
-            <label>Mã nhân viên (Tự động)</label>
-            <input value="Tự sinh sau khi lưu" disabled class="input-disabled" />
-          </div> -->
-
           <div class="form-group">
             <div class="label-flex">
               <label>Họ Và Tên <span class="req">*</span></label>
@@ -65,22 +64,48 @@
 
         <div class="right-col">
           <h3 class="section-header">Thông tin chi tiết</h3>
-
           <div class="grid-row">
             <div class="form-group">
               <div class="label-flex">
-                <label>Số CCCD <span class="req">*</span></label>
-                <span v-if="errors.cccd" class="error-msg">{{
-                  errors.cccd
+                <label>Email <span class="req">*</span></label
+                ><span v-if="errors.email" class="error-msg">{{
+                  errors.email
                 }}</span>
               </div>
               <input
-                v-model="form.cccd"
-                :class="{ 'red-border': errors.cccd }"
-                placeholder="Nhập số căn cước"
+                v-model="form.email"
+                :class="{ 'red-border': errors.email }"
+                placeholder="example@mail.com"
               />
             </div>
-
+            <div class="form-group">
+              <div class="label-flex">
+                <label>Ngày sinh <span class="req">*</span></label
+                ><span v-if="errors.ngaySinh" class="error-msg">{{
+                  errors.ngaySinh
+                }}</span>
+              </div>
+              <input
+                type="date"
+                v-model="form.ngaySinh"
+                :class="{ 'red-border': errors.ngaySinh }"
+              />
+            </div>
+          </div>
+          <div class="grid-row">
+            <div class="form-group">
+              <div class="label-flex">
+                <label>Số Điện Thoại <span class="req">*</span></label
+                ><span v-if="errors.sdt" class="error-msg">{{
+                  errors.sdt
+                }}</span>
+              </div>
+              <input
+                v-model="form.sdt"
+                :class="{ 'red-border': errors.sdt }"
+                placeholder="09xxxxxxxx"
+              />
+            </div>
             <div class="form-group">
               <label>Giới tính <span class="req">*</span></label>
               <div class="radio-group">
@@ -95,37 +120,6 @@
               </div>
             </div>
           </div>
-
-          <div class="grid-row">
-            <div class="form-group">
-              <div class="label-flex">
-                <label>Ngày sinh <span class="req">*</span></label>
-                <span v-if="errors.ngaySinh" class="error-msg">{{
-                  errors.ngaySinh
-                }}</span>
-              </div>
-              <input
-                type="date"
-                v-model="form.ngaySinh"
-                :class="{ 'red-border': errors.ngaySinh }"
-              />
-            </div>
-
-            <div class="form-group">
-              <div class="label-flex">
-                <label>Email <span class="req">*</span></label>
-                <span v-if="errors.email" class="error-msg">{{
-                  errors.email
-                }}</span>
-              </div>
-              <input
-                v-model="form.email"
-                :class="{ 'red-border': errors.email }"
-                placeholder="example@mail.com"
-              />
-            </div>
-          </div>
-
           <div class="grid-row-3">
             <div class="form-group">
               <label>Tỉnh/Thành phố <span class="req">*</span></label>
@@ -169,14 +163,12 @@
               </select>
             </div>
           </div>
-
           <div class="form-group full-width">
             <div class="label-flex">
               <label
                 >Địa chỉ cụ thể (Số nhà, đường)
                 <span class="req">*</span></label
-              >
-              <span v-if="errors.diaChiCuThe" class="error-msg">{{
+              ><span v-if="errors.diaChiCuThe" class="error-msg">{{
                 errors.diaChiCuThe
               }}</span>
             </div>
@@ -186,44 +178,6 @@
               placeholder="VD: Số 10, Ngõ 5..."
             />
           </div>
-
-          <div class="grid-row">
-            <div class="form-group">
-              <div class="label-flex">
-                <label>Số Điện Thoại <span class="req">*</span></label>
-                <span v-if="errors.sdt" class="error-msg">{{
-                  errors.sdt
-                }}</span>
-              </div>
-              <input
-                v-model="form.sdt"
-                :class="{ 'red-border': errors.sdt }"
-                placeholder="09xxxxxxxx"
-              />
-            </div>
-
-            <!-- <div class="form-group">
-                <label>Chức vụ / Vai trò</label>
-                <select v-model="form.vaiTro">
-                    <option value="Nhân viên">Nhân viên</option>
-                    <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
-                    <option value="Quản lý">Quản lý</option>
-                    <option value="Thủ kho">Thủ kho</option>
-                </select>
-             </div> -->
-          </div>
-
-          <div class="grid-row">
-            <div class="form-group">
-              <!-- <div class="label-flex">
-                    <label>Ngày vào làm <span class="req">*</span></label>
-                    <span v-if="errors.ngayVaoLam" class="error-msg">{{ errors.ngayVaoLam }}</span>
-                </div>
-                <input type="date" v-model="form.ngayVaoLam" :class="{ 'red-border': errors.ngayVaoLam }" /> -->
-            </div>
-            <div class="form-group"></div>
-          </div>
-
           <div class="footer-actions">
             <button class="btn btn-orange" @click="submitForm">
               Thêm Nhân Viên
@@ -233,19 +187,70 @@
       </div>
     </div>
 
-    <div v-if="showScanModal" class="scan-modal-overlay">
+    <div
+      v-if="showScanModal"
+      class="scan-modal-overlay"
+      @click.self="closeScanModal"
+    >
       <div class="scan-modal-content">
         <div class="scan-header">
-          <h3>Quét QR CCCD</h3>
-          <button class="close-btn" @click="closeScanModal">×</button>
-        </div>
-        <div class="scan-body">
-          <div id="reader"></div>
-          <div class="scan-options">
-            <p>Hoặc tải ảnh lên từ máy:</p>
-            <input type="file" @change="handleQrImageUpload" accept="image/*" />
+          <div class="header-title">
+            <span class="icon-qr">📷</span>
+            <h3>Quét CCCD Gắn Chip</h3>
           </div>
-          <p class="scan-note" v-if="scanError">{{ scanError }}</p>
+          <button class="close-btn" @click="closeScanModal" title="Đóng">
+            ×
+          </button>
+        </div>
+
+        <div class="scan-body">
+          <div class="camera-section">
+            <qrcode-stream
+              v-if="cameraActive"
+              @detect="onDetect"
+              @error="onError"
+              :formats="['qr_code']"
+              :track="paintBoundingBox"
+            >
+              <div class="scan-frame">
+                <div class="corner topleft"></div>
+                <div class="corner topright"></div>
+                <div class="corner bottomleft"></div>
+                <div class="corner bottomright"></div>
+                <p class="scan-text">Di chuyển CCCD vào khung hình</p>
+                <div v-if="loadingCamera" class="loading-text">
+                  Đang khởi động camera...
+                </div>
+              </div>
+            </qrcode-stream>
+
+            <div v-else class="camera-placeholder">
+              <div class="placeholder-icon">📷</div>
+              <p v-if="!scanError">Bấm nút bên dưới để bắt đầu quét</p>
+              <p v-else style="color: #e74c3c">{{ scanError }}</p>
+              <button class="btn-primary-brown" @click="startCamera">
+                Bật Camera Ngay
+              </button>
+            </div>
+          </div>
+
+          <div class="divider">
+            <span>HOẶC TẢI ẢNH</span>
+          </div>
+
+          <div class="upload-section">
+            <label class="upload-box">
+              <qrcode-capture
+                @detect="onDetect"
+                :formats="['qr_code']"
+                class="hidden-capture-input"
+              />
+
+              <span class="upload-icon">📂</span>
+              <span class="upload-text">Chọn ảnh QR từ máy tính</span>
+              <span class="upload-subtext">(Hỗ trợ tốt mọi định dạng ảnh)</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -253,10 +258,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
-import { Html5Qrcode } from "html5-qrcode";
+// 👇 Import thư viện mới
+import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
 
 const router = useRouter();
 const fileInput = ref(null);
@@ -269,17 +275,14 @@ const selectedCity = ref(null);
 const selectedDistrict = ref(null);
 const selectedWard = ref(null);
 
-// Form Data (Chú ý dùng diaChiCuThe)
+// Form Data
 const form = ref({
   hoTen: "",
-  cccd: "",
   gioiTinh: true,
   ngaySinh: "",
   email: "",
   sdt: "",
   diaChiCuThe: "",
-  vaiTro: "Nhân viên",
-  ngayVaoLam: "",
   avatar: "",
 });
 const errors = ref({});
@@ -287,12 +290,13 @@ const errors = ref({});
 // Scanner State
 const showScanModal = ref(false);
 const scanError = ref("");
-let html5QrCode = null;
+const cameraActive = ref(false);
+const loadingCamera = ref(false);
 
 // Toast notifications
 const notifications = ref([]);
 const showNotification = (message, type = "success") => {
-  const id = Date.now();
+  const id = Date.now() + Math.random();
   notifications.value.push({ message, type, id });
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
@@ -308,11 +312,95 @@ onMounted(async () => {
   }
 });
 
-onBeforeUnmount(() => {
-  stopScanner();
-});
+// --- LOGIC QR SCANNER (CÔNG NGHỆ MỚI) ---
 
-// --- LOGIC ĐỊA CHỈ ---
+function openScanModal() {
+  showScanModal.value = true;
+  scanError.value = "";
+  cameraActive.value = false; // Mặc định tắt để user tự bật
+}
+
+function closeScanModal() {
+  cameraActive.value = false;
+  showScanModal.value = false;
+}
+
+function startCamera() {
+  scanError.value = "";
+  cameraActive.value = true;
+  loadingCamera.value = true;
+}
+
+// Hàm xử lý kết quả chung cho cả Camera và Ảnh
+function onDetect(detectedCodes) {
+  // detectedCodes là một mảng các mã tìm thấy
+  const result = detectedCodes[0]; // Lấy mã đầu tiên
+
+  if (result && result.rawValue) {
+    // Có kết quả -> Tắt modal & Xử lý
+    cameraActive.value = false;
+    loadingCamera.value = false;
+
+    parseCCCDData(result.rawValue);
+  } else {
+    // Trường hợp upload ảnh mà ko tìm thấy QR
+    if (!cameraActive.value) {
+      showNotification("Không tìm thấy mã QR trong ảnh này", "warning");
+    }
+  }
+}
+
+function onError(err) {
+  loadingCamera.value = false;
+  if (err.name === "NotAllowedError") {
+    scanError.value = "Bạn cần cấp quyền truy cập Camera!";
+  } else if (err.name === "NotFoundError") {
+    scanError.value = "Không tìm thấy thiết bị Camera.";
+  } else {
+    scanError.value = `Lỗi camera: ${err.message}`;
+  }
+  cameraActive.value = false;
+}
+
+// Hàm parse dữ liệu (Logic cũ của bạn)
+function parseCCCDData(decodedText) {
+  console.log("QR Data:", decodedText);
+  const parts = decodedText.split("|");
+
+  if (parts.length >= 6) {
+    // Cấu trúc CCCD: Số|CMND cũ|Tên|NgàySinh|GiớiTinh|ĐịaChỉ|NgàyCấp
+    // form.value.cccd = parts[0]; // Đã bỏ theo yêu cầu
+    form.value.hoTen = parts[2];
+
+    // Ngày sinh: 25011999 -> 1999-01-25
+    const d = parts[3];
+    if (d.length === 8) {
+      form.value.ngaySinh = `${d.slice(4, 8)}-${d.slice(2, 4)}-${d.slice(0, 2)}`;
+    }
+
+    form.value.gioiTinh = parts[4] === "Nam";
+
+    // Địa chỉ
+    autoFillAddress(parts[5]);
+
+    showScanModal.value = false;
+    showNotification("Đã quét thành công!", "success");
+  } else {
+    showNotification("Mã QR không đúng định dạng CCCD", "error");
+  }
+}
+function paintBoundingBox(detectedCodes, ctx) {
+  for (const detectedCode of detectedCodes) {
+    const {
+      boundingBox: { x, y, width, height },
+    } = detectedCode;
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#2ecc71"; // Màu xanh lá
+    ctx.strokeRect(x, y, width, height);
+  }
+}
+// --- LOGIC ĐỊA CHỈ (Giữ nguyên) ---
 function onCityChange() {
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
@@ -323,117 +411,6 @@ function onDistrictChange() {
   listWard.value = selectedDistrict.value ? selectedDistrict.value.wards : [];
   selectedWard.value = null;
 }
-
-// --- LOGIC QR SCANNER ---
-function openScanModal() {
-  showScanModal.value = true;
-  scanError.value = "";
-  nextTick(() => {
-    startScanner();
-  });
-}
-function closeScanModal() {
-  showScanModal.value = false;
-  stopScanner();
-}
-function startScanner() {
-  if (html5QrCode) html5QrCode.clear().catch((e) => {});
-  html5QrCode = new Html5Qrcode("reader");
-  const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 250 },
-    aspectRatio: 1.0,
-  };
-  html5QrCode
-    .start({ facingMode: "environment" }, config, onScanSuccess, () => {})
-    .catch((err) => {
-      console.warn(err);
-      scanError.value =
-        "Không tìm thấy Camera. Vui lòng dùng tính năng tải ảnh.";
-    });
-}
-function stopScanner() {
-  if (html5QrCode && html5QrCode.isScanning) {
-    html5QrCode
-      .stop()
-      .then(() => html5QrCode.clear())
-      .catch((e) => {});
-  }
-}
-
-// --- XỬ LÝ ẢNH QR UPLOAD (Đã có fix viền trắng) ---
-async function handleQrImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  scanError.value = "Đang xử lý...";
-  try {
-    if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-    const processedFile = await addWhitePadding(file);
-    const decodedText = await html5QrCode.scanFile(processedFile, true);
-    onScanSuccess(decodedText);
-  } catch (err) {
-    try {
-      // Fallback ảnh gốc
-      const decodedTextOriginal = await html5QrCode.scanFile(file, true);
-      onScanSuccess(decodedTextOriginal);
-    } catch (e) {
-      scanError.value = "Không tìm thấy mã QR.";
-    }
-  }
-}
-function addWhitePadding(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const padding = Math.max(img.width, img.height) * 0.2;
-        canvas.width = img.width + padding * 2;
-        canvas.height = img.height + padding * 2;
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, padding, padding);
-        canvas.toBlob(
-          (blob) =>
-            resolve(new File([blob], "padded.png", { type: "image/png" })),
-          "image/png",
-        );
-      };
-      img.onerror = reject;
-    };
-    reader.onerror = reject;
-  });
-}
-
-// --- PARSE DỮ LIỆU QR ---
-function onScanSuccess(decodedText) {
-  stopScanner();
-  showScanModal.value = false;
-
-  const parts = decodedText.split("|");
-  if (parts.length >= 6) {
-    form.value.cccd = parts[0];
-    form.value.hoTen = parts[2];
-    form.value.gioiTinh = parts[4] === "Nam";
-    const d = parts[3];
-    if (d.length === 8)
-      form.value.ngaySinh = `${d.slice(4, 8)}-${d.slice(2, 4)}-${d.slice(
-        0,
-        2,
-      )}`;
-
-    // Tự động điền địa chỉ
-    autoFillAddress(parts[5]);
-    showNotification("Đã quét thành công!", "success");
-  } else {
-    showNotification("QR không đúng định dạng CCCD", "error");
-  }
-}
-
 function autoFillAddress(fullStr) {
   const arr = fullStr.split(",").map((s) => s.trim());
   if (arr.length < 3) return;
@@ -442,7 +419,6 @@ function autoFillAddress(fullStr) {
   const strDistrict = arr[arr.length - 2];
   const strWard = arr[arr.length - 3];
 
-  // 👇 Gán vào diaChiCuThe thay vì diaChi
   form.value.diaChiCuThe = arr.slice(0, arr.length - 3).join(", ");
 
   const foundCity = listCity.value.find((c) => compareStr(c.name, strCity));
@@ -480,10 +456,6 @@ function validateForm() {
     errors.value.hoTen = "Tên trống";
     isValid = false;
   }
-  if (!form.value.cccd || form.value.cccd.length < 9) {
-    errors.value.cccd = "CCCD sai";
-    isValid = false;
-  }
   if (
     !form.value.email ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)
@@ -495,13 +467,10 @@ function validateForm() {
     errors.value.sdt = "SĐT sai";
     isValid = false;
   }
-
-  // 👇 Validate diaChiCuThe
   if (!form.value.diaChiCuThe) {
     errors.value.diaChiCuThe = "Địa chỉ cụ thể trống";
     isValid = false;
   }
-
   if (!selectedCity.value) {
     errors.value.tinhThanh = "Chưa chọn Tỉnh";
     isValid = false;
@@ -514,7 +483,6 @@ function validateForm() {
     errors.value.xaPhuong = "Chưa chọn Xã";
     isValid = false;
   }
-
   if (!form.value.ngaySinh) {
     errors.value.ngaySinh = "Chọn ngày sinh";
     isValid = false;
@@ -527,40 +495,32 @@ function validateForm() {
       isValid = false;
     }
   }
-  // if (!form.value.ngayVaoLam) { errors.value.ngayVaoLam = "Chọn ngày vào làm"; isValid = false; }
-
   return isValid;
 }
 
 async function submitForm() {
-  if (!validateForm()) return;
-
-  // 👇 PAYLOAD ĐỒNG BỘ VỚI BACKEND MỚI
+  if (!validateForm()) {
+    showNotification("Vui lòng kiểm tra lại thông tin!", "warning");
+    return;
+  }
   const payload = {
     ...form.value,
-    // Gửi diaChiCuThe (Backend sẽ tự ghép thành diaChi)
     diaChiCuThe: form.value.diaChiCuThe,
-
-    // Gửi cả ID và Tên
     tinhThanhId: selectedCity.value?.code,
     tinhThanh: selectedCity.value?.name,
-
     quanHuyenId: selectedDistrict.value?.code,
     quanHuyen: selectedDistrict.value?.name,
-
     xaPhuongId: selectedWard.value?.code,
     xaPhuong: selectedWard.value?.name,
   };
-
   try {
     await axios.post("http://localhost:8080/api/nhan-vien", payload);
-    showNotification("Thêm nhân viên thành công!");
-    setTimeout(() => {
-      router.push("/admin/employee");
-    }, 1500);
+    sessionStorage.setItem("flashMessage", "Thêm nhân viên thành công!");
+    sessionStorage.setItem("flashType", "success");
+    router.push("/admin/employee");
   } catch (error) {
     console.error(error);
-    showNotification("Lỗi thêm mới!", "error");
+    showNotification("Lỗi thêm mới! Vui lòng thử lại.", "error");
   }
 }
 
@@ -580,13 +540,13 @@ function handleFileUpload(event) {
     };
     reader.readAsDataURL(file);
   } else {
-    alert("Ảnh quá lớn (<5MB)");
+    showNotification("Ảnh quá lớn (<5MB)", "error");
   }
 }
 </script>
 
 <style scoped>
-/* CSS ĐÃ FIX MODAL */
+/* CSS CHUNG */
 .add-employee-page {
   font-family: "Segoe UI", sans-serif;
 }
@@ -608,7 +568,6 @@ function handleFileUpload(event) {
   cursor: pointer;
   text-decoration: underline;
 }
-
 .main-card {
   position: relative;
   background: #fff;
@@ -617,13 +576,14 @@ function handleFileUpload(event) {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* NÚT MỞ MODAL */
 .btn-scan-qr {
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: #f0fdf4;
-  border: 1px solid #16a34a;
-  color: #16a34a;
+  background-color: #63391f;
+  border: 1px solid #63391f;
+  color: white;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -632,12 +592,14 @@ function handleFileUpload(event) {
   display: flex;
   align-items: center;
   gap: 5px;
+  transition: 0.2s;
 }
 .btn-scan-qr:hover {
-  background-color: #16a34a;
-  color: white;
+  background-color: #8b4513;
+  transform: translateY(-1px);
 }
 
+/* FORM LAYOUT */
 .form-layout {
   display: flex;
   gap: 40px;
@@ -679,7 +641,7 @@ function handleFileUpload(event) {
 }
 .avatar-circle:hover {
   border-color: #8b4513;
-} /* Thêm hover viền nâu */
+}
 .avatar-circle img {
   width: 100%;
   height: 100%;
@@ -687,7 +649,7 @@ function handleFileUpload(event) {
 }
 .file-input-hidden {
   display: none;
-} /* QUAN TRỌNG: Ẩn nút file */
+}
 .form-group {
   margin-bottom: 15px;
   display: flex;
@@ -710,11 +672,11 @@ select {
   border-radius: 6px;
   font-size: 14px;
   outline: none;
+  transition: 0.2s;
 }
-.input-disabled {
-  background-color: #f0f0f0;
-  color: #888;
-  cursor: not-allowed;
+input:focus,
+select:focus {
+  border-color: #63391f;
 }
 .grid-row {
   display: grid;
@@ -759,71 +721,7 @@ select {
   background-color: #fff5f5;
 }
 
-/* MODAL SCANNER */
-.scan-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-.scan-modal-content {
-  background: white;
-  width: 500px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 20px;
-  border-radius: 12px;
-}
-.scan-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-.close-btn {
-  background: #f1f1f1;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-#reader {
-  width: 100%;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 15px;
-}
-#reader video,
-#reader img {
-  width: 100% !important;
-  height: auto !important;
-  object-fit: contain;
-}
-.scan-options {
-  margin-top: 10px;
-  text-align: center;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-.scan-note {
-  color: red;
-  text-align: center;
-  margin-top: 10px;
-  font-size: 13px;
-}
-
-/* ===== TOAST NOTIFICATION ===== */
+/* TOAST */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -831,57 +729,42 @@ select {
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
 }
-
 .toast {
   pointer-events: auto;
-  min-width: 300px;
-  padding: 14px 20px;
-  border-radius: 4px; /* Bo góc nhẹ */
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  /* Đổ bóng mềm mại */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-  /* Animation trượt vào */
-  animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-
-  /* Màu nền mặc định */
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   background: #fff;
+  animation: slideInRight 0.3s forwards;
 }
-
-.toast-leave-active {
-  animation: fadeOut 0.3s ease forwards;
-}
-
-/* 1. SUCCESS (Giống ảnh mẫu của bạn) */
 .toast.success {
-  background-color: #e8f5e9; /* Nền xanh nhạt */
-  border-left: 6px solid #43a047; /* Viền trái xanh đậm */
-  color: #2e7d32; /* Chữ xanh đậm */
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
 }
-
-/* 2. ERROR */
 .toast.error {
-  background-color: #ffebee; /* Nền đỏ nhạt */
-  border-left: 6px solid #e53935; /* Viền trái đỏ đậm */
-  color: #c62828;
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
 }
-
-/* 3. WARNING */
 .toast.warning {
-  background-color: #fff3e0; /* Nền cam nhạt */
-  border-left: 6px solid #fb8c00; /* Viền trái cam đậm */
-  color: #ef6c00;
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
 }
-
-/* KEYFRAMES */
+.toast-msg {
+  color: #333;
+}
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -892,10 +775,232 @@ select {
     opacity: 1;
   }
 }
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateX(20px);
-  }
+
+/* ===== MODERN SCAN MODAL STYLES ===== */
+.scan-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+.scan-modal-content {
+  background: #fff;
+  width: 550px;
+  max-width: 95%;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.scan-header {
+  background: #fdf8f5;
+  padding: 16px 24px;
+  border-bottom: 1px solid #efe6e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #63391f;
+}
+.header-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.icon-qr {
+  font-size: 20px;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #a89288;
+  cursor: pointer;
+  line-height: 1;
+}
+.close-btn:hover {
+  color: #63391f;
+}
+.scan-body {
+  padding: 24px;
+}
+
+/* CAMERA SECTION */
+.camera-section {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  text-align: center;
+  gap: 15px;
+  padding: 20px;
+  z-index: 3;
+}
+.placeholder-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+.btn-primary-brown {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(99, 57, 31, 0.4);
+}
+.btn-primary-brown:hover {
+  background: #7d4a2b;
+}
+
+/* SCAN FRAME (Đè lên camera) */
+.scan-frame {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 10px;
+  pointer-events: none;
+  z-index: 5;
+}
+.scan-text {
+  color: #fff;
+  margin-bottom: 5px;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.loading-text {
+  color: #f39c12;
+  font-size: 13px;
+  margin-top: 5px;
+}
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #4caf50;
+}
+.topleft {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 12px 0 0 0;
+}
+.topright {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 12px 0 0;
+}
+.bottomleft {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 12px;
+}
+.bottomright {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 12px 0;
+}
+
+/* DIVIDER */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #a89288;
+  font-size: 12px;
+  font-weight: 600;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+.divider span {
+  padding: 0 10px;
+}
+
+/* UPLOAD SECTION (Custom UI cho input file) */
+.upload-box {
+  border: 2px dashed #d6c3b4;
+  background: #faf6f4;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #63391f;
+  position: relative;
+}
+.upload-box:hover {
+  border-color: #63391f;
+  background: #fdf1e8;
+}
+.upload-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+.upload-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+.upload-subtext {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+.hidden-capture-input {
+  display: none;
+} /* Ẩn input mặc định của qrcode-capture */
+.error-alert {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
 }
 </style>

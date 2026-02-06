@@ -1,127 +1,311 @@
 <template>
   <div class="header">
     <h2 class="title">Danh sách biến thể sản phẩm {{ tenSanPham }}</h2>
-
     <div class="top-bar">
       <!-- SEARCH -->
-      <div class="search-wrapper">
-        <img src="/src/assets/icon/search.svg" class="search-icon" />
-        <input
-          class="search-input"
-          placeholder="Tìm biến thể theo mã biến thể"
-          v-model="keyword"
-          @input="handleSearch"
-          style="border: 1px solid #d6c3b4"
+      <div class="left-actions">
+        <div class="search-wrapper">
+          <img src="/src/assets/icon/search.svg" class="search-icon" />
+          <input
+            class="search-input"
+            placeholder="Tìm biến thể theo mã sản phẩm và mã biến thể"
+            v-model="keyword"
+            @input="handleSearch"
+            style="border: 1px solid #d6c3b4"
+          />
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters">
+          <div class="filter-item">
+            <label>Màu sắc</label>
+            <select
+              class="select2-mausac"
+              :ref="(el) => el && (el.__vModel = selectedMauSacList)"
+            >
+              <option value="">Chọn màu sắc</option>
+              <option
+                v-for="item in mauSacList"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.tenMauSac }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Kích cỡ</label>
+            <select
+              class="select2-kichco"
+              :ref="(el) => el && (el.__vModel = selectedKichCoList)"
+            >
+              <option value="">Chọn kích cỡ</option>
+              <option
+                v-for="item in kichCoList"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.tenKichCo }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Trạng thái:</label>
+            <select v-model="selectedTrangThai" @change="handleStatusChange">
+              <option value="">Tất cả</option>
+              <option value="1">Đang bán</option>
+              <option value="2">Ngừng bán</option>
+            </select>
+          </div>
+          <div class="price-filter">
+            <label>
+              Khoảng giá:
+              <span class="price-value">
+                0 ₫ - {{ formatCurrency(selectedMaxPrice) }}
+              </span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              :max="maxPrice"
+              v-model.number="selectedMaxPrice"
+              @change="handlePriceChange"
+              class="price-slider"
+              :style="{
+                background: `linear-gradient(
+      to right,
+      #63391f 0%,
+      #63391f ${(selectedMaxPrice / maxPrice) * 100}%,
+      #e0e0e0 ${(selectedMaxPrice / maxPrice) * 100}%,
+      #e0e0e0 100%
+     )`,
+              }"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="add-btn">
+      <button @click="openScanModal">
+        <img src="/src/assets/icon/qr.svg" />
+        Quét QR
+      </button>
+
+      <button @click="exportExcel">
+        <img
+          src="/src/assets/icon/dowload.svg"
+          alt=""
+          style="width: 25px; height: 25px"
         />
-      </div>
-
-      <!-- FILTERS -->
-      <div class="filters">
-        <div class="filter-item">
-          <label>Màu sắc:</label>
-          <select
-            v-model="selectedMauSacList"
-            @change="handleColorChange"
-            style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
-          >
-            <option value="">Tất cả</option>
-            <option v-for="item in mauSacList" :key="item.id" :value="item.id">
-              {{ item.tenMauSac }}
-            </option>
-          </select>
-        </div>
-
-        <div class="filter-item">
-          <label>Kích cỡ:</label>
-          <select
-            v-model="selectedKichCoList"
-            @change="handleSizeChange"
-            style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
-          >
-            <option value="">Tất cả</option>
-            <option v-for="item in kichCoList" :key="item.id" :value="item.id">
-              {{ item.tenKichCo }}
-            </option>
-          </select>
-        </div>
-      </div>
+        Tải excel
+      </button>
+      <button @click="$router.push('/admin/product/details')">
+        Xem tất cả biến thể
+      </button>
     </div>
   </div>
 
   <div class="product-page">
-    <table class="product-table">
-      <thead>
-        <tr>
-          <th>STT</th>
-          <th>Ảnh</th>
-          <th>Mã CTSP</th>
-          <th>Kích cỡ</th>
-          <th>Màu sắc</th>
-          <th>SL tồn</th>
-          <th>Giá nhập</th>
-          <th>Giá bán</th>
-          <th>Trạng thái</th>
-          <th>Hành động</th>
-        </tr>
-      </thead>
+    <div class="table-panel">
+      <div class="table-wrapper">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  :checked="isAllSelected"
+                  @change="toggleSelectAll"
+                />
+              </th>
 
-      <tbody>
-        <tr v-for="(item, index) in variants" :key="item.id">
-          <td>{{ index + 1 }}</td>
-          <td>
-            <img
-              v-if="item.hinhAnh?.length"
-              :src="item.hinhAnh[0]"
-              class="variant-img"
+              <th>STT</th>
+              <th>Ảnh</th>
+              <th>Mã SP</th>
+              <th>Mã CTSP</th>
+              <th>Kích cỡ</th>
+              <th>Màu sắc</th>
+              <th>SL tồn</th>
+              <th>Giá nhập</th>
+              <th>Giá bán</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="(item, index) in variants" :key="item.id">
+              <td>
+                <input type="checkbox" v-model="selectedIds" :value="item.id" />
+              </td>
+
+              <td>{{ index + 1 }}</td>
+              <td>
+                <img
+                  v-if="item.hinhAnh?.length"
+                  :src="item.hinhAnh[0]"
+                  class="variant-img"
+                />
+              </td>
+              <td>{{ item.maSanPham }}</td>
+              <td>{{ item.maChiTietSanPham }}</td>
+              <td>
+                {{ item.tenKichCo }}
+              </td>
+              <td>
+                {{ item.tenMauSac }}
+              </td>
+              <td>{{ item.soLuongTon }}</td>
+              <td>{{ formatCurrency(item.giaNhap) }}</td>
+              <td>{{ formatCurrency(item.giaBan) }}</td>
+              <td>
+                <span
+                  class="status"
+                  :class="item.trangThai === 1 ? 'selling' : 'stopped'"
+                >
+                  {{ item.trangThai === 1 ? "Đang bán" : "Ngừng bán" }}
+                </span>
+              </td>
+              <td class="action">
+                <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                  <span class="icon edit" @click="goToUpdate(item.id)">
+                    <img
+                      src="/src/assets/icon/edit.svg"
+                      style="width: 20px; height: 20px"
+                    />
+                  </span>
+                </div>
+
+                <div
+                  class="tooltip-wrapper"
+                  :data-tooltip="
+                    item.trangThai === 1
+                      ? 'Ngừng bán'
+                      : item.trangThai === 2
+                        ? 'Bán lại'
+                        : 'Không khả dụng'
+                  "
+                >
+                  <label class="switch">
+                    <input
+                      type="checkbox"
+                      :checked="item.trangThai === 1"
+                      @change="toggleStatus(item)"
+                      :disabled="item.trangThai === 0"
+                    />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button
+          class="nav-btn"
+          @click="previousPage"
+          :disabled="currentPage === 0"
+        >
+          &lt;
+        </button>
+        <button
+          v-for="page in visiblePages"
+          :key="page"
+          class="page-btn"
+          :class="{ active: page - 1 === currentPage }"
+          :disabled="page === '...'"
+          @click="goToPage(page - 1)"
+        >
+          {{ page }}
+        </button>
+
+        <button
+          class="nav-btn"
+          @click="nextPage"
+          :disabled="currentPage === totalPages - 1"
+        >
+          &gt;
+        </button>
+      </div>
+    </div>
+  </div>
+  <div
+    v-if="showScanModal"
+    class="scan-modal-overlay"
+    @click.self="closeScanModal"
+  >
+    <div class="scan-modal-content">
+      <div class="scan-header">
+        <div class="header-title">
+          <span class="icon-qr">📷</span>
+          <h3>Quét mã QR sản phẩm</h3>
+        </div>
+        <button class="close-btn" @click="closeScanModal" title="Đóng">
+          ×
+        </button>
+      </div>
+
+      <div class="scan-body">
+        <div class="camera-section">
+          <qrcode-stream
+            v-if="cameraActive"
+            @detect="onDetect"
+            @error="onError"
+            :formats="['qr_code']"
+            :track="paintBoundingBox"
+          >
+            <div class="scan-frame">
+              <div class="corner topleft"></div>
+              <div class="corner topright"></div>
+              <div class="corner bottomleft"></div>
+              <div class="corner bottomright"></div>
+              <p>Đưa mã QR vào giữa khung để quét</p>
+              <div v-if="loadingCamera" class="loading-text">
+                Đang khởi động camera...
+              </div>
+            </div>
+          </qrcode-stream>
+
+          <div v-else class="camera-placeholder">
+            <div class="placeholder-icon">📷</div>
+            <p v-if="!scanError">Bấm nút bên dưới để bắt đầu quét</p>
+            <p v-else style="color: #e74c3c">{{ scanError }}</p>
+            <button class="btn-primary-brown" @click="startCamera">
+              Bật Camera Ngay
+            </button>
+          </div>
+        </div>
+
+        <div class="divider">
+          <span>HOẶC TẢI ẢNH</span>
+        </div>
+
+        <div class="upload-section">
+          <label class="upload-box">
+            <qrcode-capture
+              @detect="onDetect"
+              :formats="['qr_code']"
+              class="hidden-capture-input"
             />
-          </td>
-          <td>{{ item.maChiTietSanPham }}</td>
-          <td>
-            {{ item.tenKichCo }}
-          </td>
-          <td>
-            {{ item.tenMauSac }}
-          </td>
-          <td>{{ item.soLuongTon }}</td>
-          <td>{{ formatCurrency(item.giaNhap) }}</td>
-          <td>{{ formatCurrency(item.giaBan) }}</td>
-          <td>
-            <span
-              class="status"
-              :class="item.trangThai === 1 ? 'selling' : 'out'"
-            >
-              {{ item.trangThai === 1 ? "Đang bán" : "Ngừng bán" }}
-            </span>
-          </td>
-          <td class="action">
-            <span class="icon edit" @click="goToUpdate(item.id)"
-              ><img
-                src="/src/assets/icon/edit.svg"
-                alt=""
-                style="width: 20px; height: 20px"
-            /></span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="pagination">
-      <button @click="previousPage" :disabled="currentPage === 0">
-        <img src="/src/assets/icon/arrowRight.svg" alt="" />
-      </button>
-      <button
-        v-for="page in visiblePages"
-        :key="page"
-        class="page-btn"
-        :class="{ active: page - 1 === currentPage }"
-        :disabled="page === '...'"
-        @click="goToPage(page - 1)"
-      >
-        {{ page }}
-      </button>
 
-      <button @click="nextPage" :disabled="currentPage === totalPages - 1">
-        <img src="/src/assets/icon/arrowLeft.svg" alt="" />
-      </button>
+            <span class="upload-icon">📂</span>
+            <span class="upload-text">Chọn ảnh QR từ máy tính</span>
+            <span class="upload-subtext">(Hỗ trợ tốt mọi định dạng ảnh)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-container">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="notif.type"
+    >
+      {{ notif.message }}
     </div>
   </div>
 </template>
@@ -129,10 +313,83 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
 import axios from "axios";
+const notifications = ref([]);
+
+const showNotification = (message, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 3000);
+};
+const showScanModal = ref(false);
+const scanError = ref("");
+const cameraActive = ref(false);
+const loadingCamera = ref(false);
+function openScanModal() {
+  showScanModal.value = true;
+  scanError.value = "";
+  cameraActive.value = false; // Mặc định tắt để user tự bật
+}
+
+function closeScanModal() {
+  cameraActive.value = false;
+  showScanModal.value = false;
+}
+
+function startCamera() {
+  scanError.value = "";
+  cameraActive.value = true;
+  loadingCamera.value = true;
+}
+
+function onDetect(detectedCodes) {
+  const result = detectedCodes[0];
+  if (!result || !result.rawValue) return;
+
+  const qrValue = result.rawValue.trim();
+
+  // ❌ QR SAI
+  if (!qrValue.startsWith("CTSP")) {
+    showNotification("QR không hợp lệ!", "error");
+
+    cameraActive.value = false;
+    loadingCamera.value = false;
+    showScanModal.value = false;
+    return;
+  }
+
+  // ✅ QR ĐÚNG
+  showNotification("Quét QR thành công", "success");
+
+  cameraActive.value = false;
+  loadingCamera.value = false;
+  showScanModal.value = false;
+
+  keyword.value = qrValue;
+  currentPage.value = 0;
+
+  fetchVariants();
+}
+
+function onError(err) {
+  loadingCamera.value = false;
+  if (err.name === "NotAllowedError") {
+    scanError.value = "Bạn cần cấp quyền truy cập Camera!";
+  } else if (err.name === "NotFoundError") {
+    scanError.value = "Không tìm thấy thiết bị Camera.";
+  } else {
+    scanError.value = `Lỗi camera: ${err.message}`;
+  }
+  cameraActive.value = false;
+}
 
 const router = useRouter();
 const route = useRoute();
+const isInitPrice = ref(true);
 
 const currentPage = ref(0);
 const pageSize = ref(8);
@@ -143,6 +400,62 @@ const kichCoList = ref([]);
 
 const selectedMauSacList = ref("");
 const selectedKichCoList = ref("");
+
+const selectedTrangThai = ref("");
+const selectedIds = ref([]);
+const isAllSelected = computed(() => {
+  return (
+    variants.value.length > 0 &&
+    selectedIds.value.length === variants.value.length
+  );
+});
+
+const exportExcel = async () => {
+  try {
+    const params = {};
+
+    // 👉 nếu có chọn checkbox → gửi danh sách id
+    if (selectedIds.value.length > 0) {
+      params.ids = selectedIds.value;
+    }
+
+    if (isFilterByProduct.value) {
+      params.productId = productId;
+    }
+
+    const res = await axios.get(
+      "http://localhost:8080/api/chi-tiet-san-pham/export-excel",
+      {
+        params,
+        responseType: "blob",
+      },
+    );
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "chi_tiet_san_pham.xlsx");
+    document.body.appendChild(link);
+    link.click();
+  } catch (e) {
+    alert("Xuất excel thất bại!");
+  }
+};
+
+const toggleSelectAll = (e) => {
+  if (e.target.checked) {
+    selectedIds.value = variants.value.map((v) => v.id);
+  } else {
+    selectedIds.value = [];
+  }
+};
+
+const handleStatusChange = () => {
+  currentPage.value = 0;
+  fetchVariants();
+};
+const maxPrice = ref(0); // giá lớn nhất trong data
+const selectedMaxPrice = ref(0);
 
 const fetchMauSac = async () => {
   const res = await axios.get("http://localhost:8080/api/mau-sac");
@@ -231,6 +544,7 @@ const handleSearch = () => {
 };
 
 const productId = route.params.id;
+const isFilterByProduct = ref(!!productId);
 
 const tenSanPham = ref("");
 const keyword = ref("");
@@ -247,160 +561,156 @@ const formatCurrency = (value) => {
 const goToUpdate = (variantId) => {
   router.push(`/admin/chi-tiet-san-pham/${productId}/edit/${variantId}`);
 };
+const handlePriceChange = () => {
+  currentPage.value = 0;
+  fetchVariants();
+};
+
+const viewAllVariants = async () => {
+  isFilterByProduct.value = false;
+  currentPage.value = 0;
+
+  // 🔥 reset price filter
+  isInitPrice.value = true;
+  selectedMaxPrice.value = 0;
+  maxPrice.value = 0;
+
+  await fetchVariants();
+};
 
 const fetchVariants = async () => {
   try {
-    const res = await axios.get(
-      "http://localhost:8080/api/chi-tiet-san-pham/filter",
-      {
-        params: {
-          productId: productId,
-          keyword: keyword.value || null,
-          mauSacId: selectedMauSacList.value || null,
-          kichCoId: selectedKichCoList.value || null,
-          page: currentPage.value,
-          size: pageSize.value,
-        },
-      },
-    );
+    const url = "http://localhost:8080/api/chi-tiet-san-pham";
+
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      keyword: keyword.value || null,
+      mauSacId: selectedMauSacList.value || null,
+      kichCoId: selectedKichCoList.value || null,
+      trangThai:
+        selectedTrangThai.value !== "" ? selectedTrangThai.value : null,
+      minPrice: 0,
+      maxPrice: selectedMaxPrice.value || null,
+    };
+
+    if (isFilterByProduct.value) {
+      params.productId = productId;
+    }
+
+    const res = await axios.get(url, { params });
 
     variants.value = res.data.content;
     totalPages.value = res.data.totalPages;
-  } catch (error) {
-    console.error("Lỗi load CTSP:", error);
+    if (variants.value.length > 0) {
+      tenSanPham.value = variants.value[0].tenSanPham;
+    }
+    if (variants.value.length > 0 && isInitPrice.value) {
+      const prices = variants.value.map((v) => v.giaBan || 0);
+      const max = Math.max(...prices);
+
+      maxPrice.value = max;
+      selectedMaxPrice.value = max; // set 1 lần duy nhất
+      isInitPrice.value = false; // 🔒 khóa lại
+    }
+  } catch (e) {
+    console.error("Lỗi load CTSP:", e);
   }
+};
+async function toggleStatus(item) {
+  const oldStatus = item.trangThai;
+
+  // 🔁 toggle 1 ↔ 2
+  const newStatus = oldStatus === 1 ? 2 : 1;
+
+  // optimistic update
+  item.trangThai = newStatus;
+
+  try {
+    await axios.put(
+      `http://localhost:8080/api/chi-tiet-san-pham/${item.id}/change-status`,
+      null,
+      {
+        params: {
+          trangThai: newStatus,
+          nguoiCapNhat: "admin",
+        },
+      },
+    );
+  } catch (error) {
+    // rollback
+    item.trangThai = oldStatus;
+    alert("Lỗi cập nhật trạng thái sản phẩm!");
+  }
+}
+const initSelect2 = (selector, placeholder, modelRef) => {
+  const $el = window.$(selector);
+
+  if (!$el.length || !$el.select2) return;
+
+  if ($el.hasClass("select2-hidden-accessible")) {
+    $el.select2("destroy");
+  }
+
+  $el.select2({
+    width: "100%",
+    placeholder,
+    allowClear: true,
+  });
+
+  if (modelRef.value) {
+    $el.val(modelRef.value).trigger("change.select2");
+  }
+
+  $el.on("change", function () {
+    modelRef.value = $(this).val();
+    currentPage.value = 0;
+    fetchVariants(); // 🔥 QUAN TRỌNG
+  });
 };
 
 onMounted(() => {
   fetchVariants();
   fetchMauSac();
   fetchKichCo();
+  setTimeout(() => {
+    initSelect2(".select2-mausac", "Chọn màu sắc", selectedMauSacList);
+    initSelect2(".select2-kichco", "Chọn kích cỡ", selectedKichCoList);
+  }, 0);
 });
 </script>
 
 <style scoped>
-.product-page {
-  background: #fff;
-  padding: 20px;
-  font-size: 14px;
-  margin-top: 10px;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
-    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
-  border-radius: 6px;
-}
-
+/* ===== HEADER PANEL ===== */
 .header {
-  margin-bottom: 10px;
   background: #fff;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 0.0625em 0.0625em,
-    rgba(0, 0, 0, 0.25) 0px 0.125em 0.5em,
-    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset;
-  border-radius: 6px;
+  border-radius: 20px;
+  border: 1px solid #e5e5e5; /* 👈 viền mỏng */
+  margin-bottom: 12px;
 }
 
 .title {
-  color: #63391f;
-  margin-bottom: 15px;
   margin: 15px;
+  color: #63391f;
 }
 
-/* TOP BAR */
 .top-bar {
   display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  gap: 100px;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 15px 12px;
 }
 
-.filters select {
-  margin-right: 8px;
-  padding: 6px 10px;
-}
-
-.add-btn {
-  position: relative;
-  margin: 15px;
-}
-
-.add-btn button {
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-/* SUMMARY */
-.summary {
-  margin: 10px 0;
+.left-actions {
   display: flex;
-  gap: 20px;
+  align-items: flex-end;
+  gap: 12px;
 }
 
-/* TABLE */
-.product-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.product-table th {
-  background: #63391f;
-  color: #fff;
-  padding: 8px;
-}
-
-.product-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-.product-table img {
-  width: 40px;
-  height: auto;
-}
-
-/* STATUS */
-.status.selling {
-  color: green;
-  font-weight: 600;
-}
-
-.status.out {
-  color: red;
-  font-weight: 600;
-}
-
-/* PAGINATION */
-.pagination {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-.pagination button {
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  background: #fff;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-weight: 600;
-  color: #333;
-}
+/* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
   width: 300px;
-  margin: 15px;
 }
 
 .search-icon {
@@ -408,70 +718,183 @@ onMounted(() => {
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  font-size: 16px;
-  color: #666;
-  pointer-events: none;
 }
-
 .search-input {
   width: 100%;
+  height: 40px;
   padding: 8px 10px 8px 34px;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  font-size: 14px;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
-.search-input:focus {
-  border-color: #6b3f2a;
-}
-.variant-img {
-  width: 45px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-/* FILTER GROUP */
+/* ===== FILTER ===== */
 .filters {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  gap: 12px; /* 👈 GỌN HƠN */
+  align-items: flex-end;
 }
 
 .filter-item {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 200px;
+}
+
+.filter-item label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
+}
+
+.filter-item select,
+.filter-item input {
+  height: 40px; /* 👈 BẰNG SEARCH */
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #555555a4;
+  background: #fff;
+}
+
+/* ===== ADD ===== */
+.add-btn {
+  display: flex;
+  justify-content: end;
+  margin-right: 20px;
+  margin-bottom: 20px; /* 👈 ép nút xuống cùng hàng */
+  align-self: flex-end;
+  gap: 10px;
+}
+
+.add-btn button {
+  height: 40px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
+  border: 1px solid #ccc;
+  border-radius: 10px; /* 👈 bo y hệt */
+  background: #fff;
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #484848;
+
+  display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.filter-item label {
-  font-weight: 500;
-  white-space: nowrap;
+/* ===== TABLE PANEL ===== */
+.product-page {
+  background: transparent;
+}
+.product-table thead tr {
+  border-bottom: 1.5px solid #e0e0e0;
 }
 
-.filter-item select {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+.table-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 10px;
+  border: 1px solid #e5e5e5; /* 👈 viền nhẹ */
 }
-.page-numbers {
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.product-table th {
+  color: #000000;
+  padding: 20px 12px;
+}
+
+.product-table td {
+  padding: 18px 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+  height: 50px;
+}
+
+.status.selling {
+  color: #2ecc71;
+  font-weight: 600;
+}
+.status.upcoming {
+  color: #f39c12;
+  font-weight: 600;
+}
+.status.stopped {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.action {
   display: flex;
-  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
 
+.switch {
+  position: relative;
+  width: 50px;
+  height: 24px;
+}
+.switch input {
+  display: none;
+}
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  background: #ccc;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+input:checked + .slider {
+  background: #63391f;
+}
+input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+.pagination button {
+  padding: 6px 12px;
+}
 .page-btn {
-  min-width: 32px;
-  height: 32px;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 6px;
   border: 1px solid #ddd;
   background: #fff;
-  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   height: 40px;
   width: 40px;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  background: #f0f0f0;
 }
 
 .page-btn.active {
@@ -481,4 +904,447 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.page-btn.active:hover {
+  background: #63391f;
+}
+
+.page-btn:disabled {
+  cursor: default;
+  border: none;
+  background: transparent;
+  color: #999;
+}
+
+.switch input:disabled + .slider {
+  background-color: #e74c3ccc !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.switch input:disabled ~ .slider {
+  pointer-events: none;
+}
+.nav-btn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #63391f;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.nav-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  background: #fff;
+}
+.product-table img {
+  width: 40px;
+  height: auto;
+}
+.price-filter {
+  width: 700px; /* 👈 tăng chiều dài */
+  margin-bottom: 20px;
+}
+.price-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  outline: none;
+}
+
+/* Chrome, Edge */
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #63391f;
+  cursor: pointer;
+  border: none;
+}
+
+/* Firefox */
+.price-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #63391f;
+  cursor: pointer;
+  border: none;
+}
+.scan-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+.scan-modal-content {
+  background: #fff;
+  width: 550px;
+  max-width: 95%;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.scan-header {
+  background: #fdf8f5;
+  padding: 16px 24px;
+  border-bottom: 1px solid #efe6e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #63391f;
+}
+.header-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.icon-qr {
+  font-size: 20px;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #a89288;
+  cursor: pointer;
+  line-height: 1;
+}
+.close-btn:hover {
+  color: #63391f;
+}
+.scan-body {
+  padding: 24px;
+}
+
+/* CAMERA SECTION */
+.camera-section {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  text-align: center;
+  gap: 15px;
+  padding: 20px;
+  z-index: 3;
+}
+.placeholder-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+.btn-primary-brown {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(99, 57, 31, 0.4);
+}
+.btn-primary-brown:hover {
+  background: #7d4a2b;
+}
+
+/* SCAN FRAME (Đè lên camera) */
+.scan-frame {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 10px;
+  pointer-events: none;
+  z-index: 5;
+}
+.scan-text {
+  color: #fff;
+  margin-bottom: 5px;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.loading-text {
+  color: #f39c12;
+  font-size: 13px;
+  margin-top: 5px;
+}
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #4caf50;
+}
+.topleft {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 12px 0 0 0;
+}
+.topright {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 12px 0 0;
+}
+.bottomleft {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 12px;
+}
+.bottomright {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 12px 0;
+}
+
+/* DIVIDER */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #a89288;
+  font-size: 12px;
+  font-weight: 600;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+.divider span {
+  padding: 0 10px;
+}
+
+/* UPLOAD SECTION (Custom UI cho input file) */
+.upload-box {
+  border: 2px dashed #d6c3b4;
+  background: #faf6f4;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #63391f;
+  position: relative;
+}
+.upload-box:hover {
+  border-color: #63391f;
+  background: #fdf1e8;
+}
+.upload-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+.upload-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+.upload-subtext {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+.hidden-capture-input {
+  display: none;
+} /* Ẩn input mặc định của qrcode-capture */
+.error-alert {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  word-wrap: break-word;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  transition: 0.2s ease;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
+}
+:deep(.select2-container) {
+  width: 100% !important;
+}
+
+/* ô select giống input */
+:deep(.select2-container .select2-selection--single) {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #555555a4;
+  background: #fff;
+  display: flex;
+  align-items: center;
+}
+/* Mũi tên */
+:deep(.select2-container .select2-selection__arrow) {
+  height: 30px;
+}
+
+/* text bên trong */
+:deep(.select2-selection__rendered) {
+  font-size: 14px;
+  color: #3f2a1d; /* màu chữ input */
+  padding-left: 0 !important;
+  line-height: normal !important;
+}
+
+/* placeholder */
+:deep(.select2-selection__placeholder) {
+  color: #a08c7a; /* giống placeholder input */
+}
+
+/* mũi tên */
+:deep(.select2-selection__arrow) {
+  height: 100%;
+  right: 10px;
+}
+
+/* focus giống input */
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+) {
+  border-color: #a9744f;
+  box-shadow: 0 0 0 1px rgba(169, 116, 79, 0.35);
+}
 </style>

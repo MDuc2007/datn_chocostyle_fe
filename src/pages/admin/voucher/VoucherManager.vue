@@ -123,48 +123,68 @@
             </td>
 
             <td>
-              <span :class="statusClass(item.trangThai)">
-                {{ statusText(item.trangThai) }}
+              <span :class="statusClass(item)">
+                {{ statusText(item) }}
               </span>
             </td>
 
             <td>
-              <span @click="goEdit(item.id)" style="cursor: pointer"
-                ><img
-                  src="/src/assets/icon/edit.svg"
-                  alt=""
-                  style="width: 20px; height: 20px"
-              /></span>
-              <label class="switch">
-                <input
-                  type="checkbox"
-                  :checked="item._checked"
-                  :disabled="isExpired(item)"
-                  @click.prevent="toggleStatus(item)"
-                />
-                <span class="slider"></span>
-              </label>
+              <div class="action-cell">
+                <span class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                  <span class="icon-edit" @click="goEdit(item.id)">
+                    <img src="/src/assets/icon/edit.svg" alt="" />
+                  </span>
+                </span>
+
+                <span class="tooltip-wrapper" data-tooltip="Đổi trạng thái">
+                  <label class="switch">
+                    <input
+                      type="checkbox"
+                      :checked="
+                        calcTrangThai(item) === 1 || calcTrangThai(item) === 2
+                      "
+                      :disabled="calcTrangThai(item) === 0"
+                      @click.prevent="toggleStatus(item)"
+                    />
+
+                    <span class="slider"></span>
+                  </label>
+                </span>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
 
       <div class="pagination">
-        <button :disabled="currentPage === 1" @click="currentPage--">
-          <img src="/src/assets/icon/arrowRight.svg" alt="" />
+        <!-- PREV -->
+        <button
+          class="nav-btn"
+          @click="previousPage"
+          :disabled="currentPage === 1"
+        >
+          &lt;
         </button>
 
+        <!-- PAGE NUMBERS -->
         <button
-          v-for="p in totalPages"
+          v-for="p in visiblePages"
           :key="p"
+          class="page-btn"
           :class="{ active: p === currentPage }"
-          @click="currentPage = p"
+          :disabled="p === '...'"
+          @click="p !== '...' && (currentPage = p)"
         >
           {{ p }}
         </button>
 
-        <button :disabled="currentPage === totalPages" @click="currentPage++">
-          <img src="/src/assets/icon/arrowLeft.svg" alt="" />
+        <!-- NEXT -->
+        <button
+          class="nav-btn"
+          @click="nextPage"
+          :disabled="currentPage === totalPages"
+        >
+          &gt;
         </button>
       </div>
     </div>
@@ -188,20 +208,25 @@
     </div>
   </div>
 
-  <div v-if="toast.show" :class="['toast', toast.type]">
-    <span class="toast-icon">✔</span>
-    <span class="toast-text">{{ toast.message }}</span>
+  <div class="toast-container">
+    <div v-for="t in toasts" :key="t.id" :class="['toast', t.type]">
+      <span class="toast-icon">
+        {{ t.type === "success" ? "✔" : "✖" }}
+      </span>
+      <span class="toast-text">{{ t.message }}</span>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
 const host = "http://localhost:8080";
 
 const router = useRouter();
+const route = useRoute();
 
 const list = ref([]);
 const keyword = ref("");
@@ -215,11 +240,6 @@ const filter = reactive({
   toDate: "",
   trangThai: "",
 });
-
-const isExpired = (item) => {
-  const today = new Date();
-  return today > new Date(item.ngayKetThuc);
-};
 
 const totalVoucher = computed(() => filteredList.value.length);
 
@@ -260,6 +280,45 @@ const pagedList = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return filteredList.value.slice(start, start + pageSize);
 });
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+
+    if (current > 4) pages.push("...");
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (current < total - 3) pages.push("...");
+
+    pages.push(total);
+  }
+
+  return pages;
+});
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
 
 watch(
   () => ({ ...filter }),
@@ -307,9 +366,15 @@ const resetFilter = () => {
   load();
 };
 
+const isExpired = (item) => {
+  return new Date() > new Date(item.ngayKetThuc);
+};
+
 const toggleStatus = (item) => {
+  if (calcTrangThai(item) === 0) return;
+
   selectedItem.value = item;
-  pendingChecked.value = !item._checked;
+  pendingChecked.value = calcTrangThai(item) === -1;
   showStatusModal.value = true;
 };
 
@@ -339,33 +404,78 @@ const showStatusModal = ref(false);
 const selectedItem = ref(null);
 const pendingChecked = ref(false);
 
-const toast = reactive({
-  show: false,
-  message: "",
-  type: "success",
-});
+const toasts = ref([]);
+
+let toastId = 0;
 
 const showToast = (message, type = "success") => {
-  toast.message = message;
-  toast.type = type;
-  toast.show = true;
+  const id = toastId++;
+
+  toasts.value.push({
+    id,
+    message,
+    type,
+  });
 
   setTimeout(() => {
-    toast.show = false;
+    toasts.value = toasts.value.filter((t) => t.id !== id);
   }, 3000);
+};
+
+const calcTrangThai = (item) => {
+  const now = new Date();
+  const start = new Date(item.ngayBatDau);
+  const end = new Date(item.ngayKetThuc);
+
+  // Hết hạn thì chết hẳn
+  if (now > end) return 0;
+
+  // Bị tắt thủ công
+  if (item.trangThai === 0) return -1;
+
+  if (now < start) return 2;
+  return 1;
 };
 
 const loaiGiamText = (v) => (v === "PERCENT" ? "Giảm %" : "Giảm tiền");
 
-const statusText = (s) =>
-  s === 1 ? "Đang diễn ra" : s === 2 ? "Sắp diễn ra" : "Đã kết thúc";
+const statusText = (item) => {
+  const s = calcTrangThai(item);
+  return s === 1
+    ? "Đang diễn ra"
+    : s === 2
+      ? "Sắp diễn ra"
+      : s === -1
+        ? "Ngừng hoạt động"
+        : "Đã kết thúc";
+};
 
-const statusClass = (s) =>
-  s === 1 ? "status-active" : s === 2 ? "status-upcoming" : "status-stop";
+const statusClass = (item) => {
+  const s = calcTrangThai(item);
+  return s === 1
+    ? "status-active"
+    : s === 2
+      ? "status-upcoming"
+      : s === -1
+        ? "status-stop"
+        : "status-stop";
+};
 
 const formatDate = (d) => (d ? d.substring(0, 10) : "");
 
-onMounted(load);
+onMounted(() => {
+  load();
+
+  if (route.query.toast === "create-success") {
+    showToast("Thêm phiếu giảm giá thành công", "success");
+    router.replace({ query: {} });
+  }
+
+  if (route.query.toast === "update-success") {
+    showToast("Cập nhật phiếu giảm giá thành công", "success");
+    router.replace({ query: {} });
+  }
+});
 </script>
 
 <style scoped>
@@ -373,11 +483,13 @@ onMounted(load);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .tittle {
   color: #63391f;
+  font-size: 25px;
+  margin-top: 1px;
+  margin-bottom: 7px;
 }
 
 .total-voucher {
@@ -390,7 +502,6 @@ onMounted(load);
 }
 
 .voucher-page {
-  padding: 20px;
   background: #f7f7f7;
 }
 
@@ -407,14 +518,17 @@ onMounted(load);
 .search-item {
   display: flex;
   flex-direction: column;
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
   gap: 4px;
 }
 
 .search-item input {
-  width: 320px;
-  height: 38px;
+  width: 460px;
+  height: 40px;
   padding: 0 14px;
-  border-radius: 6px;
+  border-radius: 10px;
   border: 1px solid #ccc;
   font-size: 14px;
 }
@@ -447,13 +561,24 @@ onMounted(load);
 .filters input,
 .filters select,
 .filters button {
-  padding: 6px 10px;
+  height: 40px; /* 👈 BẰNG SEARCH */
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #555555a4;
+  background: #fff;
 }
-
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 4px; /* tăng từ 4px → 8px hoặc 10px */
+}
+
+.filter-item label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
 }
 
 .filters select {
@@ -471,14 +596,11 @@ onMounted(load);
 .frame-bottom {
   background: #fff;
   padding: 16px 20px;
-  min-height: 520px;
-  position: relative;
-  padding-bottom: 60px;
 }
 
 .frame-top,
 .frame-bottom {
-  border-radius: 10px;
+  border-radius: 20px;
 }
 
 .btn-add {
@@ -486,7 +608,7 @@ onMounted(load);
   color: white;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
   align-self: flex-end;
@@ -496,10 +618,12 @@ onMounted(load);
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 8px;
   overflow: hidden;
   background: #fff;
-  border: 1px solid #e0e0e0;
+}
+.voucher-table thead th {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 20px;
 }
 
 .voucher-table thead th:first-child {
@@ -523,8 +647,7 @@ onMounted(load);
 }
 
 .voucher-table th {
-  background: #5a2d0c;
-  color: white;
+  color: rgb(0, 0, 0);
   padding: 10px;
 }
 
@@ -581,36 +704,90 @@ onMounted(load);
   display: inline-block;
   min-width: 90px;
   padding: 6px 12px;
-  border-radius: 14px;
+  border-radius: 24px;
   font-size: 13px;
   font-weight: 600;
   text-align: center;
   line-height: 1;
 }
 
-.table-wrapper {
-  position: relative;
-  min-height: 520px;
-  padding-bottom: 50px;
+.action-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.icon-edit {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.icon-edit img {
+  width: 20px;
+  height: 20px;
 }
 
 .pagination {
-  position: absolute;
-  bottom: 16px;
-  left: 0;
-  width: 100%;
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
+  margin: 15px 0;
 }
 
-.pagination .active {
-  background: #5a2d0c;
-  color: white;
+.nav-btn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #63391f;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pagination button {
-  padding: 5px 10px;
+.nav-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.nav-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  background: #fff;
+}
+
+.page-btn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  background: #f0f0f0;
+}
+
+.page-btn.active {
+  background: #63391f;
+  color: #fff;
+  border-color: #63391f;
+}
+
+.page-btn:disabled {
+  cursor: default;
+  border: none;
+  background: transparent;
+  color: #999;
 }
 
 .switch {
@@ -655,17 +832,6 @@ onMounted(load);
   transform: translateX(20px);
 }
 
-.filters input,
-.filters select {
-  height: 38px;
-  padding: 0 12px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fff;
-  transition: all 0.2s ease;
-}
-
 .filters input[type="date"] {
   min-width: 140px;
 }
@@ -699,18 +865,17 @@ onMounted(load);
 }
 
 .btn-add {
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 6px;
+  height: 40px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
+  border: 1px solid #ccc;
+  border-radius: 10px; /* 👈 bo y hệt */
+  background: #fff;
+  cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  background: #5a2d0c;
-  color: #fff;
-  transition: background 0.2s ease;
-}
+  font-weight: 600;
+  color: #484848;
 
-.btn-add:hover {
-  background: #4a2409;
+  transition: background 0.2s ease;
 }
 
 .apply-all {
@@ -782,10 +947,8 @@ onMounted(load);
   color: white;
   border-radius: 6px;
 }
+
 .toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
   min-width: 320px;
   padding: 14px 16px;
   border-radius: 6px;
@@ -793,9 +956,38 @@ onMounted(load);
   display: flex;
   align-items: center;
   gap: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  animation:
+    slideIn 0.35s ease,
+    fadeOut 0.35s ease 2.7s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   z-index: 2000;
-  animation: slideIn 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .toast.success {
@@ -817,5 +1009,46 @@ onMounted(load);
 
 .toast-text {
   line-height: 1.4;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s ease;
+  z-index: 999;
+}
+
+.tooltip-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+  opacity: 0;
+  transition: 0.2s ease;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
 }
 </style>
