@@ -39,6 +39,13 @@ const form = reactive({
   trangThai: 1,
 });
 
+// --- STATE QUẢN LÝ LỖI (Mới thêm) ---
+const errors = reactive({
+  tenCa: "",
+  gioBatDau: "",
+  gioKetThuc: "",
+});
+
 // Toast
 const notifications = ref<{ id: number; message: string; type: string }[]>([]);
 const showToast = (message: string, type: "success" | "error" | "warning") => {
@@ -51,7 +58,98 @@ const showToast = (message: string, type: "success" | "error" | "warning") => {
   );
 };
 
-// --- 3. API Logic ---
+// --- 3. HELPER & VALIDATION LOGIC ---
+
+// Hàm reset lỗi
+const clearErrors = () => {
+  errors.tenCa = "";
+  errors.gioBatDau = "";
+  errors.gioKetThuc = "";
+};
+
+// Hàm đổi giờ "HH:mm" sang phút
+const timeToMinutes = (timeStr: string) => {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+};
+
+// Hàm Validate chi tiết (Gán lỗi vào biến errors)
+const validateForm = () => {
+  clearErrors();
+  let isValid = true;
+
+  // 1. Check Tên Ca
+  if (!form.tenCa || !form.tenCa.trim()) {
+    errors.tenCa = "Tên ca không được để trống";
+    isValid = false;
+  } else if (form.tenCa.length < 2) {
+    errors.tenCa = "Tên ca phải có ít nhất 2 ký tự";
+    isValid = false;
+  } else {
+    // Check trùng tên
+    const isDuplicateName = shifts.value.some(
+      (s) =>
+        s.tenCa.trim().toLowerCase() === form.tenCa.trim().toLowerCase() &&
+        (!isEditing.value || s.idCa !== form.idCa),
+    );
+    if (isDuplicateName) {
+      errors.tenCa = "Tên ca này đã tồn tại";
+      isValid = false;
+    }
+  }
+
+  // 2. Check Giờ
+  if (!form.gioBatDau) {
+    errors.gioBatDau = "Vui lòng chọn giờ bắt đầu";
+    isValid = false;
+  }
+  if (!form.gioKetThuc) {
+    errors.gioKetThuc = "Vui lòng chọn giờ kết thúc";
+    isValid = false;
+  }
+
+  // 3. Check Logic thời gian (chỉ check khi đã nhập đủ giờ)
+  if (form.gioBatDau && form.gioKetThuc) {
+    const startMins = timeToMinutes(form.gioBatDau);
+    const endMins = timeToMinutes(form.gioKetThuc);
+    const duration = endMins - startMins;
+
+    if (startMins >= endMins) {
+      errors.gioKetThuc = "Giờ kết thúc phải sau giờ bắt đầu";
+      isValid = false;
+    } else if (duration < 30) {
+      errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
+      isValid = false;
+    } else if (duration > 840) {
+      // Cảnh báo mềm (confirm)
+      if (
+        !confirm("Ca làm việc này dài hơn 14 tiếng. Bạn có chắc chắn không?")
+      ) {
+        isValid = false;
+      }
+    }
+
+    // Check trùng khung giờ chính xác
+    if (isValid) {
+      const isDuplicateTime = shifts.value.some((s) => {
+        if (isEditing.value && s.idCa === form.idCa) return false;
+        const sStart = s.gioBatDau?.substring(0, 5);
+        const sEnd = s.gioKetThuc?.substring(0, 5);
+        return sStart === form.gioBatDau && sEnd === form.gioKetThuc;
+      });
+      if (isDuplicateTime) {
+        errors.gioBatDau = "Khung giờ này đã tồn tại";
+        errors.gioKetThuc = "Khung giờ này đã tồn tại";
+        isValid = false;
+      }
+    }
+  }
+
+  return isValid;
+};
+
+// --- 4. API Logic ---
 const fetchShifts = async () => {
   loading.value = true;
   try {
@@ -65,15 +163,14 @@ const fetchShifts = async () => {
 };
 
 const handleSubmit = async () => {
-  // Validate
-  if (!form.tenCa || !form.gioBatDau || !form.gioKetThuc) {
-    showToast("Vui lòng nhập đầy đủ thông tin", "warning");
-    return;
-  }
-  if (form.gioBatDau >= form.gioKetThuc) {
-    showToast("Giờ kết thúc phải sau giờ bắt đầu", "error");
-    return;
-  }
+  // Gọi hàm validate (nếu lỗi, biến errors sẽ có data -> UI hiện đỏ)
+  if (!validateForm()) return;
+
+  // Cảnh báo nghiệp vụ khi Edit
+  // if (isEditing.value) {
+  //   const confirmEdit = confirm('LƯU Ý: Việc thay đổi giờ của Ca sẽ ảnh hưởng đến lịch sử chấm công. Nếu bạn có chắc chắn muốn cập nhật?');
+  //   if (!confirmEdit) return;
+  // }
 
   try {
     // Format HH:mm -> HH:mm:00
@@ -94,25 +191,35 @@ const handleSubmit = async () => {
       await axios.post(API_URL, payload);
       showToast("Thêm mới thành công", "success");
     }
+
     closeModal();
     fetchShifts();
   } catch (error: any) {
-    showToast(error.response?.data || "Có lỗi xảy ra", "error");
+    const msg =
+      error.response?.data?.message || error.response?.data || "Có lỗi xảy ra";
+
+    // Auto map lỗi backend vào ô input
+    if (msg.toLowerCase().includes("tên ca")) {
+      errors.tenCa = msg; // Nó sẽ hiện đỏ lòm ngay ô Tên
+    } else if (msg.toLowerCase().includes("giờ")) {
+      errors.gioBatDau = msg;
+      errors.gioKetThuc = msg;
+    } else {
+      showToast(msg, "error"); // Lỗi khác thì hiện Toast
+    }
   }
 };
-// --- Thêm hàm này vào logic ---
+
 const toggleStatus = async (shift: Shift) => {
   const oldStatus = shift.trangThai;
   const newStatus = oldStatus === 1 ? 0 : 1;
 
-  // Đổi UI ngay lập tức cho mượt
-  shift.trangThai = newStatus;
+  shift.trangThai = newStatus; // Optimistic update
 
   try {
     const payload = {
       ...shift,
       trangThai: newStatus,
-      // Fix lỗi format giờ khi gửi lại lên server
       gioBatDau:
         shift.gioBatDau.length === 5
           ? shift.gioBatDau + ":00"
@@ -132,6 +239,7 @@ const toggleStatus = async (shift: Shift) => {
     showToast("Lỗi khi cập nhật trạng thái", "error");
   }
 };
+
 const deleteShift = async (id: number) => {
   if (!confirm("Bạn có chắc muốn xóa ca này?")) return;
   try {
@@ -143,7 +251,7 @@ const deleteShift = async (id: number) => {
   }
 };
 
-// --- 4. Modal Handlers ---
+// --- 5. Modal Handlers ---
 const openAddModal = () => {
   isEditing.value = false;
   // Reset form
@@ -153,6 +261,7 @@ const openAddModal = () => {
   form.gioBatDau = "";
   form.gioKetThuc = "";
   form.trangThai = 1;
+  clearErrors(); // Reset lỗi
   showModal.value = true;
 };
 
@@ -161,10 +270,11 @@ const openEditModal = (item: Shift) => {
   form.idCa = item.idCa;
   form.maCa = item.maCa;
   form.tenCa = item.tenCa;
-  // Cắt chuỗi HH:mm:ss -> HH:mm cho input time
+  // Cắt chuỗi HH:mm:ss -> HH:mm
   form.gioBatDau = item.gioBatDau?.substring(0, 5) || "";
   form.gioKetThuc = item.gioKetThuc?.substring(0, 5) || "";
   form.trangThai = item.trangThai;
+  clearErrors(); // Reset lỗi
   showModal.value = true;
 };
 
@@ -172,7 +282,7 @@ const closeModal = () => {
   showModal.value = false;
 };
 
-// --- 5. Filters ---
+// --- 6. Filters & Pagination ---
 const resetFilters = () => {
   filterStatus.value = "all";
   filterStartTime.value = "";
@@ -193,7 +303,6 @@ const filteredShifts = computed(() => {
   });
 });
 
-// Pagination computeds
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredShifts.value.length / perPage.value)),
 );
@@ -203,6 +312,7 @@ const pagedShifts = computed(() =>
     (page.value + 1) * perPage.value,
   ),
 );
+
 const visiblePages = computed(() => {
   const total = totalPages.value;
   const current = page.value + 1;
@@ -254,13 +364,9 @@ onMounted(fetchShifts);
           class="toast"
           :class="notif.type"
         >
-          <span class="toast-icon">{{
-            notif.type === "success"
-              ? "✅"
-              : notif.type === "error"
-                ? "❌"
-                : "⚠️"
-          }}</span>
+          <span v-if="notif.type === 'success'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'error'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"></span>
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
       </TransitionGroup>
@@ -430,8 +536,12 @@ onMounted(fetchShifts);
               type="text"
               v-model="form.tenCa"
               class="form-control"
+              :class="{ 'red-border': errors.tenCa }"
               placeholder="Ví dụ: Ca Sáng, Ca Chiều..."
             />
+            <span v-if="errors.tenCa" class="error-msg">{{
+              errors.tenCa
+            }}</span>
           </div>
 
           <div class="form-row">
@@ -441,24 +551,25 @@ onMounted(fetchShifts);
                 type="time"
                 v-model="form.gioBatDau"
                 class="form-control"
+                :class="{ 'red-border': errors.gioBatDau }"
               />
+              <span v-if="errors.gioBatDau" class="error-msg">{{
+                errors.gioBatDau
+              }}</span>
             </div>
+
             <div class="form-group col">
               <label>Giờ kết thúc <span class="required">*</span></label>
               <input
                 type="time"
                 v-model="form.gioKetThuc"
                 class="form-control"
+                :class="{ 'red-border': errors.gioKetThuc }"
               />
+              <span v-if="errors.gioKetThuc" class="error-msg">{{
+                errors.gioKetThuc
+              }}</span>
             </div>
-          </div>
-
-          <div class="form-group" v-if="isEditing">
-            <label>Trạng thái</label>
-            <select v-model="form.trangThai" class="form-control">
-              <option :value="1">Hoạt động</option>
-              <option :value="0">Ngưng hoạt động</option>
-            </select>
           </div>
         </div>
 
@@ -476,7 +587,6 @@ onMounted(fetchShifts);
 <style scoped>
 /* === GENERAL LAYOUT === */
 .page-container {
-  background-color: #f3f4f6;
   min-height: 100vh;
 }
 
@@ -494,7 +604,7 @@ onMounted(fetchShifts);
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 2px solid #ffffff;
   padding-bottom: 16px;
 }
 
@@ -854,42 +964,58 @@ onMounted(fetchShifts);
   gap: 12px;
 }
 
-/* Toast */
+/* TOAST */
 .toast-container {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 2000;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  pointer-events: none;
 }
 .toast {
-  background: #333;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  animation: slideInLeft 0.3s;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  animation: slideInRight 0.3s forwards;
 }
 .toast.success {
-  background: #059669;
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
 }
 .toast.error {
-  background: #dc2626;
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
 }
 .toast.warning {
-  background: #d97706;
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
 }
-@keyframes slideInLeft {
+.toast-msg {
+  color: #333;
+}
+@keyframes slideInRight {
   from {
     transform: translateX(100%);
+    opacity: 0;
   }
   to {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
@@ -962,6 +1088,35 @@ input:checked + .slider:before {
 @keyframes fadeIn {
   to {
     opacity: 1;
+  }
+}
+/* --- VALIDATION STYLES --- */
+.red-border {
+  border-color: #dc2626 !important; /* Màu đỏ đậm */
+  background-color: #fff5f5; /* Nền đỏ nhạt */
+}
+
+.red-border:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important; /* Shadow đỏ khi focus */
+}
+
+.error-msg {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 6px;
+  display: block;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

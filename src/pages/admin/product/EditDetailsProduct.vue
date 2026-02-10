@@ -148,12 +148,19 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
 
 /* ===== ROUTER ===== */
 const route = useRoute();
 const router = useRouter();
 const ctspId = Number(route.params.id);
 const showConfirmModal = ref(false);
+
+/* ===== AUTH ===== */
+const token = localStorage.getItem("token");
+const authHeader = {
+  Authorization: `Bearer ${token}`,
+};
 
 /* ===== API ===== */
 const API_BASE = "http://localhost:8080/api";
@@ -171,31 +178,15 @@ const isUploadingImage = ref(false);
 /* ===== LIST ===== */
 const mauSacList = ref([]);
 const kichCoList = ref([]);
+const loaiAoList = ref([]);
+const kieuDangList = ref([]);
+const phongCachList = ref([]);
 
 const dataCTSP = ref(null);
 
 const selectedLoaiAo = ref("");
 const selectedKieuDang = ref("");
 const selectedPhongCach = ref("");
-
-const loaiAoList = ref([]);
-const kieuDangList = ref([]);
-const phongCachList = ref([]);
-
-const fetchLoaiAo = async () => {
-  const res = await fetch(`${API_BASE}/loai-ao`);
-  loaiAoList.value = await res.json();
-};
-
-const fetchKieuDang = async () => {
-  const res = await fetch(`${API_BASE}/kieu-dang`);
-  kieuDangList.value = await res.json();
-};
-
-const fetchPhongCach = async () => {
-  const res = await fetch(`${API_BASE}/phong-cach-mac`);
-  phongCachList.value = await res.json();
-};
 
 /* ===== TOAST ===== */
 const notifications = ref([]);
@@ -209,46 +200,99 @@ const showNotification = (message, type = "success") => {
 
 /* ===== FETCH MASTER DATA ===== */
 const fetchMauSac = async () => {
-  const res = await fetch(`${API_BASE}/mau-sac`);
-  mauSacList.value = await res.json();
+  try {
+    const res = await axios.get(`${API_BASE}/mau-sac`, {
+      headers: authHeader,
+    });
+    mauSacList.value = res.data;
+  } catch {
+    showNotification("Không thể tải màu sắc", "error");
+  }
 };
 
 const fetchKichCo = async () => {
-  const res = await fetch(`${API_BASE}/kich-co`);
-  kichCoList.value = await res.json();
+  try {
+    const res = await axios.get(`${API_BASE}/kich-co`, {
+      headers: authHeader,
+    });
+    kichCoList.value = res.data;
+  } catch {
+    showNotification("Không thể tải kích cỡ", "error");
+  }
 };
 
-/* ===== FETCH CHI TIẾT SP ===== */
+const fetchLoaiAo = async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/loai-ao`, {
+      headers: authHeader,
+    });
+    loaiAoList.value = res.data;
+  } catch {
+    showNotification("Không thể tải loại áo", "error");
+  }
+};
+
+const fetchKieuDang = async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/kieu-dang`, {
+      headers: authHeader,
+    });
+    kieuDangList.value = res.data;
+  } catch {
+    showNotification("Không thể tải kiểu dáng", "error");
+  }
+};
+
+const fetchPhongCach = async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/phong-cach-mac`, {
+      headers: authHeader,
+    });
+    phongCachList.value = res.data;
+  } catch {
+    showNotification("Không thể tải phong cách mặc", "error");
+  }
+};
+
+/* ===== FETCH CHI TIẾT SẢN PHẨM ===== */
 const fetchCTSP = async () => {
-  const res = await fetch(`${API_BASE}/chi-tiet-san-pham/${ctspId}`);
-  const data = await res.json();
+  try {
+    const res = await axios.get(`${API_BASE}/chi-tiet-san-pham/${ctspId}`, {
+      headers: authHeader,
+    });
 
-  dataCTSP.value = data;
+    const data = res.data;
+    dataCTSP.value = data;
 
-  maCTSP.value = data.maChiTietSanPham;
-  selectedMauSacList.value =
-    mauSacList.value.find((m) => m.tenMauSac === data.tenMauSac)?.id || "";
-  selectedKichCoList.value =
-    kichCoList.value.find((k) => k.tenKichCo === data.tenKichCo)?.id || "";
+    maCTSP.value = data.maChiTietSanPham;
 
-  selectedLoaiAo.value =
-    loaiAoList.value.find((l) => l.tenLoai === data.tenLoaiAo)?.id || "";
+    selectedMauSacList.value =
+      mauSacList.value.find((m) => m.tenMauSac === data.tenMauSac)?.id || "";
 
-  selectedKieuDang.value =
-    kieuDangList.value.find((k) => k.tenKieuDang === data.tenKieuDang)?.id ||
-    "";
+    selectedKichCoList.value =
+      kichCoList.value.find((k) => k.tenKichCo === data.tenKichCo)?.id || "";
 
-  selectedPhongCach.value =
-    phongCachList.value.find((p) => p.tenPhongCach === data.tenPhongCachMac)
-      ?.id || "";
+    selectedLoaiAo.value =
+      loaiAoList.value.find((l) => l.tenLoai === data.tenLoaiAo)?.id || "";
 
-  soLuongTon.value = data.soLuongTon;
-  giaBan.value = data.giaBan;
-  giaNhap.value = data.giaNhap;
-  imageUrl.value = data.hinhAnh?.[0] || null;
+    selectedKieuDang.value =
+      kieuDangList.value.find((k) => k.tenKieuDang === data.tenKieuDang)?.id ||
+      "";
+
+    selectedPhongCach.value =
+      phongCachList.value.find((p) => p.tenPhongCach === data.tenPhongCachMac)
+        ?.id || "";
+
+    soLuongTon.value = data.soLuongTon;
+    giaBan.value = data.giaBan;
+    giaNhap.value = data.giaNhap;
+    imageUrl.value = data.hinhAnh?.[0] || null;
+  } catch {
+    showNotification("Không thể tải chi tiết sản phẩm", "error");
+  }
 };
 
-/* ===== UPLOAD IMAGE (OPTIONAL) ===== */
+/* ===== UPLOAD IMAGE ===== */
 const fileInput = ref(null);
 const triggerUpload = () => fileInput.value.click();
 
@@ -278,62 +322,36 @@ const onFileChange = async (e) => {
   } catch {
     showNotification("Lỗi upload ảnh", "error");
   }
+
   isUploadingImage.value = false;
 };
 
+/* ===== VALIDATE ===== */
 const validateForm = () => {
-  if (!selectedMauSacList.value) {
-    showNotification("Vui lòng chọn màu sắc", "warning");
-    return false;
-  }
-
-  if (!selectedKichCoList.value) {
-    showNotification("Vui lòng chọn kích cỡ", "warning");
-    return false;
-  }
-
-  if (!selectedLoaiAo.value) {
-    showNotification("Vui lòng chọn loại áo", "warning");
-    return false;
-  }
-
-  if (!selectedKieuDang.value) {
-    showNotification("Vui lòng chọn kiểu dáng", "warning");
-    return false;
-  }
-
-  if (!selectedPhongCach.value) {
-    showNotification("Vui lòng chọn phong cách mặc", "warning");
-    return false;
-  }
-
-  if (soLuongTon.value === null || soLuongTon.value < 0) {
-    showNotification("Số lượng tồn phải ≥ 0", "warning");
-    return false;
-  }
-
-  if (!giaNhap.value || giaNhap.value <= 0) {
-    showNotification("Giá nhập phải lớn hơn 0", "warning");
-    return false;
-  }
-
-  if (!giaBan.value || giaBan.value <= 0) {
-    showNotification("Giá bán phải lớn hơn 0", "warning");
-    return false;
-  }
-
-  if (giaBan.value < giaNhap.value) {
-    showNotification("Giá bán không được nhỏ hơn giá nhập", "warning");
-    return false;
-  }
-
-  if (!imageUrl.value) {
-    showNotification("Vui lòng chọn ảnh cho biến thể", "warning");
-    return false;
-  }
+  if (!selectedMauSacList.value)
+    return (showNotification("Vui lòng chọn màu sắc", "warning"), false);
+  if (!selectedKichCoList.value)
+    return (showNotification("Vui lòng chọn kích cỡ", "warning"), false);
+  if (!selectedLoaiAo.value)
+    return (showNotification("Vui lòng chọn loại áo", "warning"), false);
+  if (!selectedKieuDang.value)
+    return (showNotification("Vui lòng chọn kiểu dáng", "warning"), false);
+  if (!selectedPhongCach.value)
+    return (showNotification("Vui lòng chọn phong cách mặc", "warning"), false);
+  if (soLuongTon.value < 0)
+    return (showNotification("Số lượng tồn phải ≥ 0", "warning"), false);
+  if (giaNhap.value <= 0)
+    return (showNotification("Giá nhập phải > 0", "warning"), false);
+  if (giaBan.value <= 0)
+    return (showNotification("Giá bán phải > 0", "warning"), false);
+  if (giaBan.value < giaNhap.value)
+    return (showNotification("Giá bán < giá nhập", "warning"), false);
+  if (!imageUrl.value)
+    return (showNotification("Vui lòng chọn ảnh", "warning"), false);
 
   return true;
 };
+
 const handleOpenConfirm = () => {
   if (!validateForm()) return;
   showConfirmModal.value = true;
@@ -360,18 +378,17 @@ const submitUpdate = async () => {
   };
 
   try {
-    const res = await fetch(`${API_BASE}/chi-tiet-san-pham/${ctspId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    await axios.put(`${API_BASE}/chi-tiet-san-pham/${ctspId}`, payload, {
+      headers: authHeader,
     });
-
-    if (!res.ok) throw new Error(await res.text());
 
     showNotification("Cập nhật chi tiết sản phẩm thành công");
     setTimeout(() => router.back(), 1200);
-  } catch (e) {
-    showNotification(e.message || "Cập nhật thất bại", "error");
+  } catch (error) {
+    showNotification(
+      error?.response?.data?.message || "Cập nhật thất bại",
+      "error",
+    );
   }
 };
 
@@ -386,10 +403,6 @@ onMounted(async () => {
   ]);
 
   await fetchCTSP();
-  const sanPhamId = route.params.sanPhamId;
-
-  console.log(sanPhamId);
-  console.log("CTSP:", dataCTSP.value);
 });
 </script>
 

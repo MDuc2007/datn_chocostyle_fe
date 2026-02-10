@@ -1,6 +1,9 @@
 <template>
   <div class="page-container">
-    <div class="card-section filter-card form-page-animation">
+    <div
+      class="card-section filter-card form-page-animation"
+      style="animation-delay: 0.1s"
+    >
       <h2 class="page-title">QUẢN LÝ KHÁCH HÀNG</h2>
 
       <div class="filter-controls">
@@ -47,13 +50,15 @@
         </div>
 
         <div class="right-controls">
-          <button class="btn btn-outline" @click="resetFilters">Đặt lại</button>
-          <button class="btn btn-outline" @click="exportExcel">
+          <button class="btn btn-outline hover-effect" @click="resetFilters">
+            Đặt lại
+          </button>
+          <button class="btn btn-outline hover-effect" @click="exportExcel">
             Xuất Excel
           </button>
 
           <button
-            class="btn btn-primary"
+            class="btn btn-primary hover-effect"
             @click="$router.push('/admin/customer/add')"
           >
             + Thêm mới
@@ -62,7 +67,10 @@
       </div>
     </div>
 
-    <div class="card-section table-card form-page-animation">
+    <div
+      class="card-section table-card form-page-animation"
+      style="animation-delay: 0.2s"
+    >
       <div class="table-responsive">
         <table class="custom-table">
           <thead>
@@ -80,12 +88,17 @@
           <tbody>
             <tr v-if="loading">
               <td colspan="8" class="text-center py-5 text-muted">
+                <div class="loading-spinner"></div>
                 Đang tải dữ liệu...
               </td>
             </tr>
 
             <template v-else>
-              <tr v-for="(c, i) in customers" :key="c.id">
+              <tr
+                v-for="(c, i) in customers"
+                :key="c.id"
+                class="table-row-hover"
+              >
                 <td class="text-center text-muted">
                   <b>{{ i + 1 + (currentPage - 1) * pageSize }}</b>
                 </td>
@@ -120,8 +133,8 @@
                 <td class="text-center">
                   <span
                     :class="[
-                      'status-text',
-                      isActive(c) ? 'text-active' : 'text-inactive',
+                      'status-badge',
+                      isActive(c) ? 'status-active' : 'status-inactive',
                     ]"
                   >
                     {{ isActive(c) ? "Đang hoạt động" : "Ngừng hoạt động" }}
@@ -130,7 +143,12 @@
 
                 <td class="text-center">
                   <div class="actions-group">
-                    <label class="switch" title="Đổi trạng thái">
+                    <label
+                      class="switch tooltip-container"
+                      :data-tooltip="
+                        c.trangThai === 0 ? 'Mở hoạt động' : 'Ngưng hoạt động'
+                      "
+                    >
                       <input
                         type="checkbox"
                         :checked="isActive(c)"
@@ -139,30 +157,31 @@
                       <span class="slider round"></span>
                     </label>
 
-                    <button
-                      class="btn-icon-edit"
-                      title="Chỉnh sửa"
-                      @click="$router.push(`/admin/customer/edit/${c.id}`)"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                    <div class="tooltip-container" data-tooltip="Chỉnh sửa">
+                      <button
+                        class="btn-icon-edit"
+                        @click="$router.push(`/admin/customer/edit/${c.id}`)"
                       >
-                        <path
-                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                        ></path>
-                        <path
-                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                        ></path>
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                          ></path>
+                          <path
+                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -179,7 +198,7 @@
 
       <div class="pagination-footer">
         <button
-          class="p-btn"
+          class="p-btn hover-effect"
           :disabled="currentPage === 1"
           @click="changePage(currentPage - 1)"
         >
@@ -188,7 +207,7 @@
         <template v-for="page in visiblePages" :key="page">
           <button
             v-if="page !== '...'"
-            class="p-btn number"
+            class="p-btn number hover-effect"
             :class="{ active: page === currentPage }"
             @click="changePage(page)"
           >
@@ -197,7 +216,7 @@
           <span v-else class="dots">...</span>
         </template>
         <button
-          class="p-btn"
+          class="p-btn hover-effect"
           :disabled="currentPage >= totalPages"
           @click="changePage(currentPage + 1)"
         >
@@ -206,21 +225,26 @@
       </div>
     </div>
 
-    <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
-      <div class="confirm-box form-page-animation">
-        <div class="confirm-icon" style="font-size: 40px; margin-bottom: 10px">
-          ⚠️
-        </div>
-        <h3 style="color: #63391f; margin-bottom: 10px">{{ modal.title }}</h3>
-        <p style="color: #555; margin-bottom: 20px">{{ modal.message }}</p>
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="closeModal">Hủy</button>
-          <button class="btn-confirm" @click="handleModalConfirm">
-            Đồng ý
-          </button>
+    <transition name="fade-modal">
+      <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">⚠️</div>
+          <h3 class="confirm-title">{{ modal.title }}</h3>
+          <p class="confirm-desc">{{ modal.message }}</p>
+          <div class="confirm-actions">
+            <button class="btn-cancel hover-effect" @click="closeModal">
+              Hủy
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="handleModalConfirm"
+            >
+              Đồng ý
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <transition name="toast-slide">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
@@ -235,6 +259,7 @@
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
+// --- LOGIC GIỮ NGUYÊN ---
 const keyword = ref("");
 const customers = ref([]);
 const currentPage = ref(1);
@@ -276,8 +301,32 @@ const fetchCustomers = async () => {
   }
 };
 
-const exportExcel = () => {
-  window.location.href = `${API_URL}/export?keyword=${keyword.value}`;
+const exportExcel = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/export-excel`, {
+      params: {
+        keyword: keyword.value,
+        status: selectedStatus.value,
+      },
+      responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "khach_hang.xlsx";
+    link.click();
+    window.URL.revokeObjectURL(url);
+
+    showToast("Xuất Excel thành công");
+  } catch (e) {
+    showToast("Xuất Excel thất bại", "error");
+    console.error(e);
+  }
 };
 
 const handleToggleClick = (event, customer) => {
@@ -285,7 +334,7 @@ const handleToggleClick = (event, customer) => {
   modal.value = {
     show: true,
     title: "Xác nhận thay đổi",
-    message: `Bạn có chắc muốn ${isActive(customer) ? "Khóa" : "Mở khóa"} tài khoản khách hàng "${customer.tenKhachHang}"?`,
+    message: `Bạn có chắc muốn ${isActive(customer) ? "Khóa" : "Mở khóa"} tài khoản "${customer.tenKhachHang}"?`,
     action: "TOGGLE",
     id: customer.id,
   };
@@ -355,49 +404,98 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* NOTE: moved global CSS variables to `src/style.css` to avoid leaking styles app-wide */
-:deep(.page-container),
+/* =========================================
+   1. GLOBAL VARIABLES & ANIMATIONS
+   ========================================= */
 .page-container {
-  --primary-brown: #63391f; /* Màu nâu thương hiệu của bạn */
-  --primary-light: #fdf8f6; /* Màu nền nhạt khi hover */
-  --text-main: #484848; /* Màu chữ xám đậm */
-  --border-color: #e0e0e0; /* Màu viền */
-  --success-green: #2ecc71; /* Màu xanh cho trạng thái hoạt động */
-  --danger-red: #e74c3c; /* Màu đỏ cho ngừng hoạt động */
+  --primary-brown: #63391f;
+  --primary-light: #fdf8f6;
+  --text-main: #484848;
+  --border-color: #e0e0e0;
+  --success-green: #27ae60;
+  --danger-red: #e74c3c;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation Classes */
+.form-page-animation {
+  opacity: 0; /* Init hidden */
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================
+   2. LAYOUT & CARDS
+   ========================================= */
 .card-section {
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   overflow: hidden;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+
+.card-section:hover {
+  box-shadow: var(--shadow-md);
+  /* transform: translateY(-2px); // Optional: Nhấc nhẹ card khi hover */
 }
 
 .filter-card {
   padding: 24px;
 }
-
-.page-title {
-  /* 1. Font chữ có chân (Serif) để giống ảnh mẫu */
-  font-family: "Times New Roman", Times, serif;
-
-  /* 2. Kích thước và độ đậm */
-  font-size: 24px; /* Tăng nhẹ kích thước */
-  font-weight: 700; /* Độ đậm vừa phải nhưng sắc nét */
-
-  /* 3. Màu sắc: Ảnh mẫu dùng màu đen hoặc nâu cực đậm */
-  color: #63391f;
-
-  /* 4. Định dạng chữ */
-  text-transform: uppercase;
-  letter-spacing: 1px; /* Khoảng cách giữa các chữ cái rộng hơn một chút */
-
-  /* 5. Căn lề: Để sát lề trái và tạo khoảng cách với ô tìm kiếm bên dưới */
-  margin: 10px 0 25px 5px;
-  display: block;
+.table-card {
+  padding: 10px;
 }
 
+.page-title {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-brown);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 10px 0 25px 5px;
+  position: relative;
+  display: inline-block;
+}
+
+/* =========================================
+   3. INPUTS & CONTROLS
+   ========================================= */
 .filter-controls {
   display: flex;
   justify-content: space-between;
@@ -409,23 +507,26 @@ onMounted(() => {
 
 .left-controls {
   display: flex;
-  gap: 12px;
+  gap: 15px;
   flex: 1;
   align-items: flex-end;
 }
+.right-controls {
+  display: flex;
+  gap: 10px;
+  align-self: flex-end;
+}
+
 .input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .label-inside {
-  display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 4px;
 }
-
 .search-box {
   position: relative;
   width: 300px;
@@ -436,173 +537,193 @@ onMounted(() => {
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  z-index: 1;
+  pointer-events: none;
+  transition: 0.3s;
 }
 
 .form-input,
 .form-select {
-  height: 40px;
-  border: 1px solid #ccc;
+  height: 42px;
+  border: 1px solid #d1d5db;
   border-radius: 10px;
   padding: 0 12px;
   font-size: 14px;
   outline: none;
-  transition: all 0.2s;
-  color: #555;
   background-color: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .form-input.ps-icon {
-  padding-left: 36px;
+  padding-left: 40px;
 }
+
+/* Input Focus Effects */
 .form-input:focus,
 .form-select:focus {
   border-color: var(--primary-brown);
-  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
-}
-.status-box {
-  width: 160px;
+  box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
+  background-color: #fff;
 }
 
-.right-controls {
-  display: flex;
-  gap: 10px;
-  align-self: flex-end;
+.form-input:focus + .search-icon svg {
+  stroke: var(--primary-brown);
 }
+
+/* =========================================
+   4. BUTTONS
+   ========================================= */
 .btn {
-  height: 40px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  user-select: none;
 }
+
+/* Hover Effect Utility */
+.hover-effect:active {
+  transform: scale(0.96);
+}
+
 .btn-primary {
-  background-color: #ffffff;
+  background-color: #fff;
   color: var(--text-main);
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 .btn-primary:hover {
   border-color: var(--primary-brown);
   color: var(--primary-brown);
-  background-color: #f9f9f9;
+  background-color: #fff8f5;
+  box-shadow: 0 4px 10px rgba(99, 57, 31, 0.15);
 }
+
 .btn-outline {
   background-color: #fff;
   color: var(--text-main);
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
 }
 .btn-outline:hover {
   border-color: var(--primary-brown);
-  background-color: #fdf8f6;
+  background-color: var(--primary-light);
+  color: var(--primary-brown);
 }
 
-/* --- BẢNG DỮ LIỆU TỐI ƯU --- */
-.table-card {
-  padding: 10px;
-}
+/* =========================================
+   5. TABLE
+   ========================================= */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
 }
-
 .custom-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 1000px;
-  table-layout: fixed; /* Cố định layout để đảm bảo width chính xác */
-}
-
-.custom-table thead tr {
-  border-bottom: 1.5px solid #e0e0e0;
+  table-layout: fixed;
 }
 
 .custom-table th {
-  background-color: #fff;
-  color: #000000;
   font-weight: 700;
-  padding: 20px 12px;
+  padding: 16px 12px;
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #edf2f7;
 }
 
 .custom-table td {
-  padding: 18px 12px;
+  padding: 16px 12px;
   font-size: 14px;
   color: #484848;
-  vertical-align: middle; /* Căn giữa nội dung theo chiều dọc */
-  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s;
 }
-.custom-table tbody tr:hover {
-  background-color: #f9fafb;
+
+/* Row Hover Effect */
+.table-row-hover:hover td {
+  background-color: #fdf8f6; /* Nền nâu rất nhạt */
 }
 
 .text-dark-bold {
-  color: #111827;
+  color: #1f2937;
   font-weight: 600;
 }
 .text-center {
   text-align: center !important;
 }
-
-/* Xử lý nhảy dòng Trạng thái */
-.status-text {
-  font-weight: 600;
-  font-size: 14px;
-  white-space: nowrap; /* Không cho phép xuống dòng */
-}
-.text-active {
-  color: var(--success-green);
-}
-.text-inactive {
-  color: var(--danger-red);
-}
-
-/* Xử lý tràn chữ cho Email và Địa chỉ */
 .truncate-text,
 .address-text {
   display: block;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Hiện dấu ... khi text quá dài */
+  text-overflow: ellipsis;
 }
 
-.address-cell {
-  max-width: 0; /* Cần thiết để text-overflow hoạt động trong table-layout fixed */
+/* Status Badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 130px;
+}
+.status-active {
+  background-color: #e8f5e9;
+  color: var(--success-green);
+  border: 1px solid #c8e6c9;
+}
+.status-inactive {
+  background-color: #ffebee;
+  color: var(--danger-red);
+  border: 1px solid #ffcdd2;
 }
 
+/* =========================================
+   6. ACTIONS & SWITCH
+   ========================================= */
 .actions-group {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
 }
 
 .btn-icon-edit {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ccc;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: #fff;
-  color: #484848;
+  background: #f3f4f6;
+  color: #6b7280;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 .btn-icon-edit:hover {
-  border-color: var(--primary-brown);
-  color: var(--primary-brown);
+  background: var(--primary-brown);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 57, 31, 0.2);
 }
 
+/* Switch Animation */
 .switch {
   position: relative;
-  width: 50px;
+  width: 46px;
   height: 24px;
 }
 .switch input {
@@ -612,8 +733,8 @@ onMounted(() => {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background-color: #ccc;
-  transition: 0.3s;
+  background-color: #d1d5db;
+  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 24px;
 }
 .slider:before {
@@ -624,77 +745,68 @@ onMounted(() => {
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.3s;
+  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 input:checked + .slider {
   background-color: var(--primary-brown);
 }
 input:checked + .slider:before {
-  transform: translateX(26px);
+  transform: translateX(22px);
 }
 
+/* =========================================
+   7. PAGINATION
+   ========================================= */
 .pagination-footer {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   padding: 20px 0;
 }
 .p-btn {
-  width: 40px;
-  height: 40px;
+  min-width: 38px;
+  height: 38px;
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
-  color: var(--primary-brown);
+  color: #374151;
   font-weight: 600;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: 0.2s;
+}
+.p-btn:hover:not(:disabled) {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
 }
 .p-btn.active {
   background: var(--primary-brown);
   border-color: var(--primary-brown);
   color: #fff;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 .p-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-  border: none;
-  background: transparent;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.toast-notification {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background-color: #ecfdf5;
-  padding: 16px 20px;
-  border-radius: 12px;
-  border-left: 6px solid #10b981;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 9999;
+.confirm-actions {
   display: flex;
-  align-items: center;
   gap: 20px;
-  min-width: 300px;
-}
-.toast-content {
-  color: #065f46;
-  font-weight: 700;
-  font-size: 15px;
-}
-.toast-close {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 20px;
-  color: #065f46;
-  opacity: 0.7;
 }
 
+.confirm-actions button {
+  flex: 1;
+  height: 42px;
+}
+
+/* =========================================
+   8. MODAL & TOAST
+   ========================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -709,14 +821,27 @@ input:checked + .slider:before {
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  border: 1px solid var(--border-color);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
 }
-.confirm-actions {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+.confirm-icon-wrapper {
+  font-size: 40px;
+  margin-bottom: 15px;
+  animation: bounce 1s infinite;
 }
+.confirm-title {
+  color: var(--primary-brown);
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
 .btn-confirm {
   background: var(--primary-brown);
   color: #fff;
@@ -725,7 +850,13 @@ input:checked + .slider:before {
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  transition: 0.2s;
 }
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+
 .btn-cancel {
   background: #f3f4f6;
   color: #374151;
@@ -734,15 +865,115 @@ input:checked + .slider:before {
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  transition: 0.2s;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
 }
 
+/* Toast */
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background-color: #fff;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 5px solid;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 320px;
+}
+.toast-notification.success {
+  border-color: var(--success-green);
+}
+.toast-notification.error {
+  border-color: var(--danger-red);
+}
+.toast-content {
+  font-weight: 600;
+  font-size: 14px;
+}
+.toast-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+/* Transitions */
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
 .toast-slide-enter-active,
 .toast-slide-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .toast-slide-enter-from,
 .toast-slide-leave-to {
   transform: translateX(120%);
   opacity: 0;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-brown);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+/* Tooltip Animation */
+.tooltip-container {
+  position: relative;
+}
+.tooltip-container:hover::after,
+.tooltip-container:hover::before {
+  opacity: 1;
+  transform: translate(-50%, -5px);
+}
+.tooltip-container::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translate(-50%, 5px);
+  background: #1f2937;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.tooltip-container::before {
+  content: "";
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translate(-50%, 5px);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
 }
 </style>

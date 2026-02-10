@@ -141,23 +141,41 @@
       </div>
     </div>
   </div>
+  <div class="toast-container">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="notif.type"
+    >
+      {{ notif.message }}
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
+const token = localStorage.getItem("token");
+
 const colors = ref([]);
 const allColors = ref([]);
 const selectedStatus = ref("");
 
+const notifications = ref([]);
+
+const showNotification = (message, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 3000);
+};
+
 async function toggleStatus(item) {
   const oldStatus = item.trangThai;
-
-  // ✅ toggle đúng: 1 ↔ 0
   const newStatus = oldStatus === 1 ? 0 : 1;
-
-  // optimistic update
   item.trangThai = newStatus;
 
   try {
@@ -165,20 +183,19 @@ async function toggleStatus(item) {
       `http://localhost:8080/api/kieu-dang/${item.id}/doi-trang-thai`,
       null,
       {
-        params: {
-          nguoiCapNhat: "admin",
-        },
+        params: { nguoiCapNhat: "admin" },
+        headers: { Authorization: `Bearer ${token}` },
       },
     );
-  } catch (error) {
-    // rollback
+    showNotification("Cập nhật trạng thái thành công", "success");
+  } catch {
     item.trangThai = oldStatus;
-    alert("Lỗi cập nhật trạng thái màu sắc!");
+    showNotification("Lỗi cập nhật trạng thái", "error");
   }
 }
+
 const handleFilterChange = () => {
   if (selectedStatus.value === "") {
-    // Tất cả
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
@@ -187,15 +204,23 @@ const handleFilterChange = () => {
 };
 
 const fetchColors = async () => {
-  const res = await axios.get("http://localhost:8080/api/kieu-dang");
+  try {
+    const res = await axios.get("http://localhost:8080/api/kieu-dang", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  colors.value = res.data.map((item) => ({
-    id: item.id,
-    name: item.tenKieuDang,
-    code: item.maKieuDang,
-    ngayTao: item.ngayTao, // 👈 thêm
-    trangThai: item.trangThai,
-  }));
+    allColors.value = res.data.map((item) => ({
+      id: item.id,
+      name: item.tenKieuDang,
+      code: item.maKieuDang,
+      ngayTao: item.ngayTao,
+      trangThai: item.trangThai,
+    }));
+
+    colors.value = [...allColors.value];
+  } catch {
+    showNotification("Không thể tải danh sách kiểu dáng", "error");
+  }
 };
 
 const formatDate = (date) => {
@@ -206,13 +231,13 @@ const formatDate = (date) => {
 onMounted(fetchColors);
 
 const isModalOpen = ref(false);
-const newColor = ref({
-  tenKieuDang: "",
-  nguoiTao: "admin", // tạm
-});
-
 const isEdit = ref(false);
 const editingId = ref(null);
+
+const newColor = ref({
+  tenKieuDang: "",
+  nguoiTao: "admin",
+});
 
 const openModal = () => {
   isModalOpen.value = true;
@@ -220,25 +245,38 @@ const openModal = () => {
 
 const closeModal = () => {
   isModalOpen.value = false;
-  newColor.value = { tenKieuDang: "" };
+  newColor.value = { tenKieuDang: "", nguoiTao: "admin" };
   isEdit.value = false;
   editingId.value = null;
 };
 
 const addColor = async () => {
-  if (!newColor.value.tenKieuDang.trim()) return;
+  if (!newColor.value.tenKieuDang.trim()) {
+    showNotification("Tên kiểu dáng không được để trống", "warning");
+    return;
+  }
 
-  await fetch("http://localhost:8080/api/kieu-dang", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenKieuDang: newColor.value.tenKieuDang,
-      nguoiTao: "admin", // 👈 bắt buộc
-    }),
-  });
+  try {
+    await axios.post(
+      "http://localhost:8080/api/kieu-dang",
+      {
+        tenKieuDang: newColor.value.tenKieuDang,
+        nguoiTao: "admin",
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Thêm kiểu dáng thành công", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    showNotification(
+      error?.response?.data?.message || "Thêm kiểu dáng thất bại",
+      "error",
+    );
+  }
 };
 
 const editColor = (item) => {
@@ -249,27 +287,46 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenKieuDang.trim()) return;
+  if (!newColor.value.tenKieuDang.trim()) {
+    showNotification("Tên kiểu dáng không được để trống", "warning");
+    return;
+  }
 
-  await fetch(`http://localhost:8080/api/kieu-dang/${editingId.value}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenKieuDang: newColor.value.tenKieuDang,
-      nguoiCapNhat: "admin",
-    }),
-  });
+  try {
+    await axios.put(
+      `http://localhost:8080/api/kieu-dang/${editingId.value}`,
+      {
+        tenKieuDang: newColor.value.tenKieuDang,
+        nguoiCapNhat: "admin",
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Cập nhật kiểu dáng thành công", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    showNotification(
+      error?.response?.data?.message || "Cập nhật thất bại",
+      "error",
+    );
+  }
 };
 
 const deleteColor = async (item) => {
-  if (confirm(`Bạn có chắc muốn xóa kiểu dáng "${item.name}"?`)) {
-    await fetch(`http://localhost:8080/api/kieu-dang/${item.id}`, {
-      method: "DELETE",
+  if (!confirm(`Bạn có chắc muốn xóa kiểu dáng "${item.name}"?`)) return;
+
+  try {
+    await axios.delete(`http://localhost:8080/api/kieu-dang/${item.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
+
+    showNotification("Xóa kiểu dáng thành công", "success");
     fetchColors();
+  } catch {
+    showNotification("Xóa kiểu dáng thất bại", "error");
   }
 };
 </script>
@@ -763,5 +820,53 @@ input:checked + .slider::before {
 .tooltip-wrapper:hover::after,
 .tooltip-wrapper:hover::before {
   opacity: 1;
+}
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  word-wrap: break-word;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 </style>

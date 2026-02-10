@@ -141,11 +141,33 @@
       </div>
     </div>
   </div>
+  <div class="toast-container">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="notif.type"
+    >
+      {{ notif.message }}
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+const token = localStorage.getItem("token");
+
+const notifications = ref([]);
+
+const showNotification = (message, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 3000);
+};
 
 const colors = ref([]);
 const allColors = ref([]);
@@ -187,15 +209,21 @@ const handleFilterChange = () => {
 };
 
 const fetchColors = async () => {
-  const res = await axios.get("http://localhost:8080/api/xuat-xu");
+  const res = await axios.get("http://localhost:8080/api/xuat-xu", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-  colors.value = res.data.map((item) => ({
+  allColors.value = res.data.map((item) => ({
     id: item.id,
     name: item.tenXuatXu,
     code: item.maXuatXu,
-    ngayTao: item.ngayTao, // 👈 thêm
+    ngayTao: item.ngayTao,
     trangThai: item.trangThai,
   }));
+
+  colors.value = [...allColors.value];
 };
 
 const formatDate = (date) => {
@@ -226,19 +254,34 @@ const closeModal = () => {
 };
 
 const addColor = async () => {
-  if (!newColor.value.tenXuatXu.trim()) return;
+  if (!newColor.value.tenXuatXu.trim()) {
+    showNotification("Tên xuất xứ không được để trống", "warning");
+    return;
+  }
 
-  await fetch("http://localhost:8080/api/xuat-xu", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenXuatXu: newColor.value.tenXuatXu,
-      nguoiTao: "admin", // 👈 bắt buộc
-    }),
-  });
+  try {
+    await axios.post(
+      "http://localhost:8080/api/xuat-xu",
+      {
+        tenXuatXu: newColor.value.tenXuatXu,
+        nguoiTao: "admin",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Thêm xuất xứ thành công", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    const message =
+      error?.response?.data?.message || "Có lỗi xảy ra khi thêm xuất xứ";
+
+    showNotification(message, "error");
+  }
 };
 
 const editColor = (item) => {
@@ -249,19 +292,33 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenXuatXu.trim()) return;
+  if (!newColor.value.tenXuatXu.trim()) {
+    showNotification("Tên xuất xứ không được để trống", "warning");
+    return;
+  }
 
-  await fetch(`http://localhost:8080/api/xuat-xu/${editingId.value}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenXuatXu: newColor.value.tenXuatXu,
-      nguoiCapNhat: "admin",
-    }),
-  });
+  try {
+    await axios.put(
+      `http://localhost:8080/api/xuat-xu/${editingId.value}`,
+      {
+        tenXuatXu: newColor.value.tenXuatXu,
+        nguoiCapNhat: "admin",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Cập nhật xuất xứ thành công ", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    const message = error?.response?.data?.message || "Cập nhật thất bại";
+
+    showNotification(message, "error");
+  }
 };
 
 const deleteColor = async (item) => {
@@ -763,5 +820,53 @@ input:checked + .slider::before {
 .tooltip-wrapper:hover::after,
 .tooltip-wrapper:hover::before {
   opacity: 1;
+}
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  word-wrap: break-word;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 </style>

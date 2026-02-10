@@ -8,13 +8,9 @@
           class="toast"
           :class="notif.type"
         >
-          <span v-if="notif.type === 'success'" style="font-size: 18px"
-            >✅</span
-          >
-          <span v-if="notif.type === 'error'" style="font-size: 18px">❌</span>
-          <span v-if="notif.type === 'warning'" style="font-size: 18px"
-            >⚠️</span
-          >
+          <span v-if="notif.type === 'success'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'error'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"></span>
 
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
@@ -144,7 +140,7 @@
           </div>
 
           <div class="grid-row">
-            <div class="form-group">
+            <!-- <div class="form-group">
               <label>Chức vụ</label>
               <select v-model="form.vaiTro">
                 <option value="Nhân viên">Nhân viên</option>
@@ -152,8 +148,8 @@
                 <option value="Quản lý">Quản lý</option>
                 <option value="Thủ kho">Thủ kho</option>
               </select>
-            </div>
-
+            </div> -->
+<!-- 
             <div class="form-group">
               <label>Trạng thái</label>
               <select v-model="form.trangThai" class="status-select">
@@ -161,7 +157,7 @@
                 <option :value="0">Đã nghỉ việc</option>
                 <option :value="2">Đã khóa</option>
               </select>
-            </div>
+            </div> -->
           </div>
 
           <div class="grid-row-3">
@@ -251,7 +247,7 @@ const router = useRouter();
 const route = useRoute();
 const fileInput = ref(null);
 
-// Địa chỉ
+// --- DATA ---
 const listCity = ref([]);
 const listDistrict = ref([]);
 const listWard = ref([]);
@@ -260,6 +256,7 @@ const selectedDistrict = ref(null);
 const selectedWard = ref(null);
 
 const form = ref({
+  id: null, // Quan trọng để update
   maNv: "",
   hoTen: "",
   gioiTinh: true,
@@ -276,7 +273,7 @@ const form = ref({
 });
 const errors = ref({});
 
-// Toast notifications
+// --- TOAST NOTIFICATION ---
 const notifications = ref([]);
 const showNotification = (message, type = "success") => {
   const id = Date.now() + Math.random();
@@ -286,14 +283,16 @@ const showNotification = (message, type = "success") => {
   }, 4000);
 };
 
-// 1. Load Data
+// --- 1. LOAD DATA ---
 onMounted(async () => {
   try {
+    // Load địa chỉ
     const resAddr = await axios.get(
       "https://provinces.open-api.vn/api/?depth=3",
     );
     listCity.value = resAddr.data;
 
+    // Load thông tin nhân viên
     const empId = route.params.id;
     if (empId) await fetchEmployeeDetail(empId);
   } catch (e) {
@@ -301,20 +300,22 @@ onMounted(async () => {
   }
 });
 
-// 2. Fetch & Map Data
+// --- 2. FETCH & MAP DATA ---
 async function fetchEmployeeDetail(id) {
   try {
     const res = await axios.get(`http://localhost:8080/api/nhan-vien/${id}`);
     const data = res.data;
 
+    // Map dữ liệu vào Form
     form.value = {
       ...data,
       ngaySinh: formatDateForInput(data.ngaySinh),
       ngayVaoLam: formatDateForInput(data.ngayVaoLam),
-      vaiTro: data.chucVu,
+      vaiTro: data.chucVu || "Nhân viên", // Map chucVu -> vaiTro
       diaChiCuThe: data.diaChiCuThe,
     };
 
+    // Fill lại Combobox Địa chỉ
     if (data.tinhThanhId) {
       selectedCity.value = listCity.value.find(
         (c) => c.code == data.tinhThanhId,
@@ -338,24 +339,165 @@ async function fetchEmployeeDetail(id) {
     }
   } catch (error) {
     console.error("Lỗi tải nhân viên:", error);
+    showNotification("Không tìm thấy dữ liệu nhân viên", "error");
   }
 }
 
+// --- 3. VALIDATE FORM (LOGIC MỚI - KHẮC PHỤC LỖI TÊN) ---
+function validateForm() {
+  errors.value = {};
+  let isValid = true;
+
+  // A. Validate Họ Tên (Phương pháp chặn ký tự cấm)
+  // Regex tìm số hoặc ký tự đặc biệt
+  const invalidChars = /[0-9!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]/;
+
+  if (!form.value.hoTen?.trim()) {
+    errors.value.hoTen = "Họ tên không được để trống";
+    isValid = false;
+  } else if (form.value.hoTen.length < 5) {
+    errors.value.hoTen = "Họ tên quá ngắn (tối thiểu 5 ký tự)";
+    isValid = false;
+  } else if (invalidChars.test(form.value.hoTen)) {
+    // Nếu tìm thấy ký tự cấm -> Báo lỗi
+    errors.value.hoTen =
+      "Họ tên không hợp lệ (không được chứa số hoặc ký tự đặc biệt)";
+    isValid = false;
+  }
+
+  // B. Validate Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!form.value.email?.trim()) {
+    errors.value.email = "Email không được để trống";
+    isValid = false;
+  } else if (!emailRegex.test(form.value.email)) {
+    errors.value.email = "Định dạng email không đúng";
+    isValid = false;
+  }
+
+  // C. Validate SĐT
+  const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+  if (!form.value.sdt?.trim()) {
+    errors.value.sdt = "SĐT không được để trống";
+    isValid = false;
+  } else if (!phoneRegex.test(form.value.sdt) || form.value.sdt.length !== 10) {
+    errors.value.sdt = "SĐT không hợp lệ (10 số, đầu 03,05,07,08,09)";
+    isValid = false;
+  }
+
+  // D. Validate Địa chỉ
+  if (!form.value.diaChiCuThe?.trim()) {
+    errors.value.diaChiCuThe = "Nhập địa chỉ cụ thể";
+    isValid = false;
+  }
+  if (!selectedCity.value) {
+    errors.value.tinhThanh = "Chưa chọn Tỉnh/TP";
+    isValid = false;
+  }
+  if (!selectedDistrict.value && selectedCity.value) {
+    errors.value.quanHuyen = "Chưa chọn Quận/Huyện";
+    isValid = false;
+  }
+  if (!selectedWard.value && selectedDistrict.value) {
+    errors.value.xaPhuong = "Chưa chọn Xã/Phường";
+    isValid = false;
+  }
+
+  // E. Validate Ngày sinh (18 - 65 tuổi)
+  if (!form.value.ngaySinh) {
+    errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+    isValid = false;
+  } else {
+    const today = new Date();
+    const birthDate = new Date(form.value.ngaySinh);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      errors.value.ngaySinh = `Nhân viên chưa đủ 18 tuổi (Hiện tại: ${age})`;
+      isValid = false;
+    } else if (age > 65) {
+      errors.value.ngaySinh = `Tuổi vượt quá quy định lao động (Hiện tại: ${age})`;
+      isValid = false;
+    }
+  }
+
+  return isValid;
+}
+
+// --- 4. SUBMIT FORM ---
+async function submitForm() {
+  // 1. Validate Client
+  if (!validateForm()) {
+    showNotification("Dữ liệu không hợp lệ, vui lòng kiểm tra lại!", "warning");
+    return;
+  }
+
+  // 2. Prepare Payload
+  const payload = {
+    ...form.value,
+    // Trim dữ liệu string để tránh lỗi khoảng trắng thừa
+    hoTen: form.value.hoTen.trim(),
+    email: form.value.email.trim(),
+    diaChiCuThe: form.value.diaChiCuThe.trim(),
+
+    // Map lại ID địa chỉ từ Combobox
+    tinhThanhId: selectedCity.value?.code,
+    tinhThanh: selectedCity.value?.name,
+    quanHuyenId: selectedDistrict.value?.code,
+    quanHuyen: selectedDistrict.value?.name,
+    xaPhuongId: selectedWard.value?.code,
+    xaPhuong: selectedWard.value?.name,
+
+    chucVu: form.value.vaiTro, // Backend dùng field chucVu
+  };
+
+  try {
+    // 3. Call API Update
+    await axios.put(
+      `http://localhost:8080/api/nhan-vien/${form.value.id}`,
+      payload,
+    );
+
+    showNotification("Cập nhật nhân viên thành công!", "success");
+
+    // 4. Redirect sau khi thành công
+    setTimeout(() => {
+      router.push("/admin/employee");
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+    // 5. Bắt lỗi từ Backend (Ví dụ: Email trùng với nhân viên KHÁC)
+    if (error.response && error.response.data && error.response.data.message) {
+      const msg = error.response.data.message;
+      showNotification(msg, "error");
+
+      // Map lỗi vào field cụ thể nếu có
+      if (msg.includes("Email")) errors.value.email = msg;
+      if (msg.includes("SĐT") || msg.includes("Phone")) errors.value.sdt = msg;
+    } else {
+      showNotification("Lỗi cập nhật! Vui lòng thử lại sau.", "error");
+    }
+  }
+}
+
+// --- 5. UTILS & HELPERS ---
 function formatDateForInput(dateStr) {
   if (!dateStr) return "";
   return dateStr.substring(0, 10);
 }
-
 function formatDateVN(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
 }
-
-// 3. Logic Combobox
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleString("vi-VN");
+}
 function onCityChange() {
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
@@ -366,104 +508,6 @@ function onDistrictChange() {
   listWard.value = selectedDistrict.value ? selectedDistrict.value.wards : [];
   selectedWard.value = null;
 }
-
-// 4. Validate & Submit
-function validateForm() {
-  errors.value = {};
-  let isValid = true;
-
-  // Validate Tên
-  if (!form.value.hoTen?.trim()) {
-    errors.value.hoTen = "Tên trống";
-    isValid = false;
-  }
-
-  // Validate Email & SDT
-  if (
-    !form.value.email ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)
-  ) {
-    errors.value.email = "Email sai";
-    isValid = false;
-  }
-  if (!form.value.sdt || !/^0\d{9}$/.test(form.value.sdt)) {
-    errors.value.sdt = "SĐT sai";
-    isValid = false;
-  }
-
-  // Validate Địa chỉ cụ thể
-  if (!form.value.diaChiCuThe) {
-    errors.value.diaChiCuThe = "Địa chỉ cụ thể trống";
-    isValid = false;
-  }
-
-  // Validate Tỉnh/Huyện/Xã (QUAN TRỌNG)
-  if (!selectedCity.value) {
-    errors.value.tinhThanh = "Chưa chọn Tỉnh";
-    isValid = false;
-  }
-  if (!selectedDistrict.value && selectedCity.value) {
-    errors.value.quanHuyen = "Chưa chọn Huyện";
-    isValid = false;
-  }
-  if (!selectedWard.value && selectedDistrict.value) {
-    errors.value.xaPhuong = "Chưa chọn Xã";
-    isValid = false;
-  }
-
-  // Validate Ngày sinh
-  if (!form.value.ngaySinh) {
-    errors.value.ngaySinh = "Chọn ngày sinh";
-    isValid = false;
-  } else {
-    if (
-      new Date().getFullYear() - new Date(form.value.ngaySinh).getFullYear() <
-      18
-    ) {
-      errors.value.ngaySinh = "Chưa đủ 18 tuổi";
-      isValid = false;
-    }
-  }
-
-  return isValid;
-}
-
-async function submitForm() {
-  // 👇 THÊM DÒNG NÀY ĐỂ HIỆN TOAST KHI LỖI 👇
-  if (!validateForm()) {
-    showNotification("Vui lòng kiểm tra lại thông tin!", "warning");
-    return;
-  }
-
-  const payload = {
-    ...form.value,
-    diaChiCuThe: form.value.diaChiCuThe,
-    tinhThanhId: selectedCity.value?.code,
-    tinhThanh: selectedCity.value?.name,
-    quanHuyenId: selectedDistrict.value?.code,
-    quanHuyen: selectedDistrict.value?.name,
-    xaPhuongId: selectedWard.value?.code,
-    xaPhuong: selectedWard.value?.name,
-  };
-
-  try {
-    await axios.put(
-      `http://localhost:8080/api/nhan-vien/${form.value.id}`,
-      payload,
-    );
-
-    showNotification("Cập nhật nhân viên thành công!", "success");
-
-    setTimeout(() => {
-      router.push("/admin/employee");
-    }, 1500); // Đợi 1.5 giây để người dùng kịp đọc thông báo
-  } catch (error) {
-    console.error(error);
-    showNotification("Lỗi cập nhật! Vui lòng thử lại.", "error");
-  }
-}
-
-// Utils
 function goBack() {
   router.push("/admin/employee");
 }
@@ -472,20 +516,17 @@ function triggerFileInput() {
 }
 function handleFileUpload(event) {
   const file = event.target.files[0];
-  if (file && file.size <= 5 * 1024 * 1024) {
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("Ảnh quá lớn (<5MB)", "error");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       form.value.avatar = e.target.result;
     };
     reader.readAsDataURL(file);
-  } else {
-    showNotification("Ảnh quá lớn (<5MB)", "error");
   }
-}
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return d.toLocaleString("vi-VN");
 }
 </script>
 

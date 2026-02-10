@@ -108,29 +108,75 @@
     </div>
   </div>
 
-  <!-- BIẾN THỂ -->
-  <div v-for="spId in selectedSanPhamIds" :key="spId" class="col-12">
+  <!-- ===== BẢNG BIẾN THỂ GỘP ===== -->
+  <div v-if="allChiTietList.length" class="col-12">
     <div class="panel-card">
       <div class="card-body">
-        <h5 class="panel-title">
-          Biến thể của sản phẩm:
-          {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
-        </h5>
+        <h5 class="panel-title">Danh sách biến thể</h5>
+        <!-- SEARCH + FILTER BAR -->
+        <div class="variant-toolbar">
+          <input
+            v-model="variantKeyword"
+            placeholder="Tìm mã chi tiết / tên sản phẩm..."
+            class="search-input"
+          />
 
-        <!-- ❌ bỏ table-wrapper + table-responsive -->
+          <select v-model="filterMau">
+            <option value="">Màu sắc</option>
+            <option v-for="m in mauOptions" :key="m" :value="m">{{ m }}</option>
+          </select>
+
+          <select v-model="filterSize">
+            <option value="">Size</option>
+            <option v-for="s in sizeOptions" :key="s" :value="s">
+              {{ s }}
+            </option>
+          </select>
+
+          <select v-model="filterLoai">
+            <option value="">Loại áo</option>
+            <option v-for="l in loaiOptions" :key="l" :value="l">
+              {{ l }}
+            </option>
+          </select>
+
+          <select v-model="filterKieu">
+            <option value="">Kiểu dáng</option>
+            <option v-for="k in kieuOptions" :key="k" :value="k">
+              {{ k }}
+            </option>
+          </select>
+
+          <button
+            v-if="
+              variantKeyword ||
+              filterMau ||
+              filterSize ||
+              filterLoai ||
+              filterKieu
+            "
+            class="btn-clear"
+            @click="clearFilters"
+          >
+            Xóa lọc
+          </button>
+        </div>
+
         <table class="variant">
           <thead>
             <tr>
               <th>
                 <button
                   class="btn-icon header-tick"
-                  :class="{ active: isAllChiTietSelected(spId) }"
-                  @click="toggleAllChiTiet(spId)"
+                  :class="{ active: isAllChiTietSelectedAll }"
+                  @click="toggleAllChiTietAll"
                 >
-                  {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
+                  {{ isAllChiTietSelectedAll ? "✓" : "+" }}
                 </button>
               </th>
-              <th>Mã chi tiết sản phẩm</th>
+
+              <th>Tên sản phẩm</th>
+              <th>Mã chi tiết</th>
               <th>Màu sắc</th>
               <th>Kích cỡ</th>
               <th>Loại áo</th>
@@ -139,7 +185,7 @@
           </thead>
 
           <tbody>
-            <tr v-for="ct in chiTietMap[spId]" :key="ct.id">
+            <tr v-for="ct in filteredChiTietList" :key="ct.id">
               <td>
                 <button
                   class="btn-icon"
@@ -150,31 +196,27 @@
                 </button>
               </td>
 
+              <td>{{ ct.tenSp }}</td>
               <td>{{ ct.maChiTietSanPham }}</td>
 
               <td>
-                <span v-for="(m, i) in ct.mauSacList" :key="i">
+                <span v-for="m in ct.mauSacList" :key="m.tenMauSac">
                   {{ m.tenMauSac }}
                 </span>
               </td>
 
               <td>
                 <span
-                  v-for="(k, i) in ct.kichCoList"
-                  :key="i"
+                  v-for="k in ct.kichCoList"
+                  :key="k"
                   class="badge bg-secondary me-1"
                 >
                   {{ k }}
                 </span>
               </td>
 
-              <td>
-                {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
-              </td>
-
-              <td>
-                {{ sanPhamList.find((sp) => spId === sp.id)?.tenKieuDang }}
-              </td>
+              <td>{{ ct.tenLoaiAo }}</td>
+              <td>{{ ct.tenKieuDang }}</td>
             </tr>
           </tbody>
         </table>
@@ -195,7 +237,12 @@
   </div>
 
   <div class="toast-container">
-    <div v-for="notif in notifications" :key="notif.id" class="toast success">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="notif.type"
+    >
       {{ notif.message }}
     </div>
   </div>
@@ -208,6 +255,13 @@ import axios from "axios";
 import { computed } from "vue";
 
 const router = useRouter();
+const clearFilters = () => {
+  variantKeyword.value = "";
+  filterMau.value = "";
+  filterSize.value = "";
+  filterLoai.value = "";
+  filterKieu.value = "";
+};
 
 const form = reactive({
   tenDotGiamGia: "",
@@ -225,14 +279,68 @@ const errors = reactive({
 });
 
 const showConfirm = ref(false);
+// ===== SEARCH + FILTER =====
+const variantKeyword = ref("");
+
+const filterMau = ref("");
+const filterSize = ref("");
+const filterLoai = ref("");
+const filterKieu = ref("");
+const mauOptions = computed(() => {
+  return [
+    ...new Set(
+      allChiTietList.value.flatMap(
+        (ct) => ct.mauSacList?.map((m: any) => m.tenMauSac) || [],
+      ),
+    ),
+  ];
+});
+
+const sizeOptions = computed(() => {
+  return [
+    ...new Set(allChiTietList.value.flatMap((ct) => ct.kichCoList || [])),
+  ];
+});
+
+const loaiOptions = computed(() => {
+  return [...new Set(allChiTietList.value.map((ct) => ct.tenLoaiAo))];
+});
+
+const kieuOptions = computed(() => {
+  return [...new Set(allChiTietList.value.map((ct) => ct.tenKieuDang))];
+});
+const filteredChiTietList = computed(() => {
+  const kw = variantKeyword.value.toLowerCase();
+
+  return allChiTietList.value.filter((ct) => {
+    const matchKeyword =
+      !kw ||
+      ct.maChiTietSanPham?.toLowerCase().includes(kw) ||
+      ct.tenSp?.toLowerCase().includes(kw);
+
+    const matchMau =
+      !filterMau.value ||
+      ct.mauSacList?.some((m: any) => m.tenMauSac === filterMau.value);
+
+    const matchSize =
+      !filterSize.value || ct.kichCoList?.includes(filterSize.value);
+
+    const matchLoai = !filterLoai.value || ct.tenLoaiAo === filterLoai.value;
+
+    const matchKieu = !filterKieu.value || ct.tenKieuDang === filterKieu.value;
+
+    return matchKeyword && matchMau && matchSize && matchLoai && matchKieu;
+  });
+});
 
 // 1. Khai báo mảng chứa thông báo
-const notifications = ref<{ id: number; message: string }[]>([]);
+const notifications = ref<{ id: number; message: string; type: string }[]>([]);
 
 // 2. Hàm để đẩy thông báo vào mảng và tự xóa sau 3 giây
-const showNotification = (message: string) => {
+const showNotification = (message: string, type = "success") => {
   const id = Date.now();
-  notifications.value.push({ id, message });
+
+  notifications.value.push({ id, message, type });
 
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
@@ -432,7 +540,9 @@ const submit = async () => {
     await axios.post("http://localhost:8080/api/promotions", payload);
     showSuccessModal();
   } catch (e: any) {
-    alert(JSON.stringify(e.response?.data));
+    const msg = e.response?.data?.message || "Tên đợt giảm giá đã tồn tại";
+
+    showNotification(msg, "error");
   }
 };
 
@@ -445,6 +555,33 @@ const toggleChiTiet = (ctId: number) => {
     selectedChiTietIds.value.splice(index, 1);
   } else {
     selectedChiTietIds.value.push(ctId);
+  }
+};
+const allChiTietList = computed(() => {
+  return selectedSanPhamIds.value.flatMap((spId) => {
+    const sp = sanPhamList.find((s) => s.id === spId);
+
+    return (chiTietMap[spId] || []).map((ct) => ({
+      ...ct,
+      tenSp: sp?.tenSp,
+      tenLoaiAo: sp?.tenLoaiAo,
+      tenKieuDang: sp?.tenKieuDang,
+    }));
+  });
+});
+
+const isAllChiTietSelectedAll = computed(() => {
+  return (
+    allChiTietList.value.length > 0 &&
+    allChiTietList.value.every((ct) => selectedChiTietIds.value.includes(ct.id))
+  );
+});
+
+const toggleAllChiTietAll = () => {
+  if (isAllChiTietSelectedAll.value) {
+    selectedChiTietIds.value = [];
+  } else {
+    selectedChiTietIds.value = allChiTietList.value.map((ct) => ct.id);
   }
 };
 
@@ -487,11 +624,6 @@ const back = () => router.push("/admin/promotion");
   font-size: 25px;
   margin-bottom: 15px;
   margin-top: 1px;
-}
-.panel-card {
-  max-height: 400px;
-  overflow-y: auto;
-  margin-bottom: 20px;
 }
 
 .form-group {
@@ -608,6 +740,21 @@ const back = () => router.push("/admin/promotion");
   display: flex;
   flex-direction: column;
 }
+.btn-clear {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-clear:hover {
+  background: #63391f;
+  color: white;
+  border-color: #63391f;
+}
 
 .table-wrapper::before {
   content: "";
@@ -673,7 +820,7 @@ td {
   box-shadow: 0 0 5px rgba(99, 57, 31, 0.3);
 }
 .search-input {
-  width: 95%;
+  width: 98%;
   height: 30px;
   padding: 8px;
   border: 1px solid #ccc;
@@ -781,6 +928,12 @@ th {
     opacity: 1;
   }
 }
+.toast.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-left: 6px solid #ef4444;
+}
+
 .table thead th {
   color: #000000 !important;
 }
@@ -791,7 +944,6 @@ th {
   border-spacing: 0;
   table-layout: auto;
 
-  border: 1px solid #ddd; /* ✅ viền ngoài */
   border-radius: 16px; /* ✅ bo góc */
   overflow: hidden; /* ✅ cắt góc thead */
   background: #fff;
@@ -831,5 +983,60 @@ th {
 
 .variant thead th:last-child {
   border-top-right-radius: 16px;
+}
+/* ===== ONLY FILTER STYLE (keep search as is) ===== */
+
+.variant-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* select đẹp hơn */
+.variant-toolbar select {
+  height: 32px;
+  padding: 0 10px;
+
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.variant-toolbar select:hover {
+  border-color: #63391f;
+}
+
+.variant-toolbar select:focus {
+  border-color: #63391f;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.12);
+}
+
+/* nút clear nhìn như action button */
+.btn-clear {
+  height: 32px;
+  padding: 0 12px;
+
+  border-radius: 8px;
+  border: none;
+
+  background: #63391f;
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.btn-clear:hover {
+  background: #4b2c18;
+  transform: translateY(-1px);
 }
 </style>

@@ -8,13 +8,14 @@ interface Employee {
   maNv: string;
   hoTen: string;
   chucVu?: string;
+  trangThai: number; // Thêm để lọc dropdown
 }
 interface Shift {
-  id: number;
-  idCa: number; // SỬA: Dùng chính xác idCa
+  idCa: number;
   tenCa: string;
   gioBatDau: string;
   gioKetThuc: string;
+  trangThai: number; // Thêm để lọc dropdown
 }
 
 interface Schedule {
@@ -66,7 +67,14 @@ const form = reactive({
   idNhanVien: "" as string | number,
   idCa: "" as string | number,
   ghiChu: "",
-  trangThai: 0,
+  trangThai: 1,
+});
+
+// --- NEW: Error State (Quản lý lỗi đỏ) ---
+const errors = reactive({
+  ngayLamViec: "",
+  idNhanVien: "",
+  idCa: "",
 });
 
 // Toast
@@ -81,48 +89,110 @@ const showToast = (message: string, type: "success" | "error" | "warning") => {
   );
 };
 
-// --- 3. API ACTIONS ---
+// --- 3. HELPER & VALIDATION ---
+const clearErrors = () => {
+  errors.ngayLamViec = "";
+  errors.idNhanVien = "";
+  errors.idCa = "";
+};
+
+// Hàm đổi giờ sang phút
+const timeToMinutes = (timeStr: string) => {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+};
+
+const validateForm = () => {
+  clearErrors();
+  let isValid = true;
+
+  // 1. Check trống
+  if (!form.ngayLamViec) {
+    errors.ngayLamViec = "Vui lòng chọn ngày";
+    isValid = false;
+  }
+  if (!form.idNhanVien) {
+    errors.idNhanVien = "Vui lòng chọn nhân viên";
+    isValid = false;
+  }
+  if (!form.idCa) {
+    errors.idCa = "Vui lòng chọn ca làm việc";
+    isValid = false;
+  }
+
+  if (!isValid) return false;
+
+  // 2. Check ngày quá khứ
+  const today = new Date().toISOString().split("T")[0];
+  if (!isEditing.value && form.ngayLamViec < today) {
+    errors.ngayLamViec = "Không thể phân lịch cho ngày đã qua";
+    isValid = false;
+  }
+
+  // 3. CHECK TRÙNG GIỜ (Overlap Check)
+  const selectedShift = shifts.value.find((s) => s.idCa === Number(form.idCa));
+  if (selectedShift) {
+    const newStart = timeToMinutes(selectedShift.gioBatDau);
+    const newEnd = timeToMinutes(selectedShift.gioKetThuc);
+
+    const hasConflict = schedules.value.some((s) => {
+      if (isEditing.value && s.id === form.id) return false; // Bỏ qua chính nó
+
+      const isSameDay = s.ngayLamViec === form.ngayLamViec;
+      // Handle trường hợp user object hoặc id
+      const sIdNv = s.nhanVien?.id || (s.nhanVien as any)?.idNv;
+      const isSameEmp = Number(sIdNv) === Number(form.idNhanVien);
+
+      if (isSameDay && isSameEmp) {
+        // Lấy giờ ca cũ
+        const existingStart = timeToMinutes(s.caLamViec.gioBatDau);
+        const existingEnd = timeToMinutes(s.caLamViec.gioKetThuc);
+
+        // Công thức trùng: (StartA < EndB) && (EndA > StartB)
+        return newStart < existingEnd && newEnd > existingStart;
+      }
+      return false;
+    });
+
+    if (hasConflict) {
+      errors.idCa = "Nhân viên này đã có ca làm việc bị trùng giờ trong ngày!";
+      isValid = false;
+    }
+  }
+
+  return isValid;
+};
+
+// --- 4. API ACTIONS ---
 const fetchData = async () => {
   loading.value = true;
   try {
-    // Nếu dữ liệu quá lớn, bạn nên gọi API theo tháng (from...to)
-    // Ở đây tôi giữ nguyên logic lấy tất cả để đơn giản hóa filter client-side
     const [resSch, resEmp, resShift] = await Promise.all([
       axios.get(API_URL),
       axios.get(API_EMP),
       axios.get(API_SHIFT),
     ]);
     schedules.value = resSch.data;
-    employees.value = resEmp.data;
-    shifts.value = resShift.data;
+    // Lọc chỉ lấy nhân viên/ca Active cho đẹp dropdown
+    employees.value = resEmp.data.filter((e: any) => e.trangThai === 1);
+    shifts.value = resShift.data.filter((s: any) => s.trangThai === 1);
   } catch (error) {
     showToast("Lỗi kết nối server", "error");
-    console.error(error);
   } finally {
     loading.value = false;
   }
 };
 
 const handleSave = async () => {
-  if (!form.idNhanVien || !form.idCa || !form.ngayLamViec) {
-    showToast("Vui lòng nhập đầy đủ thông tin bắt buộc (*)", "warning");
-    return;
-  }
+  // Gọi hàm validate mới
+  if (!validateForm()) return;
 
-  // Check trùng
-  const isDuplicate = schedules.value.some(
-    (s) =>
-      s.ngayLamViec === form.ngayLamViec &&
-      (s.nhanVien?.id === Number(form.idNhanVien) ||
-        (s.nhanVien as any)?.idNv === Number(form.idNhanVien)) &&
-      s.caLamViec?.idCa === Number(form.idCa) &&
-      s.id !== form.id,
-  );
-
-  if (isDuplicate) {
-    showToast("Nhân viên này đã có lịch trùng trong ca này!", "error");
-    return;
-  }
+  // Cảnh báo sửa quá khứ
+  // const today = new Date().toISOString().split('T')[0];
+  // if (isEditing.value && form.ngayLamViec < today) {
+  //   if (!confirm('Bạn đang sửa lịch trong quá khứ. Tiếp tục?')) return;
+  // }
 
   try {
     const payload = {
@@ -145,31 +215,52 @@ const handleSave = async () => {
     closeModal();
     fetchData();
   } catch (error: any) {
-    showToast(error.response?.data?.message || "Lỗi xử lý dữ liệu", "error");
+    // Map lỗi từ backend nếu có
+    const msg = error.response?.data?.message || "Lỗi xử lý dữ liệu";
+    if (msg.toLowerCase().includes("trùng")) errors.idCa = msg;
+    else showToast(msg, "error");
   }
 };
 
-const handleDelete = async (id: number) => {
-  if (!confirm("Bạn chắc chắn muốn xóa lịch này?")) return;
+const handleDelete = async (item: Schedule) => {
+  // 1. Check ngày quá khứ ngay tại Client (Nhanh & Mượt)
+  const today = new Date().toISOString().split("T")[0];
+  if (item.ngayLamViec < today) {
+    showToast("Không thể xóa lịch sử làm việc đã qua!", "error");
+    return;
+  }
+
+  // 2. Confirm
+  if (
+    !confirm(
+      `Xóa lịch làm việc ngày ${item.ngayLamViec} của ${item.nhanVien?.hoTen}?`,
+    )
+  )
+    return;
+
+  // 3. Gọi API
   try {
-    await axios.delete(`${API_URL}/${id}`);
+    await axios.delete(`${API_URL}/${item.id}`);
     showToast("Đã xóa lịch làm việc", "success");
     fetchData();
-  } catch (error) {
-    showToast("Lỗi khi xóa", "error");
+  } catch (error: any) {
+    // Vẫn giữ logic bắt lỗi backend để an toàn tuyệt đối
+    const msg =
+      error.response?.data?.message || error.response?.data || "Lỗi khi xóa";
+    showToast(msg, "error");
   }
 };
 
-// --- 4. MODAL HANDLERS ---
+// --- 5. MODAL HANDLERS ---
 const openAddModal = () => {
   isEditing.value = false;
   form.id = null;
-  // Nếu đang chọn ngày ở bộ lọc thì lấy ngày đó, không thì lấy hôm nay
   form.ngayLamViec = filters.date || new Date().toISOString().split("T")[0];
   form.idNhanVien = "";
   form.idCa = "";
   form.ghiChu = "";
   form.trangThai = 1;
+  clearErrors(); // Reset lỗi
   showModal.value = true;
 };
 
@@ -179,24 +270,23 @@ const openEditModal = (item: Schedule) => {
   form.ngayLamViec = item.ngayLamViec;
 
   const nv = item.nhanVien;
-  if (nv)
-    form.idNhanVien = nv.id || (nv as any).idNv || (nv as any).id_nv || "";
+  if (nv) form.idNhanVien = nv.id || (nv as any).idNv || "";
   else form.idNhanVien = "";
 
   const ca = item.caLamViec;
-  if (ca) form.idCa = ca.idCa || (ca as any).id || (ca as any).id_ca || "";
+  if (ca) form.idCa = ca.idCa || "";
   else form.idCa = "";
 
   form.ghiChu = item.ghiChu || "";
   form.trangThai = item.trangThai;
+  clearErrors(); // Reset lỗi
   showModal.value = true;
 };
 
 const closeModal = () => (showModal.value = false);
 
-// --- 5. LOGIC FILTERS & CALENDAR ---
+// --- 6. LOGIC FILTERS & CALENDAR (Giữ nguyên) ---
 
-// Watch filter date để nhảy lịch đến tháng đó
 watch(
   () => filters.date,
   (newDate) => {
@@ -219,12 +309,10 @@ const resetFilters = () => {
 
 const formatTime = (time: string) => (time ? time.substring(0, 5) : "--:--");
 
-// Logic cho BẢNG (Table) - Lọc chặt chẽ
+// Logic cho BẢNG (Table)
 const filteredSchedules = computed(() => {
   return schedules.value.filter((s) => {
-    // Nếu có chọn ngày -> Lọc đúng ngày. Nếu không -> Hiện tất cả
     const matchDate = !filters.date || s.ngayLamViec === filters.date;
-
     const name = s.nhanVien?.hoTen?.toLowerCase() || "";
     const code = s.nhanVien?.maNv?.toLowerCase() || "";
     const searchName = filters.employeeName.toLowerCase();
@@ -232,22 +320,18 @@ const filteredSchedules = computed(() => {
       !filters.employeeName ||
       name.includes(searchName) ||
       code.includes(searchName);
-
     const matchShiftName =
       !filters.shiftName ||
       (s.caLamViec?.tenCa &&
         s.caLamViec.tenCa
           .toLowerCase()
           .includes(filters.shiftName.toLowerCase()));
-
     const matchStatus =
       filters.status === "all" || s.trangThai === filters.status;
-
     return matchDate && matchEmpName && matchShiftName && matchStatus;
   });
 });
 
-// Pagination computeds
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredSchedules.value.length / perPage.value)),
 );
@@ -286,7 +370,6 @@ const visiblePages = computed(() => {
     rangeWithDots.push(i);
     l = i;
   });
-
   return rangeWithDots;
 });
 
@@ -300,14 +383,10 @@ const calendarDays = computed(() => {
   const days = [];
   const firstDay = new Date(currentYear.value, currentMonth.value, 1);
   const lastDay = new Date(currentYear.value, currentMonth.value + 1, 0);
-
-  // Tính padding đầu tháng (0=Mon, 6=Sun)
   let startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
   for (let i = 0; i < startDay; i++) {
     days.push({ day: null, dateStr: "" });
   }
-
-  // Các ngày trong tháng
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const monthStr = String(currentMonth.value + 1).padStart(2, "0");
     const dayStr = String(i).padStart(2, "0");
@@ -319,13 +398,10 @@ const calendarDays = computed(() => {
   return days;
 });
 
-// Lọc dữ liệu hiển thị TRÊN LỊCH (Không lọc ngày, chỉ lọc NV/Ca/Trạng thái)
 const getSchedulesForCalendarCell = (dateStr: string) => {
   if (!dateStr) return [];
   return schedules.value.filter((s) => {
     if (s.ngayLamViec !== dateStr) return false;
-
-    // Áp dụng các bộ lọc còn lại
     const name = s.nhanVien?.hoTen?.toLowerCase() || "";
     const code = s.nhanVien?.maNv?.toLowerCase() || "";
     const searchName = filters.employeeName.toLowerCase();
@@ -333,22 +409,18 @@ const getSchedulesForCalendarCell = (dateStr: string) => {
       !filters.employeeName ||
       name.includes(searchName) ||
       code.includes(searchName);
-
     const matchShiftName =
       !filters.shiftName ||
       (s.caLamViec?.tenCa &&
         s.caLamViec.tenCa
           .toLowerCase()
           .includes(filters.shiftName.toLowerCase()));
-
     const matchStatus =
       filters.status === "all" || s.trangThai === filters.status;
-
     return matchEmpName && matchShiftName && matchStatus;
   });
 };
 
-// Điều hướng lịch
 const monthTitle = computed(
   () => `Tháng ${currentMonth.value + 1} - ${currentYear.value}`,
 );
@@ -370,8 +442,6 @@ const goToToday = () => {
   const now = new Date();
   currentMonth.value = now.getMonth();
   currentYear.value = now.getFullYear();
-  // Nếu đang lọc ngày thì reset ngày về hôm nay để lịch highlight đúng
-  // filters.date = now.toISOString().split('T')[0];
 };
 
 onMounted(fetchData);
@@ -387,13 +457,6 @@ onMounted(fetchData);
           class="toast"
           :class="notif.type"
         >
-          <span class="toast-icon">{{
-            notif.type === "success"
-              ? "✅"
-              : notif.type === "error"
-                ? "❌"
-                : "⚠️"
-          }}</span>
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
       </TransitionGroup>
@@ -443,7 +506,7 @@ onMounted(fetchData);
           </div>
 
           <div class="filter-group">
-            <span class="filter-label">Tên/Mã nhân viên:</span>
+            <span class="filter-label">Tên/Mã NV:</span>
             <input
               type="text"
               class="mini-input search"
@@ -520,7 +583,7 @@ onMounted(fetchData);
                 </span>
               </td>
               <td>
-                <div class="date-badge">📅 {{ item.ngayLamViec }}</div>
+                <div class="date-badge">{{ item.ngayLamViec }}</div>
               </td>
               <td class="text-center">
                 <span
@@ -558,7 +621,7 @@ onMounted(fetchData);
                   </button>
                   <button
                     class="action-btn delete-btn"
-                    @click="handleDelete(item.id)"
+                    @click="handleDelete(item)"
                     data-tooltip="Xóa"
                   >
                     <svg
@@ -649,7 +712,6 @@ onMounted(fetchData);
           :class="{
             empty: !cell.day,
             today: cell.dateStr === new Date().toISOString().split('T')[0],
-            /* SỬA 1: Thêm điều kiện cell.dateStr phải có giá trị */
             'selected-day': cell.dateStr && cell.dateStr === filters.date,
           }"
           @click="cell.day && (filters.date = cell.dateStr)"
@@ -688,7 +750,11 @@ onMounted(fetchData);
               type="date"
               v-model="form.ngayLamViec"
               class="form-control"
+              :class="{ 'red-border': errors.ngayLamViec }"
             />
+            <span v-if="errors.ngayLamViec" class="error-msg">{{
+              errors.ngayLamViec
+            }}</span>
           </div>
 
           <div class="form-group">
@@ -696,12 +762,16 @@ onMounted(fetchData);
             <select
               v-model="form.idNhanVien"
               class="form-control custom-select-modal"
+              :class="{ 'red-border': errors.idNhanVien }"
             >
               <option value="" disabled>-- Chọn nhân viên --</option>
               <option v-for="emp in employees" :key="emp.id" :value="emp.id">
                 {{ emp.maNv }} - {{ emp.hoTen }}
               </option>
             </select>
+            <span v-if="errors.idNhanVien" class="error-msg">{{
+              errors.idNhanVien
+            }}</span>
           </div>
 
           <div class="form-group">
@@ -709,6 +779,7 @@ onMounted(fetchData);
             <select
               v-model="form.idCa"
               class="form-control custom-select-modal"
+              :class="{ 'red-border': errors.idCa }"
             >
               <option :value="''" disabled>-- Chọn ca --</option>
               <option v-for="s in shifts" :key="s.idCa" :value="s.idCa">
@@ -716,6 +787,7 @@ onMounted(fetchData);
                 {{ formatTime(s.gioKetThuc) }})
               </option>
             </select>
+            <span v-if="errors.idCa" class="error-msg">{{ errors.idCa }}</span>
           </div>
 
           <div class="form-group">
@@ -749,9 +821,8 @@ onMounted(fetchData);
 </template>
 
 <style scoped>
-/* === GENERAL LAYOUT === */
+/* === GIỮ NGUYÊN STYLE CŨ === */
 .page-container {
-  background-color: #f3f4f6;
   min-height: 100vh;
 }
 .card-section {
@@ -762,7 +833,7 @@ onMounted(fetchData);
   margin-bottom: 24px;
 }
 
-/* === HEADER & FILTER === */
+/* HEADER & FILTER */
 .filter-card-header {
   display: flex;
   justify-content: space-between;
@@ -783,7 +854,7 @@ onMounted(fetchData);
   align-items: center;
 }
 
-/* --- VIEW TOGGLE BUTTONS --- */
+/* VIEW TOGGLE */
 .view-toggle {
   background: #f3f4f6;
   padding: 4px;
@@ -857,7 +928,7 @@ onMounted(fetchData);
   border-color: #63391f;
 }
 
-/* === BUTTONS === */
+/* BUTTONS */
 .btn {
   height: 40px;
   padding: 0 20px;
@@ -896,7 +967,7 @@ onMounted(fetchData);
   background: #fff8f5;
 }
 
-/* === TABLE STYLES === */
+/* TABLE STYLES */
 .table-container {
   width: 100%;
   overflow-x: auto;
@@ -927,8 +998,9 @@ onMounted(fetchData);
   vertical-align: middle;
   white-space: nowrap;
 }
-
-/* Badge & Text Styles */
+.text-center {
+  text-align: center !important;
+}
 .date-badge {
   font-weight: 600;
   color: #374151;
@@ -987,9 +1059,6 @@ onMounted(fetchData);
   background: #fef3c7;
   color: #92400e;
 }
-.text-center {
-  text-align: center !important;
-}
 .action-group.center-actions {
   display: flex;
   align-items: center;
@@ -1021,7 +1090,7 @@ onMounted(fetchData);
   background: #fef2f2;
 }
 
-/* === PAGINATION === */
+/* PAGINATION */
 .pagination-footer {
   display: flex;
   justify-content: center;
@@ -1060,7 +1129,7 @@ onMounted(fetchData);
   font-weight: bold;
 }
 
-/* === CALENDAR STYLES === */
+/* CALENDAR STYLES */
 .calendar-card {
   min-height: 700px;
   display: flex;
@@ -1109,7 +1178,6 @@ onMounted(fetchData);
   font-size: 13px;
   color: #555;
 }
-
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1134,7 +1202,6 @@ onMounted(fetchData);
 .text-red {
   color: #dc2626;
 }
-
 .day-cell {
   min-height: 100px;
   border-right: 1px solid #e5e7eb;
@@ -1156,7 +1223,6 @@ onMounted(fetchData);
 .day-cell.selected-day {
   box-shadow: inset 0 0 0 2px #63391f;
 }
-
 .day-number {
   font-weight: 700;
   font-size: 13px;
@@ -1168,7 +1234,6 @@ onMounted(fetchData);
   color: #63391f;
   text-decoration: underline;
 }
-
 .shifts-container {
   display: flex;
   flex-direction: column;
@@ -1202,7 +1267,6 @@ onMounted(fetchData);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .legend-mini {
   display: flex;
   gap: 15px;
@@ -1226,7 +1290,7 @@ onMounted(fetchData);
   background: #f59e0b;
 }
 
-/* === TOOLTIP === */
+/* TOOLTIP */
 [data-tooltip] {
   position: relative;
 }
@@ -1254,7 +1318,7 @@ onMounted(fetchData);
   transform: translateX(-50%) translateY(-10px);
 }
 
-/* === MODAL === */
+/* MODAL */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1328,23 +1392,83 @@ onMounted(fetchData);
   justify-content: flex-end;
   gap: 12px;
 }
+
+/* TOAST */
 .toast-container {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 2000;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  pointer-events: none;
 }
 .toast {
-  background: #333;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  animation: slideInRight 0.3s forwards;
+}
+.toast.success {
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
+}
+.toast.error {
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
+}
+.toast.warning {
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
+}
+.toast-msg {
+  color: #333;
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === ERROR STYLES (MỚI) === */
+.red-border {
+  border-color: #dc2626 !important;
+  background-color: #fff5f5;
+}
+.error-msg {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+  animation: fadeIn 0.3s;
+  font-weight: 500;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
