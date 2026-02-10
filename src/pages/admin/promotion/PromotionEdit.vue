@@ -124,65 +124,110 @@
       </div>
     </div>
 
-    <div v-for="spId in selectedSanPhamIds" :key="spId" class="full">
+    <div v-if="allChiTietList.length" class="full">
       <div class="panel-card">
-        <h5 class="subtitle">
-          Biến thể của: {{ sanPhamList.find((sp) => sp.id === spId)?.tenSp }}
-        </h5>
-        <div class="variant-wrapper">
-          <table class="variant-table">
-            <thead>
-              <tr>
-                <th>
-                  <button
-                    class="btn-icon header-tick"
-                    :class="{ active: isAllChiTietSelected(spId) }"
-                    @click="toggleAllChiTiet(spId)"
-                  >
-                    {{ isAllChiTietSelected(spId) ? "✓" : "+" }}
-                  </button>
-                </th>
-                <th>Mã CTSP</th>
-                <th>Màu sắc</th>
-                <th>Kích cỡ</th>
-                <th>Loại áo</th>
-                <th>Kiểu dáng</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ct in chiTietMap[spId] || []" :key="ct.id">
-                <td>
-                  <button
-                    class="btn-icon"
-                    :class="{ active: selectedChiTietIds.includes(ct.id) }"
-                    @click="toggleChiTiet(ct.id)"
-                  >
-                    {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
-                  </button>
-                </td>
-                <td>{{ ct.maChiTietSanPham }}</td>
-                <td>
-                  {{ ct.mauSacList?.map((ms: any) => ms.tenMauSac).join(", ") }}
-                </td>
-                <td>
-                  {{ ct.kichCoList?.join(", ") }}
-                </td>
-                <td>
-                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenLoaiAo }}
-                </td>
-                <td>
-                  {{ sanPhamList.find((sp) => sp.id === spId)?.tenKieuDang }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <h5 class="subtitle">Danh sách biến thể đã chọn</h5>
+
+        <!-- ===== SEARCH + FILTER ===== -->
+        <div class="variant-toolbar">
+          <input
+            v-model="variantKeyword"
+            placeholder="Tìm mã CT / tên SP..."
+            class="search-input"
+          />
+
+          <select v-model="filterMau">
+            <option value="">Màu sắc</option>
+            <option v-for="m in mauOptions" :key="m">{{ m }}</option>
+          </select>
+
+          <select v-model="filterSize">
+            <option value="">Size</option>
+            <option v-for="s in sizeOptions" :key="s">{{ s }}</option>
+          </select>
+
+          <select v-model="filterLoai">
+            <option value="">Loại áo</option>
+            <option v-for="l in loaiOptions" :key="l">{{ l }}</option>
+          </select>
+
+          <select v-model="filterKieu">
+            <option value="">Kiểu dáng</option>
+            <option v-for="k in kieuOptions" :key="k">{{ k }}</option>
+          </select>
+
+          <button
+            v-if="
+              variantKeyword ||
+              filterMau ||
+              filterSize ||
+              filterLoai ||
+              filterKieu
+            "
+            class="btn-clear"
+            @click="clearFilters"
+          >
+            Xóa lọc
+          </button>
         </div>
+
+        <!-- ===== TABLE ===== -->
+        <table class="variant-table">
+          <thead>
+            <tr>
+              <th>
+                <button
+                  class="btn-icon header-tick"
+                  :class="{ active: isAllVariantSelected }"
+                  @click="toggleAllVariants"
+                >
+                  {{ isAllVariantSelected ? "✓" : "+" }}
+                </button>
+              </th>
+
+              <th>Tên SP</th>
+              <th>Mã CTSP</th>
+              <th>Màu</th>
+              <th>Size</th>
+              <th>Loại</th>
+              <th>Kiểu</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="ct in filteredChiTietList" :key="ct.id">
+              <td>
+                <button
+                  class="btn-icon"
+                  :class="{ active: selectedChiTietIds.includes(ct.id) }"
+                  @click="toggleChiTiet(ct.id)"
+                >
+                  {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
+                </button>
+              </td>
+
+              <td>{{ ct.tenSp }}</td>
+              <td>{{ ct.maChiTietSanPham }}</td>
+              <td>
+                {{ ct.mauSacList?.map((m: any) => m.tenMauSac).join(", ") }}
+              </td>
+              <td>{{ ct.kichCoList?.join(", ") }}</td>
+              <td>{{ ct.tenLoaiAo }}</td>
+              <td>{{ ct.tenKieuDang }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
     <div class="toast-container">
-      <div v-for="notif in notifications" :key="notif.id" class="toast success">
-        <span style="margin-right: 8px">✔️</span> {{ notif.message }}
+      <div
+        v-for="notif in notifications"
+        :key="notif.id"
+        class="toast"
+        :class="notif.type"
+      >
+        {{ notif.message }}
       </div>
     </div>
 
@@ -213,6 +258,62 @@ const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
 const keyword = ref("");
+const variantKeyword = ref("");
+
+const filterMau = ref("");
+const filterSize = ref("");
+const filterLoai = ref("");
+const filterKieu = ref("");
+
+const clearFilters = () => {
+  variantKeyword.value = "";
+  filterMau.value = "";
+  filterSize.value = "";
+  filterLoai.value = "";
+  filterKieu.value = "";
+};
+const mauOptions = computed(() => [
+  ...new Set(
+    allChiTietList.value.flatMap(
+      (ct) => ct.mauSacList?.map((m: any) => m.tenMauSac) || [],
+    ),
+  ),
+]);
+
+const sizeOptions = computed(() => [
+  ...new Set(allChiTietList.value.flatMap((ct) => ct.kichCoList || [])),
+]);
+
+const loaiOptions = computed(() => [
+  ...new Set(allChiTietList.value.map((ct) => ct.tenLoaiAo)),
+]);
+
+const kieuOptions = computed(() => [
+  ...new Set(allChiTietList.value.map((ct) => ct.tenKieuDang)),
+]);
+const filteredChiTietList = computed(() => {
+  const kw = variantKeyword.value.toLowerCase();
+
+  return allChiTietList.value.filter((ct) => {
+    const matchKeyword =
+      !kw ||
+      ct.maChiTietSanPham?.toLowerCase().includes(kw) ||
+      ct.tenSp?.toLowerCase().includes(kw);
+
+    const matchMau =
+      !filterMau.value ||
+      ct.mauSacList?.some((m: any) => m.tenMauSac === filterMau.value);
+
+    const matchSize =
+      !filterSize.value || ct.kichCoList?.includes(filterSize.value);
+
+    const matchLoai = !filterLoai.value || ct.tenLoaiAo === filterLoai.value;
+
+    const matchKieu = !filterKieu.value || ct.tenKieuDang === filterKieu.value;
+
+    return matchKeyword && matchMau && matchSize && matchLoai && matchKieu;
+  });
+});
 
 // 2. Khai báo State dữ liệu
 const sanPhamList = ref<any[]>([]);
@@ -247,12 +348,13 @@ const filteredSanPhamList = computed(() => {
 
 // 3. Khai báo UI State (Modal & Toast)
 const showConfirm = ref(false);
-const notifications = ref<{ id: number; message: string }[]>([]);
+const notifications = ref<{ id: number; message: string; type?: string }[]>([]);
 
 // 4. Các hàm xử lý giao diện
-const showNotification = (message: string) => {
+const showNotification = (message: string, type = "success") => {
   const id = Date.now();
-  notifications.value.push({ id, message });
+  notifications.value.push({ id, message, type });
+
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 3000);
@@ -332,6 +434,46 @@ const toggleAllChiTiet = (spId: number) => {
     });
   }
 };
+/* ===== TICK ALL BIẾN THỂ ===== */
+const isAllVariantSelected = computed(() => {
+  const visibleIds = filteredChiTietList.value.map((ct) => ct.id);
+  if (visibleIds.length === 0) return false;
+
+  return visibleIds.every((id) => selectedChiTietIds.value.includes(id));
+});
+
+const toggleAllVariants = () => {
+  const visibleIds = filteredChiTietList.value.map((ct) => ct.id);
+
+  if (isAllVariantSelected.value) {
+    // bỏ chọn
+    selectedChiTietIds.value = selectedChiTietIds.value.filter(
+      (id) => !visibleIds.includes(id),
+    );
+  } else {
+    // chọn tất cả
+    visibleIds.forEach((id) => {
+      if (!selectedChiTietIds.value.includes(id)) {
+        selectedChiTietIds.value.push(id);
+      }
+    });
+  }
+};
+
+// ===== GỘP ALL BIẾN THỂ =====
+const allChiTietList = computed(() => {
+  return selectedSanPhamIds.value.flatMap((spId) => {
+    const sp = sanPhamList.value.find((s) => s.id === spId);
+
+    return (chiTietMap[spId] || []).map((ct) => ({
+      ...ct,
+      tenSp: sp?.tenSp,
+      tenLoaiAo: sp?.tenLoaiAo,
+      tenKieuDang: sp?.tenKieuDang,
+    }));
+  });
+});
+
 const back = () => router.push("/admin/promotion");
 
 // 5. Logic Nghiệp vụ & Validation
@@ -397,8 +539,8 @@ const submit = async () => {
     await axios.put(`http://localhost:8080/api/promotions/${id}`, payload);
     showSuccessModal();
   } catch (e) {
-    alert("Lỗi server: Không thể cập nhật đợt giảm giá");
     console.error(e);
+    showNotification("Không thể cập nhật đợt giảm giá", "error");
   }
 };
 
@@ -804,5 +946,66 @@ img {
   padding: 14px 8px;
   text-align: center;
   border-top: 1px solid #eee;
+}
+/* ===== FILTER BAR ONLY (không đụng search) ===== */
+.variant-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* select filter */
+.variant-toolbar select {
+  height: 40px;
+  min-width: 120px;
+  padding: 0 12px;
+
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* hover */
+.variant-toolbar select:hover {
+  border-color: #63391f;
+}
+
+/* focus */
+.variant-toolbar select:focus {
+  outline: none;
+  border-color: #63391f;
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15);
+}
+
+/* nút clear */
+.btn-clear {
+  height: 40px;
+  padding: 0 16px;
+
+  border-radius: 10px;
+  border: none;
+
+  background: #63391f;
+  color: white;
+
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-clear:hover {
+  background: #4b2c18;
+  transform: translateY(-1px);
+}
+.toast.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-left: 6px solid #ef4444;
 }
 </style>

@@ -1,21 +1,38 @@
 <template>
   <div class="register-wrapper">
+    <div class="bg-pattern"></div>
+
     <div class="register-card">
       <div class="register-header">
         <h1 class="brand-title">CHOCOSTYLE</h1>
-        <p class="subtitle">Tạo tài khoản mới</p>
+        <p class="subtitle">Đăng ký thành viên mới</p>
       </div>
 
-      <form @submit.prevent="handleRegister">
+      <form @submit.prevent="handleRegister" autocomplete="off">
         <div class="form-group">
           <label for="fullname">Họ và tên</label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ 'has-error': errors.fullname }">
+            <span class="input-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
             <input
               id="fullname"
               v-model="fullname"
               type="text"
-              placeholder="Nhập họ và tên của bạn"
-              :class="{ 'input-error': errors.fullname }"
+              placeholder="Nguyễn Văn A"
               @input="errors.fullname = ''"
             />
           </div>
@@ -26,13 +43,28 @@
 
         <div class="form-group">
           <label for="username">Tên đăng nhập</label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ 'has-error': errors.username }">
+            <span class="input-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path>
+              </svg>
+            </span>
             <input
               id="username"
               v-model="username"
               type="text"
-              placeholder="Chọn tên đăng nhập"
-              :class="{ 'input-error': errors.username }"
+              placeholder="username123"
               @input="errors.username = ''"
             />
           </div>
@@ -43,76 +75,135 @@
 
         <div class="form-group">
           <label for="email">Email</label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ 'has-error': errors.email }">
+            <span class="input-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                ></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </span>
             <input
               id="email"
               v-model="email"
               type="text"
               placeholder="example@gmail.com"
-              :class="{ 'input-error': errors.email }"
               @input="errors.email = ''"
             />
           </div>
           <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
         </div>
 
-        <div class="form-group">
-          <label for="password">Mật khẩu</label>
-          <div class="input-wrapper">
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-              :class="{ 'input-error': errors.password }"
-              @input="errors.password = ''"
-            />
+        <div class="row-group">
+          <div class="form-group half">
+            <label for="password">Mật khẩu</label>
+            <div
+              class="input-wrapper"
+              :class="{ 'has-error': errors.password }"
+            >
+              <span class="input-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    ry="2"
+                  ></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input
+                id="password"
+                v-model="password"
+                type="password"
+                placeholder="******"
+                @input="errors.password = ''"
+              />
+            </div>
           </div>
-          <span v-if="errors.password" class="error-text">{{
-            errors.password
-          }}</span>
+
+          <div class="form-group half">
+            <label for="confirmPassword">Nhập lại</label>
+            <div
+              class="input-wrapper"
+              :class="{ 'has-error': errors.confirmPassword }"
+            >
+              <span class="input-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </span>
+              <input
+                id="confirmPassword"
+                v-model="confirmPassword"
+                type="password"
+                placeholder="******"
+                @input="errors.confirmPassword = ''"
+              />
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="confirmPassword">Nhập lại mật khẩu</label>
-          <div class="input-wrapper">
-            <input
-              id="confirmPassword"
-              v-model="confirmPassword"
-              type="password"
-              placeholder="Xác nhận mật khẩu"
-              :class="{ 'input-error': errors.confirmPassword }"
-              @input="errors.confirmPassword = ''"
-            />
-          </div>
-          <span v-if="errors.confirmPassword" class="error-text">{{
-            errors.confirmPassword
-          }}</span>
-        </div>
-
-        <div
-          v-if="message"
-          :class="['msg-box', isError ? 'error-msg' : 'success-msg']"
+        <span
+          v-if="errors.password || errors.confirmPassword"
+          class="error-text block-center"
         >
-          {{ message }}
-        </div>
+          {{ errors.password || errors.confirmPassword }}
+        </span>
+
+        <transition name="slide-up">
+          <div
+            v-if="message"
+            :class="['msg-box', isError ? 'error-msg' : 'success-msg']"
+          >
+            <span class="msg-icon">
+              {{ isError ? "⚠️" : "✅" }}
+            </span>
+            <span>{{ message }}</span>
+          </div>
+        </transition>
 
         <button type="submit" :disabled="loading" class="btn-register">
           <span v-if="loading" class="spinner"></span>
           <span v-else>ĐĂNG KÝ NGAY</span>
         </button>
 
-        <div class="login-redirect">
-          <p>
-            Đã có tài khoản?
-            <router-link to="/login" class="login-link"
-              >Đăng nhập ngay</router-link
-            >
-          </p>
-        </div>
-
         <div class="divider">
-          <span>HOẶC ĐĂNG KÝ VỚI</span>
+          <span>HOẶC TIẾP TỤC VỚI</span>
         </div>
 
         <div class="social-buttons">
@@ -134,10 +225,18 @@
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
               alt="Facebook"
-              width="20"
             />
             <span>Facebook</span>
           </a>
+        </div>
+
+        <div class="auth-footer">
+          <p>
+            Đã có tài khoản?
+            <router-link to="/login" class="login-link">
+              Đăng nhập ngay
+            </router-link>
+          </p>
         </div>
       </form>
     </div>
@@ -155,66 +254,50 @@ const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 
-// Đối tượng chứa lỗi của từng trường
-const errors = ref({
-  fullname: "",
-  username: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-});
-
+const errors = ref({});
 const loading = ref(false);
 const message = ref("");
 const isError = ref(false);
+
 const router = useRouter();
 
-// Hàm kiểm tra định dạng email
-const isValidEmail = (email) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-// Hàm validate toàn bộ form
 const validateForm = () => {
   let isValid = true;
-  errors.value = {}; // Reset lỗi cũ
+  errors.value = {};
 
-  // 1. Kiểm tra Họ tên
   if (!fullname.value.trim()) {
-    errors.value.fullname = "Họ tên không được để trống";
+    errors.value.fullname = "Vui lòng nhập họ tên";
     isValid = false;
   }
 
-  // 2. Kiểm tra Username
   if (!username.value.trim()) {
-    errors.value.username = "Tên đăng nhập không được để trống";
+    errors.value.username = "Thiếu tên đăng nhập";
     isValid = false;
   } else if (username.value.length < 4) {
-    errors.value.username = "Tên đăng nhập phải từ 4 ký tự trở lên";
+    errors.value.username = "Username tối thiểu 4 ký tự";
     isValid = false;
   }
 
-  // 3. Kiểm tra Email
   if (!email.value.trim()) {
-    errors.value.email = "Email không được để trống";
+    errors.value.email = "Thiếu email";
     isValid = false;
   } else if (!isValidEmail(email.value)) {
-    errors.value.email = "Định dạng email không hợp lệ";
+    errors.value.email = "Email không hợp lệ";
     isValid = false;
   }
 
-  // 4. Kiểm tra Password (backend yêu cầu min 6)
   if (!password.value) {
-    errors.value.password = "Mật khẩu không được để trống";
+    errors.value.password = "Thiếu mật khẩu";
     isValid = false;
   } else if (password.value.length < 6) {
-    errors.value.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    errors.value.password = "Mật khẩu quá ngắn (>6)";
     isValid = false;
   }
 
-  // 5. Kiểm tra Xác nhận mật khẩu
   if (password.value !== confirmPassword.value) {
-    errors.value.confirmPassword = "Mật khẩu xác nhận không khớp";
+    errors.value.confirmPassword = "Mật khẩu không khớp";
     isValid = false;
   }
 
@@ -222,14 +305,10 @@ const validateForm = () => {
 };
 
 const handleRegister = async () => {
-  // Reset thông báo server
   message.value = "";
   isError.value = false;
 
-  // Gọi hàm validate trước khi gửi
-  if (!validateForm()) {
-    return; // Dừng lại nếu có lỗi
-  }
+  if (!validateForm()) return;
 
   loading.value = true;
 
@@ -241,7 +320,6 @@ const handleRegister = async () => {
       password: password.value,
     });
 
-    // Thành công
     isError.value = false;
     message.value = "Đăng ký thành công! Đang chuyển hướng...";
 
@@ -249,13 +327,9 @@ const handleRegister = async () => {
       router.push("/login");
     }, 1500);
   } catch (error) {
-    console.error(error);
     isError.value = true;
-    // Lấy thông báo lỗi từ Backend
     message.value =
-      error.response && error.response.data && error.response.data.message
-        ? error.response.data.message
-        : "Đăng ký thất bại. Vui lòng thử lại!";
+      error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!";
   } finally {
     loading.value = false;
   }
@@ -263,11 +337,18 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* --- GIỮ NGUYÊN STYLE CŨ --- */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap");
+
 :root {
   --primary-color: #63391f;
-  --bg-color: #f7f7f7;
+  --primary-hover: #4e2c17;
+  --text-main: #2d3436;
+  --text-light: #636e72;
+  --bg-color: #f4f6f8;
   --white-color: #ffffff;
+  --error-color: #d32f2f;
+  --shadow-card: 0 15px 35px rgba(99, 57, 31, 0.1);
+  --radius: 12px;
 }
 
 .register-wrapper {
@@ -275,19 +356,39 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f7f7f7;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  padding: 20px 0;
+  background-color: var(--bg-color);
+  font-family: "Nunito", sans-serif;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Họa tiết nền */
+.bg-pattern {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(99, 57, 31, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .register-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 450px;
-  background-color: #ffffff;
+  max-width: 460px;
+  background-color: var(--white-color);
   padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(99, 57, 31, 0.1);
-  transition: transform 0.3s ease;
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  animation: slideUp 0.5s ease-out;
 }
 
 .register-header {
@@ -296,193 +397,251 @@ const handleRegister = async () => {
 }
 
 .brand-title {
-  color: #63391f;
-  font-size: 28px;
+  color: var(--primary-color);
+  font-size: 30px;
   font-weight: 800;
   margin: 0;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .subtitle {
-  color: #666666;
-  font-size: 14px;
-  margin-top: 8px;
+  color: var(--text-light);
+  font-size: 15px;
+  margin-top: 5px;
 }
 
+/* --- FORM & INPUTS --- */
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
+}
+
+/* Layout 2 cột cho mật khẩu */
+.row-group {
+  display: flex;
+  gap: 15px;
+}
+.half {
+  flex: 1;
 }
 
 label {
   display: block;
-  margin-bottom: 6px;
-  color: #333;
-  font-weight: 600;
-  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: #b0b0b0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: color 0.3s;
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 10px 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 13px 14px 13px 48px; /* Chừa chỗ cho Icon */
+  border: 2px solid transparent;
+  background-color: #f9f9f9;
+  border-radius: var(--radius);
   font-size: 14px;
-  background-color: #f7f7f7;
+  color: #333;
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
 .input-wrapper input:focus {
-  border-color: #63391f;
-  background-color: #ffffff;
+  background-color: #fff;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
 
-/* --- STYLE MỚI CHO VALIDATE --- */
-.input-error {
-  border-color: #d32f2f !important;
-  background-color: #fff8f8 !important;
+.input-wrapper input:focus + .input-icon {
+  color: var(--primary-color);
+}
+
+/* Trạng thái lỗi */
+.input-wrapper.has-error input {
+  border-color: #ffcdd2;
+  background-color: #fff8f8;
+}
+.input-wrapper.has-error .input-icon {
+  color: var(--error-color);
 }
 
 .error-text {
-  color: #d32f2f;
+  color: var(--error-color);
   font-size: 12px;
   margin-top: 5px;
   display: block;
+  margin-left: 4px;
 }
-/* ------------------------------- */
+.block-center {
+  text-align: center;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
 
+/* --- BUTTONS --- */
 .btn-register {
   width: 100%;
-  padding: 12px;
-  background-color: #63391f;
+  padding: 15px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--primary-hover)
+  );
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 15px rgba(99, 57, 31, 0.2);
   margin-top: 10px;
-  letter-spacing: 1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-register:hover {
-  background-color: #4e2c17;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 57, 31, 0.3);
 }
 
 .btn-register:disabled {
-  background-color: #a8a8a8;
+  background: #bdc3c7;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.login-redirect {
-  margin-top: 15px;
-  text-align: center;
-  font-size: 14px;
-  color: #666;
-}
-
-.login-link {
-  color: #63391f;
-  font-weight: 700;
-  text-decoration: none;
-}
-.login-link:hover {
-  text-decoration: underline;
-}
-
+/* --- DIVIDER --- */
 .divider {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 20px 0 15px;
-  color: #999;
-  font-size: 11px;
+  margin: 25px 0 20px;
+  color: #aaa;
+  font-size: 12px;
   font-weight: 600;
 }
 .divider::before,
 .divider::after {
   content: "";
   flex: 1;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
 }
 .divider span {
-  padding: 0 10px;
+  padding: 0 15px;
 }
 
+/* --- SOCIAL BUTTONS --- */
 .social-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
 .btn-social {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: var(--radius);
   text-decoration: none;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  gap: 10px;
 }
 
 .btn-social img {
-  margin-right: 8px;
   width: 20px;
   height: 20px;
-  object-fit: contain;
 }
 
 .btn-google {
-  background-color: #ffffff;
+  background-color: #fff;
   color: #333;
-  border: 1px solid #ddd;
+  border: 1px solid #e0e0e0;
 }
 .btn-google:hover {
   background-color: #f7f7f7;
+  border-color: #d0d0d0;
 }
 
 .btn-facebook {
   background-color: #1877f2;
-  color: #ffffff;
+  color: #fff;
   border: 1px solid #1877f2;
 }
 .btn-facebook:hover {
-  background-color: #166fe5;
+  background-color: #156ad6;
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
 }
 
-.msg-box {
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 13px;
+/* --- FOOTER --- */
+.auth-footer {
+  margin-top: 25px;
   text-align: center;
-  margin-bottom: 15px;
+  font-size: 14px;
+  color: var(--text-light);
 }
-.error-msg {
-  background-color: #ffebee;
-  color: #c62828;
-  border: 1px solid #ef9a9a;
+
+.login-link {
+  color: var(--primary-color);
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 5px;
+}
+.login-link:hover {
+  text-decoration: underline;
+}
+
+/* --- NOTIFICATIONS --- */
+.msg-box {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  animation: slideIn 0.3s ease;
 }
 .success-msg {
   background-color: #e8f5e9;
   color: #2e7d32;
   border: 1px solid #a5d6a7;
 }
+.error-msg {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
 
+/* --- ANIMATIONS --- */
 .spinner {
-  display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -490,11 +649,28 @@ label {
     transform: rotate(360deg);
   }
 }
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+/* Responsive Mobile */
 @media (max-width: 480px) {
   .register-card {
-    padding: 25px;
-    margin: 15px;
+    padding: 30px 20px;
+  }
+  .row-group {
+    flex-direction: column;
+    gap: 0;
+  }
+  .social-buttons {
+    grid-template-columns: 1fr;
   }
 }
 </style>

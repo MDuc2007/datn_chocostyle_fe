@@ -38,11 +38,13 @@
             <label>Đến ngày</label>
             <input type="date" v-model="filter.end" />
           </div>
+          <div class="filter-item clear-wrap">
+            <button class="btn-clear" @click="clearFilter">Đặt lại</button>
+          </div>
         </div>
       </div>
 
       <!-- RIGHT -->
-
       <div class="add-btn">
         <button @click="$router.push('/admin/promotion/create')">
           <span>＋</span> Thêm đợt giảm
@@ -91,7 +93,10 @@
             </td>
 
             <td class="action">
-              <label class="switch">
+              <label
+                class="switch tooltip"
+                :data-tooltip="p.trangThai === 0 ? 'Kích hoạt' : 'Tắt đợt giảm'"
+              >
                 <input
                   type="checkbox"
                   :checked="p.trangThai !== 0"
@@ -101,7 +106,8 @@
                 <span class="slider"></span>
               </label>
               <span
-                class="icon edit"
+                class="icon edit tooltip"
+                data-tooltip="Chỉnh sửa"
                 @click="$router.push(`/admin/promotion/${p.id}/edit`)"
               >
                 <img
@@ -198,6 +204,15 @@ const filter = reactive({
   start: "",
   end: "",
 });
+const clearFilter = () => {
+  filter.keyword = "";
+  filter.trangThai = "";
+  filter.start = "";
+  filter.end = "";
+
+  pagination.page = 0;
+  fetchData(); // reload lại
+};
 
 const fetchData = async () => {
   const params: any = {
@@ -397,9 +412,13 @@ const statusText = (s: number) =>
 
 .product-table td {
   padding: 18px 12px;
-  border-bottom: 1px solid #ddd;
+
   text-align: center;
 }
+.product-table tbody tr {
+  border-bottom: 1px solid #ddd;
+}
+
 .status {
   display: inline-block;
   padding: 6px 12px;
@@ -411,22 +430,19 @@ const statusText = (s: number) =>
 /* Đang áp dụng */
 .status.selling {
   color: #2ecc71;
-  background: #eafaf1; /* xanh nhạt */
-  border-color: #b7e6c9;
+  font-weight: 600;
 }
 
 /* Sắp diễn ra */
 .status.upcoming {
   color: #f39c12;
-  background: #fff4e5; /* cam nhạt */
-  border-color: #f7d9a6;
+  font-weight: 600;
 }
 
 /* Đã kết thúc */
 .status.stopped {
   color: #e74c3c;
-  background: #fdecea; /* đỏ nhạt */
-  border-color: #f5b7b1;
+  font-weight: 600;
 }
 
 .action {
@@ -545,5 +561,70 @@ input:checked + .slider::before {
   cursor: default;
   opacity: 0.4;
   background: #fff;
+}
+/* ===== TOOLTIP ===== */
+.tooltip {
+  position: relative;
+}
+
+/* box */
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+
+  transition: 0.2s ease;
+}
+
+/* arrow */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  border: 6px solid transparent;
+  border-top-color: #333;
+
+  opacity: 0;
+  transition: 0.2s ease;
+}
+
+/* show */
+.tooltip:hover::after,
+.tooltip:hover::before {
+  opacity: 1;
+}
+
+/* ===== CLEAR FILTER BUTTON ===== */
+.clear-wrap {
+  justify-content: flex-end;
+}
+
+.btn-clear {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px; /* 👈 bo y hệt */
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #484848;
+
+  cursor: pointer;
+  transition: 0.2s;
 }
 </style>

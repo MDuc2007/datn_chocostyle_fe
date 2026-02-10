@@ -782,7 +782,7 @@ onMounted(() => {
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
-  width: 300px;
+  width: 320px;
 }
 
 .search-icon {
@@ -886,7 +886,7 @@ onMounted(() => {
   padding: 18px 12px;
   border-bottom: 1px solid #ddd;
   text-align: center;
-  height: 60px;
+  height: 70px;
 }
 
 .status.selling {

@@ -1,16 +1,23 @@
 <template>
   <div class="page-container">
+    <div class="toast-container">
+      <TransitionGroup name="toast">
+        <div
+          v-for="notif in notifications"
+          :key="notif.id"
+          class="toast"
+          :class="notif.type"
+        >
+          <span v-if="notif.type === 'success'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'error'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"></span>
+          <span class="toast-msg">{{ notif.message }}</span>
+        </div>
+      </TransitionGroup>
+    </div>
     <div class="card-section filter-card form-page-animation">
       <div class="filter-card-header">
         <h2 class="card-title">QUẢN LÝ NHÂN VIÊN</h2>
-        <div class="header-actions">
-          <div class="total-badge small">
-            Tổng số: <b>{{ employees.length || 0 }}</b>
-          </div>
-          <button class="btn btn-primary" @click="addEmployee">
-            + Thêm nhân viên
-          </button>
-        </div>
       </div>
 
       <div class="filter-row">
@@ -36,6 +43,9 @@
           <button class="btn btn-outline" @click="resetFilters">Đặt lại</button>
           <button class="btn btn-outline" @click="exportExcel">
             Xuất Excel
+          </button>
+          <button class="btn btn-primary" @click="addEmployee">
+            + Thêm nhân viên
           </button>
         </div>
       </div>
@@ -112,7 +122,16 @@
 
                 <td class="text-center">
                   <div class="actions-group">
-                    <label class="switch" title="Đổi trạng thái">
+                    <label
+                      class="switch custom-tooltip"
+                      :data-tooltip="
+                        e.status === 1
+                          ? 'Khóa nhân viên'
+                          : e.status === 2
+                            ? 'Mở khóa'
+                            : 'Kích hoạt lại'
+                      "
+                    >
                       <input
                         type="checkbox"
                         :checked="e.status === 1"
@@ -122,42 +141,27 @@
                     </label>
 
                     <button
-                      class="btn-icon btn-edit"
-                      title="Chỉnh sửa"
+                      class="btn-icon btn-edit custom-tooltip"
+                      data-tooltip="Chi tiết"
                       @click="openEditModal(e)"
                     >
                       <svg
-                        width="16"
-                        height="16"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
                         fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
                       >
-                        <rect
-                          x="3"
-                          y="3"
-                          width="18"
-                          height="18"
-                          rx="3"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                          fill="none"
-                        />
                         <path
-                          d="M8 15.5L15 8.5"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
+                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                        ></path>
                         <path
-                          d="M14.5 6.5L17.5 9.5"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
+                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                        ></path>
                       </svg>
                     </button>
                   </div>
@@ -340,7 +344,10 @@
 import { useRouter } from "vue-router";
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
+const notifications = ref([]);
 const employees = ref([]);
 const query = ref("");
 const filters = ref({ gender: "all", role: "all", status: "all" });
@@ -499,26 +506,40 @@ async function saveEmployee() {
 // --- UTILS KHÁC ---
 async function toggleStatus(e) {
   let newStatus = 1;
+
+  // Logic xác định trạng thái mới (giữ nguyên logic cũ của bạn)
   if (e.status !== 2) {
     statusHistory.value[e.id] = e.status;
-    newStatus = 2;
+    newStatus = 2; // Khóa
   } else {
     if (statusHistory.value.hasOwnProperty(e.id)) {
       newStatus = statusHistory.value[e.id];
     } else {
-      newStatus = 1;
+      newStatus = 1; // Mặc định về Active
     }
   }
+
   const originalStatus = e.status;
-  e.status = newStatus;
+  e.status = newStatus; // Cập nhật giao diện ngay để mượt mà
+
   try {
+    // Gọi API cập nhật
     await axios.put(`http://localhost:8080/api/nhan-vien/${e.id}`, {
       trangThai: newStatus,
     });
+
     if (newStatus !== 2) delete statusHistory.value[e.id];
+
+    // ==> THÊM: Hiện thông báo thành công
+    const statusText =
+      newStatus === 1 ? "Hoạt động" : newStatus === 0 ? "Đã nghỉ" : "Đã khóa";
+    showNotification(`Đã cập nhật trạng thái: ${statusText}`, "success");
   } catch (error) {
-    e.status = originalStatus;
-    alert("Lỗi cập nhật trạng thái!");
+    e.status = originalStatus; // Hoàn tác nếu lỗi
+    console.error(error);
+
+    // ==> SỬA: Thay alert bằng showNotification
+    showNotification("Lỗi cập nhật trạng thái!", "error");
   }
 }
 function addEmployee() {
@@ -617,9 +638,123 @@ function resetFilters() {
   filters.value = { gender: "all", role: "all", status: "all" };
   page.value = 0;
 }
-function exportExcel() {
-  alert("Xuất Excel");
-}
+// --- HÀM XUẤT EXCEL ---
+const exportExcel = async () => {
+  // 1. Khởi tạo Workbook và Worksheet
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Danh sách nhân viên");
+
+  // 2. Định nghĩa các cột (để set độ rộng)
+  worksheet.columns = [
+    { key: "stt", width: 10 },
+    { key: "maNv", width: 15 },
+    { key: "hoTen", width: 30 },
+    { key: "email", width: 30 },
+    { key: "sdt", width: 15 },
+    { key: "gioiTinh", width: 10 },
+    { key: "chucVu", width: 20 },
+    { key: "trangThai", width: 15 },
+  ];
+
+  // 3. Tạo Tiêu đề lớn (Dòng 1) - Merge cell
+  worksheet.mergeCells("A1:H1");
+  const titleCell = worksheet.getCell("A1");
+  titleCell.value = "DANH SÁCH NHÂN VIÊN";
+  titleCell.font = {
+    name: "Times New Roman",
+    size: 16,
+    bold: true,
+    color: { argb: "FF000000" },
+  };
+  titleCell.alignment = { vertical: "middle", horizontal: "center" };
+
+  // 4. Tạo Ngày xuất file (Dòng 2) - Merge cell
+  worksheet.mergeCells("A2:H2");
+  const subTitleCell = worksheet.getCell("A2");
+  const today = new Date();
+  subTitleCell.value = `Xuất file excel vào: ${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+  subTitleCell.font = { name: "Times New Roman", size: 11, italic: true };
+  subTitleCell.alignment = { vertical: "middle", horizontal: "center" };
+
+  // Thêm 1 dòng trống
+  worksheet.addRow([]);
+
+  // 5. Tạo Header bảng (Dòng 4)
+  const headerRow = worksheet.addRow([
+    "STT",
+    "Mã NV",
+    "Họ và tên",
+    "Email",
+    "SĐT",
+    "Giới tính",
+    "Chức vụ",
+    "Trạng thái",
+  ]);
+
+  // Style cho Header (Nền xám, Chữ đậm, Căn giữa) - Giống ảnh mẫu
+  headerRow.eachCell((cell) => {
+    cell.font = { name: "Times New Roman", bold: true };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9D9D9" }, // Màu xám nhạt giống ảnh
+    };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
+
+  // 6. Đổ dữ liệu nhân viên vào
+  // Sử dụng pagedEmployees.value nếu chỉ muốn xuất trang hiện tại,
+  // hoặc employees.value nếu muốn xuất TẤT CẢ (khuyên dùng employees.value)
+  const dataToExport = employees.value;
+
+  dataToExport.forEach((emp, index) => {
+    const row = worksheet.addRow([
+      index + 1,
+      emp.code,
+      emp.name,
+      emp.email,
+      emp.phone,
+      emp.gender ? "Nam" : "Nữ", // Xử lý hiển thị giới tính
+      getRoleLabel(emp.role), // Xử lý hiển thị chức vụ
+      getStatusLabel(emp.status), // Xử lý hiển thị trạng thái
+    ]);
+
+    // Style border cho từng cell dữ liệu
+    row.eachCell((cell) => {
+      cell.font = { name: "Times New Roman" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      // Căn giữa cho STT và các cột ngắn
+      if (cell.col !== 3 && cell.col !== 4) {
+        // Trừ Tên và Email căn trái
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+      } else {
+        cell.alignment = { vertical: "middle", horizontal: "left" };
+      }
+    });
+  });
+
+  // 7. Xuất file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `DanhSachNhanVien_${Date.now()}.xlsx`);
+};
+const showNotification = (message, type = "success") => {
+  const id = Date.now() + Math.random();
+  notifications.value.push({ message, type, id });
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 3000); // Tự động tắt sau 3 giây
+};
 </script>
 
 <style scoped>
@@ -635,7 +770,6 @@ function exportExcel() {
 
 .page-container {
   min-height: 100vh;
-  font-family: "Segoe UI", sans-serif;
   color: #333;
 }
 
@@ -847,7 +981,6 @@ function exportExcel() {
   table-layout: auto;
 }
 .custom-table th {
-  background-color: #f9fafb;
   color: #374151;
   font-weight: 700;
   padding: 14px 10px;
@@ -864,9 +997,6 @@ function exportExcel() {
   color: #4b5563;
   vertical-align: middle;
   height: auto;
-}
-.custom-table tbody tr:hover {
-  background-color: #fafafa;
 }
 .fw-bold {
   font-weight: 600;
@@ -1196,5 +1326,119 @@ input:checked + .slider:before {
 .btn-orange {
   background-color: #63391f;
   color: white;
+}
+/* --- CUSTOM TOOLTIP --- */
+/* Tạo vị trí tương đối để tooltip con bám theo */
+.custom-tooltip {
+  position: relative;
+}
+
+/* Tạo nội dung tooltip */
+.custom-tooltip::before {
+  content: attr(data-tooltip); /* Lấy nội dung từ attribute data-tooltip */
+  position: absolute;
+  bottom: 125%; /* Hiện phía trên */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333; /* Màu nền đen xám */
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+  z-index: 100;
+  pointer-events: none; /* Để chuột không bị vướng vào tooltip */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+/* Tạo mũi tên nhỏ ở dưới tooltip */
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 115%; /* Phải khớp với tooltip phía trên */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+  z-index: 100;
+}
+
+/* Hiệu ứng khi di chuột vào */
+.custom-tooltip:hover::before,
+.custom-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  bottom: 135%; /* Hiệu ứng bay lên nhẹ */
+}
+
+/* Riêng mũi tên thì bay ít hơn chút */
+.custom-tooltip:hover::after {
+  bottom: 125%;
+}
+/* TOAST */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  animation: slideInRight 0.3s forwards;
+}
+.toast.success {
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
+}
+.toast.error {
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
+}
+.toast.warning {
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
+}
+.toast-msg {
+  color: #333;
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

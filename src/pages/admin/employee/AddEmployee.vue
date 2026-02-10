@@ -8,13 +8,9 @@
           class="toast"
           :class="notif.type"
         >
-          <span v-if="notif.type === 'success'" style="font-size: 18px"
-            >✅</span
-          >
-          <span v-if="notif.type === 'error'" style="font-size: 18px">❌</span>
-          <span v-if="notif.type === 'warning'" style="font-size: 18px"
-            >⚠️</span
-          >
+          <span v-if="notif.type === 'success'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'error'" style="font-size: 18px"></span>
+          <span v-if="notif.type === 'warning'" style="font-size: 18px"></span>
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
       </TransitionGroup>
@@ -258,16 +254,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
-// 👇 Import thư viện mới
 import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
 
 const router = useRouter();
 const fileInput = ref(null);
 
-// Địa chỉ
+// --- DATA ---
 const listCity = ref([]);
 const listDistrict = ref([]);
 const listWard = ref([]);
@@ -275,7 +270,6 @@ const selectedCity = ref(null);
 const selectedDistrict = ref(null);
 const selectedWard = ref(null);
 
-// Form Data
 const form = ref({
   hoTen: "",
   gioiTinh: true,
@@ -293,7 +287,7 @@ const scanError = ref("");
 const cameraActive = ref(false);
 const loadingCamera = ref(false);
 
-// Toast notifications
+// Toast
 const notifications = ref([]);
 const showNotification = (message, type = "success") => {
   const id = Date.now() + Math.random();
@@ -312,81 +306,210 @@ onMounted(async () => {
   }
 });
 
-// --- LOGIC QR SCANNER (CÔNG NGHỆ MỚI) ---
+// --- HELPERS VALIDATE ---
+
+// 1. Tính tuổi chính xác
+function getAge(dateString) {
+  const today = new Date();
+  const birthDate = new Date(dateString);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+// 2. Validate Form (Client Side)
+function validateForm() {
+  errors.value = {};
+  let isValid = true;
+
+  // 1. Validate Họ Tên
+  if (!form.value.hoTen?.trim()) {
+    errors.value.hoTen = "Họ tên không được để trống";
+    isValid = false;
+  } else if (form.value.hoTen.length < 5) {
+    errors.value.hoTen = "Họ tên quá ngắn (tối thiểu 5 ký tự)";
+    isValid = false;
+  } else {
+    // LOGIC MỚI: Chỉ báo lỗi nếu tên chứa Số hoặc Ký tự đặc biệt
+    // Regex này tìm: Số (0-9) HOẶC Ký tự đặc biệt (!@#...)
+    const invalidChars = /[0-9!@#$%^&*()_+={}\[\]:;"'<>,.?/\\|`~-]/;
+
+    if (invalidChars.test(form.value.hoTen)) {
+      errors.value.hoTen =
+        "Họ tên không hợp lệ (không chứa số hoặc ký tự đặc biệt)";
+      isValid = false;
+    }
+  }
+
+  // 2. Validate Email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!form.value.email?.trim()) {
+    errors.value.email = "Email không được để trống";
+    isValid = false;
+  } else if (!emailRegex.test(form.value.email)) {
+    errors.value.email = "Định dạng email không đúng";
+    isValid = false;
+  }
+
+  // 3. Validate SĐT
+  const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+  if (!form.value.sdt?.trim()) {
+    errors.value.sdt = "SĐT không được để trống";
+    isValid = false;
+  } else if (!phoneRegex.test(form.value.sdt) || form.value.sdt.length !== 10) {
+    errors.value.sdt = "SĐT không hợp lệ (10 số, đầu VN)";
+    isValid = false;
+  }
+
+  // 4. Validate Địa chỉ
+  if (!form.value.diaChiCuThe?.trim()) {
+    errors.value.diaChiCuThe = "Địa chỉ cụ thể không được để trống";
+    isValid = false;
+  }
+
+  // Validate Select Box (Tỉnh/Huyện/Xã)
+  if (!selectedCity.value) {
+    errors.value.tinhThanh = "Chưa chọn Tỉnh/TP";
+    isValid = false;
+  }
+  if (!selectedDistrict.value && selectedCity.value) {
+    errors.value.quanHuyen = "Chưa chọn Quận/Huyện";
+    isValid = false;
+  }
+  if (!selectedWard.value && selectedDistrict.value) {
+    errors.value.xaPhuong = "Chưa chọn Xã/Phường";
+    isValid = false;
+  }
+
+  // 5. Validate Ngày sinh
+  if (!form.value.ngaySinh) {
+    errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+    isValid = false;
+  } else {
+    // Tính tuổi
+    const today = new Date();
+    const birthDate = new Date(form.value.ngaySinh);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      errors.value.ngaySinh = `Nhân viên chưa đủ 18 tuổi (Hiện tại: ${age})`;
+      isValid = false;
+    } else if (age > 65) {
+      errors.value.ngaySinh = `Tuổi vượt quá quy định lao động (Hiện tại: ${age})`;
+      isValid = false;
+    }
+  }
+
+  return isValid;
+}
+// --- SUBMIT FORM ---
+async function submitForm() {
+  // 1. Validate Client Local
+  if (!validateForm()) {
+    showNotification("Dữ liệu không hợp lệ, vui lòng kiểm tra lại!", "warning");
+    return;
+  }
+
+  // 2. Validate Server (Check trùng Email/SĐT)
+  // Lưu ý: Nếu Backend chưa có API check riêng, lỗi này sẽ được bắt ở catch axios.post bên dưới
+  //    const isDuplicate = await checkDuplicate(form.value.email, form.value.sdt);
+  //   if (isDuplicate) {
+  //       showNotification("Thông tin Email hoặc SĐT đã tồn tại!", "error");
+  //       return;
+  //   }
+
+  const payload = {
+    ...form.value,
+    hoTen: form.value.hoTen.trim(), // Xóa khoảng trắng thừa
+    email: form.value.email.trim(),
+    diaChiCuThe: form.value.diaChiCuThe.trim(),
+    tinhThanhId: selectedCity.value?.code,
+    tinhThanh: selectedCity.value?.name,
+    quanHuyenId: selectedDistrict.value?.code,
+    quanHuyen: selectedDistrict.value?.name,
+    xaPhuongId: selectedWard.value?.code,
+    xaPhuong: selectedWard.value?.name,
+  };
+
+  try {
+    await axios.post("http://localhost:8080/api/nhan-vien", payload);
+
+    showNotification("Thêm nhân viên thành công!", "success");
+
+    setTimeout(() => {
+      router.push("/admin/employee");
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+
+    // Xử lý lỗi trả về từ Backend (nếu Backend có validate trùng)
+    if (error.response && error.response.data) {
+      const msg = error.response.data.message || "Lỗi thêm mới!";
+      // Map lỗi từ backend vào form nếu có
+      if (msg.includes("Email")) errors.value.email = "Email đã tồn tại";
+      if (msg.includes("Phone") || msg.includes("SĐT"))
+        errors.value.sdt = "SĐT đã tồn tại";
+
+      showNotification(msg, "error");
+    } else {
+      showNotification("Lỗi hệ thống! Vui lòng thử lại sau.", "error");
+    }
+  }
+}
+
+// --- LOGIC KHÁC (SCAN QR, ĐỊA CHỈ...) ---
+// (Giữ nguyên các hàm openScanModal, onDetect, onCityChange, handleFileUpload...)
 
 function openScanModal() {
   showScanModal.value = true;
   scanError.value = "";
-  cameraActive.value = false; // Mặc định tắt để user tự bật
+  cameraActive.value = false;
 }
-
 function closeScanModal() {
   cameraActive.value = false;
   showScanModal.value = false;
 }
-
 function startCamera() {
   scanError.value = "";
   cameraActive.value = true;
   loadingCamera.value = true;
 }
-
-// Hàm xử lý kết quả chung cho cả Camera và Ảnh
 function onDetect(detectedCodes) {
-  // detectedCodes là một mảng các mã tìm thấy
-  const result = detectedCodes[0]; // Lấy mã đầu tiên
-
+  const result = detectedCodes[0];
   if (result && result.rawValue) {
-    // Có kết quả -> Tắt modal & Xử lý
     cameraActive.value = false;
     loadingCamera.value = false;
-
     parseCCCDData(result.rawValue);
   } else {
-    // Trường hợp upload ảnh mà ko tìm thấy QR
-    if (!cameraActive.value) {
-      showNotification("Không tìm thấy mã QR trong ảnh này", "warning");
-    }
+    if (!cameraActive.value)
+      showNotification("Không tìm thấy mã QR", "warning");
   }
 }
-
 function onError(err) {
   loadingCamera.value = false;
-  if (err.name === "NotAllowedError") {
-    scanError.value = "Bạn cần cấp quyền truy cập Camera!";
-  } else if (err.name === "NotFoundError") {
-    scanError.value = "Không tìm thấy thiết bị Camera.";
-  } else {
-    scanError.value = `Lỗi camera: ${err.message}`;
-  }
+  scanError.value = "Lỗi Camera: " + err.message;
   cameraActive.value = false;
 }
-
-// Hàm parse dữ liệu (Logic cũ của bạn)
 function parseCCCDData(decodedText) {
-  console.log("QR Data:", decodedText);
   const parts = decodedText.split("|");
-
   if (parts.length >= 6) {
-    // Cấu trúc CCCD: Số|CMND cũ|Tên|NgàySinh|GiớiTinh|ĐịaChỉ|NgàyCấp
-    // form.value.cccd = parts[0]; // Đã bỏ theo yêu cầu
     form.value.hoTen = parts[2];
-
-    // Ngày sinh: 25011999 -> 1999-01-25
     const d = parts[3];
-    if (d.length === 8) {
+    if (d.length === 8)
       form.value.ngaySinh = `${d.slice(4, 8)}-${d.slice(2, 4)}-${d.slice(0, 2)}`;
-    }
-
     form.value.gioiTinh = parts[4] === "Nam";
-
-    // Địa chỉ
     autoFillAddress(parts[5]);
-
     showScanModal.value = false;
-    showNotification("Đã quét thành công!", "success");
+    showNotification("Quét CCCD thành công!", "success");
   } else {
-    showNotification("Mã QR không đúng định dạng CCCD", "error");
+    showNotification("QR không đúng định dạng CCCD", "error");
   }
 }
 function paintBoundingBox(detectedCodes, ctx) {
@@ -394,13 +517,11 @@ function paintBoundingBox(detectedCodes, ctx) {
     const {
       boundingBox: { x, y, width, height },
     } = detectedCode;
-
     ctx.lineWidth = 4;
-    ctx.strokeStyle = "#2ecc71"; // Màu xanh lá
+    ctx.strokeStyle = "#2ecc71";
     ctx.strokeRect(x, y, width, height);
   }
 }
-// --- LOGIC ĐỊA CHỈ (Giữ nguyên) ---
 function onCityChange() {
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
@@ -414,13 +535,10 @@ function onDistrictChange() {
 function autoFillAddress(fullStr) {
   const arr = fullStr.split(",").map((s) => s.trim());
   if (arr.length < 3) return;
-
   const strCity = arr[arr.length - 1];
   const strDistrict = arr[arr.length - 2];
   const strWard = arr[arr.length - 3];
-
   form.value.diaChiCuThe = arr.slice(0, arr.length - 3).join(", ");
-
   const foundCity = listCity.value.find((c) => compareStr(c.name, strCity));
   if (foundCity) {
     selectedCity.value = foundCity;
@@ -447,84 +565,6 @@ function compareStr(api, qr) {
       .trim();
   return clean(api).includes(clean(qr)) || clean(qr).includes(clean(api));
 }
-
-// --- VALIDATE & SUBMIT ---
-function validateForm() {
-  errors.value = {};
-  let isValid = true;
-  if (!form.value.hoTen?.trim()) {
-    errors.value.hoTen = "Tên trống";
-    isValid = false;
-  }
-  if (
-    !form.value.email ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)
-  ) {
-    errors.value.email = "Email sai";
-    isValid = false;
-  }
-  if (!form.value.sdt || !/^0\d{9}$/.test(form.value.sdt)) {
-    errors.value.sdt = "SĐT sai";
-    isValid = false;
-  }
-  if (!form.value.diaChiCuThe) {
-    errors.value.diaChiCuThe = "Địa chỉ cụ thể trống";
-    isValid = false;
-  }
-  if (!selectedCity.value) {
-    errors.value.tinhThanh = "Chưa chọn Tỉnh";
-    isValid = false;
-  }
-  if (!selectedDistrict.value && selectedCity.value) {
-    errors.value.quanHuyen = "Chưa chọn Huyện";
-    isValid = false;
-  }
-  if (!selectedWard.value && selectedDistrict.value) {
-    errors.value.xaPhuong = "Chưa chọn Xã";
-    isValid = false;
-  }
-  if (!form.value.ngaySinh) {
-    errors.value.ngaySinh = "Chọn ngày sinh";
-    isValid = false;
-  } else {
-    if (
-      new Date().getFullYear() - new Date(form.value.ngaySinh).getFullYear() <
-      18
-    ) {
-      errors.value.ngaySinh = "Chưa đủ 18 tuổi";
-      isValid = false;
-    }
-  }
-  return isValid;
-}
-
-async function submitForm() {
-  if (!validateForm()) {
-    showNotification("Vui lòng kiểm tra lại thông tin!", "warning");
-    return;
-  }
-  const payload = {
-    ...form.value,
-    diaChiCuThe: form.value.diaChiCuThe,
-    tinhThanhId: selectedCity.value?.code,
-    tinhThanh: selectedCity.value?.name,
-    quanHuyenId: selectedDistrict.value?.code,
-    quanHuyen: selectedDistrict.value?.name,
-    xaPhuongId: selectedWard.value?.code,
-    xaPhuong: selectedWard.value?.name,
-  };
-  try {
-    await axios.post("http://localhost:8080/api/nhan-vien", payload);
-    sessionStorage.setItem("flashMessage", "Thêm nhân viên thành công!");
-    sessionStorage.setItem("flashType", "success");
-    router.push("/admin/employee");
-  } catch (error) {
-    console.error(error);
-    showNotification("Lỗi thêm mới! Vui lòng thử lại.", "error");
-  }
-}
-
-// Utils
 function goBack() {
   router.push("/admin/employee");
 }
@@ -533,14 +573,22 @@ function triggerFileInput() {
 }
 function handleFileUpload(event) {
   const file = event.target.files[0];
-  if (file && file.size <= 5 * 1024 * 1024) {
+  if (file) {
+    // Validate ảnh ở đây
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!validTypes.includes(file.type)) {
+      showNotification("Chỉ chấp nhận file ảnh (JPG, PNG)", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("Ảnh quá lớn (<5MB)", "error");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       form.value.avatar = e.target.result;
     };
     reader.readAsDataURL(file);
-  } else {
-    showNotification("Ảnh quá lớn (<5MB)", "error");
   }
 }
 </script>
@@ -783,6 +831,8 @@ select:focus {
   left: 0;
   right: 0;
   bottom: 0;
+  background: rgba(44, 28, 20, 0.75);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;

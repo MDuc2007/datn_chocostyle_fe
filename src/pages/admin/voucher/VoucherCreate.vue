@@ -116,7 +116,11 @@
             "
             :disabled="form.kieuApDung === 'PERSONAL'"
             :class="{ error: errors.soLuong }"
-            @input="form.soLuong = Math.floor($event.target.valueAsNumber)"
+            @input="
+              form.soLuong = isNaN($event.target.valueAsNumber)
+                ? null
+                : Math.floor($event.target.valueAsNumber)
+            "
             @blur="validateSoLuong"
           />
           <small v-if="errors.soLuong" class="error-text">
@@ -173,8 +177,8 @@
           <label>Sắp xếp</label>
           <select class="toolbar-input" v-model="sortBy">
             <option value="">-- Chọn --</option>
-            <option value="order-desc">Đơn (tháng) ↓</option>
-            <option value="order-asc">Đơn (tháng) ↑</option>
+            <option value="order-desc">Tổng đơn ↓</option>
+            <option value="order-asc">Tổng đơn ↑</option>
             <option value="spend-desc">Chi tiêu ↓</option>
             <option value="spend-asc">Chi tiêu ↑</option>
           </select>
@@ -200,19 +204,19 @@
             <th>Tên</th>
             <th>Email</th>
             <th>Ngày sinh</th>
-            <th>Đơn (tháng)</th>
-            <th>Chi tiêu (tháng)</th>
+            <th>Tổng đơn</th>
+            <th>Tổng chi tiêu</th>
             <th>Lần mua gần nhất</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr v-for="(c, i) in pagedCustomers" :key="c.id">
+          <tr v-for="(c, i) in pagedCustomers" :key="c.idKh">
             <td>
               <label class="custom-check">
                 <input
                   type="checkbox"
-                  :value="c.id"
+                  :value="c.idKh"
                   v-model="selectedCustomerIds"
                 />
                 <span class="check-ui"></span>
@@ -224,9 +228,9 @@
             <td>{{ c.tenKhachHang }}</td>
             <td>{{ c.email }}</td>
             <td>{{ formatDateVN(c.ngaySinh) }}</td>
-            <td>{{ c.soDonThang ?? 0 }}</td>
-            <td>{{ formatMoney(c.chiTieuThang) }}</td>
-            <td>{{ formatDateVN(c.lanMuaGanNhat) || "Chưa mua" }}</td>
+            <td>{{ c.tongDonHang }}</td>
+            <td>{{ formatMoney(c.tongChiTieu) }}</td>
+            <td>{{ formatDateVN(c.lanMuaGanNhat) }}</td>
           </tr>
         </tbody>
       </table>
@@ -347,17 +351,23 @@ const showToast = (message, type = "success") => {
 };
 
 const isAllCustomerChecked = computed(() => {
-  return (
-    customers.value.length > 0 &&
-    selectedCustomerIds.value.length === customers.value.length
+  if (pagedCustomers.value.length === 0) return false;
+  return pagedCustomers.value.every((c) =>
+    selectedCustomerIds.value.includes(c.idKh),
   );
 });
 
 const toggleSelectAllCustomers = (e) => {
+  const ids = pagedCustomers.value.map((c) => c.idKh);
+
   if (e.target.checked) {
-    selectedCustomerIds.value = customers.value.map((c) => c.id);
+    selectedCustomerIds.value = Array.from(
+      new Set([...selectedCustomerIds.value, ...ids]),
+    );
   } else {
-    selectedCustomerIds.value = [];
+    selectedCustomerIds.value = selectedCustomerIds.value.filter(
+      (id) => !ids.includes(id),
+    );
   }
 };
 
@@ -377,6 +387,10 @@ watch(
     form.giaTriToiDa = null;
     errors.giaTri = "";
     errors.giaTriToiDa = "";
+
+    validateGiaTri();
+    validateGiaTriToiDa();
+    validateDieuKien();
   },
 );
 
@@ -462,11 +476,16 @@ const validateGiaTri = () => {
 const validateGiaTriToiDa = () => {
   errors.giaTriToiDa = "";
 
-  if (form.loaiGiam === "PERCENT") {
-    if (form.giaTriToiDa === null || form.giaTriToiDa <= 0) {
-      errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
-      return false;
-    }
+  if (form.loaiGiam !== "PERCENT") return true;
+
+  if (!form.giaTriToiDa || form.giaTriToiDa <= 0) {
+    errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
+    return false;
+  }
+
+  if (form.dieuKienDonHang && form.giaTriToiDa > form.dieuKienDonHang) {
+    errors.giaTriToiDa = "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
+    return false;
   }
 
   return true;
@@ -482,6 +501,11 @@ const validateDieuKien = () => {
 
   if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
     errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
+    return false;
+  }
+
+  if (form.loaiGiam === "PERCENT" && form.dieuKienDonHang < 1000) {
+    errors.dieuKienDonHang = "Điều kiện đơn hàng quá thấp";
     return false;
   }
 
@@ -504,6 +528,7 @@ const validateNgay = () => {
 
   const start = new Date(form.ngayBatDau);
   const end = new Date(form.ngayKetThuc);
+  end.setHours(23, 59, 59, 999);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -513,7 +538,7 @@ const validateNgay = () => {
     return false;
   }
 
-  if (end <= start) {
+  if (end.getTime() < start.getTime()) {
     errors.ngayKetThuc = "Ngày kết thúc phải sau ngày bắt đầu";
     return false;
   }
@@ -551,10 +576,10 @@ const validateForm = async () => {
   if (!validateNgay()) valid = false;
   if (!validateSoLuong()) valid = false;
 
-  // if (valid) {
-  //   const ok = await checkTenTrung();
-  //   if (!ok) valid = false;
-  // }
+  if (valid) {
+    const ok = await checkTenTrung();
+    if (!ok) valid = false;
+  }
 
   if (form.kieuApDung === "PERSONAL") {
     if (selectedCustomerIds.value.length === 0) {
@@ -593,6 +618,10 @@ const submit = async () => {
 
   const payload = {
     ...form,
+    soLuong:
+      form.kieuApDung === "PERSONAL"
+        ? selectedCustomerIds.value.length
+        : form.soLuong,
     khachHangIds:
       form.kieuApDung === "PERSONAL" ? selectedCustomerIds.value : [],
   };
@@ -613,56 +642,58 @@ const submit = async () => {
 const filteredCustomers = computed(() => {
   let list = [...customers.value];
 
-  if (customerKeyword.value) {
-    const kw = customerKeyword.value.toLowerCase();
+  const kw = customerKeyword.value?.trim().toLowerCase();
+  if (kw) {
     list = list.filter(
       (c) =>
-        c.tenKhachHang.toLowerCase().includes(kw) ||
-        (c.email && c.email.toLowerCase().includes(kw)),
+        c.tenKhachHang?.toLowerCase().includes(kw) ||
+        c.email?.toLowerCase().includes(kw),
     );
   }
 
-  if (filter.minSpend !== null) {
-    list = list.filter((c) => (c.chiTieuThang ?? 0) >= filter.minSpend);
+  if (filter.minSpend != null) {
+    list = list.filter((c) => (c.tongChiTieu ?? 0) >= filter.minSpend);
   }
 
-  if (sortBy.value === "order-desc") {
-    list.sort((a, b) => (b.soDonThang ?? 0) - (a.soDonThang ?? 0));
+  switch (sortBy.value) {
+    case "order-desc":
+      return list.sort((a, b) => (b.tongDonHang ?? 0) - (a.tongDonHang ?? 0));
+    case "order-asc":
+      return list.sort((a, b) => (a.tongDonHang ?? 0) - (b.tongDonHang ?? 0));
+    case "spend-desc":
+      return list.sort((a, b) => (b.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
+    case "spend-asc":
+      return list.sort((a, b) => (a.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
+    default:
+      return list;
   }
-
-  if (sortBy.value === "order-asc") {
-    list.sort((a, b) => (a.soDonThang ?? 0) - (b.soDonThang ?? 0));
-  }
-
-  if (sortBy.value === "spend-desc") {
-    list.sort((a, b) => (b.chiTieuThang ?? 0) - (a.chiTieuThang ?? 0));
-  }
-
-  if (sortBy.value === "spend-asc") {
-    list.sort((a, b) => (a.chiTieuThang ?? 0) - (b.chiTieuThang ?? 0));
-  }
-
-  return list;
 });
 
 const suggestVip = () => {
-  const vipList = customers.value
-    .filter((c) => (c.chiTieuThang ?? 0) >= 5000000 || (c.soDonThang ?? 0) >= 5)
-    .map((c) => c.id);
+  const vipIds = customers.value
+    .filter(
+      (c) =>
+        (c.tongDonHang ?? 0) > 0 &&
+        ((c.tongChiTieu ?? 0) >= 5000000 || (c.tongDonHang ?? 0) >= 5),
+    )
+    .map((c) => c.idKh);
 
-  if (vipList.length === 0) {
-    showToast("Không có khách VIP trong tháng", "error");
+  if (vipIds.length === 0) {
+    showToast("Không có khách hàng đủ điều kiện VIP", "error");
     return;
   }
 
-  selectedCustomerIds.value = vipList;
-  showToast(`Đã chọn ${vipList.length} khách VIP`);
+  selectedCustomerIds.value = Array.from(
+    new Set([...selectedCustomerIds.value, ...vipIds]),
+  );
+
+  showToast(`Đã gợi ý ${vipIds.length} khách VIP`);
 };
 
-const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
+const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "-");
 
 const formatMoney = (v) => {
-  if (!v) return "0 đ";
+  if (v == null) return "0 đ";
   return new Intl.NumberFormat("vi-VN").format(v) + " đ";
 };
 
@@ -720,12 +751,29 @@ watch([customerKeyword, sortBy], () => {
 });
 
 onMounted(async () => {
-  const res = await axios.get("http://localhost:8080/admin/voucher/next-code");
-  form.maPgg = res.data;
-  const cusRes = await axios.get("http://localhost:8080/api/khach-hang", {
-    params: { page: 0, size: 100 },
-  });
-  customers.value = cusRes.data.content;
+  try {
+    const res = await axios.get(
+      "http://localhost:8080/admin/voucher/next-code",
+    );
+    form.maPgg = res.data;
+
+    const token = localStorage.getItem("accessToken");
+
+    const cusRes = await axios.get(
+      "http://localhost:8080/api/admin/khach-hang-thong-ke",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    console.log("CUSTOMERS:", cusRes.data);
+    customers.value = cusRes.data;
+  } catch (e) {
+    console.error(e);
+    showToast("Không tải được dữ liệu ban đầu", "error");
+  }
 });
 
 const back = () => router.push("/admin/voucher");

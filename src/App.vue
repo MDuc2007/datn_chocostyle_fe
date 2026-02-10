@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from "./pages/admin/AdminLayout.vue";
-import Home from "./views/Home.vue";
+import Home from "./pages/views/Home.vue";
 </script>
 
 <template>

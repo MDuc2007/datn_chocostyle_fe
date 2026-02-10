@@ -65,7 +65,9 @@
                   class="status"
                   :class="item.trangThai === 1 ? 'selling' : 'stopped'"
                 >
-                  {{ item.trangThai === 1 ? "Đang hoạt động" : "Ngừng hoạt động" }}
+                  {{
+                    item.trangThai === 1 ? "Đang hoạt động" : "Ngừng hoạt động"
+                  }}
                 </span>
               </td>
               <td class="action">
@@ -148,11 +150,34 @@
       </div>
     </div>
   </div>
+  <div class="toast-container">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="notif.type"
+    >
+      {{ notif.message }}
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+
+const token = localStorage.getItem("token");
+
+const notifications = ref([]);
+
+const showNotification = (message, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 3000);
+};
 
 const colors = ref([]);
 const allColors = ref([]);
@@ -160,8 +185,6 @@ const selectedStatus = ref("");
 
 async function toggleStatus(item) {
   const oldStatus = item.trangThai;
-
-  // ✅ toggle đúng: 1 ↔ 0
   const newStatus = oldStatus === 1 ? 0 : 1;
 
   // optimistic update
@@ -175,17 +198,21 @@ async function toggleStatus(item) {
         params: {
           nguoiCapNhat: "admin",
         },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
+
+    showNotification("Cập nhật trạng thái thành công", "success");
   } catch (error) {
-    // rollback
     item.trangThai = oldStatus;
-    alert("Lỗi cập nhật trạng thái màu sắc!");
+    showNotification("Lỗi cập nhật trạng thái màu sắc", "error");
   }
 }
+
 const handleFilterChange = () => {
   if (selectedStatus.value === "") {
-    // Tất cả
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
@@ -194,18 +221,26 @@ const handleFilterChange = () => {
 };
 
 const fetchColors = async () => {
-  const res = await axios.get("http://localhost:8080/api/mau-sac");
+  try {
+    const res = await axios.get("http://localhost:8080/api/mau-sac", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  allColors.value = res.data.map((item) => ({
-    id: item.id,
-    name: item.tenMauSac,
-    code: item.maMauSac,
-    rgb: item.rgb,
-    ngayTao: item.ngayTao,
-    trangThai: item.trangThai,
-  }));
+    allColors.value = res.data.map((item) => ({
+      id: item.id,
+      name: item.tenMauSac,
+      code: item.maMauSac,
+      rgb: item.rgb,
+      ngayTao: item.ngayTao,
+      trangThai: item.trangThai,
+    }));
 
-  colors.value = [...allColors.value]; // clone ban đầu
+    colors.value = [...allColors.value];
+  } catch (error) {
+    showNotification("Không thể tải danh sách màu sắc", "error");
+  }
 };
 
 const formatDate = (date) => {
@@ -216,14 +251,14 @@ const formatDate = (date) => {
 onMounted(fetchColors);
 
 const isModalOpen = ref(false);
+const isEdit = ref(false);
+const editingId = ref(null);
+
 const newColor = ref({
   tenMauSac: "",
   rgb: "",
-  nguoiTao: "admin", // tạm thời
+  nguoiTao: "admin",
 });
-
-const isEdit = ref(false);
-const editingId = ref(null);
 
 const openModal = () => {
   isModalOpen.value = true;
@@ -239,24 +274,36 @@ const closeModal = () => {
   isEdit.value = false;
   editingId.value = null;
 };
-
 const addColor = async () => {
-  if (!newColor.value.tenMauSac.trim()) return;
+  if (!newColor.value.tenMauSac.trim()) {
+    showNotification("Tên màu sắc không được để trống", "warning");
+    return;
+  }
 
-  await fetch("http://localhost:8080/api/mau-sac", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenMauSac: newColor.value.tenMauSac,
-      rgb: newColor.value.rgb,
-      nguoiTao: "admin", // 👈 bắt buộc
-    }),
-  });
+  try {
+    await axios.post(
+      "http://localhost:8080/api/mau-sac",
+      {
+        tenMauSac: newColor.value.tenMauSac,
+        rgb: newColor.value.rgb,
+        nguoiTao: "admin",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Thêm màu sắc thành công", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    const message =
+      error?.response?.data?.message || "Có lỗi xảy ra khi thêm màu sắc";
+    showNotification(message, "error");
+  }
 };
-
 const editColor = (item) => {
   isEdit.value = true;
   editingId.value = item.id;
@@ -264,33 +311,55 @@ const editColor = (item) => {
   newColor.value.rgb = item.rgb;
   openModal();
 };
-
 const updateColor = async () => {
-  if (!newColor.value.tenMauSac.trim()) return;
+  if (!newColor.value.tenMauSac.trim()) {
+    showNotification("Tên màu sắc không được để trống", "warning");
+    return;
+  }
 
-  await fetch(`http://localhost:8080/api/mau-sac/${editingId.value}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tenMauSac: newColor.value.tenMauSac,
-      rgb: newColor.value.rgb,
-      nguoiCapNhat: "admin",
-    }),
-  });
+  try {
+    await axios.put(
+      `http://localhost:8080/api/mau-sac/${editingId.value}`,
+      {
+        tenMauSac: newColor.value.tenMauSac,
+        rgb: newColor.value.rgb,
+        nguoiCapNhat: "admin",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-  closeModal();
-  fetchColors();
+    showNotification("Cập nhật màu sắc thành công", "success");
+    closeModal();
+    fetchColors();
+  } catch (error) {
+    const message =
+      error?.response?.data?.message || "Cập nhật màu sắc thất bại";
+    showNotification(message, "error");
+  }
 };
 
 const deleteColor = async (item) => {
-  if (confirm(`Bạn có chắc muốn xóa màu "${item.name}"?`)) {
-    await fetch(`http://localhost:8080/api/mau-sac/${item.id}`, {
-      method: "DELETE",
+  if (!confirm(`Bạn có chắc muốn xóa màu "${item.name}"?`)) return;
+
+  try {
+    await axios.delete(`http://localhost:8080/api/mau-sac/${item.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
+
+    showNotification("Xóa màu sắc thành công", "success");
     fetchColors();
+  } catch (error) {
+    showNotification("Xóa màu sắc thất bại", "error");
   }
 };
 </script>
+
 <style scoped>
 /* ===== HEADER PANEL ===== */
 .header {
@@ -700,5 +769,53 @@ input:checked + .slider::before {
 .tooltip-wrapper:hover::after,
 .tooltip-wrapper:hover::before {
   opacity: 1;
+}
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  word-wrap: break-word;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 </style>

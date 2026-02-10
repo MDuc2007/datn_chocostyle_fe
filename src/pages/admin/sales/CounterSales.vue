@@ -29,7 +29,7 @@
             <span class="section-title">SẢN PHẨM</span>
             <div class="actions">
               <button class="btn-outline">Quét QR sản phẩm</button>
-              <button class="btn-primary" @click="showProductPopup = true">
+              <button class="btn-primary" @click="openProductPopup">
                 Chọn sản phẩm
               </button>
             </div>
@@ -86,7 +86,7 @@
             <div class="info-box">
               <div class="section-header">
                 <span>THÔNG TIN KHÁCH HÀNG</span>
-                <button class="btn-outline" @click="showCustomerPopup = true">
+                <button class="btn-outline" @click="openCustomerPopup">
                   Chọn khách hàng
                 </button>
               </div>
@@ -133,9 +133,16 @@
                 <!-- HÀNG 3 -->
                 <div class="form-row">
                   <div class="form-item">
-                    <label>Xã / Phường</label>
-                    <select v-model="currentOrder.customer.ward">
-                      <option value="">Chọn xã phường</option>
+                    <label>Tỉnh / Thành phố</label>
+                    <select v-model="currentOrder.customer.province">
+                      <option value="">Chọn tỉnh thành phố</option>
+                      <option
+                        v-for="p in provinces"
+                        :key="p.code"
+                        :value="p.code"
+                      >
+                        {{ p.name }}
+                      </option>
                     </select>
                   </div>
 
@@ -143,13 +150,23 @@
                     <label>Quận / Huyện</label>
                     <select v-model="currentOrder.customer.district">
                       <option value="">Chọn quận huyện</option>
+                      <option
+                        v-for="d in districts"
+                        :key="d.code"
+                        :value="d.code"
+                      >
+                        {{ d.name }}
+                      </option>
                     </select>
                   </div>
 
                   <div class="form-item">
-                    <label>Tỉnh / Thành phố</label>
-                    <select v-model="currentOrder.customer.province">
-                      <option value="">Chọn tỉnh thành phố</option>
+                    <label>Xã / Phường</label>
+                    <select v-model="currentOrder.customer.ward">
+                      <option value="">Chọn xã phường</option>
+                      <option v-for="w in wards" :key="w.code" :value="w.code">
+                        {{ w.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -245,10 +262,10 @@
               <tbody>
                 <tr v-for="(c, index) in customers" :key="c.id">
                   <td>{{ index + 1 }}</td>
-                  <td>{{ c.name }}</td>
+                  <td>{{ c.tenKhachHang }}</td>
                   <td>{{ c.email }}</td>
-                  <td>{{ c.phone }}</td>
-                  <td>{{ c.address }}</td>
+                  <td>{{ c.soDienThoai }}</td>
+                  <td>{{ c.diaChiChinh }}</td>
                   <td>
                     <button class="btn-primary" @click="selectCustomer(c)">
                       Chọn
@@ -293,7 +310,7 @@
                   <th>Size</th>
                   <th>Số lượng</th>
                   <th>Giá</th>
-                  <th></th>
+                  <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -324,7 +341,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
@@ -332,25 +349,45 @@ const orders = ref([]);
 const activeOrderIndex = ref(-1);
 const MAX_ORDER = 5;
 
-const products = ref([
-  {
-    id: 1,
-    name: "Áo khoác",
-    price: 199000,
-    image: "https://via.placeholder.com/40",
-  },
-  {
-    id: 2,
-    name: "Áo thun",
-    price: 99000,
-    image: "https://via.placeholder.com/40",
-  },
-]);
+import axios from "axios";
 
-const customers = ref([
-  { id: 1, name: "Nguyễn Văn A", phone: "0123456789" },
-  { id: 2, name: "Nguyễn Văn B", phone: "0987654321" },
-]);
+const customers = ref([]);
+
+const fetchCustomers = async () => {
+  const res = await axios.get("http://localhost:8080/api/khach-hang");
+  customers.value = res.data.content;
+};
+
+const openCustomerPopup = async () => {
+  await fetchCustomers();
+  showCustomerPopup.value = true;
+};
+
+const products = ref([]);
+
+const fetchProducts = async () => {
+  const res = await axios.get("http://localhost:8080/api/pos/san-pham");
+
+  products.value = res.data.map((p) => ({
+    id: p.id,
+    code: p.maSp,
+    name: p.tenSp,
+    image: p.hinhAnh,
+    price: p.giaBan,
+    stock: p.soLuongTon,
+    color: p.mauSac,
+    size: p.kichCo,
+  }));
+};
+
+const openProductPopup = async () => {
+  await fetchProducts();
+  showProductPopup.value = true;
+};
+
+const currentOrder = computed(
+  () => orders.value[activeOrderIndex.value] || null,
+);
 
 const addToCart = (product) => {
   const cart = currentOrder.value.cart;
@@ -366,10 +403,126 @@ const removeItem = (index) => {
   currentOrder.value.cart.splice(index, 1);
 };
 
-const selectCustomer = (c) => {
-  currentOrder.value.customer = { ...c };
+const isSettingAddress = ref(false);
+
+const selectCustomer = async (c) => {
+  const res = await axios.get(`http://localhost:8080/api/khach-hang/${c.id}`);
+  const kh = res.data;
+
+  currentOrder.value.customer.name = kh.tenKhachHang || "";
+  currentOrder.value.customer.email = kh.email || "";
+  currentOrder.value.customer.phone = kh.soDienThoai || "";
+
+  const diaChi = kh.listDiaChi.find((d) => d.macDinh);
+  if (!diaChi) return;
+
+  if (!provinces.value.length) {
+    await fetchProvinces();
+  }
+
+  isSettingAddress.value = true;
+
+  currentOrder.value.customer.address = diaChi.diaChiCuThe;
+
+  const province = provinces.value.find((p) =>
+    p.name.includes(diaChi.thanhPho),
+  );
+  if (!province) return;
+
+  currentOrder.value.customer.province = province.code;
+
+  const resDistrict = await axios.get(
+    `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
+  );
+  districts.value = resDistrict.data.districts;
+
+  const district = districts.value.find((d) => d.name.includes(diaChi.quan));
+  if (!district) return;
+
+  currentOrder.value.customer.district = district.code;
+
+  const resWard = await axios.get(
+    `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
+  );
+  wards.value = resWard.data.wards;
+
+  const ward = wards.value.find((w) => w.name.includes(diaChi.phuong));
+  if (!ward) return;
+
+  currentOrder.value.customer.ward = ward.code;
+
+  isSettingAddress.value = false;
   showCustomerPopup.value = false;
 };
+
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
+
+const fetchProvinces = async () => {
+  const res = await axios.get("https://provinces.open-api.vn/api/p/");
+  provinces.value = res.data;
+};
+
+const fetchDistricts = async (provinceName) => {
+  const province = provinces.value.find((p) => p.name === provinceName);
+
+  if (!province) return;
+
+  const res = await axios.get(
+    `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
+  );
+
+  districts.value = res.data.districts;
+};
+
+const fetchWards = async (districtName) => {
+  const district = districts.value.find((d) => d.name === districtName);
+
+  if (!district) return;
+
+  const res = await axios.get(
+    `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
+  );
+
+  wards.value = res.data.wards;
+};
+
+watch(
+  () => currentOrder.value?.customer.province,
+  async (newCode) => {
+    if (!currentOrder.value || isSettingAddress.value) return;
+
+    districts.value = [];
+    wards.value = [];
+    currentOrder.value.customer.district = "";
+    currentOrder.value.customer.ward = "";
+
+    if (!newCode) return;
+
+    const res = await axios.get(
+      `https://provinces.open-api.vn/api/p/${newCode}?depth=2`,
+    );
+    districts.value = res.data.districts;
+  },
+);
+
+watch(
+  () => currentOrder.value?.customer.district,
+  async (newCode) => {
+    if (!currentOrder.value || isSettingAddress.value) return;
+
+    wards.value = [];
+    currentOrder.value.customer.ward = "";
+
+    if (!newCode) return;
+
+    const res = await axios.get(
+      `https://provinces.open-api.vn/api/d/${newCode}?depth=2`,
+    );
+    wards.value = res.data.wards;
+  },
+);
 
 const subTotal = computed(() =>
   currentOrder.value
@@ -377,12 +530,17 @@ const subTotal = computed(() =>
     : 0,
 );
 
-const formatPrice = (v) => v.toLocaleString("vi-VN") + " ₫";
-const createOrder = () => {
+const formatPrice = (v) => {
+  if (v === null || v === undefined) return "0 ₫";
+  return Number(v).toLocaleString("vi-VN") + " ₫";
+};
+const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
     alert("Tối đa 5 đơn hàng thôi 😅");
     return;
   }
+
+  await fetchProvinces();
 
   const newOrder = {
     id: Date.now(),
@@ -401,9 +559,7 @@ const createOrder = () => {
   orders.value.push(newOrder);
   activeOrderIndex.value = orders.value.length - 1;
 };
-const currentOrder = computed(
-  () => orders.value[activeOrderIndex.value] || null,
-);
+
 const removeOrder = (index) => {
   orders.value.splice(index, 1);
 
@@ -609,7 +765,8 @@ const total = computed(() => subTotal.value - discount.value);
 
 /* ================= MODAL BOX ================= */
 .modal {
-  width: 900px;
+  width: 1100px;
+  max-width: 95vw;
   max-height: 85vh;
   background: #ffffff;
   border-radius: 12px;
@@ -620,7 +777,7 @@ const total = computed(() => subTotal.value - discount.value);
 }
 
 .modal.large {
-  width: 1100px;
+  width: 1300px;
 }
 
 /* ================= HEADER ================= */
@@ -720,8 +877,35 @@ const total = computed(() => subTotal.value - discount.value);
   border-bottom: 1px solid #eee;
 }
 
+.table th,
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .table tr:hover {
   background: #fff7f1;
+}
+
+.modal .table td {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table td img.thumb {
+  display: block;
+  margin: 0 auto;
+}
+
+.table td {
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  padding: 12px 10px;
 }
 
 /* ================= IMAGE ================= */
@@ -820,7 +1004,7 @@ const total = computed(() => subTotal.value - discount.value);
 
 .product-row {
   display: grid;
-  grid-template-columns: 30px 70px 1.5fr 1fr 120px 140px 40px;
+  grid-template-columns: 30px 70px 1.5fr 1fr 120px 140px 80px 40px;
   align-items: center;
   gap: 12px;
   padding: 12px 0;

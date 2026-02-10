@@ -1,10 +1,10 @@
 <template>
   <div class="page-wrapper">
     <div class="form-container">
-      <h3 class="form-title">THÊM PHIẾU GIẢM GIÁ</h3>
+      <h3 class="form-title">CẬP NHẬT PHIẾU GIẢM GIÁ</h3>
 
       <div class="form-grid">
-        <!-- HÀNG 1 -->
+        <!-- ===== HÀNG 1 ===== -->
         <div class="form-group">
           <label>Mã phiếu giảm giá</label>
           <input disabled :value="form.maPgg" />
@@ -12,17 +12,13 @@
 
         <div class="form-group">
           <label> Tên phiếu giảm giá <span class="required">*</span> </label>
-          <input
-            v-model="form.tenPgg"
-            :class="{ error: errors.tenPgg }"
-            @blur="handleBlurTen"
-          />
+          <input v-model="form.tenPgg" :class="{ error: errors.tenPgg }" />
           <small v-if="errors.tenPgg" class="error-text">
             {{ errors.tenPgg }}
           </small>
         </div>
 
-        <!-- HÀNG 2 -->
+        <!-- ===== HÀNG 2 ===== -->
         <div class="form-group">
           <label>Kiểu áp dụng <span class="required">*</span></label>
           <div class="radio-group">
@@ -55,15 +51,15 @@
           </div>
         </div>
 
-        <!-- HÀNG 3: GIÁ TRỊ GIẢM + GIÁ TRỊ TỐI ĐA -->
+        <!-- ===== HÀNG 3 ===== -->
         <div class="form-group">
           <label> Giá trị giảm <span class="required">*</span> </label>
           <div class="input-suffix">
             <input
               type="number"
               v-model.number="form.giaTri"
+              :disabled="voucherMeta.trangThai !== 'CHUA_DIEN_RA'"
               :class="{ error: errors.giaTri }"
-              @blur="validateGiaTri"
             />
             <span class="suffix">
               {{ form.loaiGiam === "PERCENT" ? "%" : "đ" }}
@@ -82,23 +78,24 @@
           <input
             type="number"
             v-model.number="form.giaTriToiDa"
-            :disabled="form.loaiGiam === 'MONEY'"
+            :disabled="
+              form.loaiGiam === 'MONEY' ||
+              voucherMeta.trangThai !== 'CHUA_DIEN_RA'
+            "
             :class="{ error: errors.giaTriToiDa }"
-            @blur="validateGiaTriToiDa"
           />
           <small v-if="errors.giaTriToiDa" class="error-text">
             {{ errors.giaTriToiDa }}
           </small>
         </div>
 
-        <!-- HÀNG 4: ĐIỀU KIỆN + SỐ LƯỢNG -->
+        <!-- ===== HÀNG 4 ===== -->
         <div class="form-group">
           <label> Điều kiện đơn hàng <span class="required">*</span> </label>
           <input
             type="number"
             v-model.number="form.dieuKienDonHang"
             :class="{ error: errors.dieuKienDonHang }"
-            @blur="validateDieuKien"
           />
           <small v-if="errors.dieuKienDonHang" class="error-text">
             {{ errors.dieuKienDonHang }}
@@ -114,20 +111,31 @@
                 ? selectedCustomerIds.length
                 : form.soLuong
             "
-            :disabled="form.kieuApDung === 'PERSONAL'"
+            :disabled="
+              form.kieuApDung === 'PERSONAL' ||
+              voucherMeta.trangThai !== 'CHUA_DIEN_RA'
+            "
             :class="{ error: errors.soLuong }"
-            @input="form.soLuong = Math.floor($event.target.valueAsNumber)"
-            @blur="validateSoLuong"
+            @input="
+              form.soLuong = isNaN($event.target.valueAsNumber)
+                ? null
+                : Math.floor($event.target.valueAsNumber)
+            "
           />
           <small v-if="errors.soLuong" class="error-text">
             {{ errors.soLuong }}
           </small>
         </div>
 
-        <!-- HÀNG 5 -->
+        <!-- ===== HÀNG 5 ===== -->
         <div class="form-group">
           <label> Ngày bắt đầu <span class="required">*</span> </label>
-          <input type="date" v-model="form.ngayBatDau" @blur="validateNgay" />
+          <input
+            type="date"
+            v-model="form.ngayBatDau"
+            :disabled="voucherMeta.trangThai === 'DANG_DIEN_RA'"
+            :class="{ error: errors.ngayBatDau }"
+          />
           <small v-if="errors.ngayBatDau" class="error-text">
             {{ errors.ngayBatDau }}
           </small>
@@ -135,7 +143,11 @@
 
         <div class="form-group">
           <label> Ngày kết thúc <span class="required">*</span> </label>
-          <input type="date" v-model="form.ngayKetThuc" @blur="validateNgay" />
+          <input
+            type="date"
+            v-model="form.ngayKetThuc"
+            :class="{ error: errors.ngayKetThuc }"
+          />
           <small v-if="errors.ngayKetThuc" class="error-text">
             {{ errors.ngayKetThuc }}
           </small>
@@ -144,11 +156,7 @@
 
       <div class="form-actions">
         <button class="btn-cancel" @click="back">Hủy</button>
-        <button
-          class="btn-save"
-          @click="openConfirm"
-          :disabled="loading || showModal"
-        >
+        <button class="btn-save" @click="openConfirm" :disabled="loading">
           <span v-if="!loading">Lưu</span>
           <span v-else>Đang lưu...</span>
         </button>
@@ -164,7 +172,7 @@
           <label>Tìm kiếm khách hàng</label>
           <input
             class="toolbar-input"
-            placeholder="Nhập tên hoặc email khách hàng"
+            placeholder="Nhập tên hoặc email"
             v-model="customerKeyword"
           />
         </div>
@@ -207,12 +215,12 @@
         </thead>
 
         <tbody>
-          <tr v-for="(c, i) in pagedCustomers" :key="c.id">
+          <tr v-for="(c, i) in pagedCustomers" :key="c.idKh">
             <td>
               <label class="custom-check">
                 <input
                   type="checkbox"
-                  :value="c.id"
+                  :value="c.idKh"
                   v-model="selectedCustomerIds"
                 />
                 <span class="check-ui"></span>
@@ -224,8 +232,8 @@
             <td>{{ c.tenKhachHang }}</td>
             <td>{{ c.email }}</td>
             <td>{{ formatDateVN(c.ngaySinh) }}</td>
-            <td>{{ c.soDonThang ?? 0 }}</td>
-            <td>{{ formatMoney(c.chiTieuThang) }}</td>
+            <td>{{ c.tongDonHang ?? 0 }}</td>
+            <td>{{ formatMoney(c.tongChiTieu) }}</td>
             <td>{{ formatDateVN(c.lanMuaGanNhat) || "Chưa mua" }}</td>
           </tr>
         </tbody>
@@ -264,7 +272,7 @@
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-box">
         <h4>Xác nhận</h4>
-        <p>Bạn có chắc muốn thêm phiếu giảm giá này?</p>
+        <p>Bạn có chắc muốn cập nhật phiếu giảm giá này?</p>
 
         <div class="modal-actions">
           <button class="btn-cancel" @click="showModal = false">Hủy</button>
@@ -275,12 +283,15 @@
       </div>
     </div>
 
-    <div v-if="toast.show" :class="['toast', toast.type]">
-      <span class="toast-icon"></span>
-      <span class="toast-text">{{ toast.message }}</span>
+    <div class="toast-container">
+      <div v-for="t in toasts" :key="t.id" :class="['toast', t.type]">
+        <span class="toast-icon">
+          {{ t.type === "success" ? "✔" : "✖" }}
+        </span>
+        <span class="toast-text">{{ t.message }}</span>
+      </div>
     </div>
   </div>
-
   <div v-if="loading" class="loading-overlay">
     <div class="spinner"></div>
   </div>
@@ -288,19 +299,15 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
+const id = route.params.id;
+let originalTenPgg = "";
 
 const selectedCustomerIds = ref([]);
-const loading = ref(false);
-
-const filter = reactive({
-  minSpend: null,
-});
-
-const sortBy = ref("");
 
 const form = reactive({
   maPgg: "",
@@ -327,39 +334,36 @@ const errors = reactive({
 
 const customers = ref([]);
 const customerKeyword = ref("");
-
+const sortBy = ref("");
 const showModal = ref(false);
+const loading = ref(false);
 
-const toast = reactive({
-  show: false,
-  message: "",
-  type: "success",
-});
+const toasts = ref([]);
+let toastId = 0;
 
 const showToast = (message, type = "success") => {
-  toast.message = message;
-  toast.type = type;
-  toast.show = true;
+  const id = toastId++;
+
+  toasts.value.push({
+    id,
+    message,
+    type,
+  });
 
   setTimeout(() => {
-    toast.show = false;
+    toasts.value = toasts.value.filter((t) => t.id !== id);
   }, 3000);
 };
 
-const isAllCustomerChecked = computed(() => {
-  return (
-    customers.value.length > 0 &&
-    selectedCustomerIds.value.length === customers.value.length
-  );
-});
-
-const toggleSelectAllCustomers = (e) => {
-  if (e.target.checked) {
-    selectedCustomerIds.value = customers.value.map((c) => c.id);
-  } else {
-    selectedCustomerIds.value = [];
-  }
-};
+watch(
+  () => form.loaiGiam,
+  (v) => {
+    if (v === "MONEY") {
+      form.giaTriToiDa = null;
+      errors.giaTriToiDa = "";
+    }
+  },
+);
 
 watch(
   () => form.kieuApDung,
@@ -367,16 +371,6 @@ watch(
     if (v === "ALL") {
       selectedCustomerIds.value = [];
     }
-  },
-);
-
-watch(
-  () => form.loaiGiam,
-  () => {
-    form.giaTri = null;
-    form.giaTriToiDa = null;
-    errors.giaTri = "";
-    errors.giaTriToiDa = "";
   },
 );
 
@@ -390,39 +384,40 @@ watch(
   },
 );
 
-const handleBlurTen = async () => {
-  const ok = validateTenPgg();
-  if (!ok) return;
-  await checkTenTrung();
-};
+const isAllCustomerChecked = computed(() => {
+  if (pagedCustomers.value.length === 0) return false;
+  return pagedCustomers.value.every((c) =>
+    selectedCustomerIds.value.includes(c.idKh),
+  );
+});
 
-const validateTenPgg = () => {
-  errors.tenPgg = "";
+const toggleSelectAllCustomers = (e) => {
+  const ids = pagedCustomers.value.map((c) => c.idKh);
 
-  if (!form.tenPgg || !form.tenPgg.trim()) {
-    errors.tenPgg = "Tên phiếu giảm giá không được để trống";
-    return false;
+  if (e.target.checked) {
+    selectedCustomerIds.value = Array.from(
+      new Set([...selectedCustomerIds.value, ...ids]),
+    );
+  } else {
+    selectedCustomerIds.value = selectedCustomerIds.value.filter(
+      (id) => !ids.includes(id),
+    );
   }
-
-  if (form.tenPgg.trim().length < 3) {
-    errors.tenPgg = "Tên phải ít nhất 3 ký tự";
-    return false;
-  }
-
-  if (form.tenPgg.trim().length > 100) {
-    errors.tenPgg = "Tên tối đa 100 ký tự";
-    return false;
-  }
-
-  return true;
 };
 
 const checkTenTrung = async () => {
+  if (form.tenPgg.trim() === originalTenPgg.trim()) {
+    return true;
+  }
+
   try {
     const res = await axios.get(
       "http://localhost:8080/admin/voucher/check-name",
       {
-        params: { ten: form.tenPgg.trim() },
+        params: {
+          ten: form.tenPgg.trim(),
+          id: id,
+        },
       },
     );
 
@@ -433,157 +428,171 @@ const checkTenTrung = async () => {
 
     return true;
   } catch {
-    errors.tenPgg = "Không kiểm tra được tên phiếu giảm giá";
+    showToast("Không kiểm tra được tên phiếu giảm giá", "error");
     return false;
   }
 };
 
-const validateGiaTri = () => {
-  errors.giaTri = "";
+const validateForm = () => {
+  let valid = true;
+  Object.keys(errors).forEach((k) => (errors[k] = ""));
+
+  if (voucherMeta.trangThai === "DA_KET_THUC") {
+    showToast("Voucher đã kết thúc, không thể chỉnh sửa", "error");
+    return false;
+  }
+
+  if (!form.tenPgg || !form.tenPgg.trim()) {
+    errors.tenPgg = "Tên phiếu giảm giá không được để trống";
+    valid = false;
+  } else if (form.tenPgg.trim().length < 3) {
+    errors.tenPgg = "Tên phải ít nhất 3 ký tự";
+    valid = false;
+  } else if (form.tenPgg.trim().length > 100) {
+    errors.tenPgg = "Tên tối đa 100 ký tự";
+    valid = false;
+  }
 
   if (form.giaTri === null || form.giaTri <= 0) {
     errors.giaTri = "Giá trị giảm phải lớn hơn 0";
-    return false;
+    valid = false;
   }
-
-  if (form.loaiGiam === "PERCENT" && form.giaTri > 100) {
-    errors.giaTri = "Giảm % tối đa là 100";
-    return false;
-  }
-
-  if (form.loaiGiam === "MONEY" && form.giaTri < 1000) {
-    errors.giaTri = "Giảm tiền tối thiểu 1.000đ";
-    return false;
-  }
-
-  return true;
-};
-
-const validateGiaTriToiDa = () => {
-  errors.giaTriToiDa = "";
 
   if (form.loaiGiam === "PERCENT") {
+    if (form.giaTri > 100) {
+      errors.giaTri = "Giảm % tối đa là 100";
+      valid = false;
+    }
+
     if (form.giaTriToiDa === null || form.giaTriToiDa <= 0) {
       errors.giaTriToiDa = "Giá trị tối đa phải lớn hơn 0";
-      return false;
+      valid = false;
+    }
+
+    if (form.giaTriToiDa > form.dieuKienDonHang) {
+      errors.giaTriToiDa =
+        "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
+      valid = false;
     }
   }
 
-  return true;
-};
+  if (form.loaiGiam === "MONEY") {
+    if (voucherMeta.trangThai === "CHUA_DIEN_RA" && form.giaTri < 1000) {
+      errors.giaTri = "Giảm tiền tối thiểu 1.000đ";
+      valid = false;
+    }
 
-const validateDieuKien = () => {
-  errors.dieuKienDonHang = "";
+    if (form.dieuKienDonHang < form.giaTri) {
+      errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
+      valid = false;
+    }
+  }
 
   if (form.dieuKienDonHang === null || form.dieuKienDonHang <= 0) {
     errors.dieuKienDonHang = "Điều kiện đơn hàng phải lớn hơn 0";
-    return false;
+    valid = false;
   }
-
-  if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
-    errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
-    return false;
-  }
-
-  return true;
-};
-
-const validateNgay = () => {
-  errors.ngayBatDau = "";
-  errors.ngayKetThuc = "";
-
-  if (!form.ngayBatDau) {
-    errors.ngayBatDau = "Vui lòng chọn ngày bắt đầu";
-    return false;
-  }
-
-  if (!form.ngayKetThuc) {
-    errors.ngayKetThuc = "Vui lòng chọn ngày kết thúc";
-    return false;
-  }
-
-  const start = new Date(form.ngayBatDau);
-  const end = new Date(form.ngayKetThuc);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (start < today) {
+  let startDate = null;
+  let endDate = null;
+
+  if (form.ngayBatDau) {
+    startDate = new Date(form.ngayBatDau);
+    startDate.setHours(0, 0, 0, 0);
+  }
+
+  if (form.ngayKetThuc) {
+    endDate = new Date(form.ngayKetThuc);
+    endDate.setHours(23, 59, 59, 999);
+  }
+
+  if (!form.ngayBatDau) {
+    errors.ngayBatDau = "Vui lòng chọn ngày bắt đầu";
+    valid = false;
+  } else if (voucherMeta.trangThai === "CHUA_DIEN_RA" && startDate < today) {
     errors.ngayBatDau = "Ngày bắt đầu không được nhỏ hơn hôm nay";
-    return false;
+    valid = false;
   }
 
-  if (end <= start) {
+  if (voucherMeta.trangThai === "DANG_DIEN_RA" && endDate < today) {
+    errors.ngayKetThuc = "Ngày kết thúc không được nhỏ hơn hôm nay";
+    valid = false;
+  }
+
+  if (!form.ngayKetThuc) {
+    errors.ngayKetThuc = "Vui lòng chọn ngày kết thúc";
+    valid = false;
+  } else if (endDate <= startDate) {
     errors.ngayKetThuc = "Ngày kết thúc phải sau ngày bắt đầu";
+    valid = false;
+  }
+
+  if (form.kieuApDung === "ALL" && voucherMeta.soLuongDaSuDung > 0) {
+    showToast(
+      "Không thể chuyển sang áp dụng cho tất cả khi voucher đã được sử dụng",
+      "error",
+    );
     return false;
   }
 
-  return true;
-};
-
-const validateSoLuong = () => {
-  errors.soLuong = "";
-
-  if (form.kieuApDung === "PERSONAL") {
-    return true;
-  }
-
-  if (form.soLuong === null || form.soLuong <= 0) {
-    errors.soLuong = "Số lượng phải lớn hơn 0";
-    return false;
-  }
-
-  if (!Number.isInteger(form.soLuong)) {
-    errors.soLuong = "Số lượng phải là số nguyên";
-    return false;
-  }
-
-  return true;
-};
-
-const validateForm = async () => {
-  let valid = true;
-
-  if (!validateTenPgg()) valid = false;
-  if (!validateGiaTri()) valid = false;
-  if (!validateGiaTriToiDa()) valid = false;
-  if (!validateDieuKien()) valid = false;
-  if (!validateNgay()) valid = false;
-  if (!validateSoLuong()) valid = false;
-
-  // if (valid) {
-  //   const ok = await checkTenTrung();
-  //   if (!ok) valid = false;
-  // }
-
-  if (form.kieuApDung === "PERSONAL") {
-    if (selectedCustomerIds.value.length === 0) {
-      showToast("Vui lòng chọn ít nhất 1 khách hàng", "error");
+  if (form.kieuApDung === "ALL" && voucherMeta.trangThai === "CHUA_DIEN_RA") {
+    if (form.soLuong === null || form.soLuong <= 0) {
+      errors.soLuong = "Số lượng phải lớn hơn 0";
       valid = false;
     }
 
-    // if (selectedCustomerIds.value.length > form.soLuong) {
-    //   showToast("Số khách hàng không được vượt quá số lượng voucher", "error");
-    //   valid = false;
-    // }
+    if (!Number.isInteger(form.soLuong)) {
+      errors.soLuong = "Số lượng phải là số nguyên";
+      valid = false;
+    }
 
-    // if (selectedCustomerIds.value.length !== form.soLuong) {
-    //   showToast("Số lượng phải bằng số khách hàng được chọn", "error");
-    //   valid = false;
-    // }
+    if (form.soLuong < voucherMeta.soLuongDaSuDung) {
+      errors.soLuong = "Số lượng không được nhỏ hơn số đã sử dụng";
+      valid = false;
+    }
   }
 
-  if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
-    errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
-    valid = false;
+  if (form.kieuApDung === "PERSONAL") {
+    if (selectedCustomerIds.value.length === 0) {
+      showToast("Vui lòng chọn ít nhất một khách hàng", "error");
+      valid = false;
+    }
+
+    if (selectedCustomerIds.value.length < voucherMeta.soLuongDaSuDung) {
+      showToast("Không thể giảm số khách hàng đã sử dụng voucher", "error");
+      valid = false;
+    }
+
+    form.soLuong = selectedCustomerIds.value.length;
   }
 
   return valid;
 };
 
+const cannotRemoveIds = ref([]);
+
+watch(
+  selectedCustomerIds,
+  (newVal, oldVal) => {
+    const removed = cannotRemoveIds.value.filter((id) => !newVal.includes(id));
+
+    if (removed.length) {
+      selectedCustomerIds.value = Array.from(new Set([...newVal, ...removed]));
+      showToast("Không thể bỏ khách hàng đã sử dụng voucher", "error");
+    }
+  },
+  { deep: true },
+);
+
 const openConfirm = async () => {
-  const ok = await validateForm();
+  if (!validateForm()) return;
+
+  const ok = await checkTenTrung();
   if (!ok) return;
+
   showModal.value = true;
 };
 
@@ -593,18 +602,25 @@ const submit = async () => {
 
   const payload = {
     ...form,
+    soLuong:
+      form.kieuApDung === "PERSONAL"
+        ? selectedCustomerIds.value.length
+        : form.soLuong,
     khachHangIds:
       form.kieuApDung === "PERSONAL" ? selectedCustomerIds.value : [],
   };
 
   try {
-    await axios.post("http://localhost:8080/admin/voucher", payload);
+    await axios.put(`http://localhost:8080/admin/voucher/${id}`, payload);
+
     router.push({
       path: "/admin/voucher",
-      query: { toast: "create-success" },
+      query: {
+        toast: "update-success",
+      },
     });
   } catch (e) {
-    showToast("Thêm phiếu giảm giá thất bại", "error");
+    showToast("Cập nhật phiếu giảm giá thất bại", "error");
   } finally {
     loading.value = false;
   }
@@ -622,44 +638,32 @@ const filteredCustomers = computed(() => {
     );
   }
 
-  if (filter.minSpend !== null) {
-    list = list.filter((c) => (c.chiTieuThang ?? 0) >= filter.minSpend);
-  }
-
   if (sortBy.value === "order-desc") {
-    list.sort((a, b) => (b.soDonThang ?? 0) - (a.soDonThang ?? 0));
+    list.sort((a, b) => (b.tongDonHang ?? 0) - (a.tongDonHang ?? 0));
   }
 
   if (sortBy.value === "order-asc") {
-    list.sort((a, b) => (a.soDonThang ?? 0) - (b.soDonThang ?? 0));
+    list.sort((a, b) => (a.tongDonHang ?? 0) - (b.tongDonHang ?? 0));
   }
 
   if (sortBy.value === "spend-desc") {
-    list.sort((a, b) => (b.chiTieuThang ?? 0) - (a.chiTieuThang ?? 0));
+    list.sort((a, b) => (b.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
   }
 
   if (sortBy.value === "spend-asc") {
-    list.sort((a, b) => (a.chiTieuThang ?? 0) - (b.chiTieuThang ?? 0));
+    list.sort((a, b) => (a.tongChiTieu ?? 0) - (b.tongChiTieu ?? 0));
   }
 
   return list;
 });
 
-const suggestVip = () => {
-  const vipList = customers.value
-    .filter((c) => (c.chiTieuThang ?? 0) >= 5000000 || (c.soDonThang ?? 0) >= 5)
-    .map((c) => c.id);
-
-  if (vipList.length === 0) {
-    showToast("Không có khách VIP trong tháng", "error");
-    return;
+watch(filteredCustomers, () => {
+  if (customerCurrentPage.value > customerTotalPages.value) {
+    customerCurrentPage.value = 1;
   }
+});
 
-  selectedCustomerIds.value = vipList;
-  showToast(`Đã chọn ${vipList.length} khách VIP`);
-};
-
-const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "");
+const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "-");
 
 const formatMoney = (v) => {
   if (!v) return "0 đ";
@@ -719,13 +723,83 @@ watch([customerKeyword, sortBy], () => {
   customerCurrentPage.value = 1;
 });
 
+const voucherMeta = reactive({
+  trangThai: "",
+  soLuongDaSuDung: 0,
+});
+
+const suggestVip = () => {
+  const vipList = customers.value
+    .filter(
+      (c) => (c.tongDonHang ?? 0) >= 5 || (c.tongChiTieu ?? 0) >= 5_000_000,
+    )
+    .map((c) => c.idKh);
+
+  if (vipList.length === 0) {
+    showToast("Không có khách VIP theo tiêu chí hiện tại", "error");
+    return;
+  }
+
+  // Không cho bỏ khách đã dùng voucher
+  const finalIds = Array.from(new Set([...vipList, ...cannotRemoveIds.value]));
+
+  selectedCustomerIds.value = Array.from(
+    new Set([...selectedCustomerIds.value, ...finalIds]),
+  );
+
+  showToast(`Đã chọn ${finalIds.length} khách VIP`);
+};
+
 onMounted(async () => {
-  const res = await axios.get("http://localhost:8080/admin/voucher/next-code");
-  form.maPgg = res.data;
-  const cusRes = await axios.get("http://localhost:8080/api/khach-hang", {
-    params: { page: 0, size: 100 },
+  const res = await axios.get(`http://localhost:8080/admin/voucher/${id}`);
+
+  const {
+    maPgg,
+    tenPgg,
+    kieuApDung,
+    loaiGiam,
+    giaTri,
+    giaTriToiDa,
+    dieuKienDonHang,
+    ngayBatDau,
+    ngayKetThuc,
+    soLuong,
+    trangThai,
+    soLuongDaSuDung,
+  } = res.data;
+
+  Object.assign(form, {
+    maPgg,
+    tenPgg,
+    kieuApDung,
+    loaiGiam,
+    giaTri,
+    giaTriToiDa,
+    dieuKienDonHang,
+    ngayBatDau,
+    ngayKetThuc,
+    soLuong,
   });
-  customers.value = cusRes.data.content;
+
+  originalTenPgg = tenPgg;
+
+  if (loaiGiam === "MONEY") {
+    form.giaTriToiDa = null;
+  }
+
+  voucherMeta.trangThai = trangThai;
+  voucherMeta.soLuongDaSuDung = soLuongDaSuDung;
+
+  if (res.data.khachHangIds) {
+    selectedCustomerIds.value = [...res.data.khachHangIds];
+  }
+
+  const cusRes = await axios.get(
+    "http://localhost:8080/api/admin/khach-hang-thong-ke",
+  );
+  customers.value = cusRes.data;
+
+  cannotRemoveIds.value = res.data.khachHangDaSuDungIds || [];
 });
 
 const back = () => router.push("/admin/voucher");
@@ -733,10 +807,12 @@ const back = () => router.push("/admin/voucher");
 
 <style scoped>
 .page-wrapper {
+  padding: 25px;
   background: #f5f6f8;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
 .form-container,
@@ -765,7 +841,7 @@ const back = () => router.push("/admin/voucher");
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px 40px;
+  gap: 18px 25px;
 }
 
 .form-group {
@@ -775,7 +851,7 @@ const back = () => router.push("/admin/voucher");
 
 .form-group label {
   font-size: 14px;
-  font-weight: 480;
+  font-weight: 500;
   margin-bottom: 6px;
 }
 
@@ -794,7 +870,7 @@ const back = () => router.push("/admin/voucher");
 .radio-group {
   display: flex;
   gap: 20px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .radio-item {
@@ -837,7 +913,7 @@ const back = () => router.push("/admin/voucher");
 .input-suffix input {
   width: 100%;
   height: 45px;
-  padding-right: 44px;
+  padding: 8px 44px 8px 12px;
   box-sizing: border-box;
 }
 
@@ -890,7 +966,7 @@ const back = () => router.push("/admin/voucher");
 }
 
 .search-input {
-  width: 97%;
+  width: 100%;
   height: 42px;
   padding: 10px 14px;
   font-size: 14px;
@@ -901,12 +977,7 @@ const back = () => router.push("/admin/voucher");
 
 .customer-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e0e0e0;
-  background: #fff;
+  border-collapse: collapse;
 }
 
 .customer-title {
@@ -917,9 +988,63 @@ const back = () => router.push("/admin/voucher");
   color: #63391f;
 }
 
+.customer-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.toolbar-input {
+  height: 42px;
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.toolbar-input:focus {
+  outline: none;
+  border-color: #5a2d0c;
+}
+
+.toolbar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolbar-item label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.search-flex {
+  flex: 1;
+}
+
+.btn-vip {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-vip:hover {
+  background: #d97706;
+}
+
 .customer-table th {
-  height: 38px;
-  padding: 6px 10px;
+  height: 44px;
+  padding: 10px 12px;
   font-size: 14px;
   font-weight: 600;
   background: #f3f3f3;
@@ -934,41 +1059,13 @@ const back = () => router.push("/admin/voucher");
   border-bottom: 1px solid #eee;
 }
 
-.customer-table th,
-.customer-table td {
-  white-space: nowrap;
-}
-
-.customer-table thead th:first-child {
-  border-top-left-radius: 8px;
-}
-
-.customer-table thead th:last-child {
-  border-top-right-radius: 8px;
-}
-
-.customer-table th:first-child,
-.customer-table td:first-child {
-  width: 40px;
-  text-align: center;
-}
-
 .customer-table tbody tr:hover {
   background: #fafafa;
-}
-
-.customer-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 8px;
-}
-
-.customer-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 8px;
 }
 
 .customer-table input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  transform: scale(1.1);
 }
 
 /* ===== CUSTOM CHECKBOX GIỐNG DGG ===== */
@@ -1107,10 +1204,17 @@ const back = () => router.push("/admin/voucher");
   margin-top: 20px;
 }
 
-.toast {
+.toast-container {
   position: fixed;
   top: 20px;
   right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2000;
+}
+
+.toast {
   min-width: 320px;
   padding: 14px 16px;
   border-radius: 6px;
@@ -1118,9 +1222,17 @@ const back = () => router.push("/admin/voucher");
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 2000;
-  animation: slideIn 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  animation:
+    slideIn 0.35s ease,
+    fadeOut 0.35s ease 2.7s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
 }
 
 .toast.success {
@@ -1184,60 +1296,6 @@ const back = () => router.push("/admin/voucher");
   color: #e53935;
   margin-left: 2px;
   font-weight: 600;
-}
-
-.customer-toolbar {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.toolbar-input {
-  height: 42px;
-  padding: 10px 14px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-}
-
-.toolbar-input:focus {
-  outline: none;
-  border-color: #5a2d0c;
-}
-
-.toolbar-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.toolbar-item label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.search-flex {
-  flex: 1;
-}
-
-.btn-vip {
-  height: 42px;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 500;
-  background: #f59e0b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-vip:hover {
-  background: #d97706;
 }
 
 @media (max-width: 1200px) {

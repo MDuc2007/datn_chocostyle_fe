@@ -57,7 +57,8 @@
               <option value="">Tất cả trạng thái</option>
               <option :value="1">Đang diễn ra</option>
               <option :value="2">Sắp diễn ra</option>
-              <option :value="0">Ngừng hoạt động</option>
+              <option :value="-1">Ngừng hoạt động</option>
+              <option :value="0">Đã kết thúc</option>
             </select>
           </div>
 
@@ -130,12 +131,6 @@
 
             <td>
               <div class="action-cell">
-                <span class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
-                  <span class="icon-edit" @click="goEdit(item.id)">
-                    <img src="/src/assets/icon/edit.svg" alt="" />
-                  </span>
-                </span>
-
                 <span class="tooltip-wrapper" data-tooltip="Đổi trạng thái">
                   <label class="switch">
                     <input
@@ -146,9 +141,14 @@
                       :disabled="calcTrangThai(item) === 0"
                       @click.prevent="toggleStatus(item)"
                     />
-
                     <span class="slider"></span>
                   </label>
+                </span>
+
+                <span class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                  <span class="icon-edit" @click="goEdit(item)">
+                    <img src="/src/assets/icon/edit.svg" alt="" />
+                  </span>
                 </span>
               </div>
             </td>
@@ -195,9 +195,9 @@
 
       <p>
         {{
-          pendingChecked
-            ? "Kích hoạt lại phiếu giảm giá này?"
-            : "Ngừng hoạt động phiếu giảm giá này?"
+          willDeactivate
+            ? "Ngừng hoạt động phiếu giảm giá này?"
+            : "Kích hoạt lại phiếu giảm giá này?"
         }}
       </p>
 
@@ -247,8 +247,15 @@ const goCreate = () => {
   router.push("/admin/voucher/create");
 };
 
-const goEdit = (id) => {
-  router.push(`/admin/voucher/update/${id}`);
+const goEdit = (item) => {
+  const trangThai = calcTrangThai(item);
+
+  if (trangThai === 0) {
+    showToast("Không thể cập nhật phiếu giảm giá đã hết hạn", "error");
+    return;
+  }
+
+  router.push(`/admin/voucher/update/${item.id}`);
 };
 
 const kieuApDungText = (v) => (v === "ALL" ? "Tất cả" : "Cá nhân");
@@ -264,12 +271,41 @@ const formatDateVN = (d) => {
 const formatMoney = (v) => (v ? v.toLocaleString("vi-VN") + " ₫" : "0 ₫");
 
 const filteredList = computed(() => {
-  if (!keyword.value) return list.value;
-  const kw = keyword.value.toLowerCase();
-  return list.value.filter(
-    (i) =>
-      i.maPgg.toLowerCase().includes(kw) || i.tenPgg.toLowerCase().includes(kw),
-  );
+  let data = [...list.value];
+
+  if (keyword.value) {
+    const kw = keyword.value.toLowerCase();
+    data = data.filter(
+      (i) =>
+        i.maPgg.toLowerCase().includes(kw) ||
+        i.tenPgg.toLowerCase().includes(kw),
+    );
+  }
+
+  if (filter.loaiGiam) {
+    data = data.filter((i) => i.loaiGiam === filter.loaiGiam);
+  }
+
+  if (filter.kieuApDung) {
+    data = data.filter((i) => i.kieuApDung === filter.kieuApDung);
+  }
+
+  if (filter.trangThai !== "") {
+    data = data.filter((i) => calcTrangThai(i) === filter.trangThai);
+  }
+
+  if (filter.fromDate) {
+    const from = new Date(filter.fromDate);
+    data = data.filter((i) => new Date(i.ngayBatDau) >= from);
+  }
+
+  if (filter.toDate) {
+    const to = new Date(filter.toDate);
+    to.setHours(23, 59, 59, 999);
+    data = data.filter((i) => new Date(i.ngayKetThuc) <= to);
+  }
+
+  return data;
 });
 
 const totalPages = computed(() =>
@@ -321,23 +357,20 @@ const nextPage = () => {
 };
 
 watch(
-  () => ({ ...filter }),
+  () => [filter.fromDate, filter.toDate],
   () => {
-    currentPage.value = 1;
-    fetchFilter();
+    if (filter.fromDate && filter.toDate && filter.fromDate > filter.toDate) {
+      showToast("Ngày bắt đầu không được lớn hơn ngày kết thúc", "error");
+      filter.toDate = "";
+    }
   },
-  { deep: true },
 );
 
 watch(keyword, () => {
   currentPage.value = 1;
 });
 
-const mapData = (data) =>
-  data.map((i) => ({
-    ...i,
-    _checked: i.trangThai !== 0,
-  }));
+const mapData = (data) => data;
 
 const load = async () => {
   const res = await axios.get(`${host}/admin/voucher`);
@@ -345,6 +378,8 @@ const load = async () => {
 };
 
 const fetchFilter = async () => {
+  currentPage.value = 1;
+
   const res = await axios.get(`${host}/admin/voucher/filter`, {
     params: {
       loaiGiam: filter.loaiGiam || null,
@@ -354,15 +389,18 @@ const fetchFilter = async () => {
       trangThai: filter.trangThai !== "" ? filter.trangThai : null,
     },
   });
+
   list.value = mapData(res.data);
 };
 
 const resetFilter = () => {
+  keyword.value = "";
   filter.loaiGiam = "";
   filter.kieuApDung = "";
   filter.fromDate = "";
   filter.toDate = "";
   filter.trangThai = "";
+  currentPage.value = 1;
   load();
 };
 
@@ -370,15 +408,22 @@ const isExpired = (item) => {
   return new Date() > new Date(item.ngayKetThuc);
 };
 
+const willDeactivate = ref(false);
+
 const toggleStatus = (item) => {
-  if (calcTrangThai(item) === 0) return;
+  if (calcTrangThai(item) === 0) {
+    showToast("Phiếu giảm giá đã kết thúc, không thể thay đổi", "error");
+    return;
+  }
 
   selectedItem.value = item;
-  pendingChecked.value = calcTrangThai(item) === -1;
+  willDeactivate.value = item.trangThai === 1;
   showStatusModal.value = true;
 };
 
 const confirmToggle = async () => {
+  if (!selectedItem.value) return;
+
   try {
     await axios.put(`${host}/admin/voucher/${selectedItem.value.id}/toggle`);
 
@@ -386,23 +431,19 @@ const confirmToggle = async () => {
     selectedItem.value = null;
 
     load();
-
     showToast("Cập nhật trạng thái thành công", "success");
   } catch (e) {
-    selectedItem.value._checked = !pendingChecked.value;
     showToast(e.response?.data || "Không thể thay đổi trạng thái", "error");
   }
 };
 
 const cancelToggle = () => {
-  selectedItem.value._checked = !pendingChecked.value;
   showStatusModal.value = false;
   selectedItem.value = null;
 };
 
 const showStatusModal = ref(false);
 const selectedItem = ref(null);
-const pendingChecked = ref(false);
 
 const toasts = ref([]);
 
@@ -427,12 +468,10 @@ const calcTrangThai = (item) => {
   const start = new Date(item.ngayBatDau);
   const end = new Date(item.ngayKetThuc);
 
-  // Hết hạn thì chết hẳn
+  end.setHours(23, 59, 59, 999);
+
   if (now > end) return 0;
-
-  // Bị tắt thủ công
   if (item.trangThai === 0) return -1;
-
   if (now < start) return 2;
   return 1;
 };
@@ -462,6 +501,20 @@ const statusClass = (item) => {
 };
 
 const formatDate = (d) => (d ? d.substring(0, 10) : "");
+
+let filterTimeout;
+
+watch(
+  () => ({ ...filter }),
+  () => {
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(() => {
+      currentPage.value = 1;
+      fetchFilter();
+    }, 300);
+  },
+  { deep: true },
+);
 
 onMounted(() => {
   load();
