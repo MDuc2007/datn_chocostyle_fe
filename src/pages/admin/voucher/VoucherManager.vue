@@ -189,24 +189,65 @@
       </div>
     </div>
   </div>
-  <div v-if="showStatusModal" class="modal-mask">
-    <div class="modal-box">
-      <h3>Xác nhận</h3>
 
-      <p>
-        {{
-          willDeactivate
-            ? "Ngừng hoạt động phiếu giảm giá này?"
-            : "Kích hoạt lại phiếu giảm giá này?"
-        }}
-      </p>
+  <transition name="fade-modal">
+    <div
+      v-if="showStatusModal"
+      class="modal-confirm"
+      @click.self="cancelToggle"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <!-- Nếu là ngừng hoạt động thì màu cam -->
+          <svg
+            v-if="willDeactivate"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="40"
+            height="40"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 5.5v6a.75.75 0 01-1.5 0v-6a.75.75 0 011.5 0zm0 9a.75.75 0 10-1.5 0 .75.75 0 001.5 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
 
-      <div class="modal-actions">
-        <button class="btn-cancel" @click="cancelToggle">Hủy</button>
-        <button class="btn-confirm" @click="confirmToggle">Xác nhận</button>
+          <!-- Nếu kích hoạt lại thì tick -->
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="40"
+            height="40"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm13.28-2.47a.75.75 0 10-1.06-1.06l-3.72 3.72-1.47-1.47a.75.75 0 10-1.06 1.06l2 2a.75.75 0 001.06 0l4.25-4.25z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+
+        <h3 class="confirm-title">Xác nhận</h3>
+
+        <p class="confirm-desc">
+          {{
+            willDeactivate
+              ? "Ngừng hoạt động phiếu giảm giá này?"
+              : "Kích hoạt lại phiếu giảm giá này?"
+          }}
+        </p>
+
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="cancelToggle">Hủy</button>
+          <button class="btn-confirm" @click="confirmToggle">Đồng ý</button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 
   <div class="toast-container">
     <div v-for="t in toasts" :key="t.id" :class="['toast', t.type]">
@@ -954,52 +995,6 @@ onMounted(() => {
   text-align: center;
   line-height: 1;
 }
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.modal-box {
-  background: #fff;
-  width: 360px;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.modal-box h3 {
-  margin-bottom: 10px;
-}
-
-.modal-box p {
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.btn-cancel {
-  padding: 6px 14px;
-  border: 1px solid #ccc;
-  background: #f3f3f3;
-  border-radius: 6px;
-}
-
-.btn-confirm {
-  padding: 6px 14px;
-  background: #5a2d0c;
-  color: white;
-  border-radius: 6px;
-}
 
 .toast {
   min-width: 320px;
@@ -1103,5 +1098,113 @@ onMounted(() => {
 .tooltip-wrapper:hover::after,
 .tooltip-wrapper:hover::before {
   opacity: 1;
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

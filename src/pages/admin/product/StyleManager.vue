@@ -92,8 +92,7 @@
                     <input
                       type="checkbox"
                       :checked="item.trangThai === 1"
-                      @change="toggleStatus(item)"
-                      \
+                      @click.prevent="toggleStatus(item)"
                     />
                     <span class="slider"></span>
                   </label>
@@ -151,6 +150,41 @@
       {{ notif.message }}
     </div>
   </div>
+  <transition name="fade-modal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeConfirmModal"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="40"
+            height="40"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeConfirmModal">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -172,26 +206,60 @@ const showNotification = (message, type = "success") => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 3000);
 };
+/* ================== CONFIRM MODAL ================== */
+const modal = ref({
+  show: false,
+  title: "",
+  message: "",
+  action: null,
+  data: null,
+});
 
-async function toggleStatus(item) {
-  const oldStatus = item.trangThai;
-  const newStatus = oldStatus === 1 ? 0 : 1;
-  item.trangThai = newStatus;
+function closeConfirmModal() {
+  modal.value.show = false;
+}
 
-  try {
-    await axios.put(
-      `http://localhost:8080/api/phong-cach-mac/${item.id}/doi-trang-thai`,
-      null,
-      {
-        params: { nguoiCapNhat: "admin" },
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    showNotification("Cập nhật trạng thái thành công", "success");
-  } catch {
-    item.trangThai = oldStatus;
-    showNotification("Lỗi cập nhật trạng thái", "error");
+function toggleStatus(item) {
+  const newStatus = item.trangThai === 1 ? 0 : 1;
+
+  modal.value = {
+    show: true,
+    title: "Xác nhận thay đổi trạng thái",
+    message: `Bạn có chắc muốn ${
+      newStatus === 1 ? "Kích hoạt" : "Ngừng hoạt động"
+    } "${item.name}"?`,
+    action: "TOGGLE_STATUS",
+    data: item,
+  };
+}
+
+async function handleModalConfirm() {
+  if (modal.value.action === "TOGGLE_STATUS") {
+    const item = modal.value.data;
+    const oldStatus = item.trangThai;
+    const newStatus = oldStatus === 1 ? 0 : 1;
+
+    // cập nhật UI trước
+    item.trangThai = newStatus;
+
+    try {
+      await axios.put(
+        `http://localhost:8080/api/phong-cach-mac/${item.id}/doi-trang-thai`,
+        null,
+        {
+          params: { nguoiCapNhat: "admin" },
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      showNotification("Cập nhật trạng thái thành công", "success");
+    } catch {
+      item.trangThai = oldStatus; // rollback nếu lỗi
+      showNotification("Lỗi cập nhật trạng thái", "error");
+    }
   }
+
+  modal.value.show = false;
 }
 
 const handleFilterChange = () => {
@@ -199,9 +267,7 @@ const handleFilterChange = () => {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
-    colors.value = allColors.value.filter(
-      (item) => item.trangThai === status
-    );
+    colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
 };
 
@@ -267,7 +333,7 @@ const addColor = async () => {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     showNotification("Thêm phong cách mặc thành công", "success");
@@ -276,7 +342,7 @@ const addColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Thêm phong cách mặc thất bại",
-      "error"
+      "error",
     );
   }
 };
@@ -303,7 +369,7 @@ const updateColor = async () => {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     showNotification("Cập nhật phong cách mặc thành công", "success");
@@ -312,7 +378,7 @@ const updateColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Cập nhật thất bại",
-      "error"
+      "error",
     );
   }
 };
@@ -321,12 +387,9 @@ const deleteColor = async (item) => {
   if (!confirm(`Bạn có chắc muốn xóa phong cách mặc "${item.name}"?`)) return;
 
   try {
-    await axios.delete(
-      `http://localhost:8080/api/phong-cach-mac/${item.id}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    await axios.delete(`http://localhost:8080/api/phong-cach-mac/${item.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     showNotification("Xóa phong cách mặc thành công", "success");
     fetchColors();
@@ -335,7 +398,6 @@ const deleteColor = async (item) => {
   }
 };
 </script>
-
 
 <style scoped>
 /* ===== HEADER PANEL ===== */
@@ -874,5 +936,113 @@ input:checked + .slider::before {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>
