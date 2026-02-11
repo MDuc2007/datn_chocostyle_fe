@@ -448,20 +448,45 @@
       </div>
     </div>
   </div>
-  <div v-if="showConfirmModal" class="modal-overlay">
-    <div class="modal">
-      <h3>Xác nhận lưu sản phẩm</h3>
+  <transition name="fade-modal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeModalConfirm"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
 
-      <p style="margin: 15px 0; font-size: 14px; color: #444">
-        Bạn có chắc chắn muốn lưu sản phẩm không?
-      </p>
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
 
-      <div class="modal-actions">
-        <button @click="showConfirmModal = false">Huỷ</button>
-        <button class="save-btn" @click="confirmSubmit">Xác nhận</button>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeModalConfirm">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
+
   <div v-if="showQuickAllModal" class="modal-overlay">
     <div class="modal">
       <h3>Thêm nhanh cho tất cả biến thể</h3>
@@ -506,6 +531,13 @@ const quickAllGiaNhap = ref(null);
 const quickAllSoLuong = ref(null);
 
 const showConfirmModal = ref(false);
+const modal = ref({
+  show: false,
+  title: "",
+  message: "",
+  action: null,
+});
+
 const getKichCoName = (id) =>
   kichCoList.value.find((k) => k.id === id)?.tenKichCo || "Size";
 
@@ -560,7 +592,24 @@ const openConfirmModal = () => {
 
 const handleOpenConfirm = () => {
   if (!validateBeforeSubmit()) return;
-  showConfirmModal.value = true;
+
+  modal.value = {
+    show: true,
+    title: "Xác nhận lưu sản phẩm",
+    message: "Bạn có chắc chắn muốn lưu sản phẩm không?",
+    action: "SAVE",
+  };
+};
+
+const closeModalConfirm = () => {
+  modal.value.show = false;
+};
+
+const handleModalConfirm = async () => {
+  if (modal.value.action === "SAVE") {
+    modal.value.show = false;
+    await submit();
+  }
 };
 
 const confirmSubmit = async () => {
@@ -1927,5 +1976,105 @@ textarea {
   color: #e53935;
   margin-left: 2px;
   font-weight: 600;
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.confirm-icon-wrapper svg {
+  display: block;
+  margin: 0;
+}
+
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  flex: 1;
+  height: 42px;
+  transition: 0.2s;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  flex: 1;
+  height: 42px;
+  transition: 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

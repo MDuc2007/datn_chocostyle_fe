@@ -100,7 +100,7 @@
                 <input
                   type="checkbox"
                   :checked="p.trangThai !== 0"
-                  @change="toggleTrangThai(p.id)"
+                  @click.prevent="toggleTrangThai(p.id)"
                 />
 
                 <span class="slider"></span>
@@ -157,6 +157,53 @@
       </div>
     </div>
   </div>
+  <div class="toast-container">
+    <div
+      v-for="notif in notifications"
+      :key="notif.id"
+      class="toast"
+      :class="{ error: notif.type === 'error' }"
+    >
+      {{ notif.message }}
+    </div>
+  </div>
+  <transition name="fade-modal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeConfirmModal"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="40"
+            height="40"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeConfirmModal">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -247,25 +294,49 @@ watch(
 
 onMounted(fetchData);
 
-const toggleTrangThai = async (id: number) => {
+const toggleTrangThai = (id: number) => {
+  modal.show = true;
+  modal.id = id;
+  modal.title = "Xác nhận thay đổi";
+  modal.message = "Bạn có chắc chắn muốn thay đổi trạng thái đợt giảm giá này?";
+};
+const closeConfirmModal = () => {
+  modal.show = false;
+  modal.id = null;
+};
+
+const handleModalConfirm = async () => {
+  if (!modal.id) return;
+
   try {
-    // 1. Gọi API cập nhật
-    await axios.patch(`http://localhost:8080/api/promotions/${id}/toggle`);
+    await axios.patch(
+      `http://localhost:8080/api/promotions/${modal.id}/toggle`,
+    );
 
-    // 2. Tìm và cập nhật ngay lập tức trên giao diện (Optional nhưng giúp giao diện mượt hơn)
-    const index = promotions.value.findIndex((p) => p.id === id);
-    if (index !== -1) {
-      // Nếu đang bật (khác 0) thì set về 0, ngược lại thì tạm set về 1 (fetchData sẽ lấy số chuẩn sau)
-      promotions.value[index].trangThai =
-        promotions.value[index].trangThai === 0 ? 1 : 0;
-    }
-
-    // 3. Load lại dữ liệu chuẩn từ server
+    showNotification("Cập nhật trạng thái thành công");
     await fetchData();
-  } catch (error) {
-    console.error("Lỗi khi toggle:", error);
-    alert("Không thể cập nhật trạng thái!");
+  } catch {
+    showNotification("Cập nhật thất bại", "error");
   }
+
+  closeConfirmModal();
+};
+
+const modal = reactive({
+  show: false,
+  title: "",
+  message: "",
+  id: null as number | null,
+});
+
+const notifications = ref<{ id: number; message: string; type?: string }[]>([]);
+const showNotification = (message: string, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+
+  setTimeout(() => {
+    notifications.value = notifications.value.filter((n) => n.id !== id);
+  }, 2500);
 };
 
 const changePage = (p: number) => {
@@ -288,7 +359,8 @@ const statusText = (s: number) =>
 .header {
   background: #fff;
   border-radius: 20px;
-  border: 1px solid #e5e5e5; /* 👈 viền mỏng */
+  border: 1px solid #e5e5e5;
+  /* 👈 viền mỏng */
   margin-bottom: 12px;
 }
 
@@ -322,6 +394,7 @@ const statusText = (s: number) =>
   left: 10px;
   transform: translateY(-50%);
 }
+
 .search-input {
   width: 100%;
   height: 40px;
@@ -334,7 +407,8 @@ const statusText = (s: number) =>
 /* ===== FILTER ===== */
 .filters {
   display: flex;
-  gap: 12px; /* 👈 GỌN HƠN */
+  gap: 12px;
+  /* 👈 GỌN HƠN */
   align-items: flex-end;
 }
 
@@ -353,7 +427,8 @@ const statusText = (s: number) =>
 
 .filter-item select,
 .filter-item input {
-  height: 40px; /* 👈 BẰNG SEARCH */
+  height: 40px;
+  /* 👈 BẰNG SEARCH */
   padding: 0 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -365,14 +440,18 @@ const statusText = (s: number) =>
 /* ===== ADD ===== */
 .add-btn {
   margin: 0;
-  align-self: flex-end; /* 👈 ép nút xuống cùng hàng */
+  align-self: flex-end;
+  /* 👈 ép nút xuống cùng hàng */
 }
 
 .add-btn button {
-  height: 40px; /* 👈 bằng input */
-  padding: 0 16px; /* ngang vừa tay */
+  height: 40px;
+  /* 👈 bằng input */
+  padding: 0 16px;
+  /* ngang vừa tay */
   border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
+  border-radius: 10px;
+  /* 👈 bo y hệt */
   background: #fff;
   cursor: pointer;
 
@@ -389,6 +468,7 @@ const statusText = (s: number) =>
 .product-page {
   background: transparent;
 }
+
 .product-table thead tr {
   border-bottom: 1.5px solid #e0e0e0;
 }
@@ -397,7 +477,8 @@ const statusText = (s: number) =>
   background: #fff;
   border-radius: 20px;
   padding: 10px;
-  border: 1px solid #e5e5e5; /* 👈 viền nhẹ */
+  border: 1px solid #e5e5e5;
+  /* 👈 viền nhẹ */
 }
 
 .product-table {
@@ -415,6 +496,7 @@ const statusText = (s: number) =>
 
   text-align: center;
 }
+
 .product-table tbody tr {
   border-bottom: 1px solid #ddd;
 }
@@ -427,6 +509,7 @@ const statusText = (s: number) =>
   font-weight: 600;
   border: 1px solid transparent;
 }
+
 /* Đang áp dụng */
 .status.selling {
   color: #2ecc71;
@@ -457,9 +540,11 @@ const statusText = (s: number) =>
   width: 50px;
   height: 24px;
 }
+
 .switch input {
   display: none;
 }
+
 .slider {
   position: absolute;
   inset: 0;
@@ -467,6 +552,7 @@ const statusText = (s: number) =>
   border-radius: 24px;
   transition: 0.3s;
 }
+
 .slider::before {
   content: "";
   position: absolute;
@@ -478,9 +564,11 @@ const statusText = (s: number) =>
   border-radius: 50%;
   transition: 0.3s;
 }
+
 input:checked + .slider {
   background: #63391f;
 }
+
 input:checked + .slider::before {
   transform: translateX(26px);
 }
@@ -491,9 +579,11 @@ input:checked + .slider::before {
   gap: 10px;
   margin: 15px 0;
 }
+
 .pagination button {
   padding: 6px 12px;
 }
+
 .page-btn {
   min-width: 34px;
   height: 34px;
@@ -537,6 +627,7 @@ input:checked + .slider::before {
 .switch input:disabled ~ .slider {
   pointer-events: none;
 }
+
 .nav-btn {
   min-width: 40px;
   height: 40px;
@@ -562,6 +653,7 @@ input:checked + .slider::before {
   opacity: 0.4;
   background: #fff;
 }
+
 /* ===== TOOLTIP ===== */
 .tooltip {
   position: relative;
@@ -580,13 +672,14 @@ input:checked + .slider::before {
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 6px;
-
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-
   transition: 0.2s ease;
 }
+
+Stashed changes
+
 
 /* arrow */
 .tooltip::before {
@@ -595,10 +688,8 @@ input:checked + .slider::before {
   bottom: 115%;
   left: 50%;
   transform: translateX(-50%);
-
   border: 6px solid transparent;
   border-top-color: #333;
-
   opacity: 0;
   transition: 0.2s ease;
 }
@@ -618,7 +709,8 @@ input:checked + .slider::before {
   height: 40px;
   padding: 0 14px;
   border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
+  border-radius: 10px;
+  /* 👈 bo y hệt */
   background: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -626,5 +718,147 @@ input:checked + .slider::before {
 
   cursor: pointer;
   transition: 0.2s;
+}
+/* ===== TOAST CONTAINER ===== */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  min-width: 280px;
+  padding: 14px 20px;
+  border-radius: 8px;
+
+  background-color: #dcfce7;
+  color: #166534;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  border-left: 6px solid #22c55e;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  animation: slideIn 0.3s ease-out;
+}
+
+.toast.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-left: 6px solid #ef4444;
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

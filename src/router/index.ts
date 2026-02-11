@@ -22,11 +22,20 @@ const routes: Array<RouteRecordRaw> = [
     name: "PaymentPage",
     component: () => import("../pages/views/PaymentPage.vue"),
   },
+  // LOGIN KHÁCH HÀNG
   {
     path: "/login",
-    name: "Login",
+    name: "LoginCustomer",
     component: () => import("../views/LoginView.vue"),
   },
+
+  // LOGIN NHÂN VIÊN / ADMIN
+  {
+    path: "/admin/login",
+    name: "LoginStaff",
+    component: () => import("../views/AdminLogin.vue"),
+  },
+
   {
     path: "/register",
     name: "Register",
@@ -251,6 +260,7 @@ router.beforeEach((to, from, next) => {
     "/forgot-password",
     "/reset-password",
     "/oauth2/redirect",
+    "/admin/login",
   ];
 
   // Kiểm tra nếu route hiện tại (to.path) có nằm trong danh sách public không
@@ -264,22 +274,37 @@ router.beforeEach((to, from, next) => {
 
   // 1. Chưa đăng nhập mà vào trang bảo mật
   if (authRequired && !user) {
+    if (to.path.startsWith("/admin")) {
+      return next("/admin/login");
+    }
     return next("/login");
   }
 
   // 2. Kiểm tra quyền Role
+  // 2. Kiểm tra quyền Role
   if (to.meta.authorize) {
     const allowedRoles = to.meta.authorize as string[];
-    if (user && !allowedRoles.includes(user.role)) {
-      return next("/"); // Không đủ quyền thì về trang chủ
+
+    const userRole = user?.role; // ✅ chỉ 1 role
+
+    if (!allowedRoles.includes(userRole)) {
+      return next("/");
     }
   }
 
   // 3. Đã đăng nhập mà cố vào trang Login/Register
-  if (user && (to.path === "/login" || to.path === "/register")) {
-    if (user.role === "ROLE_ADMIN" || user.role === "ROLE_STAFF") {
+  if (
+    user &&
+    (to.path === "/login" ||
+      to.path === "/register" ||
+      to.path === "/admin/login")
+  ) {
+    const role = user?.role;
+
+    if (role === "ROLE_ADMIN" || role === "ROLE_STAFF") {
       return next("/admin/dashboard");
     }
+
     return next("/");
   }
 

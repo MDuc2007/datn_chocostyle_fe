@@ -3,9 +3,11 @@ import axios from "axios";
 const AUTH_URL = "/auth/";
 
 class AuthService {
-  // 1. Đăng nhập
-  async login(user) {
-    const response = await axios.post(AUTH_URL + "login", {
+  // ==========================
+  // 1. LOGIN KHÁCH HÀNG
+  // ==========================
+  async loginCustomer(user) {
+    const response = await axios.post(AUTH_URL + "login/customer", {
       usernameOrEmail: user.username,
       password: user.password,
     });
@@ -17,7 +19,25 @@ class AuthService {
     return response.data;
   }
 
-  // 2. Đăng ký
+  // ==========================
+  // 2. LOGIN NHÂN VIÊN
+  // ==========================
+  async loginStaff(user) {
+    const response = await axios.post(AUTH_URL + "login/staff", {
+      usernameOrEmail: user.username,
+      password: user.password,
+    });
+
+    if (response.data.accessToken) {
+      localStorage.setItem("user", JSON.stringify(response.data));
+    }
+
+    return response.data;
+  }
+
+  // ==========================
+  // 3. REGISTER (KHÁCH HÀNG)
+  // ==========================
   register(user) {
     return axios.post(AUTH_URL + "register", {
       hoTen: user.fullname,
@@ -27,12 +47,16 @@ class AuthService {
     });
   }
 
-  // 3. Đăng xuất
+  // ==========================
+  // 4. LOGOUT
+  // ==========================
   logout() {
     localStorage.removeItem("user");
   }
 
-  // 4. Quên mật khẩu (GỬI OTP)
+  // ==========================
+  // 5. FORGOT PASSWORD
+  // ==========================
   forgotPassword(email, type) {
     return axios.post(AUTH_URL + "forgot-password", null, {
       params: {
@@ -42,13 +66,15 @@ class AuthService {
     });
   }
 
-  // 5. Đặt lại mật khẩu
+  // ==========================
+  // 6. RESET PASSWORD
+  // ==========================
   resetPassword(email, otp, newPassword, type) {
     return axios.post(AUTH_URL + "reset-password", {
       email: email,
       otp: otp,
       newPassword: newPassword,
-      type: type,
+      type: type, // "KHACH_HANG" | "NHAN_VIEN"
     });
   }
 }

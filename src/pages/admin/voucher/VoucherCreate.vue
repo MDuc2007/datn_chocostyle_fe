@@ -147,7 +147,6 @@
       </div>
 
       <div class="form-actions">
-        <button class="btn-cancel" @click="back">Hủy</button>
         <button
           class="btn-save"
           @click="openConfirm"
@@ -265,19 +264,46 @@
     </div>
 
     <!-- ===== MODAL ===== -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-box">
-        <h4>Xác nhận</h4>
-        <p>Bạn có chắc muốn thêm phiếu giảm giá này?</p>
+    <transition name="fade-modal">
+      <div
+        v-if="showModal"
+        class="modal-confirm"
+        @click.self="showModal = false"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="40"
+              height="40"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
 
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="showModal = false">Hủy</button>
-          <button class="btn-save" @click="submit" :disabled="loading">
-            Xác nhận
-          </button>
+          <h3 class="confirm-title">Xác nhận</h3>
+
+          <p class="confirm-desc">
+            Bạn có chắc chắn muốn thêm phiếu giảm giá này?
+          </p>
+
+          <div class="confirm-actions">
+            <button class="btn-cancel" @click="showModal = false">Hủy</button>
+
+            <button class="btn-confirm" @click="submit" :disabled="loading">
+              <span v-if="!loading">Đồng ý</span>
+              <span v-else>Đang lưu...</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <div v-if="toast.show" :class="['toast', toast.type]">
       <span class="toast-icon"></span>
@@ -929,14 +955,6 @@ const back = () => router.push("/admin/voucher");
   background: #4a2409;
 }
 
-.btn-cancel {
-  background: #e0e0e0;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .search-input {
   width: 97%;
   height: 42px;
@@ -1141,18 +1159,95 @@ const back = () => router.push("/admin/voucher");
   z-index: 999;
 }
 
-.modal-box {
-  background: #fff;
-  width: 360px;
-  border-radius: 6px;
-  padding: 20px;
+/* ===== CONFIRM MODAL ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
 }
 
-.modal-actions {
+/* Khung modal */
+.confirm-modal {
+  position: relative;
+  width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  animation: modalFade 0.2s ease;
+}
+
+/* Nút X góc phải */
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #888;
+  transition: 0.2s;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+/* Icon cảnh báo */
+.modal-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #fff3cd;
+  color: #d97706;
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* Tiêu đề */
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+/* Nội dung */
+.modal-desc {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Nút */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* Animation */
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .toast {
@@ -1292,5 +1387,116 @@ const back = () => router.push("/admin/voucher");
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== CONFIRM MODAL ===== */
+
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

@@ -2,15 +2,17 @@
   <div class="login-wrapper">
     <div class="bg-pattern"></div>
 
-    <div class="login-card">
+    <div class="login-card form-page-animation">
       <div class="login-header">
-        <h1 class="brand-title">CHOCOSTYLE</h1>
-        <p class="subtitle">Chào mừng bạn quay trở lại</p>
+        <h1 class="brand-title">
+          CHOCOSTYLE
+        </h1>
+        <p class="subtitle">Đăng nhập hệ thống quản lý</p>
       </div>
 
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">Tài khoản</label>
+          <label for="username">Tài khoản quản trị</label>
           <div class="input-wrapper" :class="{ 'has-error': isError }">
             <span class="input-icon">
               <svg
@@ -24,15 +26,14 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
             </span>
             <input
               id="username"
               v-model="username"
               type="text"
-              placeholder="Nhập email tài khoản"
+              placeholder="Nhập tài khoản admin"
               required
               @input="isError = false"
             />
@@ -81,47 +82,14 @@
           </div>
         </transition>
 
-        <button type="submit" :disabled="loading" class="btn-login">
+        <button
+          type="submit"
+          :disabled="loading"
+          class="btn-login hover-effect"
+        >
           <span v-if="loading" class="spinner"></span>
           <span v-else>ĐĂNG NHẬP</span>
         </button>
-
-        <div class="divider">
-          <span>HOẶC ĐĂNG NHẬP VỚI</span>
-        </div>
-
-        <div class="social-buttons">
-          <a
-            href="http://localhost:8080/oauth2/authorization/google"
-            class="btn-social btn-google"
-          >
-            <img
-              src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
-              alt="Google"
-            />
-            <span>Google</span>
-          </a>
-
-          <a
-            href="http://localhost:8080/oauth2/authorization/facebook"
-            class="btn-social btn-facebook"
-          >
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
-              alt="Facebook"
-            />
-            <span>Facebook</span>
-          </a>
-        </div>
-
-        <div class="login-footer">
-          <p>
-            Chưa có tài khoản?
-            <router-link to="/register" class="register-link">
-              Đăng ký ngay
-            </router-link>
-          </p>
-        </div>
       </form>
     </div>
   </div>
@@ -136,7 +104,7 @@ const username = ref("");
 const password = ref("");
 const loading = ref(false);
 const message = ref("");
-const isError = ref(false); // Dùng để highlight đỏ ô input khi lỗi
+const isError = ref(false);
 const router = useRouter();
 
 const handleLogin = async () => {
@@ -145,12 +113,18 @@ const handleLogin = async () => {
   isError.value = false;
 
   try {
-    await AuthService.loginCustomer({
+    // Gọi API login dành cho nhân viên/admin
+    const res = await AuthService.loginStaff({
       username: username.value,
       password: password.value,
     });
 
-    router.push("/"); // về trang chủ khách hàng
+    // Điều hướng dựa trên role (nếu có logic phân quyền)
+    if (res.role === "ROLE_ADMIN") {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/admin/product");
+    }
   } catch (error) {
     isError.value = true;
     message.value =
@@ -198,7 +172,7 @@ const handleLogin = async () => {
   height: 200%;
   background: radial-gradient(
     circle,
-    rgba(99, 57, 31, 0.04) 0%,
+    rgba(99, 57, 31, 0.05) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -209,37 +183,53 @@ const handleLogin = async () => {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px; /* Nhỏ gọn hơn một chút so với user login */
   background-color: var(--white-color);
-  padding: 45px 40px;
+  padding: 50px 40px;
   border-radius: 20px;
   box-shadow: var(--shadow-card);
-  animation: slideUp 0.5s ease-out;
 }
 
+/* Header */
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 35px;
 }
 
 .brand-title {
   color: var(--primary-color);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   margin: 0;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Nhãn Admin */
+.admin-badge {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  vertical-align: middle;
   letter-spacing: 0.5px;
+  transform: translateY(-2px);
 }
 
 .subtitle {
   color: var(--text-light);
   font-size: 15px;
-  margin-top: 6px;
+  margin-top: 8px;
   font-weight: 600;
 }
 
-/* --- INPUTS --- */
+/* Inputs */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 label {
@@ -268,13 +258,13 @@ label {
 
 .input-wrapper input {
   width: 100%;
-  padding: 14px 14px 14px 48px; /* Chừa chỗ cho Icon */
+  padding: 14px 14px 14px 48px;
   border: 2px solid transparent;
   background-color: #f9f9f9;
   border-radius: var(--radius);
   font-size: 15px;
   color: #333;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
@@ -289,7 +279,7 @@ label {
   color: var(--primary-color);
 }
 
-/* Trạng thái lỗi */
+/* Error State */
 .input-wrapper.has-error input {
   border-color: #ffcdd2;
   background-color: #fff8f8;
@@ -300,7 +290,7 @@ label {
 
 .forgot-wrapper {
   text-align: right;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 .forgot-link {
   font-size: 13px;
@@ -314,10 +304,10 @@ label {
   text-decoration: underline;
 }
 
-/* --- BUTTONS --- */
+/* Button */
 .btn-login {
   width: 100%;
-  padding: 15px;
+  padding: 16px;
   background: linear-gradient(
     135deg,
     var(--primary-color),
@@ -327,18 +317,20 @@ label {
   border: none;
   border-radius: var(--radius);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 15px rgba(99, 57, 31, 0.2);
+  box-shadow: 0 8px 20px rgba(99, 57, 31, 0.25);
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
 }
 
 .btn-login:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(99, 57, 31, 0.3);
+  box-shadow: 0 12px 25px rgba(99, 57, 31, 0.35);
 }
 
 .btn-login:disabled {
@@ -348,89 +340,11 @@ label {
   box-shadow: none;
 }
 
-/* --- SOCIAL --- */
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 25px 0 20px;
-  color: #aaa;
-  font-size: 12px;
-  font-weight: 600;
-}
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  border-bottom: 1px solid #eee;
-}
-.divider span {
-  padding: 0 15px;
+.hover-effect:active {
+  transform: scale(0.98);
 }
 
-.social-buttons {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 25px;
-}
-
-.btn-social {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  border-radius: var(--radius);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  gap: 8px;
-}
-
-.btn-social img {
-  width: 20px;
-  height: 20px;
-}
-
-.btn-google {
-  background-color: #fff;
-  color: #333;
-  border: 1px solid #e0e0e0;
-}
-.btn-google:hover {
-  background-color: #f7f7f7;
-  border-color: #d0d0d0;
-}
-
-.btn-facebook {
-  background-color: #1877f2;
-  color: #fff;
-  border: 1px solid #1877f2;
-}
-.btn-facebook:hover {
-  background-color: #156ad6;
-  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
-}
-
-/* --- FOOTER --- */
-.login-footer {
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-light);
-}
-
-.register-link {
-  color: var(--primary-color);
-  font-weight: 700;
-  text-decoration: none;
-  margin-left: 5px;
-}
-.register-link:hover {
-  text-decoration: underline;
-}
-
-/* --- NOTIFICATIONS --- */
+/* Notification */
 .msg-box {
   padding: 12px;
   border-radius: 8px;
@@ -438,7 +352,7 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   justify-content: center;
 }
 
@@ -448,11 +362,26 @@ label {
   border: 1px solid #ef9a9a;
 }
 
-/* --- ANIMATIONS --- */
+/* Animation */
+.form-page-animation {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: #fff;
   animation: spin 0.8s linear infinite;
@@ -463,18 +392,7 @@ label {
     transform: rotate(360deg);
   }
 }
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* Vue Transition */
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.3s ease;
