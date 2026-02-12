@@ -296,7 +296,7 @@
         </button>
         <button
           class="btn-orange hover-effect"
-          @click="handleUpdate"
+          @click="handleUpdateClick"
           :disabled="isLoading || loadingData"
           :class="{ 'btn-loading': isLoading }"
         >
@@ -312,6 +312,42 @@
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
         <button class="toast-close" @click="toast.show = false">×</button>
+      </div>
+    </transition>
+
+    <transition name="fade-modal">
+      <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
+            </svg>
+          </div>
+          <h3 class="confirm-title">{{ modal.title }}</h3>
+          <p class="confirm-desc">{{ modal.message }}</p>
+          <div class="confirm-actions">
+            <button class="btn-cancel hover-effect" @click="closeModal">
+              Xem lại
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="confirmUpdateAction"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
       </div>
     </transition>
   </div>
@@ -349,9 +385,11 @@ const editForm = ref({
 
 // Dùng để so sánh sự thay đổi khi check trùng
 const originalData = ref({});
-
 const errors = ref({});
 const toast = ref({ show: false, message: "", type: "success" });
+
+// THÊM BIẾN MODAL
+const modal = ref({ show: false, title: "", message: "" });
 
 // --- LIFECYCLE ---
 onMounted(async () => {
@@ -387,7 +425,7 @@ const fetchCustomerDetail = async () => {
   }
 };
 
-// --- LOGIC ĐỊA CHỈ (Giữ nguyên) ---
+// --- LOGIC ĐỊA CHỈ ---
 const onProvinceChange = async (addr) => {
   addr.districtId = null;
   addr.wardCode = null;
@@ -457,7 +495,7 @@ const handleFileUpload = (e) => {
   }
 };
 
-// --- VALIDATION (LOGIC TƯƠNG ĐỒNG CREATE) ---
+// --- VALIDATION ---
 const validateForm = () => {
   errors.value = {};
   let isValid = true;
@@ -533,13 +571,23 @@ const clearError = (field) => {
   if (errors.value[field]) delete errors.value[field];
 };
 
-// --- HANDLE UPDATE (GỘP CHECK TRÙNG) ---
-const handleUpdate = async () => {
+// --- HÀM MỚI: XỬ LÝ KHI ẤN NÚT "CẬP NHẬT" ---
+const handleUpdateClick = () => {
   if (!validateForm()) {
     showToast("Vui lòng kiểm tra lại thông tin", "error");
     return;
   }
+  // Mở modal xác nhận
+  modal.value = {
+    show: true,
+    title: "Xác nhận cập nhật",
+    message: `Bạn có chắc chắn muốn lưu thay đổi cho khách hàng "${editForm.value.tenKhachHang}"?`,
+  };
+};
 
+// --- HÀM CŨ ĐỔI TÊN: GỌI API (CHẠY SAU KHI ĐỒNG Ý) ---
+const confirmUpdateAction = async () => {
+  modal.value.show = false; // Đóng modal
   isLoading.value = true;
 
   // 1. Check trùng (Chỉ check nếu có thay đổi)
@@ -548,12 +596,10 @@ const handleUpdate = async () => {
     const isPhoneChanged =
       editForm.value.soDienThoai !== originalData.value.soDienThoai;
 
-    // Nếu có thay đổi mới gọi API
     if (isEmailChanged || isPhoneChanged) {
       const checkRes = await customerService.checkUnique({
         email: isEmailChanged ? editForm.value.email : null,
         sdt: isPhoneChanged ? editForm.value.soDienThoai : null,
-        // Không check username khi update
       });
 
       const result = checkRes.data;
@@ -581,9 +627,8 @@ const handleUpdate = async () => {
   // 2. Gọi API Update
   try {
     const payload = { ...editForm.value };
-    // Map lại địa chỉ cho chắc chắn
     payload.listDiaChi = payload.listDiaChi.map((a) => ({
-      id: a.id, // ID cũ nếu có
+      id: a.id,
       thanhPho: a.provinceName,
       quan: a.districtName,
       phuong: a.wardName,
@@ -609,6 +654,8 @@ const handleUpdate = async () => {
     isLoading.value = false;
   }
 };
+
+const closeModal = () => (modal.value.show = false);
 
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type: type };
@@ -1108,5 +1155,118 @@ const showToast = (msg, type = "success") => {
 .list-anim-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+
+/* =========================================
+   6. MODAL STYLES (NEW)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounce 1s infinite;
+}
+
+.confirm-title {
+  color: var(--primary-brown);
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
+
+.btn-confirm {
+  background-color: #63391f; /* Fix lỗi mất màu */
+  color: #fff;
+}
+.btn-confirm:hover {
+  background-color: #4e2c17;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+/* Animations */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

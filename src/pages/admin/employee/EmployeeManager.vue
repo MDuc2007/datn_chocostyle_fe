@@ -135,7 +135,7 @@
                       <input
                         type="checkbox"
                         :checked="e.status === 1"
-                        @change="toggleStatus(e)"
+                        @click="toggleStatus(e, $event)"
                       />
                       <span class="slider round"></span>
                     </label>
@@ -206,6 +206,49 @@
         </button>
       </div>
     </div>
+
+    <!-- Confirm Dialog Modal -->
+    <transition name="fade-modal">
+      <div
+        v-if="confirmDialog.show"
+        class="modal-confirm"
+        @click.self="handleConfirm(false)"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="40"
+              height="40"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <h3 class="confirm-title">{{ confirmDialog.title }}</h3>
+          <p class="confirm-desc" v-html="confirmDialog.message"></p>
+          <div class="confirm-actions">
+            <button
+              class="btn-cancel hover-effect"
+              @click="handleConfirm(false)"
+            >
+              Hủy
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="handleConfirm(true)"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content form-page-animation">
@@ -363,6 +406,32 @@ const fileInput = ref(null);
 const statusHistory = ref({});
 const errors = ref({});
 
+// Confirm Dialog State
+const confirmDialog = ref({
+  show: false,
+  title: "Xác nhận",
+  message: "",
+  resolve: null,
+});
+
+const showConfirmDialog = (message, title = "Xác nhận") => {
+  return new Promise((resolve) => {
+    confirmDialog.value.title = title;
+    confirmDialog.value.message = message;
+    confirmDialog.value.resolve = resolve;
+    confirmDialog.value.show = true;
+  });
+};
+
+const handleConfirm = (result) => {
+  if (confirmDialog.value.resolve) {
+    confirmDialog.value.resolve(result);
+  }
+  confirmDialog.value.show = false;
+  confirmDialog.value.message = "";
+  confirmDialog.value.resolve = null;
+};
+
 // --- HÀM VALIDATE CHO FORM SỬA ---
 function validateEditForm() {
   errors.value = {};
@@ -504,23 +573,32 @@ async function saveEmployee() {
 }
 
 // --- UTILS KHÁC ---
-async function toggleStatus(e) {
-  let newStatus = 1;
-
-  // Logic xác định trạng thái mới (giữ nguyên logic cũ của bạn)
-  if (e.status !== 2) {
-    statusHistory.value[e.id] = e.status;
-    newStatus = 2; // Khóa
-  } else {
-    if (statusHistory.value.hasOwnProperty(e.id)) {
-      newStatus = statusHistory.value[e.id];
-    } else {
-      newStatus = 1; // Mặc định về Active
-    }
-  }
+async function toggleStatus(e, event) {
+  // QUAN TRỌNG: Ngăn chặn checkbox tự đổi trạng thái ngay lập tức
+  event.preventDefault();
 
   const originalStatus = e.status;
-  e.status = newStatus; // Cập nhật giao diện ngay để mượt mà
+  let newStatus = 1;
+
+  // Logic xác định trạng thái mới
+  if (e.status !== 2) {
+    newStatus = 2; // Khóa
+  } else {
+    newStatus = 1; // Mở khóa về Active
+  }
+
+  // Confirm before changing status
+  const statusText = newStatus === 1 ? "Hoạt động" : "Khóa tài khoản";
+  const confirmMsg = `
+      Bạn có chắc chắn muốn thay đổi trạng thái nhân viên?<br><br>
+    `;
+
+  if (!(await showConfirmDialog(confirmMsg, "Xác nhận thay đổi trạng thái"))) {
+    // Nếu bấm Hủy, do đã preventDefault ở trên, UI switch vẫn giữ nguyên
+    return;
+  }
+
+  e.status = newStatus; // Cập nhật UI
 
   try {
     // Gọi API cập nhật
@@ -528,17 +606,10 @@ async function toggleStatus(e) {
       trangThai: newStatus,
     });
 
-    if (newStatus !== 2) delete statusHistory.value[e.id];
-
-    // ==> THÊM: Hiện thông báo thành công
-    const statusText =
-      newStatus === 1 ? "Hoạt động" : newStatus === 0 ? "Đã nghỉ" : "Đã khóa";
     showNotification(`Đã cập nhật trạng thái: ${statusText}`, "success");
   } catch (error) {
     e.status = originalStatus; // Hoàn tác nếu lỗi
     console.error(error);
-
-    // ==> SỬA: Thay alert bằng showNotification
     showNotification("Lỗi cập nhật trạng thái!", "error");
   }
 }
@@ -869,7 +940,7 @@ const showNotification = (message, type = "success") => {
   font-size: 16px;
 }
 .mini-select {
-  height: 42px;
+  height: 50px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   padding: 0 10px;
@@ -981,6 +1052,7 @@ const showNotification = (message, type = "success") => {
   table-layout: auto;
 }
 .custom-table th {
+  background-color: #f9fafb;
   color: #374151;
   font-weight: 700;
   padding: 14px 10px;
@@ -997,6 +1069,9 @@ const showNotification = (message, type = "success") => {
   color: #4b5563;
   vertical-align: middle;
   height: auto;
+}
+.custom-table tbody tr:hover {
+  background-color: #fafafa;
 }
 .fw-bold {
   font-weight: 600;
@@ -1440,5 +1515,123 @@ input:checked + .slider:before {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* === CONFIRM DIALOG === */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 12000;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block;
+  margin: 0;
+}
+
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

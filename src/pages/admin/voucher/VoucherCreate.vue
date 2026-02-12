@@ -275,15 +275,16 @@
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              fill="currentColor"
-              width="40"
-              height="40"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <path
-                fill-rule="evenodd"
-                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                clip-rule="evenodd"
-              />
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
             </svg>
           </div>
 
@@ -1416,8 +1417,8 @@ const back = () => router.push("/admin/voucher");
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #fff4e5;
-  color: #ff9800;
+  background-color: #e8f5e9;
+  color: #22c55e;
   margin: 0 auto 15px auto;
 
   /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */

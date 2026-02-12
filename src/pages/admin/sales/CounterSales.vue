@@ -2,7 +2,6 @@
   <div class="pos-page">
     <div class="top-header">
       <h3 class="page-title">BÁN HÀNG TẠI QUẦY</h3>
-
       <button class="btn-create" @click="createOrder">+ Tạo đơn hàng</button>
     </div>
     <div v-if="orders.length" class="pos-card">
@@ -15,15 +14,10 @@
           @click="activeOrderIndex = index"
         >
           <span>Đơn {{ index + 1 }}</span>
-
-          <!-- nút xoá -->
           <span class="tab-close" @click.stop="removeOrder(index)"> ✕ </span>
         </div>
       </div>
-
-      <!-- ================= MAIN LAYOUT ================= -->
       <div v-if="currentOrder" class="main-layout">
-        <!-- ===== LEFT: DANH SÁCH SẢN PHẨM ===== -->
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
@@ -34,32 +28,26 @@
               </button>
             </div>
           </div>
-
           <div class="product-list">
             <div
               v-for="(item, index) in currentOrder.cart"
               :key="index"
               class="product-row"
             >
-              <!-- checkbox -->
-              <input type="checkbox" />
-
-              <!-- ảnh -->
-              <img :src="item.image" class="product-img" />
-
-              <!-- thông tin -->
+              <div class="img-wrap">
+                <img :src="item.image" class="product-img" />
+                <span v-if="item.discountPercent > 0" class="sale-badge">
+                  -{{ item.discountPercent }}%
+                </span>
+              </div>
               <div class="product-info">
                 <div class="name">{{ item.name }}</div>
                 <div class="meta">Size: {{ item.size || "L" }}</div>
               </div>
-
-              <!-- giá -->
               <div class="price">
                 <del>{{ formatPrice(item.oldPrice || item.price) }}</del>
                 <span class="sale">{{ formatPrice(item.price) }}</span>
               </div>
-
-              <!-- số lượng -->
               <div class="qty">
                 <button @click="item.quantity--" :disabled="item.quantity <= 1">
                   −
@@ -67,22 +55,15 @@
                 <span>{{ item.quantity }}</span>
                 <button @click="item.quantity++">+</button>
               </div>
-
-              <!-- tổng -->
               <div class="total">
                 {{ formatPrice(item.price * item.quantity) }}
               </div>
-
-              <!-- xoá -->
               <button class="btn-danger" @click="removeItem(index)">X</button>
             </div>
           </div>
         </div>
-
-        <!-- ===== RIGHT: THÔNG TIN ===== -->
         <div class="right-panel">
           <div class="right-grid">
-            <!-- ===== THÔNG TIN KHÁCH HÀNG ===== -->
             <div class="info-box">
               <div class="section-header">
                 <span>THÔNG TIN KHÁCH HÀNG</span>
@@ -90,9 +71,7 @@
                   Chọn khách hàng
                 </button>
               </div>
-
               <div class="customer-form">
-                <!-- HÀNG 1 -->
                 <div class="form-row">
                   <div class="form-item">
                     <label>Tên khách hàng</label>
@@ -101,7 +80,6 @@
                       placeholder="Nhập tên khách hàng"
                     />
                   </div>
-
                   <div class="form-item">
                     <label>Email</label>
                     <input
@@ -110,8 +88,6 @@
                     />
                   </div>
                 </div>
-
-                <!-- HÀNG 2 -->
                 <div class="form-row">
                   <div class="form-item">
                     <label>Số điện thoại</label>
@@ -120,7 +96,6 @@
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
-
                   <div class="form-item">
                     <label>Địa chỉ cụ thể</label>
                     <input
@@ -129,8 +104,6 @@
                     />
                   </div>
                 </div>
-
-                <!-- HÀNG 3 -->
                 <div class="form-row">
                   <div class="form-item">
                     <label>Tỉnh / Thành phố</label>
@@ -145,7 +118,6 @@
                       </option>
                     </select>
                   </div>
-
                   <div class="form-item">
                     <label>Quận / Huyện</label>
                     <select v-model="currentOrder.customer.district">
@@ -159,7 +131,6 @@
                       </option>
                     </select>
                   </div>
-
                   <div class="form-item">
                     <label>Xã / Phường</label>
                     <select v-model="currentOrder.customer.ward">
@@ -172,67 +143,89 @@
                 </div>
               </div>
             </div>
-
-            <!-- ===== THÔNG TIN THANH TOÁN ===== -->
             <div class="info-box payment-box">
               <div class="section-header">
                 <span>THÔNG TIN THANH TOÁN</span>
+                <div class="delivery-switch">
+                  <span
+                    :class="{ active: currentOrder.deliveryType === 'COUNTER' }"
+                  >
+                    Tại quầy
+                  </span>
+                  <label class="switch">
+                    <input
+                      type="checkbox"
+                      :checked="currentOrder.deliveryType === 'DELIVERY'"
+                      @change="toggleDelivery"
+                    />
+                    <span class="slider"></span>
+                  </label>
+                  <span
+                    :class="{
+                      active: currentOrder.deliveryType === 'DELIVERY',
+                    }"
+                  >
+                    Giao hàng
+                  </span>
+                </div>
               </div>
-
-              <!-- MÃ GIẢM GIÁ -->
               <div class="voucher-row">
-                <input v-model="voucherCode" placeholder="Mã giảm giá" />
+                <input
+                  v-model="currentOrder.voucherCode"
+                  placeholder="Mã giảm giá"
+                />
                 <button class="btn-outline" @click="applyVoucher">
                   Áp dụng
                 </button>
               </div>
-
-              <!-- THÔNG BÁO -->
-              <div v-if="appliedVoucher" class="voucher-success">
+              <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
                 Áp dụng thành công phiếu giảm giá
-                <b>{{ appliedVoucher.message }}</b>
+                <b>{{ currentOrder.appliedVoucher.message }}</b>
+                ({{ voucherText }})
               </div>
-
-              <!-- CHI TIẾT TIỀN -->
               <div class="payment-row">
                 <span>Tiền hàng</span>
                 <span>{{ formatPrice(subTotal) }}</span>
               </div>
-
               <div class="payment-row">
                 <span>Phí vận chuyển</span>
-                <span>{{ formatPrice(0) }}</span>
+                <span>{{ formatPrice(shippingFee) }}</span>
               </div>
-
               <div class="payment-row">
                 <span>Giảm giá</span>
                 <span class="text-red"> - {{ formatPrice(discount) }} </span>
               </div>
-
               <hr />
-
               <div class="payment-row total">
                 <span>Tổng số tiền</span>
                 <span>{{ formatPrice(total) }}</span>
               </div>
-
-              <div class="payment-row">
+              <div class="payment-row pay-action">
                 <span>Khách thanh toán</span>
-                <span>0 ₫</span>
+                <button class="pay-btn" @click="openPaymentPopup">
+                  ⬜⬜ ⬜⬜
+                </button>
+                <div class="pay-right">
+                  <span class="money">
+                    {{ formatPrice(currentOrder.paidAmount || 0) }}
+                  </span>
+                </div>
               </div>
 
-              <div class="payment-row text-red">
+              <div
+                v-if="currentOrder.paymentMethod === 'CASH'"
+                class="payment-row text-red"
+              >
                 <span>Tiền thừa</span>
-                <span>{{ formatPrice(total) }}</span>
+                <span>{{ formatPrice(changeMoney) }}</span>
               </div>
-
-              <button class="btn-submit big">XÁC NHẬN ĐẶT HÀNG</button>
+              <button class="btn-submit big" @click="confirmSubmitOrder">
+                XÁC NHẬN ĐẶT HÀNG
+              </button>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- ================= POPUP CHỌN KHÁCH HÀNG ================= -->
       <div class="modal-overlay" v-if="showCustomerPopup">
         <div class="modal">
           <div class="modal-header">
@@ -241,13 +234,12 @@
               Đóng
             </button>
           </div>
-
           <div class="modal-body">
             <input
+              v-model="customerSearch"
               class="search-input"
               placeholder="Tìm theo tên, email, số điện thoại"
             />
-
             <table class="table">
               <thead>
                 <tr>
@@ -260,7 +252,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(c, index) in customers" :key="c.id">
+                <tr v-for="(c, index) in filteredCustomers" :key="c.id">
                   <td>{{ index + 1 }}</td>
                   <td>{{ c.tenKhachHang }}</td>
                   <td>{{ c.email }}</td>
@@ -290,12 +282,23 @@
 
           <div class="modal-body">
             <div class="filter-row">
-              <input placeholder="Tìm theo mã, tên sản phẩm" />
-              <select>
-                <option>Màu sắc</option>
+              <input
+                v-model="searchText"
+                placeholder="Tìm theo mã, tên sản phẩm"
+              />
+
+              <select v-model="filterColor">
+                <option value="">Tất cả màu</option>
+                <option v-for="c in colors" :key="c" :value="c">
+                  {{ c }}
+                </option>
               </select>
-              <select>
-                <option>Kích cỡ</option>
+
+              <select v-model="filterSize">
+                <option value="">Tất cả size</option>
+                <option v-for="s in sizes" :key="s" :value="s">
+                  {{ s }}
+                </option>
               </select>
             </div>
 
@@ -314,17 +317,33 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(p, index) in products" :key="p.id">
+                <tr v-for="(p, index) in filteredProducts" :key="p.id">
                   <td>{{ index + 1 }}</td>
                   <td>{{ p.code }}</td>
                   <td>
-                    <img :src="p.image" class="thumb" />
+                    <div class="img-wrap small">
+                      <img :src="p.image" class="thumb" />
+
+                      <span
+                        v-if="p.discountPercent > 0"
+                        class="sale-badge small"
+                      >
+                        -{{ p.discountPercent }}%
+                      </span>
+                    </div>
                   </td>
                   <td>{{ p.name }}</td>
                   <td>{{ p.color }}</td>
                   <td>{{ p.size }}</td>
                   <td>{{ p.stock }}</td>
-                  <td>{{ formatPrice(p.price) }}</td>
+                  <td class="price-cell">
+                    <del v-if="p.discountPercent > 0">
+                      {{ formatPrice(p.oldPrice) }}
+                    </del>
+                    <span class="sale">
+                      {{ formatPrice(p.price) }}
+                    </span>
+                  </td>
                   <td>
                     <button class="btn-primary" @click="addToCart(p)">
                       Chọn
@@ -336,10 +355,94 @@
           </div>
         </div>
       </div>
+
+      <!-- ================= POPUP THANH TOÁN ================= -->
+      <div class="modal-overlay" v-if="showPaymentPopup">
+        <div class="modal small">
+          <div class="modal-header">
+            <h4>PHƯƠNG THỨC THANH TOÁN</h4>
+            <button class="btn-close" @click="showPaymentPopup = false">
+              Đóng
+            </button>
+          </div>
+
+          <div class="modal-body payment-popup">
+            <!-- chọn loại -->
+            <div class="pay-type">
+              <button
+                :class="{ active: paymentMethod === 'CASH' }"
+                @click="paymentMethod = 'CASH'"
+              >
+                💵 Tiền mặt
+              </button>
+
+              <button
+                :class="{ active: paymentMethod === 'BANK' }"
+                @click="paymentMethod = 'BANK'"
+              >
+                🏦 Chuyển khoản
+              </button>
+            </div>
+
+            <!-- CASH -->
+            <div v-if="paymentMethod === 'CASH'" class="cash-input">
+              <input
+                type="number"
+                v-model.number="cashInput"
+                placeholder="Nhập số tiền khách đưa"
+              />
+            </div>
+
+            <!-- BANK -->
+            <div v-if="paymentMethod === 'BANK'" class="bank-box">
+              <img :src="bankQR" class="qr-img" />
+
+              <p class="bank-money">
+                Số tiền: <b>{{ formatPrice(total) }}</b>
+              </p>
+
+              <p>TPBank</p>
+              <p>STK: 00000674626</p>
+            </div>
+
+            <!-- confirm -->
+            <button class="btn-submit" @click="confirmPayment">XONG</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</template>
+  <!-- ===== CONFIRM MODAL ===== -->
+  <transition name="fade-modal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeConfirmModal"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">⚠️</div>
 
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="closeConfirmModal">Hủy</button>
+          <button class="btn-confirm" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container">
+    <transition name="toast-slide">
+      <div v-if="toast.show" :class="['toast', toast.type]">
+        {{ toast.message }}
+      </div>
+    </transition>
+  </div>
+</template>
 <script setup>
 import { ref, computed, watch } from "vue";
 
@@ -364,24 +467,46 @@ const openCustomerPopup = async () => {
 };
 
 const products = ref([]);
+const promotions = ref([]);
 
 const fetchProducts = async () => {
   const res = await axios.get("http://localhost:8080/api/pos/san-pham");
 
-  products.value = res.data.map((p) => ({
-    id: p.id,
-    code: p.maSp,
-    name: p.tenSp,
-    image: p.hinhAnh,
-    price: p.giaBan,
-    stock: p.soLuongTon,
-    color: p.mauSac,
-    size: p.kichCo,
-  }));
+  // tạo map: variantId -> percent
+  const discountMap = {};
+
+  promotions.value.forEach((pr) => {
+    pr.chiTietSanPhamIds.forEach((id) => {
+      discountMap[id] = Math.max(discountMap[id] || 0, pr.giaTriGiam);
+    });
+  });
+
+  products.value = res.data.map((p) => {
+    const percent = discountMap[p.id] || 0;
+
+    const oldPrice = p.giaBan;
+    const newPrice = (oldPrice * (100 - percent)) / 100;
+
+    return {
+      id: p.id,
+      code: p.maSp,
+      name: p.tenSp,
+      image: p.hinhAnh,
+      stock: p.soLuongTon,
+      color: p.mauSac,
+      size: p.kichCo,
+
+      oldPrice,
+      price: newPrice,
+      discountPercent: percent,
+    };
+  });
 };
 
 const openProductPopup = async () => {
-  await fetchProducts();
+  await fetchPromotions(); // load trước
+  await fetchProducts(); // dùng promotions đã có
+
   showProductPopup.value = true;
 };
 
@@ -399,8 +524,28 @@ const addToCart = (product) => {
   showProductPopup.value = false;
 };
 
+const confirmSubmitOrder = () => {
+  if (!currentOrder.value?.cart.length) {
+    showToast("Vui lòng chọn sản phẩm trước khi đặt hàng", "error");
+
+    return;
+  }
+
+  openConfirmModal(
+    "Xác nhận đặt hàng",
+    "Bạn có chắc muốn tạo đơn này không?",
+    submitOrder,
+  );
+};
+
 const removeItem = (index) => {
   currentOrder.value.cart.splice(index, 1);
+};
+const fetchPromotions = async () => {
+  const res = await axios.get("http://localhost:8080/api/promotions");
+
+  // chỉ lấy đợt đang hoạt động
+  promotions.value = res.data.filter((p) => p.trangThai === 1);
 };
 
 const isSettingAddress = ref(false);
@@ -409,24 +554,26 @@ const selectCustomer = async (c) => {
   const res = await axios.get(`http://localhost:8080/api/khach-hang/${c.id}`);
   const kh = res.data;
 
+  currentOrder.value.customer.id = c.id; // ⭐⭐ QUAN TRỌNG NHẤT
+
   currentOrder.value.customer.name = kh.tenKhachHang || "";
   currentOrder.value.customer.email = kh.email || "";
   currentOrder.value.customer.phone = kh.soDienThoai || "";
 
-  const diaChi = kh.listDiaChi.find((d) => d.macDinh);
+  const diaChi = kh.listDiaChi?.find((d) => d.macDinh) || kh.listDiaChi?.[0];
+
   if (!diaChi) return;
 
-  if (!provinces.value.length) {
-    await fetchProvinces();
-  }
+  if (!provinces.value.length) await fetchProvinces();
 
   isSettingAddress.value = true;
 
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
   const province = provinces.value.find((p) =>
-    p.name.includes(diaChi.thanhPho),
+    p.name.toLowerCase().includes(diaChi.thanhPho.toLowerCase()),
   );
+
   if (!province) return;
 
   currentOrder.value.customer.province = province.code;
@@ -436,7 +583,10 @@ const selectCustomer = async (c) => {
   );
   districts.value = resDistrict.data.districts;
 
-  const district = districts.value.find((d) => d.name.includes(diaChi.quan));
+  const district = districts.value.find((d) =>
+    d.name.toLowerCase().includes(diaChi.quan.toLowerCase()),
+  );
+
   if (!district) return;
 
   currentOrder.value.customer.district = district.code;
@@ -446,14 +596,51 @@ const selectCustomer = async (c) => {
   );
   wards.value = resWard.data.wards;
 
-  const ward = wards.value.find((w) => w.name.includes(diaChi.phuong));
+  const ward = wards.value.find((w) =>
+    w.name.toLowerCase().includes(diaChi.phuong.toLowerCase()),
+  );
+
   if (!ward) return;
 
   currentOrder.value.customer.ward = ward.code;
 
-  isSettingAddress.value = false;
+  setTimeout(() => {
+    isSettingAddress.value = false;
+  }, 0);
+
   showCustomerPopup.value = false;
 };
+
+const showPaymentPopup = ref(false);
+
+const paymentMethod = ref("CASH");
+const cashInput = ref(0);
+
+const openPaymentPopup = () => {
+  paymentMethod.value = "CASH";
+  cashInput.value = total.value;
+  showPaymentPopup.value = true;
+};
+
+const confirmPayment = () => {
+  if (!currentOrder.value) return;
+
+  currentOrder.value.paymentMethod = paymentMethod.value;
+
+  if (paymentMethod.value === "CASH") {
+    currentOrder.value.paidAmount = cashInput.value || 0;
+  } else {
+    // chuyển khoản = trả đúng tiền
+    currentOrder.value.paidAmount = total.value;
+  }
+
+  showPaymentPopup.value = false;
+};
+
+const changeMoney = computed(() => {
+  if (!currentOrder.value) return 0;
+  return Math.max((currentOrder.value.paidAmount || 0) - total.value, 0);
+});
 
 const provinces = ref([]);
 const districts = ref([]);
@@ -536,7 +723,7 @@ const formatPrice = (v) => {
 };
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
-    alert("Tối đa 5 đơn hàng thôi 😅");
+    alert("Tối đa 5 đơn hàng thôi ");
     return;
   }
 
@@ -546,6 +733,7 @@ const createOrder = async () => {
     id: Date.now(),
     cart: [],
     customer: {
+      id: null, // ⭐⭐ THÊM DÒNG NÀY
       name: "",
       email: "",
       phone: "",
@@ -554,10 +742,55 @@ const createOrder = async () => {
       district: "",
       province: "",
     },
-  };
+    paidAmount: 0,
+    paymentMethod: "CASH",
+    voucherCode: "",
+    appliedVoucher: null,
 
+    // ⭐ THÊM
+    deliveryType: "COUNTER", // COUNTER | DELIVERY
+    shippingFee: 0,
+  };
   orders.value.push(newOrder);
   activeOrderIndex.value = orders.value.length - 1;
+};
+
+const submitOrder = async () => {
+  if (!currentOrder.value) return;
+
+  try {
+    const order = currentOrder.value;
+
+    const payload = {
+      loaiDon: 1,
+      tongTienHang: subTotal.value,
+      phiShip: shippingFee.value,
+      ghiChu: "",
+
+      maVoucher: order.voucherCode || null,
+
+      idKhachHang: order.customer.id || null,
+      idNhanVien: 3,
+
+      sanPhamChiTiet: order.cart.map((i) => ({
+        idChiTietSanPham: i.id,
+        soLuong: i.quantity,
+        donGia: i.price,
+      })),
+    };
+
+    await axios.post("http://localhost:8080/api/hoa-don", payload);
+
+    showToast("Tạo đơn hàng thành công");
+
+    removeOrder(activeOrderIndex.value);
+  } catch (e) {
+    console.error("CREATE ORDER ERROR:", e);
+    console.error("Response:", e.response);
+    console.error("Data:", e.response?.data);
+
+    showToast(e.response?.data || "Lỗi tạo đơn", "error");
+  }
 };
 
 const removeOrder = (index) => {
@@ -572,29 +805,273 @@ const removeOrder = (index) => {
     activeOrderIndex.value = orders.value.length - 1;
   }
 };
+const searchText = ref("");
+const filterColor = ref("");
+const filterSize = ref("");
+const colors = computed(() => {
+  return [...new Set(products.value.map((p) => p.color).filter(Boolean))];
+});
 
-const voucherCode = ref("");
-const appliedVoucher = ref(null);
+const sizes = computed(() => {
+  return [...new Set(products.value.map((p) => p.size).filter(Boolean))];
+});
+const filteredProducts = computed(() => {
+  let list = products.value;
+  if (searchText.value) {
+    const s = searchText.value.toLowerCase();
+    list = list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(s) || p.code.toLowerCase().includes(s),
+    );
+  }
+  if (filterColor.value) {
+    list = list.filter((p) => p.color === filterColor.value);
+  }
+  if (filterSize.value) {
+    list = list.filter((p) => p.size === filterSize.value);
+  }
 
+  return list;
+});
+const customerSearch = ref("");
+const filteredCustomers = computed(() => {
+  if (!customerSearch.value) return customers.value;
+
+  const s = customerSearch.value.toLowerCase();
+
+  return customers.value.filter(
+    (c) =>
+      (c.tenKhachHang || "").toLowerCase().includes(s) ||
+      (c.email || "").toLowerCase().includes(s) ||
+      (c.soDienThoai || "").includes(s),
+  );
+});
+
+import { onMounted, watchEffect } from "vue";
+
+const STORAGE_KEY = "pos_orders_state";
+const isReady = ref(false);
+
+onMounted(async () => {
+  isSettingAddress.value = true;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    const data = JSON.parse(saved);
+    orders.value = data.orders || [];
+    activeOrderIndex.value = data.activeOrderIndex ?? -1;
+  }
+
+  await fetchProvinces();
+
+  // ⭐ KHÔI PHỤC DISTRICT + WARD
+  for (const order of orders.value) {
+    const provinceCode = order.customer.province;
+    const districtCode = order.customer.district;
+
+    if (provinceCode) {
+      const resDistrict = await axios.get(
+        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
+      );
+
+      districts.value = resDistrict.data.districts;
+    }
+
+    if (districtCode) {
+      const resWard = await axios.get(
+        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
+      );
+
+      wards.value = resWard.data.wards;
+    }
+  }
+
+  await fetchVouchers();
+
+  isSettingAddress.value = false;
+  isReady.value = true;
+});
+
+watchEffect(() => {
+  if (!isReady.value) return; // 🚨 chặn lần đầu
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      orders: orders.value,
+      activeOrderIndex: activeOrderIndex.value,
+    }),
+  );
+});
+
+const clearStorage = () => {
+  localStorage.removeItem(STORAGE_KEY);
+};
+const vouchers = ref([]);
+const fetchVouchers = async () => {
+  const res = await axios.get("http://localhost:8080/admin/voucher");
+  vouchers.value = res.data;
+};
+
+const bankQR = computed(() => {
+  if (!currentOrder.value) return "";
+
+  const amount = total.value || 0;
+
+  // TPBank + STK của bạn
+  const bank = "tpbank";
+  const account = "00000674626";
+
+  return `https://img.vietqr.io/image/${bank}-${account}-compact.png?amount=${amount}&addInfo=POS`;
+});
 const applyVoucher = () => {
-  if (voucherCode.value === "PGG10") {
-    appliedVoucher.value = {
-      code: "PGG10",
-      percent: 10,
-      message: "Giảm 10% cho đơn hàng đầu tiên",
-    };
+  if (!currentOrder.value) return;
+  const code = currentOrder.value.voucherCode;
+  if (!code) return;
+
+  const found = vouchers.value.find(
+    (v) => v.maPgg.toLowerCase() === code.toLowerCase(),
+  );
+
+  if (!found) {
+    showToast("Mã giảm giá không tồn tại", "error");
+    currentOrder.value.appliedVoucher = null;
+    return;
+  }
+
+  // Log ra để kiểm tra nếu vẫn không chạy
+  console.log("Voucher tìm thấy:", found);
+
+  currentOrder.value.appliedVoucher = {
+    code: found.maPgg,
+    // Đảm bảo ép kiểu số cho giaTri
+    percent: found.loaiGiam === "PERCENT" ? Number(found.giaTri) : 0,
+    amount:
+      found.loaiGiam === "AMOUNT" || found.loaiGiam === "MONEY"
+        ? Number(found.giaTri)
+        : 0,
+    message: found.tenPgg,
+  };
+};
+
+const voucherText = computed(() => {
+  const v = currentOrder.value?.appliedVoucher;
+  if (!v) return "";
+  if (v.percent > 0) return `Giảm ${v.percent}%`;
+  if (v.amount > 0) return `Giảm ${formatPrice(v.amount)}`;
+  return "";
+});
+const discount = computed(() => {
+  const v = currentOrder.value?.appliedVoucher;
+  if (!v) return 0;
+
+  let totalDiscount = 0;
+
+  if (v.percent && v.percent > 0) {
+    totalDiscount = (subTotal.value * v.percent) / 100;
+  } else if (v.amount && v.amount > 0) {
+    totalDiscount = v.amount;
+  }
+
+  // Không cho phép tiền giảm lớn hơn tổng tiền hàng
+  return Math.min(totalDiscount, subTotal.value);
+});
+const shippingFee = computed(() => {
+  if (!currentOrder.value) return 0;
+  return currentOrder.value.deliveryType === "DELIVERY"
+    ? currentOrder.value.shippingFee
+    : 0;
+});
+
+const total = computed(
+  () => subTotal.value - discount.value + shippingFee.value,
+);
+
+const setDelivery = (type) => {
+  if (!currentOrder.value) return;
+
+  currentOrder.value.deliveryType = type;
+
+  if (type === "COUNTER") {
+    currentOrder.value.shippingFee = 0;
   } else {
-    appliedVoucher.value = null;
-    alert("Mã giảm giá không hợp lệ");
+    currentOrder.value.shippingFee = 30000; // ⭐ default ship (bạn đổi tùy ý)
   }
 };
 
-const discount = computed(() => {
-  if (!appliedVoucher.value) return 0;
-  return (subTotal.value * appliedVoucher.value.percent) / 100;
+/* ================= CONFIRM MODAL ================= */
+const modal = ref({
+  show: false,
+  title: "",
+  message: "",
+  onConfirm: null,
 });
 
-const total = computed(() => subTotal.value - discount.value);
+const openConfirmModal = (title, message, cb) => {
+  modal.value = {
+    show: true,
+    title,
+    message,
+    onConfirm: cb,
+  };
+};
+
+const closeConfirmModal = () => {
+  modal.value.show = false;
+};
+
+const handleModalConfirm = () => {
+  modal.value.onConfirm?.();
+  closeConfirmModal();
+};
+
+/* ================= TOAST ================= */
+const toast = ref({
+  show: false,
+  message: "",
+  type: "success", // success | error
+});
+
+const showToast = (msg, type = "success") => {
+  toast.value.message = msg;
+  toast.value.type = type;
+  toast.value.show = true;
+
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 2500);
+};
+
+const calculateShipping = async () => {
+  if (!currentOrder.value) return;
+
+  const districtCode = currentOrder.value.customer.district;
+  if (!districtCode) return;
+
+  const districtObj = districts.value.find((d) => d.code === districtCode);
+
+  if (!districtObj) return;
+
+  const res = await axios.get("http://localhost:8080/api/shipping", {
+    params: { district: districtObj.name },
+  });
+
+  currentOrder.value.shippingFee = res.data;
+};
+
+const toggleDelivery = async (e) => {
+  const isDelivery = e.target.checked;
+
+  if (!currentOrder.value) return;
+
+  currentOrder.value.deliveryType = isDelivery ? "DELIVERY" : "COUNTER";
+
+  if (isDelivery) {
+    await calculateShipping();
+  } else {
+    currentOrder.value.shippingFee = 0;
+  }
+};
 </script>
 
 <style scoped>
@@ -609,6 +1086,7 @@ const total = computed(() => subTotal.value - discount.value);
   margin-bottom: 16px;
   color: #333;
 }
+
 /* ===== HEADER PANEL ===== */
 .top-header {
   background: #fff;
@@ -745,12 +1223,14 @@ const total = computed(() => subTotal.value - discount.value);
   border: none;
   outline: none;
 }
+
 .popup-content {
   background: #fff;
   padding: 20px;
   width: 800px;
   border-radius: 10px;
 }
+
 /* ================= MODAL OVERLAY ================= */
 .modal-overlay {
   position: fixed;
@@ -916,6 +1396,81 @@ const total = computed(() => subTotal.value - discount.value);
   border: 1px solid #ddd;
 }
 
+.modal.small {
+  width: 400px;
+}
+
+.payment-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pay-type {
+  display: flex;
+  gap: 10px;
+}
+
+.pay-type button {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #c49a6c;
+  background: #fff;
+  cursor: pointer;
+}
+
+.pay-type button.active {
+  background: linear-gradient(90deg, #c89b6d, #6b3f23);
+  color: #fff;
+}
+
+.pay-action {
+  align-items: center;
+}
+
+.pay-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.money {
+  font-weight: 600;
+}
+
+.pay-btn {
+  width: 34px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #c49a6c;
+  background: #fff;
+  font-size: 10px;
+  line-height: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  padding: 2px;
+}
+
+.pay-btn:hover {
+  background: #c49a6c;
+  color: #fff;
+}
+
+.cash-input input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.clickable {
+  cursor: pointer;
+  color: #6b3f23;
+  font-weight: 600;
+}
+
 /* ================= BUTTONS ================= */
 .btn-primary {
   background: #c49a6c;
@@ -944,6 +1499,27 @@ const total = computed(() => subTotal.value - discount.value);
 .btn-outline:hover {
   background: #c49a6c;
   color: #fff;
+}
+
+.bank-box {
+  text-align: center;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.qr-img {
+  width: 200px;
+  height: 200px;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.bank-money {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .customer-form {
@@ -1004,7 +1580,7 @@ const total = computed(() => subTotal.value - discount.value);
 
 .product-row {
   display: grid;
-  grid-template-columns: 30px 70px 1.5fr 1fr 120px 140px 80px 40px;
+  grid-template-columns: 30px 200px 1.5fr 1fr 500px 200px 100px 40px;
   align-items: center;
   gap: 12px;
   padding: 12px 0;
@@ -1012,8 +1588,11 @@ const total = computed(() => subTotal.value - discount.value);
 }
 
 .product-img {
-  width: 60px;
-  border-radius: 8px;
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #eee;
 }
 
 .product-info .name {
@@ -1038,6 +1617,36 @@ const total = computed(() => subTotal.value - discount.value);
 .price .sale {
   color: red;
   font-weight: 600;
+}
+
+.price-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  line-height: 1.2;
+}
+
+.price-cell del {
+  color: #999;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.price-cell .sale {
+  color: #e53935;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.modal .table td {
+  height: 70px;
 }
 
 .qty {
@@ -1078,6 +1687,7 @@ const total = computed(() => subTotal.value - discount.value);
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1088,11 +1698,13 @@ const total = computed(() => subTotal.value - discount.value);
     opacity: 0;
     transform: translateY(20px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
+
 /* ===== CARD CHA ===== */
 .pos-card {
   background: #fff;
@@ -1106,8 +1718,10 @@ const total = computed(() => subTotal.value - discount.value);
   background: #f7f7f7;
   border-bottom: 1px solid #e5e5e5;
   padding: 0 12px;
-  gap: 0; /* QUAN TRỌNG */
-  margin: 0; /* QUAN TRỌNG */
+  gap: 0;
+  /* QUAN TRỌNG */
+  margin: 0;
+  /* QUAN TRỌNG */
 }
 
 /* ===== TAB ===== */
@@ -1128,6 +1742,7 @@ const total = computed(() => subTotal.value - discount.value);
   cursor: pointer;
   transition: all 0.15s ease;
 }
+
 .order-tab.active {
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -1142,11 +1757,13 @@ const total = computed(() => subTotal.value - discount.value);
   background: #fff;
 
   border: 1px solid #e5e5e5;
-  border-bottom: 1px solid #fff; /* DÍNH LIỀN CONTENT */
+  border-bottom: 1px solid #fff;
+  /* DÍNH LIỀN CONTENT */
 
   font-weight: 600;
 
-  margin-bottom: -1px; /* trick dính */
+  margin-bottom: -1px;
+  /* trick dính */
 }
 
 /* close */
@@ -1163,6 +1780,7 @@ const total = computed(() => subTotal.value - discount.value);
 .main-layout {
   padding: 16px;
 }
+
 .payment-box {
   font-size: 14px;
 }
@@ -1223,5 +1841,263 @@ const total = computed(() => subTotal.value - discount.value);
   font-size: 15px;
   border-radius: 20px;
   border: none;
+}
+
+/* ===== WRAP ẢNH ===== */
+.img-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.img-wrap.small {
+  width: fit-content;
+}
+
+/* ===== BADGE SALE ===== */
+.sale-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+
+  background: #e53935;
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  padding: 3px 7px;
+  border-radius: 6px;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sale-badge.small {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* ===== DELIVERY SWITCH ===== */
+.delivery-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.delivery-switch span {
+  color: #999;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.delivery-switch span.active {
+  color: #6b3f23;
+  font-weight: 700;
+}
+
+/* SWITCH */
+.switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #ddd;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.25s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+/* ON */
+.switch input:checked + .slider {
+  background: linear-gradient(90deg, #c89b6d, #6b3f23);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(22px);
+}
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  min-width: 300px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  background-color: #dcfce7;
+  color: #166534;
+  font-size: 16px;
+  font-weight: 500;
+  border-left: 6px solid #22c55e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-left: 6px solid #ef4444;
+}
+
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block;
+  /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0;
+  /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

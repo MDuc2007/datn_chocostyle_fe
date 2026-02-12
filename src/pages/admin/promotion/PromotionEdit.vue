@@ -231,20 +231,43 @@
       </div>
     </div>
 
-    <div v-if="showConfirm" class="modal">
-      <div class="modal-box">
-        <h4>Xác nhận hệ thống</h4>
-        <p>
-          Bạn có chắc chắn muốn lưu các thay đổi cho đợt giảm giá này không?
-        </p>
-        <div class="actions">
-          <button class="btn cancel" @click="showConfirm = false">
-            Hủy bỏ
-          </button>
-          <button class="btn primary" @click="submit">Đồng ý</button>
+    <transition name="fade-modal">
+      <div
+        v-if="showConfirm"
+        class="modal-confirm"
+        @click.self="showConfirm = false"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
+            </svg>
+          </div>
+          <h3 class="confirm-title">Xác nhận hệ thống</h3>
+
+          <p class="confirm-desc">
+            Bạn có chắc chắn muốn lưu các thay đổi cho đợt giảm giá này không?
+          </p>
+
+          <div class="confirm-actions">
+            <button class="btn-cancel" @click="showConfirm = false">Hủy</button>
+
+            <button class="btn-confirm" @click="submit">Đồng ý</button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -877,33 +900,109 @@ img {
   margin-bottom: 20px;
 }
 /* === MODAL === */
-.modal {
+/* ===== CONFIRM MODAL (NEW STYLE) ===== */
+.modal-confirm {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 3000;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  animation: zoomIn 0.25s ease;
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+
+  margin: 0 auto 15px;
+  font-size: 34px;
 }
 
-.modal-box {
-  background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  width: 400px;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+.confirm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #63391f;
+  margin-bottom: 10px;
 }
 
-.modal-box h4 {
-  margin-top: 0;
-  color: #333;
-}
-.modal-box p {
+.confirm-desc {
   color: #666;
-  line-height: 1.5;
+  margin-bottom: 24px;
 }
+
+.confirm-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-confirm,
+.btn-cancel {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.25s;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* ===== PANEL BIẾN THỂ ===== */
 .panel-card {
   background: #fff;

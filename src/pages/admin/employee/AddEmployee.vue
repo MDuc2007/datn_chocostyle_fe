@@ -250,6 +250,50 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirm Dialog Modal -->
+    <transition name="fade-modal">
+      <div
+        v-if="confirmDialog.show"
+        class="modal-confirm"
+        @click.self="handleConfirm(false)"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
+            </svg>
+          </div>
+          <h3 class="confirm-title">{{ confirmDialog.title }}</h3>
+          <p class="confirm-desc" v-html="confirmDialog.message"></p>
+          <div class="confirm-actions">
+            <button
+              class="btn-cancel hover-effect"
+              @click="handleConfirm(false)"
+            >
+              Hủy
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="handleConfirm(true)"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -295,6 +339,44 @@ const showNotification = (message, type = "success") => {
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 4000);
+};
+
+// Confirm Dialog State
+const confirmDialog = ref({
+  show: false,
+  title: "Xác nhận",
+  message: "",
+  resolve: null,
+});
+
+const showConfirmDialog = (message, title = "Xác nhận") => {
+  return new Promise((resolve) => {
+    confirmDialog.value.title = title;
+    confirmDialog.value.message = message;
+    confirmDialog.value.resolve = resolve;
+    confirmDialog.value.show = true;
+  });
+};
+
+const handleConfirm = (result) => {
+  if (confirmDialog.value.resolve) {
+    confirmDialog.value.resolve(result);
+  }
+  confirmDialog.value.show = false;
+  confirmDialog.value.message = "";
+  confirmDialog.value.resolve = null;
+};
+
+// Track if form has data
+const hasFormData = () => {
+  return (
+    form.value.hoTen?.trim() ||
+    form.value.email?.trim() ||
+    form.value.sdt?.trim() ||
+    form.value.diaChiCuThe?.trim() ||
+    form.value.avatar ||
+    form.value.ngaySinh
+  );
 };
 
 onMounted(async () => {
@@ -417,17 +499,16 @@ async function submitForm() {
     return;
   }
 
-  // 2. Validate Server (Check trùng Email/SĐT)
-  // Lưu ý: Nếu Backend chưa có API check riêng, lỗi này sẽ được bắt ở catch axios.post bên dưới
-  //    const isDuplicate = await checkDuplicate(form.value.email, form.value.sdt);
-  //   if (isDuplicate) {
-  //       showNotification("Thông tin Email hoặc SĐT đã tồn tại!", "error");
-  //       return;
-  //   }
+  // 2. Confirm before submit
+  const confirmMsg = `
+    Bạn có chắc chắn muốn thêm nhân viên mới?<br><br>
+  `;
+
+  if (!(await showConfirmDialog(confirmMsg, "Xác nhận thêm nhân viên"))) return;
 
   const payload = {
     ...form.value,
-    hoTen: form.value.hoTen.trim(), // Xóa khoảng trắng thừa
+    hoTen: form.value.hoTen.trim(),
     email: form.value.email.trim(),
     diaChiCuThe: form.value.diaChiCuThe.trim(),
     tinhThanhId: selectedCity.value?.code,
@@ -565,7 +646,12 @@ function compareStr(api, qr) {
       .trim();
   return clean(api).includes(clean(qr)) || clean(qr).includes(clean(api));
 }
-function goBack() {
+async function goBack() {
+  // Check if form has unsaved data
+  if (hasFormData()) {
+    const confirmMsg = `Bạn có dữ liệu chưa được lưu.<br>Bạn có chắc chắn muốn rời khỏi trang này?`;
+    if (!(await showConfirmDialog(confirmMsg, "Xác nhận rời khỏi"))) return;
+  }
   router.push("/admin/employee");
 }
 function triggerFileInput() {
@@ -1052,5 +1138,123 @@ select:focus {
   color: #dc2626;
   font-size: 13px;
   text-align: center;
+}
+
+/* === CONFIRM DIALOG === */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 12000;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block;
+  margin: 0;
+}
+
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

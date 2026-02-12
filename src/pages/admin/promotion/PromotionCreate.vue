@@ -225,16 +225,40 @@
   </div>
 
   <!-- MODAL -->
-  <div v-if="showConfirm" class="modal">
-    <div class="modal-content">
-      <h4>Xác nhận</h4>
-      <p>Bạn có chắc chắn muốn thêm đợt giảm giá?</p>
-      <div class="modal-footer">
-        <button class="btn-secondary" @click="showConfirm = false">Hủy</button>
-        <button class="btn-primary" @click="submit()">Xác nhận</button>
+  <transition name="fade-modal">
+    <div
+      v-if="showConfirm"
+      class="modal-confirm"
+      @click.self="showConfirm = false"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
+
+        <h3 class="confirm-title">Xác nhận</h3>
+        <p class="confirm-desc">Bạn có chắc chắn muốn thêm đợt giảm giá?</p>
+
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="showConfirm = false">Hủy</button>
+          <button class="btn-confirm" @click="submit()">Đồng ý</button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 
   <div class="toast-container">
     <div
@@ -874,24 +898,113 @@ th {
   color: #333;
 }
 
-.modal {
+/* ===== MODAL CONFIRM NEW ===== */
+.modal-confirm {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  animation: zoomIn 0.25s ease-out;
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+
+  margin: 0 auto 15px;
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 350px;
+
+.confirm-title {
+  color: #63391f;
+  font-size: 20px;
+  margin-bottom: 10px;
 }
-.modal-footer {
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.confirm-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 20px;
+}
+
+.btn-confirm {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+
+  background: #63391f;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
+.btn-cancel {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+
+  background: #f3f4f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 
 .success {

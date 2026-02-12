@@ -140,7 +140,7 @@
           </div>
 
           <div class="grid-row">
-            <!-- <div class="form-group">
+            <div class="form-group">
               <label>Chức vụ</label>
               <select v-model="form.vaiTro">
                 <option value="Nhân viên">Nhân viên</option>
@@ -148,8 +148,8 @@
                 <option value="Quản lý">Quản lý</option>
                 <option value="Thủ kho">Thủ kho</option>
               </select>
-            </div> -->
-<!-- 
+            </div>
+
             <div class="form-group">
               <label>Trạng thái</label>
               <select v-model="form.trangThai" class="status-select">
@@ -157,7 +157,7 @@
                 <option :value="0">Đã nghỉ việc</option>
                 <option :value="2">Đã khóa</option>
               </select>
-            </div> -->
+            </div>
           </div>
 
           <div class="grid-row-3">
@@ -236,10 +236,48 @@
       </div>
     </div>
   </div>
+
+  <!-- Confirm Dialog Modal -->
+  <transition name="fade-modal">
+    <div
+      v-if="confirmDialog.show"
+      class="modal-confirm"
+      @click.self="handleConfirm(false)"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
+        <h3 class="confirm-title">{{ confirmDialog.title }}</h3>
+        <p class="confirm-desc" v-html="confirmDialog.message"></p>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="handleConfirm(false)">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleConfirm(true)">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
@@ -283,6 +321,52 @@ const showNotification = (message, type = "success") => {
   }, 4000);
 };
 
+// Confirm Dialog State
+const confirmDialog = ref({
+  show: false,
+  title: "Xác nhận",
+  message: "",
+  resolve: null,
+});
+
+const showConfirmDialog = (message, title = "Xác nhận") => {
+  return new Promise((resolve) => {
+    confirmDialog.value.title = title;
+    confirmDialog.value.message = message;
+    confirmDialog.value.resolve = resolve;
+    confirmDialog.value.show = true;
+  });
+};
+
+const handleConfirm = (result) => {
+  if (confirmDialog.value.resolve) {
+    confirmDialog.value.resolve(result);
+  }
+  confirmDialog.value.show = false;
+  confirmDialog.value.message = "";
+  confirmDialog.value.resolve = null;
+};
+
+// Track original form values for change detection
+const originalForm = ref(null);
+
+const hasFormChanged = computed(() => {
+  if (!originalForm.value) return false;
+  return (
+    form.value.hoTen !== originalForm.value.hoTen ||
+    form.value.email !== originalForm.value.email ||
+    form.value.sdt !== originalForm.value.sdt ||
+    form.value.ngaySinh !== originalForm.value.ngaySinh ||
+    form.value.gioiTinh !== originalForm.value.gioiTinh ||
+    form.value.vaiTro !== originalForm.value.vaiTro ||
+    form.value.trangThai !== originalForm.value.trangThai ||
+    form.value.diaChiCuThe !== originalForm.value.diaChiCuThe ||
+    selectedCity.value?.code !== originalForm.value.tinhThanhId ||
+    selectedDistrict.value?.code !== originalForm.value.quanHuyenId ||
+    selectedWard.value?.code !== originalForm.value.xaPhuongId
+  );
+});
+
 // --- 1. LOAD DATA ---
 onMounted(async () => {
   try {
@@ -311,8 +395,23 @@ async function fetchEmployeeDetail(id) {
       ...data,
       ngaySinh: formatDateForInput(data.ngaySinh),
       ngayVaoLam: formatDateForInput(data.ngayVaoLam),
-      vaiTro: data.chucVu || "Nhân viên", // Map chucVu -> vaiTro
+      vaiTro: data.chucVu || "Nhân viên",
       diaChiCuThe: data.diaChiCuThe,
+    };
+
+    // Save original form values for change detection
+    originalForm.value = {
+      hoTen: form.value.hoTen,
+      email: form.value.email,
+      sdt: form.value.sdt,
+      ngaySinh: form.value.ngaySinh,
+      gioiTinh: form.value.gioiTinh,
+      vaiTro: form.value.vaiTro,
+      trangThai: form.value.trangThai,
+      diaChiCuThe: form.value.diaChiCuThe,
+      tinhThanhId: data.tinhThanhId,
+      quanHuyenId: data.quanHuyenId,
+      xaPhuongId: data.xaPhuongId,
     };
 
     // Fill lại Combobox Địa chỉ
@@ -436,27 +535,29 @@ async function submitForm() {
     return;
   }
 
-  // 2. Prepare Payload
+  // 2. Confirm before save
+  const confirmMsg = `
+    Bạn có chắc chắn muốn lưu thay đổi?<br><br>
+  `;
+
+  if (!(await showConfirmDialog(confirmMsg, "Xác nhận lưu thay đổi"))) return;
+
+  // 3. Prepare Payload
   const payload = {
     ...form.value,
-    // Trim dữ liệu string để tránh lỗi khoảng trắng thừa
     hoTen: form.value.hoTen.trim(),
     email: form.value.email.trim(),
     diaChiCuThe: form.value.diaChiCuThe.trim(),
-
-    // Map lại ID địa chỉ từ Combobox
     tinhThanhId: selectedCity.value?.code,
     tinhThanh: selectedCity.value?.name,
     quanHuyenId: selectedDistrict.value?.code,
     quanHuyen: selectedDistrict.value?.name,
     xaPhuongId: selectedWard.value?.code,
     xaPhuong: selectedWard.value?.name,
-
-    chucVu: form.value.vaiTro, // Backend dùng field chucVu
+    chucVu: form.value.vaiTro,
   };
 
   try {
-    // 3. Call API Update
     await axios.put(
       `http://localhost:8080/api/nhan-vien/${form.value.id}`,
       payload,
@@ -464,18 +565,14 @@ async function submitForm() {
 
     showNotification("Cập nhật nhân viên thành công!", "success");
 
-    // 4. Redirect sau khi thành công
     setTimeout(() => {
       router.push("/admin/employee");
     }, 1500);
   } catch (error) {
     console.error(error);
-    // 5. Bắt lỗi từ Backend (Ví dụ: Email trùng với nhân viên KHÁC)
     if (error.response && error.response.data && error.response.data.message) {
       const msg = error.response.data.message;
       showNotification(msg, "error");
-
-      // Map lỗi vào field cụ thể nếu có
       if (msg.includes("Email")) errors.value.email = msg;
       if (msg.includes("SĐT") || msg.includes("Phone")) errors.value.sdt = msg;
     } else {
@@ -508,7 +605,12 @@ function onDistrictChange() {
   listWard.value = selectedDistrict.value ? selectedDistrict.value.wards : [];
   selectedWard.value = null;
 }
-function goBack() {
+async function goBack() {
+  // Check if form has unsaved data
+  if (hasFormChanged.value) {
+    const confirmMsg = `Bạn có dữ liệu chưa được lưu.<br>Bạn có chắc chắn muốn rời khỏi trang này?`;
+    if (!(await showConfirmDialog(confirmMsg, "Xác nhận rời khỏi"))) return;
+  }
   router.push("/admin/employee");
 }
 function triggerFileInput() {
@@ -789,6 +891,108 @@ select:focus {
   }
   to {
     transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Confirm Dialog Styles */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.confirm-icon-wrapper svg {
+  display: block;
+  margin: 0;
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
     opacity: 1;
   }
 }
