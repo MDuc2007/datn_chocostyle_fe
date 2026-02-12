@@ -39,7 +39,18 @@ const form = reactive({
   trangThai: 1,
 });
 
-// --- STATE QUẢN LÝ LỖI (Mới thêm) ---
+// --- State theo dõi thay đổi Form (Để confirm khi đóng) ---
+const originalForm = ref<any>(null);
+const hasFormChanged = computed(() => {
+  if (!originalForm.value) return false;
+  return (
+    form.tenCa !== originalForm.value.tenCa ||
+    form.gioBatDau !== originalForm.value.gioBatDau ||
+    form.gioKetThuc !== originalForm.value.gioKetThuc
+  );
+});
+
+// --- STATE QUẢN LÝ LỖI ---
 const errors = reactive({
   tenCa: "",
   gioBatDau: "",
@@ -58,28 +69,54 @@ const showToast = (message: string, type: "success" | "error" | "warning") => {
   );
 };
 
+// --- CONFIRM DIALOG STATE (Giống ScheduleManager) ---
+const confirmDialog = ref({
+  show: false,
+  title: "Xác nhận",
+  message: "",
+  resolve: null as ((value: boolean) => void) | null,
+});
+
+const showConfirmDialog = (
+  message: string,
+  title: string = "Xác nhận",
+): Promise<boolean> => {
+  return new Promise((resolve) => {
+    confirmDialog.value.message = message;
+    confirmDialog.value.title = title;
+    confirmDialog.value.resolve = resolve;
+    confirmDialog.value.show = true;
+  });
+};
+
+const handleConfirm = (result: boolean) => {
+  if (confirmDialog.value.resolve) {
+    confirmDialog.value.resolve(result);
+  }
+  confirmDialog.value.show = false;
+  confirmDialog.value.message = "";
+  confirmDialog.value.resolve = null;
+};
+
 // --- 3. HELPER & VALIDATION LOGIC ---
 
-// Hàm reset lỗi
 const clearErrors = () => {
   errors.tenCa = "";
   errors.gioBatDau = "";
   errors.gioKetThuc = "";
 };
 
-// Hàm đổi giờ "HH:mm" sang phút
 const timeToMinutes = (timeStr: string) => {
   if (!timeStr) return 0;
   const [h, m] = timeStr.split(":").map(Number);
   return h * 60 + m;
 };
 
-// Hàm Validate chi tiết (Gán lỗi vào biến errors)
 const validateForm = () => {
   clearErrors();
   let isValid = true;
 
-  // 1. Check Tên Ca
+  // Validate Tên
   if (!form.tenCa || !form.tenCa.trim()) {
     errors.tenCa = "Tên ca không được để trống";
     isValid = false;
@@ -87,7 +124,7 @@ const validateForm = () => {
     errors.tenCa = "Tên ca phải có ít nhất 2 ký tự";
     isValid = false;
   } else {
-    // Check trùng tên
+    // Check trùng tên (trừ chính nó khi edit)
     const isDuplicateName = shifts.value.some(
       (s) =>
         s.tenCa.trim().toLowerCase() === form.tenCa.trim().toLowerCase() &&
@@ -99,7 +136,7 @@ const validateForm = () => {
     }
   }
 
-  // 2. Check Giờ
+  // Validate Giờ
   if (!form.gioBatDau) {
     errors.gioBatDau = "Vui lòng chọn giờ bắt đầu";
     isValid = false;
@@ -109,7 +146,7 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // 3. Check Logic thời gian (chỉ check khi đã nhập đủ giờ)
+  // Check Logic thời gian
   if (form.gioBatDau && form.gioKetThuc) {
     const startMins = timeToMinutes(form.gioBatDau);
     const endMins = timeToMinutes(form.gioKetThuc);
@@ -121,16 +158,9 @@ const validateForm = () => {
     } else if (duration < 30) {
       errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
       isValid = false;
-    } else if (duration > 840) {
-      // Cảnh báo mềm (confirm)
-      if (
-        !confirm("Ca làm việc này dài hơn 14 tiếng. Bạn có chắc chắn không?")
-      ) {
-        isValid = false;
-      }
     }
 
-    // Check trùng khung giờ chính xác
+    // Check trùng khung giờ
     if (isValid) {
       const isDuplicateTime = shifts.value.some((s) => {
         if (isEditing.value && s.idCa === form.idCa) return false;
@@ -163,17 +193,25 @@ const fetchShifts = async () => {
 };
 
 const handleSubmit = async () => {
-  // Gọi hàm validate (nếu lỗi, biến errors sẽ có data -> UI hiện đỏ)
   if (!validateForm()) return;
 
-  // Cảnh báo nghiệp vụ khi Edit
-  // if (isEditing.value) {
-  //   const confirmEdit = confirm('LƯU Ý: Việc thay đổi giờ của Ca sẽ ảnh hưởng đến lịch sử chấm công. Nếu bạn có chắc chắn muốn cập nhật?');
-  //   if (!confirmEdit) return;
-  // }
+  // Confirm Dialog trước khi lưu
+  const actionText = isEditing.value ? "cập nhật" : "thêm mới";
+  const confirmMsg = `
+    Bạn có chắc chắn muốn <strong>${actionText}</strong> ca làm việc này?<br><br>
+    <strong>Tên ca:</strong> ${form.tenCa}<br>
+    <strong>Thời gian:</strong> ${form.gioBatDau} - ${form.gioKetThuc}
+  `;
+
+  if (
+    !(await showConfirmDialog(
+      confirmMsg,
+      isEditing.value ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
+    ))
+  )
+    return;
 
   try {
-    // Format HH:mm -> HH:mm:00
     const payload = {
       ...form,
       gioBatDau:
@@ -192,29 +230,40 @@ const handleSubmit = async () => {
       showToast("Thêm mới thành công", "success");
     }
 
+    // Reset originalForm để closeModal không hỏi lại
+    originalForm.value = null;
     closeModal();
     fetchShifts();
   } catch (error: any) {
     const msg =
       error.response?.data?.message || error.response?.data || "Có lỗi xảy ra";
-
-    // Auto map lỗi backend vào ô input
-    if (msg.toLowerCase().includes("tên ca")) {
-      errors.tenCa = msg; // Nó sẽ hiện đỏ lòm ngay ô Tên
-    } else if (msg.toLowerCase().includes("giờ")) {
+    if (msg.toLowerCase().includes("tên ca")) errors.tenCa = msg;
+    else if (msg.toLowerCase().includes("giờ")) {
       errors.gioBatDau = msg;
       errors.gioKetThuc = msg;
-    } else {
-      showToast(msg, "error"); // Lỗi khác thì hiện Toast
-    }
+    } else showToast(msg, "error");
   }
 };
 
-const toggleStatus = async (shift: Shift) => {
+// --- LOGIC TOGGLE SWITCH (ĐÃ FIX LỖI UI) ---
+const toggleStatus = async (shift: Shift, event: Event) => {
+  // 1. QUAN TRỌNG: Ngăn chặn checkbox tự đổi trạng thái ngay lập tức
+  event.preventDefault();
+
   const oldStatus = shift.trangThai;
   const newStatus = oldStatus === 1 ? 0 : 1;
 
-  shift.trangThai = newStatus; // Optimistic update
+  // 2. Hỏi xác nhận
+  const actionText = newStatus === 1 ? "kích hoạt" : "ngưng hoạt động";
+  const confirmMsg = `Bạn có chắc chắn muốn <strong>${actionText}</strong> ca <strong>${shift.tenCa}</strong>?`;
+
+  if (!(await showConfirmDialog(confirmMsg, "Xác nhận trạng thái"))) {
+    // Nếu bấm Hủy, do đã preventDefault ở trên, UI switch vẫn giữ nguyên -> Đúng ý bạn.
+    return;
+  }
+
+  // 3. Nếu Đồng ý -> Cập nhật UI và gọi API
+  shift.trangThai = newStatus; // Cập nhật UI
 
   try {
     const payload = {
@@ -235,33 +284,40 @@ const toggleStatus = async (shift: Shift) => {
       "success",
     );
   } catch (error) {
-    shift.trangThai = oldStatus; // Hoàn tác nếu lỗi
+    shift.trangThai = oldStatus; // Revert nếu API lỗi
     showToast("Lỗi khi cập nhật trạng thái", "error");
   }
 };
 
 const deleteShift = async (id: number) => {
-  if (!confirm("Bạn có chắc muốn xóa ca này?")) return;
+  const shift = shifts.value.find((s) => s.idCa === id);
+  if (!shift) return;
+
+  const confirmMsg = `Bạn có chắc chắn muốn xóa ca <strong>${shift.tenCa}</strong>?<br>Lưu ý: Hành động này không thể hoàn tác.`;
+  if (!(await showConfirmDialog(confirmMsg, "Xác nhận xóa"))) return;
+
   try {
     await axios.delete(`${API_URL}/${id}`);
     showToast("Đã xóa thành công", "success");
     fetchShifts();
   } catch (error) {
-    showToast("Lỗi khi xóa", "error");
+    showToast("Lỗi khi xóa (Có thể ca đang được sử dụng)", "error");
   }
 };
 
 // --- 5. Modal Handlers ---
 const openAddModal = () => {
   isEditing.value = false;
-  // Reset form
   form.idCa = null;
   form.maCa = "";
   form.tenCa = "";
   form.gioBatDau = "";
   form.gioKetThuc = "";
   form.trangThai = 1;
-  clearErrors(); // Reset lỗi
+  clearErrors();
+
+  // Lưu trạng thái gốc (để check dirty form)
+  originalForm.value = { ...form };
   showModal.value = true;
 };
 
@@ -270,19 +326,29 @@ const openEditModal = (item: Shift) => {
   form.idCa = item.idCa;
   form.maCa = item.maCa;
   form.tenCa = item.tenCa;
-  // Cắt chuỗi HH:mm:ss -> HH:mm
   form.gioBatDau = item.gioBatDau?.substring(0, 5) || "";
   form.gioKetThuc = item.gioKetThuc?.substring(0, 5) || "";
   form.trangThai = item.trangThai;
-  clearErrors(); // Reset lỗi
+  clearErrors();
+
+  // Lưu trạng thái gốc
+  originalForm.value = { ...form };
   showModal.value = true;
 };
 
-const closeModal = () => {
+const closeModal = async () => {
+  // Check nếu có thay đổi chưa lưu
+  if (hasFormChanged.value) {
+    const confirmMsg =
+      "Bạn có thay đổi chưa được lưu.<br>Bạn có chắc chắn muốn hủy bỏ và đóng?";
+    if (!(await showConfirmDialog(confirmMsg, "Cảnh báo"))) return;
+  }
+
   showModal.value = false;
+  originalForm.value = null; // Reset
 };
 
-// --- 6. Filters & Pagination ---
+// --- 6. Filters & Pagination (Giữ nguyên logic cũ) ---
 const resetFilters = () => {
   filterStatus.value = "all";
   filterStartTime.value = "";
@@ -364,9 +430,6 @@ onMounted(fetchShifts);
           class="toast"
           :class="notif.type"
         >
-          <span v-if="notif.type === 'success'" style="font-size: 18px"></span>
-          <span v-if="notif.type === 'error'" style="font-size: 18px"></span>
-          <span v-if="notif.type === 'warning'" style="font-size: 18px"></span>
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
       </TransitionGroup>
@@ -480,7 +543,7 @@ onMounted(fetchShifts);
                     <input
                       type="checkbox"
                       :checked="shift.trangThai === 1"
-                      @change="toggleStatus(shift)"
+                      @click="toggleStatus(shift, $event)"
                     />
                     <span class="slider"></span>
                   </label>
@@ -529,49 +592,7 @@ onMounted(fetchShifts);
           <button class="close-btn" @click="closeModal">×</button>
         </div>
 
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Tên Ca <span class="required">*</span></label>
-            <input
-              type="text"
-              v-model="form.tenCa"
-              class="form-control"
-              :class="{ 'red-border': errors.tenCa }"
-              placeholder="Ví dụ: Ca Sáng, Ca Chiều..."
-            />
-            <span v-if="errors.tenCa" class="error-msg">{{
-              errors.tenCa
-            }}</span>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col">
-              <label>Giờ bắt đầu <span class="required">*</span></label>
-              <input
-                type="time"
-                v-model="form.gioBatDau"
-                class="form-control"
-                :class="{ 'red-border': errors.gioBatDau }"
-              />
-              <span v-if="errors.gioBatDau" class="error-msg">{{
-                errors.gioBatDau
-              }}</span>
-            </div>
-
-            <div class="form-group col">
-              <label>Giờ kết thúc <span class="required">*</span></label>
-              <input
-                type="time"
-                v-model="form.gioKetThuc"
-                class="form-control"
-                :class="{ 'red-border': errors.gioKetThuc }"
-              />
-              <span v-if="errors.gioKetThuc" class="error-msg">{{
-                errors.gioKetThuc
-              }}</span>
-            </div>
-          </div>
-        </div>
+        
 
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Hủy bỏ</button>
@@ -581,6 +602,48 @@ onMounted(fetchShifts);
         </div>
       </div>
     </div>
+
+    <transition name="fade-modal">
+      <div
+        v-if="confirmDialog.show"
+        class="modal-confirm"
+        @click.self="handleConfirm(false)"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="40"
+              height="40"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <h3 class="confirm-title">{{ confirmDialog.title }}</h3>
+          <p class="confirm-desc" v-html="confirmDialog.message"></p>
+          <div class="confirm-actions">
+            <button
+              class="btn-cancel hover-effect"
+              @click="handleConfirm(false)"
+            >
+              Hủy
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="handleConfirm(true)"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -713,7 +776,7 @@ onMounted(fetchShifts);
   padding: 4px;
 }
 
-/* === TABLE STYLES (ĐÃ SỬA LỖI LỆCH) === */
+/* === TABLE STYLES === */
 .table-container {
   width: 100%;
   overflow-x: auto;
@@ -745,7 +808,6 @@ onMounted(fetchShifts);
   white-space: nowrap;
 }
 
-/* FIX 1: Thêm !important để ghi đè thuộc tính text-align: left của thẻ th bên trên */
 .text-center {
   text-align: center !important;
 }
@@ -791,7 +853,7 @@ onMounted(fetchShifts);
   color: #92400e;
 }
 
-/* === ACTION GROUP (ĐÃ SỬA CĂN CHỈNH NÚT) === */
+/* === ACTION GROUP === */
 .action-group.center-actions {
   display: flex;
   align-items: center;
@@ -812,7 +874,6 @@ onMounted(fetchShifts);
   transition: all 0.2s;
 }
 
-/* FIX 2: Bỏ comment đoạn này. SVG phải là block để không bị tính khoảng trống dòng (line-height) gây lệch icon */
 .action-btn svg {
   display: block;
 }
@@ -1019,14 +1080,14 @@ onMounted(fetchShifts);
   }
 }
 
-/* === SWITCH STYLING (FIX 3) === */
+/* === SWITCH STYLING === */
 .switch {
   position: relative;
-  display: inline-block; /* Hoặc block đều được vì flex cha đã xử lý */
+  display: inline-block;
   width: 40px;
   height: 22px;
   margin: 0;
-  cursor: pointer; /* Thêm con trỏ tay */
+  cursor: pointer;
 }
 .switch input {
   opacity: 0;
@@ -1050,7 +1111,7 @@ onMounted(fetchShifts);
   height: 16px;
   width: 16px;
   left: 3px;
-  bottom: 3px; /* 16+3+3 = 22px height -> Căn chuẩn */
+  bottom: 3px;
   background-color: white;
   transition: 0.3s;
   border-radius: 50%;
@@ -1090,14 +1151,15 @@ input:checked + .slider:before {
     opacity: 1;
   }
 }
+
 /* --- VALIDATION STYLES --- */
 .red-border {
-  border-color: #dc2626 !important; /* Màu đỏ đậm */
-  background-color: #fff5f5; /* Nền đỏ nhạt */
+  border-color: #dc2626 !important;
+  background-color: #fff5f5;
 }
 
 .red-border:focus {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important; /* Shadow đỏ khi focus */
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
 }
 
 .error-msg {
@@ -1117,6 +1179,108 @@ input:checked + .slider:before {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* === CONFIRM DIALOG STYLES === */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.confirm-icon-wrapper svg {
+  display: block;
+  margin: 0;
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 </style>

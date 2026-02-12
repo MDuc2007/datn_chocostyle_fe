@@ -114,7 +114,7 @@
           <button @click="closeModal" class="close-x">&times;</button>
         </div>
         <img
-          src="/src/assets/logo/889f315d-5a03-447c-845c-f7f3896783fa.jpg"
+          src="/src/assets/logo/image 55.png"
           alt="Size Guide"
           class="size-guide-image"
         />

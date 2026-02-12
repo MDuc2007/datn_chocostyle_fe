@@ -287,7 +287,7 @@
         </button>
         <button
           class="btn-orange hover-effect"
-          @click="saveCustomer"
+          @click="handleSaveClick"
           :disabled="isLoading"
           :class="{ 'btn-loading': isLoading }"
         >
@@ -306,6 +306,39 @@
       </div>
     </transition>
   </div>
+
+  <transition name="fade-modal">
+    <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeModal">
+            Xem lại
+          </button>
+          <button class="btn-confirm hover-effect" @click="confirmSaveAction">
+            Xác nhận lưu
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -316,6 +349,51 @@ import { customerService } from "../../../services/customerService";
 
 const router = useRouter();
 
+// --- 1. Thêm biến modal vào phần khai báo STATE (dưới dòng const toast = ...) ---
+const modal = ref({ show: false, title: "", message: "" });
+
+// --- 2. Thêm hàm mới: Xử lý khi ấn nút "Lưu" (Thay thế việc gọi saveCustomer trực tiếp) ---
+const handleSaveClick = () => {
+  // Validate trước, nếu sai thì báo lỗi và dừng luôn, không hiện modal
+  if (!validateForm()) {
+    showToast("Vui lòng kiểm tra lại thông tin nhập", "error");
+    return;
+  }
+
+  // Nếu dữ liệu ok, thì hiện modal xác nhận
+  modal.value = {
+    show: true,
+    title: "Xác nhận thêm mới",
+    message: `Bạn có chắc chắn muốn thêm khách hàng "${newCustomer.value.tenKhachHang}" vào hệ thống?`,
+  };
+};
+
+// --- 3. Sửa hàm saveCustomer cũ thành hàm xử lý sau khi đã Đồng Ý ---
+// (Đổi tên hàm cũ saveCustomer -> confirmSaveAction hoặc giữ nguyên logic bên trong nhưng bỏ đoạn validate đi vì đã làm ở bước trên)
+const confirmSaveAction = async () => {
+  // Đóng modal trước
+  modal.value.show = false;
+
+  isLoading.value = true;
+
+  try {
+    await customerService.create(newCustomer.value, selectedFile.value);
+    showToast("Thêm khách hàng thành công!", "success");
+    setTimeout(() => router.push("/admin/customer"), 1500);
+  } catch (error) {
+    console.error("Lỗi lưu:", error);
+    // ... (Giữ nguyên phần xử lý lỗi cũ của bạn) ...
+    if (error.response && error.response.data) {
+      // logic lỗi cũ
+      showToast("Có lỗi xảy ra", "error");
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Hàm đóng modal
+const closeModal = () => (modal.value.show = false);
 // --- STATE ---
 const previewImage = ref(null);
 const selectedFile = ref(null);
@@ -1016,5 +1094,119 @@ const showToast = (msg, type = "success") => {
 .list-anim-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+
+/* =========================================
+   6. MODAL STYLES (Thêm mới)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* Màn hình tối đi */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+
+/* Icon dấu chấm hỏi màu xanh dương hoặc cam tuỳ ý */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounce 1s infinite;
+}
+
+.confirm-title {
+  color: var(--primary-brown);
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
+
+.btn-confirm {
+  background-color: #63391f; /* <-- THÊM DÒNG NÀY (Mã màu nâu của bạn) */
+  color: #fff;
+}
+.btn-confirm:hover {
+  background-color: #4e2c17; /* Màu nâu đậm hơn khi di chuột */
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+/* Animations cho Modal */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>
