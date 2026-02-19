@@ -6,6 +6,7 @@
       <div class="login-header">
         <h1 class="brand-title">
           CHOCOSTYLE
+          <span class="admin-badge">ADMIN</span>
         </h1>
         <p class="subtitle">Đăng nhập hệ thống quản lý</p>
       </div>
@@ -88,7 +89,7 @@
           class="btn-login hover-effect"
         >
           <span v-if="loading" class="spinner"></span>
-          <span v-else>ĐĂNG NHẬP</span>
+          <span v-else>TRUY CẬP HỆ THỐNG</span>
         </button>
       </form>
     </div>
@@ -119,11 +120,15 @@ const handleLogin = async () => {
       password: password.value,
     });
 
-    // Điều hướng dựa trên role (nếu có logic phân quyền)
+    // Điều hướng dựa trên role
     if (res.role === "ROLE_ADMIN") {
       router.push("/admin/dashboard");
+    } else if (res.role === "ROLE_STAFF") {
+      // Thay đổi đường dẫn này thành trang bạn muốn Nhân viên vào (ví dụ: /staff/pos)
+      router.push("/staff/pos");
     } else {
-      router.push("/admin/product");
+      // Trường hợp dự phòng nếu có role khác hoặc lỗi
+      router.push("/");
     }
   } catch (error) {
     isError.value = true;

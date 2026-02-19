@@ -62,7 +62,13 @@
             </select>
           </div>
 
-          <button @click="resetFilter">Đặt lại</button>
+          <button class="btn-clear" @click="resetFilter">
+            <img
+              src="/src/assets/icon/refesh.svg"
+              style="width: 20px; height: 20px"
+              alt=""
+            />
+          </button>
         </div>
 
         <button class="btn-add" @click="goCreate">+ Thêm phiếu giảm giá</button>
@@ -198,34 +204,16 @@
     >
       <div class="confirm-box">
         <div class="confirm-icon-wrapper">
-          <!-- Nếu là ngừng hoạt động thì màu cam -->
           <svg
-            v-if="willDeactivate"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
+            fill="currentColor"
             width="40"
             height="40"
-            fill="currentColor"
           >
             <path
               fill-rule="evenodd"
-              d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 5.5v6a.75.75 0 01-1.5 0v-6a.75.75 0 011.5 0zm0 9a.75.75 0 10-1.5 0 .75.75 0 001.5 0z"
-              clip-rule="evenodd"
-            />
-          </svg>
-
-          <!-- Nếu kích hoạt lại thì tick -->
-          <svg
-            v-else
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="40"
-            height="40"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm13.28-2.47a.75.75 0 10-1.06-1.06l-3.72 3.72-1.47-1.47a.75.75 0 10-1.06 1.06l2 2a.75.75 0 001.06 0l4.25-4.25z"
+              d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
               clip-rule="evenodd"
             />
           </svg>
@@ -243,6 +231,7 @@
 
         <div class="confirm-actions">
           <button class="btn-cancel" @click="cancelToggle">Hủy</button>
+
           <button class="btn-confirm" @click="confirmToggle">Đồng ý</button>
         </div>
       </div>
@@ -573,6 +562,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ================= LAYOUT ================= */
+.voucher-page {
+  background: #f7f7f7;
+}
+
+.frame-top,
+.frame-bottom {
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 20px;
+}
+
+.frame-top {
+  margin-bottom: 16px;
+}
+
 .header-row {
   display: flex;
   justify-content: space-between;
@@ -582,29 +587,10 @@ onMounted(() => {
 .tittle {
   color: #63391f;
   font-size: 25px;
-  margin-top: 1px;
-  margin-bottom: 7px;
+  margin: 0;
 }
 
-.total-voucher {
-  font-size: 15px;
-  color: #333;
-}
-
-.total-voucher strong {
-  font-weight: 600;
-}
-
-.voucher-page {
-  background: #f7f7f7;
-}
-
-.frame-top {
-  background: #fff;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-}
-
+/* ================= SEARCH ================= */
 .search-row {
   margin-bottom: 12px;
 }
@@ -612,10 +598,11 @@ onMounted(() => {
 .search-item {
   display: flex;
   flex-direction: column;
+  gap: 4px;
   font-size: 15px;
   font-weight: 600;
+  margin-top: 10px;
   color: #484848;
-  gap: 4px;
 }
 
 .search-item input {
@@ -627,23 +614,18 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.search-row input:focus {
+.search-item input:focus {
   outline: none;
   border-color: #5a2d0c;
   box-shadow: 0 0 0 2px rgba(90, 45, 12, 0.15);
 }
 
-.filter-box {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-}
-
+/* ================= FILTER ================= */
 .filter-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
   align-items: flex-end;
+  gap: 12px;
 }
 
 .filters {
@@ -652,21 +634,10 @@ onMounted(() => {
   align-items: flex-end;
 }
 
-.filters input,
-.filters select,
-.filters button {
-  height: 40px; /* 👈 BẰNG SEARCH */
-  padding: 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #555555a4;
-  background: #fff;
-}
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* tăng từ 4px → 8px hoặc 10px */
+  gap: 4px;
 }
 
 .filter-item label {
@@ -675,95 +646,82 @@ onMounted(() => {
   color: #484848;
 }
 
-.filters select {
-  min-width: 150px;
+.filters input,
+.filters select,
+.filters button {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background: #fff;
 }
 
 .filters input[type="date"] {
   min-width: 140px;
 }
 
+.filters select {
+  min-width: 150px;
+}
+
+.filters input:focus,
+.filters select:focus {
+  outline: none;
+  border-color: #5a2d0c;
+  box-shadow: 0 0 0 2px rgba(90, 45, 12, 0.15);
+}
+/* 
 .filters button {
-  white-space: nowrap;
-}
-
-.frame-bottom {
-  background: #fff;
-  padding: 16px 20px;
-}
-
-.frame-top,
-.frame-bottom {
-  border-radius: 20px;
-}
-
-.btn-add {
-  background: #5a2d0c;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
   cursor: pointer;
-  white-space: nowrap;
-  align-self: flex-end;
+  background: #f3f3f3;
 }
 
+.filters button:hover {
+  background: #eaeaea;
+} */
+
+/* ================= BUTTON ADD ================= */
+.btn-add {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  white-space: nowrap;
+}
+
+/* ================= TABLE ================= */
 .voucher-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
-  background: #fff;
 }
+
 .voucher-table thead th {
   border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 20px;
+  padding: 12px 10px;
 }
 
-.voucher-table thead th:first-child {
-  border-top-left-radius: 8px;
+.voucher-table th,
+.voucher-table td {
+  padding: 8px;
+  text-align: center;
 }
 
-.voucher-table thead th:last-child {
-  border-top-right-radius: 8px;
-}
-
-.voucher-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 8px;
-}
-
-.voucher-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 8px;
+.voucher-table td {
+  border-bottom: 1px solid #ddd;
 }
 
 .voucher-table tbody tr:hover {
   background: #fafafa;
 }
 
-.voucher-table th {
-  color: rgb(0, 0, 0);
-  padding: 10px;
-}
-
-.voucher-table td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-}
-
-.voucher-table td.text-center {
-  text-align: center;
-}
-
-.voucher-table td span {
-  vertical-align: middle;
-}
-
-.voucher-table td.text-left {
-  text-align: left;
-  line-height: 1.5;
-}
-
+/* ================= DISCOUNT ================= */
 .discount-main {
   color: #e53935;
   margin-bottom: 4px;
@@ -774,24 +732,7 @@ onMounted(() => {
   line-height: 1.4;
 }
 
-.status-active {
-  background: #e7f7ef;
-  color: #1b7f4b;
-  border: 1px solid #a8e5c7;
-}
-
-.status-upcoming {
-  background: #fff4e5;
-  color: #c77700;
-  border: 1px solid #ffd59e;
-}
-
-.status-stop {
-  background: #fdecea;
-  color: #c62828;
-  border: 1px solid #f5b5b0;
-}
-
+/* ================= STATUS ================= */
 .status-active,
 .status-upcoming,
 .status-stop {
@@ -801,92 +742,63 @@ onMounted(() => {
   border-radius: 24px;
   font-size: 13px;
   font-weight: 600;
-  text-align: center;
   line-height: 1;
 }
 
-.action-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+.status-active {
+  background: #e7f7ef;
+  color: #1b7f4b;
 }
 
-.icon-edit {
-  cursor: pointer;
+.status-upcoming {
+  background: #fff4e5;
+  color: #c77700;
+}
+
+.status-stop {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* ================= APPLY TYPE ================= */
+.apply-all,
+.apply-personal {
+  display: inline-block;
+  min-width: 90px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.apply-all {
+  background: #e7f7ef;
+  color: #1b7f4b;
+}
+
+.apply-personal {
+  background: #fff4e5;
+  color: #c77700;
+}
+
+/* ================= ACTION ================= */
+.action-cell {
   display: flex;
+  justify-content: center;
   align-items: center;
+  gap: 12px;
 }
 
 .icon-edit img {
   width: 20px;
   height: 20px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.nav-btn {
-  min-width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #fff;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  color: #63391f;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.nav-btn:hover:not(:disabled) {
-  background: #f0f0f0;
-}
-
-.nav-btn:disabled {
-  cursor: default;
-  opacity: 0.4;
-  background: #fff;
-}
-
-.page-btn {
-  min-width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.page-btn:hover:not(:disabled):not(.active) {
-  background: #f0f0f0;
-}
-
-.page-btn.active {
-  background: #63391f;
-  color: #fff;
-  border-color: #63391f;
-}
-
-.page-btn:disabled {
-  cursor: default;
-  border: none;
-  background: transparent;
-  color: #999;
-}
-
+/* ================= SWITCH ================= */
 .switch {
   position: relative;
-  display: inline-block;
   width: 42px;
   height: 22px;
 }
@@ -899,135 +811,158 @@ onMounted(() => {
 
 .slider {
   position: absolute;
-  cursor: pointer;
   inset: 0;
-  background-color: #ccc;
-  transition: 0.3s;
+  background: #ccc;
   border-radius: 22px;
+  transition: 0.3s;
+  cursor: pointer;
 }
 
 .slider::before {
-  position: absolute;
   content: "";
-  height: 18px;
+  position: absolute;
   width: 18px;
+  height: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
-  transition: 0.3s;
+  background: #fff;
   border-radius: 50%;
+  transition: 0.3s;
 }
 
 .switch input:checked + .slider {
-  background-color: #5a2d0c;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .switch input:checked + .slider::before {
   transform: translateX(20px);
 }
 
-.filters input[type="date"] {
-  min-width: 140px;
+/* ================= PAGINATION ================= */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
 }
 
-.filters input:focus,
-.filters select:focus {
-  outline: none;
-  border-color: #5a2d0c;
-  box-shadow: 0 0 0 2px rgba(90, 45, 12, 0.15);
-}
-
-.filters input::placeholder {
-  color: #999;
-  font-size: 13px;
-}
-
-.filters button {
-  height: 38px;
-  padding: 0 14px;
+.nav-btn,
+.page-btn {
+  min-width: 40px;
+  height: 40px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f3f3f3;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filters button:hover {
-  background: #eaeaea;
-  border-color: #bbb;
-}
-
-.btn-add {
-  height: 40px; /* 👈 bằng input */
-  padding: 0 16px; /* ngang vừa tay */
-  border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
+  border: 1px solid #ddd;
   background: #fff;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #484848;
-
-  transition: background 0.2s ease;
 }
 
-.apply-all {
-  background: #e7f7ef;
-  color: #1b7f4b;
-  border: 1px solid #a8e5c7;
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
-.apply-personal {
-  background: #fff4e5;
-  color: #c77700;
-  border: 1px solid #ffd59e;
+.page-btn.active {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  color: #fff;
+  border: none;
 }
 
-.apply-all,
-.apply-personal {
-  display: inline-block;
-  min-width: 90px;
-  padding: 6px 12px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 600;
+.page-btn:disabled {
+  border: none;
+  background: transparent;
+  color: #999;
+}
+
+/* ================= MODAL ================= */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
   text-align: center;
-  line-height: 1;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.toast {
-  min-width: 320px;
-  padding: 14px 16px;
-  border-radius: 6px;
-  font-size: 14px;
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  animation:
-    slideIn 0.35s ease,
-    fadeOut 0.35s ease 2.7s forwards;
+  justify-content: center;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
 }
 
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateX(40px);
-  }
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
 }
 
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-confirm,
+.btn-cancel {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  color: #fff;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+
+/* ================= TOAST ================= */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -1036,6 +971,17 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   z-index: 2000;
+}
+
+.toast {
+  min-width: 320px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .toast.success {
@@ -1059,6 +1005,7 @@ onMounted(() => {
   line-height: 1.4;
 }
 
+/* ================= TOOLTIP ================= */
 .tooltip-wrapper {
   position: relative;
   display: inline-block;
@@ -1077,9 +1024,7 @@ onMounted(() => {
   font-size: 12px;
   white-space: nowrap;
   opacity: 0;
-  pointer-events: none;
   transition: 0.2s ease;
-  z-index: 999;
 }
 
 .tooltip-wrapper::before {
@@ -1099,112 +1044,25 @@ onMounted(() => {
 .tooltip-wrapper:hover::before {
   opacity: 1;
 }
-.modal-confirm {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  display: inline-block;
 }
-.confirm-box {
+.btn-clear {
+  height: 42px;
+  width: 42px;
+  border: 1px solid #e0e0e0;
   background: #fff;
-  padding: 30px;
-  border-radius: 20px;
-  width: 400px;
-  text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: zoomIn 0.3s ease-out;
-}
-/* Tìm đoạn này trong phần 8. MODAL & TOAST */
-/* Sửa lại đoạn này */
-.confirm-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #fff4e5;
-  color: #ff9800;
-  margin: 0 auto 15px auto;
-
-  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-size: 40px;
-
-  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
-  line-height: 1;
-
-  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
-  /* animation: none; */
-}
-
-/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
-.confirm-icon-wrapper i,
-.confirm-icon-wrapper svg,
-.confirm-icon-wrapper span {
-  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0; /* Xóa margin mặc định nếu có */
-
-  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
-  /* transform: translateY(2px); */
-}
-.confirm-title {
-  color: #63391f;
-  margin-bottom: 10px;
-  font-size: 20px;
-}
-.confirm-desc {
-  color: #666;
-  margin-bottom: 25px;
-  line-height: 1.5;
-}
-
-.btn-confirm {
-  background: #63391f;
-  color: #fff;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
-}
-.btn-confirm:hover {
-  background: #4e2c17;
-  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
-}
-.confirm-actions {
-  display: flex;
-  gap: 20px;
-}
-
-.btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
-}
-.btn-cancel:hover {
-  background: #e5e7eb;
-}
-.fade-modal-enter-active,
-.fade-modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-modal-enter-from,
-.fade-modal-leave-to {
-  opacity: 0;
 }
 </style>

@@ -762,7 +762,7 @@ const submitOrder = async () => {
     const order = currentOrder.value;
 
     const payload = {
-      loaiDon: 1,
+      loaiDon: 0,
       tongTienHang: subTotal.value,
       phiShip: shippingFee.value,
       ghiChu: "",
@@ -770,7 +770,7 @@ const submitOrder = async () => {
       maVoucher: order.voucherCode || null,
 
       idKhachHang: order.customer.id || null,
-      idNhanVien: 3,
+      idNhanVien: 1,
 
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,

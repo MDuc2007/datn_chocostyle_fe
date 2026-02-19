@@ -438,25 +438,20 @@ onMounted(fetchShifts);
     <div class="card-section filter-card form-page-animation">
       <div class="filter-card-header">
         <h2 class="card-title">QUẢN LÝ CA LÀM VIỆC</h2>
-        <div class="header-actions">
-          <button class="btn btn-primary" @click="openAddModal">
-            <span class="plus-icon">+</span> Thiết lập ca
-          </button>
-        </div>
       </div>
 
       <div class="filter-row">
         <div class="left-filters">
-          <div class="filter-group">
-            <span class="filter-label">Trạng thái:</span>
-            <select class="custom-select" v-model="filterStatus">
+          <div class="input-wrapper">
+            <span class="label-inside">Trạng thái</span>
+            <select class="form-select" v-model="filterStatus">
               <option value="all">Tất cả</option>
               <option :value="1">Hoạt động</option>
               <option :value="0">Ngưng hoạt động</option>
             </select>
           </div>
-          <div class="filter-group">
-            <span class="filter-label">Khung giờ:</span>
+          <div class="input-wrapper">
+            <span class="label-inside">Khung giờ</span>
             <div class="time-range-box">
               <input type="time" v-model="filterStartTime" />
               <span class="arrow">➝</span>
@@ -465,6 +460,11 @@ onMounted(fetchShifts);
           </div>
         </div>
         <button class="btn btn-outline" @click="resetFilters">Làm mới</button>
+        <div class="header-actions">
+          <button class="btn btn-primary" @click="openAddModal">
+            <span class="plus-icon">+</span> Thiết lập ca
+          </button>
+        </div>
       </div>
     </div>
 
@@ -584,7 +584,7 @@ onMounted(fetchShifts);
     </div>
 
     <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-      <div class="modal-box form-page-animation">
+      <div class="modal-box">
         <div class="modal-header">
           <h3>
             {{ isEditing ? "CẬP NHẬT CA LÀM VIỆC" : "THÊM CA LÀM VIỆC MỚI" }}
@@ -592,7 +592,49 @@ onMounted(fetchShifts);
           <button class="close-btn" @click="closeModal">×</button>
         </div>
 
-        
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Tên Ca <span class="required">*</span></label>
+            <input
+              type="text"
+              v-model="form.tenCa"
+              class="form-control"
+              :class="{ 'red-border': errors.tenCa }"
+              placeholder="Ví dụ: Ca Sáng, Ca Chiều..."
+            />
+            <span v-if="errors.tenCa" class="error-msg">{{
+              errors.tenCa
+            }}</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col">
+              <label>Giờ bắt đầu <span class="required">*</span></label>
+              <input
+                type="time"
+                v-model="form.gioBatDau"
+                class="form-control"
+                :class="{ 'red-border': errors.gioBatDau }"
+              />
+              <span v-if="errors.gioBatDau" class="error-msg">{{
+                errors.gioBatDau
+              }}</span>
+            </div>
+
+            <div class="form-group col">
+              <label>Giờ kết thúc <span class="required">*</span></label>
+              <input
+                type="time"
+                v-model="form.gioKetThuc"
+                class="form-control"
+                :class="{ 'red-border': errors.gioKetThuc }"
+              />
+              <span v-if="errors.gioKetThuc" class="error-msg">{{
+                errors.gioKetThuc
+              }}</span>
+            </div>
+          </div>
+        </div>
 
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Hủy bỏ</button>
@@ -650,15 +692,67 @@ onMounted(fetchShifts);
 <style scoped>
 /* === GENERAL LAYOUT === */
 .page-container {
+  --primary-brown: #63391f;
+  --primary-light: #fdf8f6;
+  --text-main: #484848;
+  --border-color: #e0e0e0;
+  --success-green: #27ae60;
+  --danger-red: #e74c3c;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   min-height: 100vh;
+  color: #333;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.form-page-animation {
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .card-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
+  overflow: hidden;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+
+.card-section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.filter-card {
+  padding: 24px;
+}
+.table-card {
+  padding: 10px;
 }
 
 /* === HEADER & BUTTONS === */
@@ -666,21 +760,26 @@ onMounted(fetchShifts);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  border-bottom: 2px solid #ffffff;
-  padding-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .card-title {
   color: #63391f;
-  font-weight: 800;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 24px;
   margin: 0;
+  /* letter-spacing: 0.5px; */
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .btn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
   border: none;
@@ -693,13 +792,13 @@ onMounted(fetchShifts);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #8b5a2b, #63391f);
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(99, 57, 31, 0.3);
+  background: linear-gradient(135deg, #5a3420, #b8895d);
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
 .btn-secondary {
@@ -723,43 +822,45 @@ onMounted(fetchShifts);
 
 /* === FILTER BAR === */
 .filter-row {
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  gap: 16px;
 }
 
 .left-filters {
   display: flex;
-  gap: 24px;
-  align-items: center;
-}
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.filter-label {
-  font-weight: 600;
-  color: #4b5563;
-  font-size: 14px;
+  gap: 15px;
+  align-items: flex-end;
+  flex: 1;
 }
 
-.custom-select,
-.time-range-box input {
-  padding: 8px 12px;
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label-inside {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.form-select {
+  height: 42px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 10px;
+  padding: 0 12px;
   font-size: 14px;
   outline: none;
+  background-color: #fff;
+  min-width: 160px;
 }
-.custom-select:focus,
-.time-range-box input:focus {
-  border-color: #63391f;
-  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
+
+.form-select:focus {
+  border-color: var(--primary-brown);
+  box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
 }
 
 .time-range-box {
@@ -767,22 +868,22 @@ onMounted(fetchShifts);
   align-items: center;
   gap: 8px;
   background: white;
-  padding: 4px;
+  padding: 8px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 10px;
+  min-width: 200px;
 }
 .time-range-box input {
   border: none;
   padding: 4px;
+  background: transparent;
+  font-size: 14px;
 }
 
 /* === TABLE STYLES === */
 .table-container {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
 }
 .custom-table {
   width: 100%;
@@ -791,21 +892,26 @@ onMounted(fetchShifts);
   table-layout: fixed;
 }
 .custom-table th {
-  background: #f9fafb;
+  background: transparent;
   color: #374151;
-  padding: 14px 16px;
+  padding: 16px 12px;
   font-weight: 700;
-  text-align: left; /* Mặc định left */
-  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  border-bottom: 2px solid #edf2f7;
   font-size: 13px;
   text-transform: uppercase;
   white-space: nowrap;
 }
 .custom-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   white-space: nowrap;
+  font-size: 14px;
+  color: #000000;
+}
+.custom-table tbody tr:hover {
+  background-color: #fdf8f6;
 }
 
 .text-center {
@@ -814,24 +920,24 @@ onMounted(fetchShifts);
 
 .code-text {
   font-weight: 700;
-  color: #63391f;
+  color: #000000;
   font-size: 13px;
 }
 .font-bold {
   font-weight: 600;
 }
 .text-gray-500 {
-  color: #6b7280;
+  color: #000000;
 }
 .name-badge {
   font-weight: 600;
-  color: #111827;
+  color: #000000;
   font-size: 14px;
 }
 .time-text {
   font-family: monospace;
   font-weight: 500;
-  color: #4b5563;
+  color: #000000;
   background: #f3f4f6;
   padding: 4px 8px;
   border-radius: 4px;
@@ -843,14 +949,17 @@ onMounted(fetchShifts);
   font-size: 12px;
   font-weight: 700;
   display: inline-block;
+  min-width: 100px;
 }
 .active {
-  background: #dcfce7;
+  background: #e8f5e9;
   color: #166534;
+  border: 1px solid #c8e6c9;
 }
 .inactive {
   background: #fef3c7;
   color: #92400e;
+  border: 1px solid #fde68a;
 }
 
 /* === ACTION GROUP === */
@@ -858,20 +967,20 @@ onMounted(fetchShifts);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 15px;
 }
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid transparent;
   border-radius: 8px;
   color: #6b7280;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .action-btn svg {
@@ -882,34 +991,40 @@ onMounted(fetchShifts);
   border-color: #63391f;
   color: #63391f;
   background: #fff8f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 57, 31, 0.15);
 }
 
 /* === PAGINATION === */
 .pagination-footer {
   display: flex;
   justify-content: center;
-  gap: 6px;
-  margin-top: 24px;
+  gap: 8px;
+  padding: 20px 0;
 }
 .p-btn {
-  width: 36px;
-  height: 36px;
+  min-width: 38px;
+  height: 38px;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  color: #4b5563;
-  font-weight: 500;
+  color: #374151;
+  font-weight: 600;
   transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .p-btn.active {
-  background: #63391f;
-  border-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  border-color: #6b3f23;
   color: #fff;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 .p-btn:hover:not(.active):not(:disabled) {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  border-color: #63391f;
+  color: #63391f;
 }
 .p-btn:disabled {
   background: #f9f9f9;
@@ -932,7 +1047,7 @@ onMounted(fetchShifts);
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -943,7 +1058,6 @@ onMounted(fetchShifts);
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  animation: modalSlideIn 0.3s ease-out;
 }
 @keyframes modalSlideIn {
   from {
@@ -1084,8 +1198,8 @@ onMounted(fetchShifts);
 .switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 46px;
+  height: 24px;
   margin: 0;
   cursor: pointer;
 }
@@ -1101,27 +1215,27 @@ onMounted(fetchShifts);
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #e5e7eb;
-  transition: 0.3s;
+  background-color: #d9534f;
+  transition: 0.4s;
   border-radius: 24px;
 }
 .slider:before {
   position: absolute;
   content: "";
-  height: 16px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.3s;
+  transition: 0.4s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 input:checked + .slider {
-  background-color: #63391f !important;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d) !important;
 }
 input:checked + .slider:before {
-  transform: translateX(18px);
+  transform: translateX(22px);
 }
 
 /* Tooltip */
@@ -1134,9 +1248,9 @@ input:checked + .slider:before {
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-  background: #333;
+  background: #1f2937;
   color: white;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   white-space: nowrap;
@@ -1145,6 +1259,7 @@ input:checked + .slider:before {
   animation: fadeIn 0.2s forwards;
   z-index: 100;
   margin-bottom: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 @keyframes fadeIn {
   to {
@@ -1189,7 +1304,7 @@ input:checked + .slider:before {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 10000;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
 }
@@ -1235,7 +1350,7 @@ input:checked + .slider:before {
   gap: 20px;
 }
 .btn-confirm {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -1247,7 +1362,7 @@ input:checked + .slider:before {
   height: 42px;
 }
 .btn-confirm:hover {
-  background: #4e2c17;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 .btn-cancel {

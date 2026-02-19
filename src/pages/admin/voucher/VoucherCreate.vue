@@ -147,6 +147,7 @@
       </div>
 
       <div class="form-actions">
+        <button class="btn-cancel" @click="back">Hủy</button>
         <button
           class="btn-save"
           @click="openConfirm"
@@ -182,8 +183,6 @@
             <option value="spend-asc">Chi tiêu ↑</option>
           </select>
         </div>
-
-        <button class="btn-vip" @click="suggestVip">Gợi ý khách VIP</button>
       </div>
 
       <table class="customer-table">
@@ -275,16 +274,15 @@
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              fill="currentColor"
+              width="40"
+              height="40"
             >
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 12l3 3 5-5"></path>
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
             </svg>
           </div>
 
@@ -696,27 +694,6 @@ const filteredCustomers = computed(() => {
   }
 });
 
-const suggestVip = () => {
-  const vipIds = customers.value
-    .filter(
-      (c) =>
-        (c.tongDonHang ?? 0) > 0 &&
-        ((c.tongChiTieu ?? 0) >= 5000000 || (c.tongDonHang ?? 0) >= 5),
-    )
-    .map((c) => c.idKh);
-
-  if (vipIds.length === 0) {
-    showToast("Không có khách hàng đủ điều kiện VIP", "error");
-    return;
-  }
-
-  selectedCustomerIds.value = Array.from(
-    new Set([...selectedCustomerIds.value, ...vipIds]),
-  );
-
-  showToast(`Đã gợi ý ${vipIds.length} khách VIP`);
-};
-
 const formatDateVN = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "-");
 
 const formatMoney = (v) => {
@@ -944,7 +921,7 @@ const back = () => router.push("/admin/voucher");
 }
 
 .btn-save {
-  background: #5a2d0c;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 8px 18px;
@@ -1367,23 +1344,6 @@ const back = () => router.push("/admin/voucher");
   flex: 1;
 }
 
-.btn-vip {
-  height: 42px;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 500;
-  background: #f59e0b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-vip:hover {
-  background: #d97706;
-}
-
 @media (max-width: 1200px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -1395,107 +1355,109 @@ const back = () => router.push("/admin/voucher");
 .modal-confirm {
   position: fixed;
   inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 2000;
 }
+
 .confirm-box {
-  background: #fff;
-  padding: 30px;
-  border-radius: 20px;
   width: 400px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 24px;
   text-align: center;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: zoomIn 0.3s ease-out;
+  animation: zoomIn 0.25s ease;
 }
-/* Tìm đoạn này trong phần 8. MODAL & TOAST */
-/* Sửa lại đoạn này */
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #e8f5e9;
-  color: #22c55e;
-  margin: 0 auto 15px auto;
-
-  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  background: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-size: 40px;
-
-  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
   line-height: 1;
-
-  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
-  /* animation: none; */
 }
 
-/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
-.confirm-icon-wrapper i,
-.confirm-icon-wrapper svg,
-.confirm-icon-wrapper span {
-  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0; /* Xóa margin mặc định nếu có */
-
-  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
-  /* transform: translateY(2px); */
+.confirm-icon-wrapper svg {
+  display: block;
 }
+
 .confirm-title {
+  font-size: 20px;
+  font-weight: 600;
   color: #63391f;
   margin-bottom: 10px;
-  font-size: 20px;
 }
+
 .confirm-desc {
+  font-size: 14px;
   color: #666;
-  margin-bottom: 25px;
+  margin-bottom: 24px;
   line-height: 1.5;
 }
 
-.btn-confirm {
-  background: #63391f;
-  color: #fff;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
-}
-.btn-confirm:hover {
-  background: #4e2c17;
-  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
-}
 .confirm-actions {
   display: flex;
-  gap: 20px;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn-cancel,
+.btn-confirm {
+  min-width: 120px;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  padding: 0 20px;
 }
 
 .btn-cancel {
   background: #f3f4f6;
   color: #374151;
   border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
 }
+
 .btn-cancel:hover {
   background: #e5e7eb;
 }
+
+.btn-confirm {
+  background: #63391f;
+  color: #ffffff;
+  border: none;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
 .fade-modal-enter-active,
 .fade-modal-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
+
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;

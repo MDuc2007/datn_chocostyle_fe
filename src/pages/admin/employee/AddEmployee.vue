@@ -715,8 +715,8 @@ function handleFileUpload(event) {
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: #63391f;
-  border: 1px solid #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  border: 1px solid #6b3f23;
   color: white;
   padding: 8px 12px;
   border-radius: 6px;
@@ -729,7 +729,7 @@ function handleFileUpload(event) {
   transition: 0.2s;
 }
 .btn-scan-qr:hover {
-  background-color: #8b4513;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   transform: translateY(-1px);
 }
 
@@ -830,13 +830,18 @@ select:focus {
   padding-top: 20px;
 }
 .btn-orange {
-  background-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
   padding: 12px 30px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-orange:hover {
+  background: linear-gradient(135deg, #5a3420, #b8895d);
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 .label-flex {
   display: flex;
@@ -917,8 +922,6 @@ select:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(44, 28, 20, 0.75);
-  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -997,7 +1000,7 @@ select:focus {
   opacity: 0.5;
 }
 .btn-primary-brown {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -1007,7 +1010,7 @@ select:focus {
   box-shadow: 0 4px 12px rgba(99, 57, 31, 0.4);
 }
 .btn-primary-brown:hover {
-  background: #7d4a2b;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
 }
 
 /* SCAN FRAME (Đè lên camera) */
@@ -1231,7 +1234,7 @@ select:focus {
 }
 
 .btn-confirm {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -1241,6 +1244,10 @@ select:focus {
   transition: 0.2s;
   flex: 1;
   height: 42px;
+}
+.btn-confirm:hover {
+  background: linear-gradient(135deg, #5a3420, #b8895d);
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
 .btn-confirm:hover {

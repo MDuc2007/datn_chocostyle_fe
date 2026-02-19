@@ -4,7 +4,8 @@
       class="card-section filter-card form-page-animation"
       style="animation-delay: 0.1s"
     >
-      <h2 class="page-title">QUẢN LÝ KHÁCH HÀNG</h2>
+      <h2 class="title">QUẢN LÝ KHÁCH HÀNG</h2>
+
       <div class="filter-controls">
         <div class="left-controls">
           <div class="search-box input-wrapper">
@@ -418,8 +419,8 @@ onMounted(() => {
 
 <style scoped>
 /* =========================================
-   1. GLOBAL VARIABLES & ANIMATIONS
-   ========================================= */
+    1. GLOBAL VARIABLES & ANIMATIONS
+    ========================================= */
 .page-container {
   --primary-brown: #63391f;
   --primary-light: #fdf8f6;
@@ -468,8 +469,8 @@ onMounted(() => {
 }
 
 /* =========================================
-   2. LAYOUT & CARDS
-   ========================================= */
+    2. LAYOUT & CARDS
+    ========================================= */
 .card-section {
   background: #ffffff;
   border-radius: 16px;
@@ -494,21 +495,14 @@ onMounted(() => {
   padding: 10px;
 }
 
-.page-title {
-  font-family: "Times New Roman", Times, serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-brown);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin: 10px 0 25px 5px;
-  position: relative;
-  display: inline-block;
+.title {
+  margin: 15px;
+  color: #63391f;
 }
 
 /* =========================================
-   3. INPUTS & CONTROLS
-   ========================================= */
+    3. INPUTS & CONTROLS
+    ========================================= */
 .filter-controls {
   display: flex;
   justify-content: space-between;
@@ -583,8 +577,8 @@ onMounted(() => {
 }
 
 /* =========================================
-   4. BUTTONS
-   ========================================= */
+    4. BUTTONS
+    ========================================= */
 .btn {
   height: 42px;
   padding: 0 20px;
@@ -630,8 +624,8 @@ onMounted(() => {
 }
 
 /* =========================================
-   5. TABLE
-   ========================================= */
+    5. TABLE
+    ========================================= */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -648,7 +642,7 @@ onMounted(() => {
   font-weight: 700;
   padding: 16px 12px;
   text-align: left;
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #edf2f7;
@@ -656,7 +650,7 @@ onMounted(() => {
 
 .custom-table td {
   padding: 16px 12px;
-  font-size: 14px;
+  font-size: 15px;
   color: #484848;
   vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
@@ -693,19 +687,15 @@ onMounted(() => {
   min-width: 130px;
 }
 .status-active {
-  background-color: #e8f5e9;
   color: var(--success-green);
-  border: 1px solid #c8e6c9;
 }
 .status-inactive {
-  background-color: #ffebee;
   color: var(--danger-red);
-  border: 1px solid #ffcdd2;
 }
 
 /* =========================================
-   6. ACTIONS & SWITCH
-   ========================================= */
+    6. ACTIONS & SWITCH
+    ========================================= */
 .actions-group {
   display: flex;
   justify-content: center;
@@ -770,8 +760,8 @@ input:checked + .slider:before {
 }
 
 /* =========================================
-   7. PAGINATION
-   ========================================= */
+    7. PAGINATION
+    ========================================= */
 .pagination-footer {
   display: flex;
   justify-content: center;
@@ -818,8 +808,8 @@ input:checked + .slider:before {
 }
 
 /* =========================================
-   8. MODAL & TOAST
-   ========================================= */
+    8. MODAL & TOAST
+    ========================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;

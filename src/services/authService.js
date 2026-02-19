@@ -8,7 +8,7 @@ class AuthService {
   // ==========================
   async loginCustomer(user) {
     const response = await axios.post(AUTH_URL + "login/customer", {
-      usernameOrEmail: user.username,
+      email: user.username,
       password: user.password,
     });
 
@@ -24,7 +24,7 @@ class AuthService {
   // ==========================
   async loginStaff(user) {
     const response = await axios.post(AUTH_URL + "login/staff", {
-      usernameOrEmail: user.username,
+      email: user.username,
       password: user.password,
     });
 
@@ -41,7 +41,7 @@ class AuthService {
   register(user) {
     return axios.post(AUTH_URL + "register", {
       hoTen: user.fullname,
-      tenTaiKhoan: user.username,
+      soDienThoai: user.phone,
       email: user.email,
       matKhau: user.password,
     });

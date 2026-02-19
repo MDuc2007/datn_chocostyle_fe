@@ -1,37 +1,37 @@
 <template>
   <div class="add-employee-page">
     <div class="main-card form-page-animation">
-      <div class="header-bar">
-        <h2 class="title">CẬP NHẬT THÔNG TIN KHÁCH HÀNG</h2>
+      <div class="header-simple">
         <button
           class="btn-back hover-effect"
           @click="$router.push('/admin/customer')"
         >
-          <i class="fa fa-arrow-left"></i> Quay lại
+          <i class="fa fa-arrow-left"></i> Quay lại danh sách
         </button>
       </div>
 
       <div v-if="loadingData" class="loading-state">
         <div class="spinner"></div>
-        <p>Đang tải dữ liệu...</p>
+        <p>Đang tải dữ liệu khách hàng...</p>
       </div>
 
-      <div class="form-content" v-else>
-        <div class="form-layout">
-          <div class="left-col">
-            <div class="section-header">Ảnh đại diện</div>
+      <div v-else class="body-layout-split">
+        <div class="left-panel">
+          <h3 class="panel-heading">Thông tin khách hàng</h3>
+
+          <div class="avatar-section">
             <div class="avatar-wrapper">
               <label
                 class="avatar-circle hover-scale"
                 title="Thay đổi ảnh đại diện"
               >
                 <img v-if="previewImage" :src="previewImage" alt="Avatar" />
-                <div v-else class="placeholder-text">Chọn ảnh</div>
-
-                <div class="avatar-overlay">
+                <div v-else class="placeholder-text">
+                  <i class="fa fa-camera"></i><br />Tải ảnh
+                </div>
+                <div class="avatar-overlay-edit">
                   <span>Thay đổi</span>
                 </div>
-
                 <input
                   type="file"
                   accept="image/*"
@@ -41,116 +41,45 @@
               </label>
               <span class="hint">Định dạng: JPG, PNG (Max 5MB)</span>
             </div>
-
-            <div class="form-group">
-              <label>Mã khách hàng</label>
-              <input
-                :value="editForm.maKhachHang"
-                readonly
-                class="input-disabled"
-              />
-            </div>
-            <div class="form-group">
-              <label>Tên tài khoản</label>
-              <input
-                v-model="editForm.tenTaiKhoan"
-                readonly
-                class="input-disabled"
-              />
-            </div>
-
-            <div class="form-group">
-              <label
-                >Mật khẩu mới
-                <span class="sub-label">(Bỏ trống nếu không đổi)</span></label
-              >
-              <input
-                type="password"
-                v-model="editForm.matKhau"
-                placeholder="******"
-                class="form-input"
-                :class="{ 'red-border': errors.matKhau }"
-                @input="clearError('matKhau')"
-              />
-              <span v-if="errors.matKhau" class="error-msg slide-down">{{
-                errors.matKhau
-              }}</span>
-            </div>
-
-            <div class="form-group" v-if="editForm.matKhau">
-              <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
-              <input
-                type="password"
-                v-model="editForm.confirmPassword"
-                placeholder="******"
-                class="form-input"
-                :class="{ 'red-border': errors.confirmPassword }"
-                @input="clearError('confirmPassword')"
-              />
-              <span
-                v-if="errors.confirmPassword"
-                class="error-msg slide-down"
-                >{{ errors.confirmPassword }}</span
-              >
-            </div>
           </div>
 
-          <div class="right-col">
-            <div class="section-header">Thông tin cá nhân</div>
+          <div class="form-group name-group">
+            <label>Họ và tên <span class="req">*</span></label>
+            <input
+              type="text"
+              v-model="editForm.tenKhachHang"
+              placeholder="Nhập họ tên khách hàng"
+              class="form-input"
+              :class="{ 'red-border': errors.tenKhachHang }"
+              @input="clearError('tenKhachHang')"
+            />
+            <span v-if="errors.tenKhachHang" class="error-msg slide-down">
+              {{ errors.tenKhachHang }}
+            </span>
+          </div>
+        </div>
 
-            <div class="form-group">
-              <label>Họ và tên <span class="req">*</span></label>
-              <input
-                type="text"
-                v-model="editForm.tenKhachHang"
-                placeholder="Nhập họ tên khách hàng"
-                class="form-input"
-                :class="{ 'red-border': errors.tenKhachHang }"
-                @input="clearError('tenKhachHang')"
-              />
-              <span v-if="errors.tenKhachHang" class="error-msg slide-down">{{
-                errors.tenKhachHang
-              }}</span>
-            </div>
+        <div class="right-panel">
+          <div class="right-header">
+            <h3 class="panel-heading">Thông tin chi tiết</h3>
+          </div>
 
-            <div class="grid-row">
+          <div class="form-grid-container">
+            <div class="row-duo">
               <div class="form-group">
-                <label>Số điện thoại <span class="req">*</span></label>
+                <label>Email <span class="req">*</span></label>
                 <input
-                  v-model="editForm.soDienThoai"
-                  placeholder="09xxxxxxxx"
+                  v-model="editForm.email"
+                  placeholder="example@mail.com"
                   class="form-input"
-                  :class="{ 'red-border': errors.soDienThoai }"
-                  @input="clearError('soDienThoai')"
+                  :class="{ 'red-border': errors.email }"
+                  @input="clearError('email')"
                 />
-                <span v-if="errors.soDienThoai" class="error-msg slide-down">{{
-                  errors.soDienThoai
+                <span v-if="errors.email" class="error-msg slide-down">{{
+                  errors.email
                 }}</span>
               </div>
-              <div class="form-group">
-                <label>Giới tính</label>
-                <div class="radio-group">
-                  <label class="radio-item">
-                    <input
-                      type="radio"
-                      :value="true"
-                      v-model="editForm.gioiTinh"
-                    />
-                    Nam
-                  </label>
-                  <label class="radio-item">
-                    <input
-                      type="radio"
-                      :value="false"
-                      v-model="editForm.gioiTinh"
-                    />
-                    Nữ
-                  </label>
-                </div>
-              </div>
-            </div>
 
-            <div class="grid-row">
               <div class="form-group">
                 <label>Ngày sinh <span class="req">*</span></label>
                 <input
@@ -164,18 +93,43 @@
                   errors.ngaySinh
                 }}</span>
               </div>
+            </div>
+
+            <div class="row-duo">
               <div class="form-group">
-                <label>Email liên hệ <span class="req">*</span></label>
+                <label>Số điện thoại <span class="req">*</span></label>
                 <input
-                  v-model="editForm.email"
-                  placeholder="example@gmail.com"
+                  v-model="editForm.soDienThoai"
+                  placeholder="09xxxxxxxx"
                   class="form-input"
-                  :class="{ 'red-border': errors.email }"
-                  @input="clearError('email')"
+                  :class="{ 'red-border': errors.soDienThoai }"
+                  @input="clearError('soDienThoai')"
                 />
-                <span v-if="errors.email" class="error-msg slide-down">{{
-                  errors.email
+                <span v-if="errors.soDienThoai" class="error-msg slide-down">{{
+                  errors.soDienThoai
                 }}</span>
+              </div>
+
+              <div class="form-group">
+                <label>Giới tính</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input
+                      type="radio"
+                      :value="true"
+                      v-model="editForm.gioiTinh"
+                    />
+                    <span>Nam</span>
+                  </label>
+                  <label class="radio-item">
+                    <input
+                      type="radio"
+                      :value="false"
+                      v-model="editForm.gioiTinh"
+                    />
+                    <span>Nữ</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -284,27 +238,27 @@
               </span>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="footer-actions">
-        <button
-          class="btn-cancel-clean hover-effect"
-          @click="$router.push('/admin/customer')"
-        >
-          Hủy bỏ
-        </button>
-        <button
-          class="btn-orange hover-effect"
-          @click="handleUpdateClick"
-          :disabled="isLoading || loadingData"
-          :class="{ 'btn-loading': isLoading }"
-        >
-          <span v-if="isLoading"
-            ><i class="fa fa-spinner fa-spin"></i> Đang xử lý...</span
-          >
-          <span v-else>Cập Nhật Thông Tin</span>
-        </button>
+          <div class="footer-actions">
+            <button
+              class="btn-cancel-clean hover-effect"
+              @click="$router.push('/admin/customer')"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              class="btn-orange hover-effect"
+              @click="handleUpdateClick"
+              :disabled="isLoading"
+              :class="{ 'btn-loading': isLoading }"
+            >
+              <span v-if="isLoading"
+                ><i class="fa fa-spinner fa-spin"></i> Đang xử lý...</span
+              >
+              <span v-else>Lưu Thay Đổi</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -318,22 +272,22 @@
     <transition name="fade-modal">
       <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
         <div class="confirm-box">
-          <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 12l3 3 5-5"></path>
-            </svg>
-          </div>
+         <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
           <h3 class="confirm-title">{{ modal.title }}</h3>
           <p class="confirm-desc">{{ modal.message }}</p>
           <div class="confirm-actions">
@@ -365,7 +319,7 @@ const customerId = route.params.id;
 
 // --- STATE ---
 const loadingData = ref(true);
-const isLoading = ref(false); // Loading khi bấm nút Lưu
+const isLoading = ref(false);
 const listProvinces = ref([]);
 const previewImage = ref(null);
 const selectedFile = ref(null);
@@ -378,17 +332,14 @@ const editForm = ref({
   email: "",
   gioiTinh: true,
   ngaySinh: "",
-  matKhau: "", // Mật khẩu mới (optional)
+  matKhau: "",
   confirmPassword: "",
   listDiaChi: [],
 });
 
-// Dùng để so sánh sự thay đổi khi check trùng
 const originalData = ref({});
 const errors = ref({});
 const toast = ref({ show: false, message: "", type: "success" });
-
-// THÊM BIẾN MODAL
 const modal = ref({ show: false, title: "", message: "" });
 
 // --- LIFECYCLE ---
@@ -410,10 +361,12 @@ const fetchProvinces = async () => {
 const fetchCustomerDetail = async () => {
   try {
     const data = await customerService.getByIdForEdit(customerId);
-    editForm.value = { ...data, matKhau: "", confirmPassword: "" }; // Reset mật khẩu khi load
+    // Reset mật khẩu khi load
+    editForm.value = { ...data, matKhau: "", confirmPassword: "" };
+
     if (data.avatarFullUrl) previewImage.value = data.avatarFullUrl;
 
-    // Lưu lại dữ liệu gốc để so sánh khi check trùng
+    // Lưu dữ liệu gốc để check trùng
     originalData.value = {
       email: data.email,
       soDienThoai: data.soDienThoai,
@@ -425,7 +378,7 @@ const fetchCustomerDetail = async () => {
   }
 };
 
-// --- LOGIC ĐỊA CHỈ ---
+// --- ADDRESS LOGIC ---
 const onProvinceChange = async (addr) => {
   addr.districtId = null;
   addr.wardCode = null;
@@ -501,16 +454,11 @@ const validateForm = () => {
   let isValid = true;
   const form = editForm.value;
 
-  // 1. Họ tên
   if (!form.tenKhachHang?.trim()) {
     errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
     isValid = false;
-  } else if (form.tenKhachHang.length < 2 || form.tenKhachHang.length > 50) {
-    errors.value.tenKhachHang = "Họ tên phải từ 2 đến 50 ký tự";
-    isValid = false;
   }
 
-  // 2. Số điện thoại
   const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
   if (!form.soDienThoai) {
     errors.value.soDienThoai = "Vui lòng nhập số điện thoại";
@@ -520,7 +468,6 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // 3. Email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!form.email?.trim()) {
     errors.value.email = "Vui lòng nhập Email";
@@ -530,7 +477,6 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // 4. Ngày sinh
   if (!form.ngaySinh) {
     errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
     isValid = false;
@@ -538,24 +484,11 @@ const validateForm = () => {
     const today = new Date();
     const birthDate = new Date(form.ngaySinh);
     if (birthDate >= today) {
-      errors.value.ngaySinh = "Ngày sinh phải nhỏ hơn ngày hiện tại";
+      errors.value.ngaySinh = "Ngày sinh không hợp lệ";
       isValid = false;
     }
   }
 
-  // 5. Mật khẩu (LOGIC KHÁC: Chỉ check khi có nhập)
-  if (form.matKhau && form.matKhau.trim() !== "") {
-    if (form.matKhau.length < 6) {
-      errors.value.matKhau = "Mật khẩu mới phải có ít nhất 6 ký tự";
-      isValid = false;
-    }
-    if (form.matKhau !== form.confirmPassword) {
-      errors.value.confirmPassword = "Mật khẩu xác nhận không khớp";
-      isValid = false;
-    }
-  }
-
-  // 6. Địa chỉ
   const hasValidAddr = form.listDiaChi.some(
     (a) => a.provinceId && a.districtId && a.wardCode && a.detail?.trim(),
   );
@@ -571,13 +504,12 @@ const clearError = (field) => {
   if (errors.value[field]) delete errors.value[field];
 };
 
-// --- HÀM MỚI: XỬ LÝ KHI ẤN NÚT "CẬP NHẬT" ---
+// --- ACTIONS ---
 const handleUpdateClick = () => {
   if (!validateForm()) {
     showToast("Vui lòng kiểm tra lại thông tin", "error");
     return;
   }
-  // Mở modal xác nhận
   modal.value = {
     show: true,
     title: "Xác nhận cập nhật",
@@ -585,13 +517,12 @@ const handleUpdateClick = () => {
   };
 };
 
-// --- HÀM CŨ ĐỔI TÊN: GỌI API (CHẠY SAU KHI ĐỒNG Ý) ---
 const confirmUpdateAction = async () => {
-  modal.value.show = false; // Đóng modal
+  modal.value.show = false;
   isLoading.value = true;
 
-  // 1. Check trùng (Chỉ check nếu có thay đổi)
   try {
+    // 1. Check trùng
     const isEmailChanged = editForm.value.email !== originalData.value.email;
     const isPhoneChanged =
       editForm.value.soDienThoai !== originalData.value.soDienThoai;
@@ -601,31 +532,21 @@ const confirmUpdateAction = async () => {
         email: isEmailChanged ? editForm.value.email : null,
         sdt: isPhoneChanged ? editForm.value.soDienThoai : null,
       });
-
       const result = checkRes.data;
-      let hasDuplicate = false;
 
-      if (isEmailChanged && result.isEmailExist) {
-        errors.value.email = "Email này đã thuộc về người khác!";
-        hasDuplicate = true;
-      }
-      if (isPhoneChanged && result.isPhoneExist) {
-        errors.value.soDienThoai = "Số điện thoại này đã tồn tại!";
-        hasDuplicate = true;
-      }
-
-      if (hasDuplicate) {
+      if (
+        (isEmailChanged && result.isEmailExist) ||
+        (isPhoneChanged && result.isPhoneExist)
+      ) {
+        if (result.isEmailExist) errors.value.email = "Email đã tồn tại!";
+        if (result.isPhoneExist) errors.value.soDienThoai = "SĐT đã tồn tại!";
         showToast("Thông tin bị trùng lặp!", "error");
         isLoading.value = false;
         return;
       }
     }
-  } catch (e) {
-    console.log("Lỗi check trùng (bỏ qua):", e);
-  }
 
-  // 2. Gọi API Update
-  try {
+    // 2. Map data và Update
     const payload = { ...editForm.value };
     payload.listDiaChi = payload.listDiaChi.map((a) => ({
       id: a.id,
@@ -656,7 +577,6 @@ const confirmUpdateAction = async () => {
 };
 
 const closeModal = () => (modal.value.show = false);
-
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type: type };
   setTimeout(() => (toast.value.show = false), 3000);
@@ -665,7 +585,7 @@ const showToast = (msg, type = "success") => {
 
 <style scoped>
 /* =========================================
-   1. GLOBAL & VARIABLES
+   1. GLOBAL & LAYOUT
    ========================================= */
 .add-employee-page {
   font-family: "Segoe UI", sans-serif;
@@ -675,127 +595,79 @@ const showToast = (msg, type = "success") => {
   --primary-light: #fdf8f6;
   --text-main: #484848;
   --border-color: #e0e0e0;
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
   min-height: 100vh;
 }
 
-/* Keyframes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.form-page-animation {
-  opacity: 0;
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.slide-down {
-  animation: slideDown 0.2s ease-out;
-}
-
-/* =========================================
-   2. LAYOUT
-   ========================================= */
 .main-card {
   position: relative;
   background: #ffffff;
-  padding: 30px;
+  padding: 40px;
   border-radius: 20px;
-  box-shadow: var(--shadow-sm);
-  width: 100%;
-  max-width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin: 0 auto;
   box-sizing: border-box;
-  transition: box-shadow 0.3s ease;
-}
-.main-card:hover {
-  box-shadow: var(--shadow-md);
 }
 
-.header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* Header Simple */
+.header-simple {
   margin-bottom: 25px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
 }
-.title {
-  font-size: 22px;
-  color: var(--primary-brown);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .btn-back {
   border: none;
   background: none;
-  color: var(--primary-brown);
+  color: #666;
   cursor: pointer;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  font-size: 14px;
 }
-
-.form-layout {
-  display: flex;
-  gap: 40px;
-  flex-wrap: wrap;
-}
-.left-col {
-  width: 300px;
-  border-right: 1px solid #eee;
-  padding-right: 30px;
-  flex-shrink: 0;
-}
-.right-col {
-  flex-grow: 1;
-}
-
-.section-header {
-  margin-bottom: 20px;
-  font-size: 16px;
-  font-weight: 700;
+.btn-back:hover {
   color: var(--primary-brown);
-  border-left: 4px solid var(--primary-brown);
-  padding-left: 10px;
 }
 
 /* =========================================
-   3. AVATAR & INPUTS
+   2. BODY LAYOUT (2 COLUMNS)
    ========================================= */
+.body-layout-split {
+  display: flex;
+  gap: 60px;
+}
+
+.left-panel {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-panel {
+  flex: 1;
+}
+
+.panel-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 25px;
+}
+
+/* =========================================
+   3. LEFT PANEL STYLES (AVATAR)
+   ========================================= */
+.avatar-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 25px;
 }
 .avatar-circle {
-  width: 130px;
-  height: 130px;
+  width: 120px;
+  height: 120px;
   border: 2px dashed var(--primary-brown);
   border-radius: 50%;
   display: flex;
@@ -820,6 +692,7 @@ const showToast = (msg, type = "success") => {
   color: var(--primary-brown);
   font-size: 13px;
   opacity: 0.7;
+  text-align: center;
 }
 .file-input-hidden {
   display: none;
@@ -829,30 +702,68 @@ const showToast = (msg, type = "success") => {
   color: #777;
   margin-top: 8px;
 }
+.name-group {
+  width: 100%;
+}
 
-/* Overlay Effect */
-.avatar-overlay {
+/* Overlay Edit Specific */
+.avatar-overlay-edit {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: 0.3s;
 }
-.avatar-overlay span {
+.avatar-overlay-edit span {
   color: #fff;
   font-size: 12px;
   font-weight: 600;
 }
-.avatar-circle:hover .avatar-overlay {
+.avatar-circle:hover .avatar-overlay-edit {
   opacity: 1;
 }
 
-/* Inputs */
+/* =========================================
+   4. RIGHT PANEL STYLES (FORM GRID)
+   ========================================= */
+.right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+.btn-scan-cccd {
+  background-color: #8d6e63;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
 .form-group {
-  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
 }
@@ -866,57 +777,35 @@ const showToast = (msg, type = "success") => {
   color: #c0392b;
   margin-left: 3px;
 }
-.sub-label {
-  font-weight: normal;
-  font-size: 11px;
-  color: #777;
-}
 
-.form-input,
-.addr-select,
-.addr-input-detail {
+.form-input {
   padding: 10px 15px;
+  height: 45px;
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 14px;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: #fff;
+  background: #fff;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  width: 100%;
 }
-.form-input:focus,
-.addr-select:focus,
-.addr-input-detail:focus {
+.form-input:focus {
   border-color: var(--primary-brown);
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
-
-.input-disabled {
-  padding: 10px 15px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 14px;
-  background-color: #f3f3f3;
-  color: #888;
-  cursor: not-allowed;
+.red-border {
+  border-color: #c0392b !important;
+  background-color: #fff5f5;
 }
-
 .error-msg {
   color: #c0392b;
   font-size: 12px;
   font-style: italic;
   margin-top: 4px;
 }
-.red-border {
-  border-color: #c0392b !important;
-  background-color: #fff5f5;
-}
 
-/* Radio & Grid */
-.grid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
+/* Radio Group */
 .radio-group {
   display: flex;
   gap: 20px;
@@ -925,17 +814,24 @@ const showToast = (msg, type = "success") => {
 .radio-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
   cursor: pointer;
   color: var(--primary-brown);
 }
+.radio-item input {
+  accent-color: var(--primary-brown);
+  width: 16px;
+  height: 16px;
+}
 
 /* =========================================
-   4. ADDRESS SECTION
+   5. ADDRESS SECTION
    ========================================= */
 .address-section-wrapper {
-  margin-top: 30px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed #ddd;
 }
 .section-header-row {
   display: flex;
@@ -944,21 +840,21 @@ const showToast = (msg, type = "success") => {
   margin-bottom: 15px;
 }
 .section-label-v3 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--primary-brown);
   margin: 0;
 }
-
 .btn-add-address-dashed {
   background: transparent;
   border: 1.5px dashed var(--primary-brown);
   color: var(--primary-brown);
-  padding: 6px 15px;
-  border-radius: 10px;
+  padding: 8px 15px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 13px;
 }
 .btn-add-address-dashed:hover {
   background: var(--primary-brown);
@@ -966,9 +862,9 @@ const showToast = (msg, type = "success") => {
 }
 
 .address-card-v3 {
-  background: #fcfcfc;
+  background: #fafafa;
   border-radius: 12px;
-  padding: 15px;
+  padding: 20px;
   margin-bottom: 15px;
   border: 1px solid #eee;
   transition: all 0.3s ease;
@@ -981,17 +877,21 @@ const showToast = (msg, type = "success") => {
 
 .address-main-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   flex-wrap: wrap;
   padding-right: 36px;
   position: relative;
 }
-.addr-select,
-.addr-input-detail {
+.addr-select {
   flex: 1;
-  min-width: 0;
+  min-width: 140px;
+}
+.addr-input-detail {
+  width: 100%;
+  flex-basis: 100%;
+  margin-top: 10px;
 }
 
 .btn-remove-circle {
@@ -1005,23 +905,21 @@ const showToast = (msg, type = "success") => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   position: absolute;
-  right: 0;
-  top: 5px;
+  right: -10px;
+  top: 8px;
   transition: 0.2s;
 }
 .btn-remove-circle:hover {
   background: #ff4d4f;
   color: #fff;
-  transform: scale(1.1);
 }
 
 .btn-default-pill {
   background: #fff;
   border: 1px solid var(--primary-brown);
   color: var(--primary-brown);
-  padding: 5px 18px;
+  padding: 6px 18px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
@@ -1032,27 +930,22 @@ const showToast = (msg, type = "success") => {
   background: var(--primary-light);
 }
 .btn-default-pill.is-active {
-  background: var(--primary-brown);
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   color: #ffffff;
   cursor: default;
 }
 
 /* =========================================
-   5. FOOTER & LOADING
+   6. FOOTER, LOADING & MISC
    ========================================= */
 .footer-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 30px;
+  margin-top: 40px;
   border-top: 1px solid #eee;
   padding-top: 20px;
   gap: 15px;
 }
-
-.hover-effect:active {
-  transform: scale(0.96);
-}
-
 .btn-cancel-clean {
   padding: 10px 24px;
   border: 1px solid #cbd5e1;
@@ -1069,7 +962,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-orange {
-  background-color: var(--primary-brown);
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   color: #fff;
   border: none;
   padding: 12px 40px;
@@ -1103,7 +996,7 @@ const showToast = (msg, type = "success") => {
   margin: 0 auto 15px;
 }
 
-/* Toast */
+/* Toast, Modal, Animations */
 .toast-notification {
   position: fixed;
   top: 20px;
@@ -1118,14 +1011,13 @@ const showToast = (msg, type = "success") => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   font-weight: 600;
+  background: #fff;
 }
 .toast-notification.success {
-  background: #ecfdf5;
   color: #065f46;
   border-left: 5px solid #10b981;
 }
 .toast-notification.error {
-  background: #fef2f2;
   color: #991b1b;
   border-left: 5px solid #ef4444;
 }
@@ -1134,32 +1026,8 @@ const showToast = (msg, type = "success") => {
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: inherit;
 }
 
-/* Transitions */
-.toast-slide-enter-active,
-.toast-slide-leave-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.toast-slide-enter-from,
-.toast-slide-leave-to {
-  transform: translateX(120%);
-  opacity: 0;
-}
-.list-anim-enter-active,
-.list-anim-leave-active {
-  transition: all 0.3s ease;
-}
-.list-anim-enter-from,
-.list-anim-leave-to {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-
-/* =========================================
-   6. MODAL STYLES (NEW)
-   ========================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1170,51 +1038,43 @@ const showToast = (msg, type = "success") => {
   z-index: 1000;
   backdrop-filter: blur(2px);
 }
-
 .confirm-box {
   background: #fff;
   padding: 30px;
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   animation: zoomIn 0.3s ease-out;
 }
-
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #e8f5e9;
-  color: #22c55e;
-  margin: 0 auto 20px auto;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   animation: bounce 1s infinite;
 }
-
 .confirm-title {
   color: var(--primary-brown);
   margin-bottom: 10px;
   font-size: 20px;
   font-weight: 700;
 }
-
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
   font-size: 14px;
 }
-
 .confirm-actions {
   display: flex;
   gap: 15px;
 }
-
 .confirm-actions button {
   flex: 1;
   height: 42px;
@@ -1224,15 +1084,13 @@ const showToast = (msg, type = "success") => {
   border: none;
   font-size: 14px;
 }
-
 .btn-confirm {
-  background-color: #63391f; /* Fix lỗi mất màu */
+  background-color: #63391f;
   color: #fff;
 }
 .btn-confirm:hover {
   background-color: #4e2c17;
 }
-
 .btn-cancel {
   background: #f1f5f9;
   color: #475569;
@@ -1241,7 +1099,6 @@ const showToast = (msg, type = "success") => {
   background: #e2e8f0;
 }
 
-/* Animations */
 @keyframes zoomIn {
   from {
     opacity: 0;
@@ -1261,12 +1118,57 @@ const showToast = (msg, type = "success") => {
     transform: translateY(-5px);
   }
 }
-.fade-modal-enter-active,
-.fade-modal-leave-active {
-  transition: opacity 0.2s ease;
+.slide-down {
+  animation: slideDown 0.2s ease-out;
 }
-.fade-modal-enter-from,
-.fade-modal-leave-to {
+@keyframes slideDown {
+  from {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.form-page-animation {
   opacity: 0;
+  animation: fadeInUp 0.5s forwards;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .body-layout-split {
+    flex-direction: column;
+    gap: 30px;
+  }
+  .left-panel {
+    flex: none;
+    align-items: center;
+    width: 100%;
+  }
+  .name-group {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .row-duo {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
 }
 </style>
