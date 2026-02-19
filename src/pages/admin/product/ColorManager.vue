@@ -560,17 +560,39 @@ const deleteColor = async (item) => {
   height: 50px;
 }
 
+/* Base badge */
+.status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px; /* bo tròn full */
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+/* Đang bán */
 .status.selling {
-  color: #2ecc71;
-  font-weight: 600;
+  color: #1b7f4b;
+  background: #e7f7ef;
+  border-color: #a8e5c7;
+  font-size: 10px;
 }
-.status.upcoming {
-  color: #f39c12;
-  font-weight: 600;
+
+/* Hết hàng */
+.status.out {
+  color: #ea580c;
+  background: #ffedd5;
+  border-color: #fdba74;
+  font-size: 10px;
 }
+
+/* Ngừng bán */
 .status.stopped {
-  color: #e74c3c;
-  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  font-size: 10px;
 }
 
 .action {
@@ -608,7 +630,7 @@ const deleteColor = async (item) => {
   transition: 0.3s;
 }
 input:checked + .slider {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 input:checked + .slider::before {
   transform: translateX(26px);
@@ -640,14 +662,14 @@ input:checked + .slider::before {
 }
 
 .page-btn.active {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border-color: #63391f;
   font-weight: 600;
 }
 
 .page-btn.active:hover {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .page-btn:disabled {
@@ -767,13 +789,13 @@ input:checked + .slider::before {
 }
 
 .modal-actions .save-btn {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   min-width: 80px;
 }
 
 .modal-actions .save-btn:hover {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 .color-input-group {
   display: flex;

@@ -778,13 +778,19 @@ select:focus {
   padding-top: 20px;
 }
 .btn-orange {
-  background-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
   padding: 12px 30px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-orange:hover {
+  background: linear-gradient(135deg, #5a3420, #b8895d);
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
 /* Error & Validation */
@@ -948,7 +954,7 @@ select:focus {
   gap: 20px;
 }
 .btn-confirm {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -960,7 +966,7 @@ select:focus {
   height: 42px;
 }
 .btn-confirm:hover {
-  background: #4e2c17;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 .btn-cancel {

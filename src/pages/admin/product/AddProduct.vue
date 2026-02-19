@@ -242,8 +242,7 @@
       <div class="variants-header">
         <h3>Danh sách biến thể</h3>
         <button
-          class="save-btn"
-          style="background-color: white; color: black"
+          class="save-fast-btn"
           @click="openQuickAllModal"
           :disabled="isEditMode"
         >
@@ -1274,13 +1273,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
 .container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 35px;
+  font-family: "Poppins", sans-serif;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
 }
 
 .title {
@@ -1305,9 +1305,9 @@ onMounted(async () => {
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+  margin-bottom: 22px;
 }
 
 .col {
@@ -1325,13 +1325,25 @@ label {
   font-weight: bold;
   margin-bottom: 5px;
 }
-
 input,
 select,
 textarea {
-  padding: 8px;
-  border: 1px solid #c7b2a3;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: "Poppins", sans-serif;
+  background: white;
+  transition: all 0.25s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #6b3f23;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(107, 63, 35, 0.08);
 }
 
 textarea {
@@ -1358,20 +1370,28 @@ textarea {
 :deep(.select2-container) {
   width: 100% !important;
 }
-
-/* ô select giống input */
 :deep(.select2-container .select2-selection--single) {
-  height: 35px;
-  border: 1px solid #c7b2a3; /* giống input */
-  border-radius: 6px; /* bo góc như input */
-  padding: 0 12px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: white;
   display: flex;
   align-items: center;
-  background-color: #fff;
+  padding: 0 14px;
+  transition: 0.25s;
 }
+
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+) {
+  border-color: #6b3f23;
+  box-shadow: 0 0 0 3px rgba(107, 63, 35, 0.08);
+}
+
 /* Mũi tên */
 :deep(.select2-container .select2-selection__arrow) {
-  height: 30px;
+  height: 40px;
 }
 
 /* text bên trong */
@@ -1473,8 +1493,23 @@ textarea {
 }
 
 .save-btn {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.save-fast-btn {
+  background: white;
+  color: black;
   padding: 10px 20px;
   border: none;
   border-radius: 4px;
@@ -1483,7 +1518,7 @@ textarea {
 }
 
 .save-btn:hover:not(:disabled) {
-  background: #5a3318;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .save-btn:disabled {
@@ -1563,13 +1598,13 @@ textarea {
 }
 
 .modal-actions .save-btn {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   min-width: 80px;
 }
 
 .modal-actions .save-btn:hover {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .modal-color-section {
@@ -1694,7 +1729,7 @@ textarea {
 }
 
 .color-item.selected {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border-color: #6b3f23;
   font-weight: 600;
@@ -1735,7 +1770,7 @@ textarea {
 }
 
 .btn-primary {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
   padding: 8px 15px;
@@ -1776,7 +1811,7 @@ textarea {
 .variant-color-header {
   background: #f9f9f9;
   padding: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  border: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1872,7 +1907,7 @@ textarea {
 }
 
 .btn-add-size {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
   padding: 8px 15px;
@@ -1919,7 +1954,7 @@ textarea {
 }
 
 .btn-add-color:hover {
-  background: #6b3f23;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
 }
 
@@ -2076,5 +2111,65 @@ textarea {
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.variant-table tbody tr {
+  background: #ffffff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.04);
+}
+
+.variant-table td {
+  padding: 12px;
+}
+
+.variant-table .input-field {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  padding: 0 12px;
+  font-size: 14px;
+  font-family: "Poppins", sans-serif;
+  background: white;
+  transition: all 0.25s ease;
+}
+
+.variant-table .input-field:focus {
+  outline: none;
+  border-color: #6b3f23;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(107, 63, 35, 0.08);
+}
+.variant-table input[type="number"]::-webkit-outer-spin-button,
+.variant-table input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.variant-table input[type="number"] {
+  -moz-appearance: textfield;
+}
+.btn-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #ffeaea;
+  color: #c0392b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-delete:hover {
+  background: #ffcccc;
 }
 </style>

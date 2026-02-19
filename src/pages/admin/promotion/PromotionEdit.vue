@@ -132,43 +132,79 @@
         <div class="variant-toolbar">
           <input
             v-model="variantKeyword"
-            placeholder="Tìm mã CT / tên SP..."
+            placeholder="Tìm mã chi tiết / tên sản phẩm..."
             class="search-input"
           />
 
           <select v-model="filterMau">
             <option value="">Màu sắc</option>
-            <option v-for="m in mauOptions" :key="m">{{ m }}</option>
+            <option v-for="m in mauOptions" :key="m" :value="m">
+              {{ m }}
+            </option>
           </select>
 
           <select v-model="filterSize">
             <option value="">Size</option>
-            <option v-for="s in sizeOptions" :key="s">{{ s }}</option>
+            <option v-for="s in sizeOptions" :key="s" :value="s">
+              {{ s }}
+            </option>
           </select>
 
           <select v-model="filterLoai">
             <option value="">Loại áo</option>
-            <option v-for="l in loaiOptions" :key="l">{{ l }}</option>
+            <option v-for="l in loaiOptions" :key="l" :value="l">
+              {{ l }}
+            </option>
           </select>
 
           <select v-model="filterKieu">
             <option value="">Kiểu dáng</option>
-            <option v-for="k in kieuOptions" :key="k">{{ k }}</option>
+            <option v-for="k in kieuOptions" :key="k" :value="k">
+              {{ k }}
+            </option>
           </select>
-
           <button
             v-if="
               variantKeyword ||
               filterMau ||
               filterSize ||
               filterLoai ||
-              filterKieu
+              filterKieu ||
+              selectedMaxPrice !== maxPrice
             "
             class="btn-clear"
             @click="clearFilters"
           >
             Xóa lọc
           </button>
+        </div>
+
+        <!-- 🔥 PRICE FILTER FULL WIDTH -->
+        <div class="price-filter-full">
+          <div class="price-label">
+            <span>Khoảng giá:</span>
+            <span class="price-value">
+              0 ₫ - {{ formatPrice(selectedMaxPrice) }}
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min="0"
+            :max="maxPrice"
+            step="1"
+            v-model.number="selectedMaxPrice"
+            class="price-slider"
+            :style="{
+              background: `linear-gradient(
+        to right,
+        #63391f 0%,
+        #63391f ${maxPrice ? (selectedMaxPrice / maxPrice) * 100 : 0}%,
+        #e0e0e0 ${maxPrice ? (selectedMaxPrice / maxPrice) * 100 : 0}%,
+        #e0e0e0 99%
+      )`,
+            }"
+          />
         </div>
 
         <!-- ===== TABLE ===== -->
@@ -184,13 +220,15 @@
                   {{ isAllVariantSelected ? "✓" : "+" }}
                 </button>
               </th>
-
+              <th>Ảnh</th>
               <th>Tên SP</th>
               <th>Mã CTSP</th>
               <th>Màu</th>
               <th>Size</th>
               <th>Loại</th>
               <th>Kiểu</th>
+              <th>Số lượng</th>
+              <th>Giá bán</th>
             </tr>
           </thead>
 
@@ -205,6 +243,9 @@
                   {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
                 </button>
               </td>
+              <td>
+                <img :src="ct.anhHienThi" class="variant-img" />
+              </td>
 
               <td>{{ ct.tenSp }}</td>
               <td>{{ ct.maChiTietSanPham }}</td>
@@ -214,6 +255,16 @@
               <td>{{ ct.kichCoList?.join(", ") }}</td>
               <td>{{ ct.tenLoaiAo }}</td>
               <td>{{ ct.tenKieuDang }}</td>
+              <td>{{ ct.soLuong }}</td>
+
+              <td class="price-cell">
+                <div class="old-price">
+                  {{ formatPrice(ct.giaBan) }}
+                </div>
+                <div class="new-price">
+                  {{ formatPrice(getDiscountPrice(ct.giaBan)) }}
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -272,7 +323,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, computed } from "vue";
+import { reactive, ref, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
@@ -294,6 +345,7 @@ const clearFilters = () => {
   filterSize.value = "";
   filterLoai.value = "";
   filterKieu.value = "";
+  selectedMaxPrice.value = maxPrice.value;
 };
 const mauOptions = computed(() => [
   ...new Set(
@@ -334,7 +386,22 @@ const filteredChiTietList = computed(() => {
 
     const matchKieu = !filterKieu.value || ct.tenKieuDang === filterKieu.value;
 
-    return matchKeyword && matchMau && matchSize && matchLoai && matchKieu;
+    // 🔥 LỌC THEO SLIDER
+    const percent = promotionMap.value[ct.id] || 0;
+
+    const finalPrice = percent ? ct.giaBan * (1 - percent / 100) : ct.giaBan;
+
+    const matchPrice =
+      !selectedMaxPrice.value || finalPrice <= selectedMaxPrice.value;
+
+    return (
+      matchKeyword &&
+      matchMau &&
+      matchSize &&
+      matchLoai &&
+      matchKieu &&
+      matchPrice
+    );
   });
 });
 
@@ -493,6 +560,11 @@ const allChiTietList = computed(() => {
       tenSp: sp?.tenSp,
       tenLoaiAo: sp?.tenLoaiAo,
       tenKieuDang: sp?.tenKieuDang,
+
+      // ⭐ THÊM 3 CÁI NÀY
+      anhHienThi: ct.hinhAnhUrls?.length > 0 ? ct.hinhAnhUrls[0] : sp?.hinhAnh,
+      giaBan: ct.giaBan,
+      soLuong: ct.soLuongTon,
     }));
   });
 });
@@ -616,6 +688,66 @@ onMounted(async () => {
     alert("Không tìm thấy thông tin đợt giảm giá này");
   }
 });
+
+const promotionMap = ref<Record<number, number>>({});
+const promotionCountMap = ref<Record<number, number>>({}); // ⭐ thêm
+
+const fetchPromotions = async () => {
+  const res = await axios.get("http://localhost:8080/api/promotions");
+
+  const percentMap: Record<number, number> = {};
+  const countMap: Record<number, number> = {};
+  const today = new Date();
+
+  res.data
+    .filter((dgg: any) => {
+      // 1️⃣ phải đang active
+      if (dgg.trangThai !== 1) return false;
+
+      // 2️⃣ phải trong thời gian hiệu lực
+      const start = new Date(dgg.ngayBatDau);
+      const end = new Date(dgg.ngayKetThuc);
+
+      return today >= start && today <= end;
+    })
+    .forEach((dgg: any) => {
+      dgg.chiTietSanPhamIds.forEach((id: number) => {
+        countMap[id] = (countMap[id] || 0) + 1;
+        percentMap[id] = Math.max(percentMap[id] || 0, dgg.giaTriGiam);
+      });
+    });
+
+  promotionMap.value = percentMap;
+  promotionCountMap.value = countMap;
+};
+
+const selectedMaxPrice = ref(0);
+
+const maxPrice = computed(() => {
+  if (!allChiTietList.value.length) return 0;
+
+  const prices = allChiTietList.value.map((ct) => {
+    const percent = promotionMap.value[ct.id] || 0;
+
+    const finalPrice = percent ? ct.giaBan * (1 - percent / 100) : ct.giaBan;
+
+    return Math.round(finalPrice); // 🔥 QUAN TRỌNG
+  });
+
+  return Math.max(...prices);
+});
+
+watch(maxPrice, (val) => {
+  selectedMaxPrice.value = val;
+});
+const formatPrice = (price: number) => {
+  return (price || 0).toLocaleString("vi-VN") + " ₫";
+};
+const getDiscountPrice = (gia: number) => {
+  if (!gia) return 0;
+  const discount = form.giaTriGiam || 0;
+  return Math.round(gia - (gia * discount) / 100);
+};
 </script>
 
 <style scoped>
@@ -683,7 +815,7 @@ onMounted(async () => {
 }
 
 .input-group input {
-  height: 50px;
+  height: 52px;
   border-right: none;
   border-radius: 10px 0 0 10px;
 }
@@ -1085,26 +1217,78 @@ img {
 /* nút clear */
 .btn-clear {
   height: 40px;
-  padding: 0 16px;
-
+  min-width: 120px;
+  padding: 0 12px;
   border-radius: 10px;
-  border: none;
-
-  background: #63391f;
-  color: white;
-
-  font-weight: 500;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .btn-clear:hover {
-  background: #4b2c18;
-  transform: translateY(-1px);
+  background: #fff;
+  color: black;
+  border: 1px solid #ddd;
 }
 .toast.error {
   background-color: #fee2e2;
   color: #991b1b;
   border-left: 6px solid #ef4444;
+}
+.variant-img {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.price-cell {
+  font-weight: 600;
+  color: #e53935;
+}
+.price-filter {
+  width: 470px; /* 👈 tăng chiều dài */
+  margin-bottom: 20px;
+}
+.price-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  outline: none;
+}
+
+/* Chrome, Edge */
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  cursor: pointer;
+  border: none;
+}
+
+/* Firefox */
+.price-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  cursor: pointer;
+  border: none;
+}
+.old-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 12px;
+}
+
+.new-price {
+  font-weight: 600;
+  color: #e53935;
+  font-size: 16px;
 }
 </style>

@@ -20,31 +20,61 @@
         <h2 class="card-title">QUẢN LÝ NHÂN VIÊN</h2>
       </div>
 
-      <div class="filter-row">
-        <div class="left-filters">
-          <div class="search-input">
-            <span class="search-icon">🔍</span>
-            <input
-              v-model="query"
-              type="text"
-              placeholder="Tìm theo tên, mã hoặc email"
-            />
+      <div class="filter-controls">
+        <div class="left-controls">
+          <div class="filter-group search-group">
+            <div class="search-box">
+              <i class="search-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9CA3AF"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </i>
+              <input
+                v-model="query"
+                type="text"
+                class="form-input ps-icon"
+                placeholder="Tìm theo tên, mã hoặc email"
+              />
+            </div>
           </div>
 
-          <select class="mini-select" v-model="filters.status">
-            <option value="all">Tất cả</option>
-            <option value="active">Đang làm</option>
-            <option value="inactive">Đã nghỉ</option>
-            <option value="locked">Đã khóa</option>
-          </select>
+          <div class="filter-group">
+            <label class="filter-label">Trạng thái</label>
+            <select class="form-select" v-model="filters.status">
+              <option value="all">Tất cả</option>
+              <option value="active">Đang làm</option>
+              <option value="inactive">Đã nghỉ</option>
+              <option value="locked">Đã khóa</option>
+            </select>
+          </div>
         </div>
 
-        <div class="right-actions">
-          <button class="btn btn-outline" @click="resetFilters">Đặt lại</button>
-          <button class="btn btn-outline" @click="exportExcel">
+        <div class="right-controls">
+          <button class="btn btn-outline hover-effect" @click="resetFilters">
+            Đặt lại
+          </button>
+
+          <button class="btn btn-outline hover-effect" @click="exportExcel">
+            <img
+              src="/src/assets/icon/dowload.svg"
+              alt=""
+              style="width: 16px; height: 16px; margin-right: 8px"
+            />
             Xuất Excel
           </button>
-          <button class="btn btn-primary" @click="addEmployee">
+
+          <button class="btn btn-primary hover-effect" @click="addEmployee">
             + Thêm nhân viên
           </button>
         </div>
@@ -52,7 +82,7 @@
     </div>
 
     <div class="card-section table-card form-page-animation">
-      <div class="table-responsive">
+      <div class="table-container">
         <table class="custom-table">
           <thead>
             <tr>
@@ -96,12 +126,12 @@
                   </div>
                 </td>
 
-                <td>
-                  <b style="color: #63391f">{{ e.code }}</b>
+                <td style="color: #000000">
+                  {{ e.code }}
                 </td>
 
                 <td>
-                  <span class="fw-bold text-dark">{{ e.name }}</span>
+                  <span>{{ e.name }}</span>
                 </td>
 
                 <td>
@@ -184,7 +214,7 @@
           :disabled="page === 0"
           @click="changePage(page - 1)"
         >
-          &lt;
+          <
         </button>
         <template v-for="p in visiblePages" :key="p">
           <button
@@ -202,7 +232,7 @@
           :disabled="page >= totalPages - 1"
           @click="changePage(page + 1)"
         >
-          &gt;
+          >
         </button>
       </div>
     </div>
@@ -829,255 +859,278 @@ const showNotification = (message, type = "success") => {
 </script>
 
 <style scoped>
-/* --- 1. COLOR PALETTE --- */
-:root {
-  --primary-brown: #63391f;
-  --success-green: #10b981;
-  --danger-red: #ef4444;
-  --bg-gray: #f8fafc;
-  --text-main: #333;
-  --text-muted: #6b7280;
-}
-
+/* =========================================
+   1. GLOBAL VARIABLES & ANIMATIONS
+   ========================================= */
 .page-container {
+  --primary-brown: #63391f;
+  --primary-light: #fdf8f6;
+  --text-main: #484848;
+  --border-color: #e0e0e0;
+  --success-green: #27ae60;
+  --danger-red: #e74c3c;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   min-height: 100vh;
   color: #333;
 }
 
-/* --- HEADER & CARDS --- */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.page-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #63391f;
-  text-transform: uppercase;
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-.total-badge {
-  background: #fff;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  color: #63391f;
-  border: 1px solid #63391f;
-  box-shadow: 0 2px 4px rgba(99, 57, 31, 0.1);
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.form-page-animation {
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================
+   2. LAYOUT & CARDS
+   ========================================= */
 .card-section {
   background: #ffffff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
+  overflow: hidden;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 }
 
-/* --- FILTER --- */
-.filter-header {
-  color: #63391f;
-  margin-bottom: 20px;
-  font-size: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.search-group {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 5px;
+.card-section:hover {
+  box-shadow: var(--shadow-md);
 }
 
-/* New inline filter row to match screenshot */
-.filter-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+.filter-card {
+  padding: 24px;
 }
-.left-filters {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-.right-actions {
-  display: flex;
-  gap: 10px;
-}
-.search-input {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px 12px;
-  min-width: 360px;
-  box-shadow: none;
-}
-.search-input input {
-  border: none;
-  outline: none;
-  padding: 8px;
-  font-size: 14px;
-  width: 100%;
-}
-.search-icon {
-  margin-right: 8px;
-  color: #9ca3af;
-  font-size: 16px;
-}
-.mini-select {
-  height: 50px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  padding: 0 10px;
-  background: #fff;
-}
-.mini-date {
-  height: 42px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  padding: 4px 10px;
-  background: #fff;
+.table-card {
+  padding: 10px;
 }
 
-/* Filter card header (title inside card) */
 .filter-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
 }
+
 .card-title {
-  font-size: 18px;
+  font-size: 24px;
+  font-weight: bold;
   color: #63391f;
-  font-weight: 800;
+  /* text-transform: uppercase;
+  letter-spacing: 1px; */
   margin: 0;
-  letter-spacing: 0.5px;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.total-badge.small {
-  background: transparent;
-  border: 1px solid rgba(99, 57, 31, 0.08);
-  padding: 6px 12px;
-  border-radius: 14px;
-  color: var(--primary-brown);
-  font-weight: 600;
 }
 
-.form-item label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 6px;
+/* =========================================
+   FILTER CONTROLS (NEW STYLE)
+   ========================================= */
+
+.filter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 10px;
 }
+
+.left-controls {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.right-controls {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Nhóm bộ lọc: Dùng để đẩy Label lên trên Input */
+.filter-group {
+  display: flex;
+  flex-direction: column; /* Xếp dọc: Label trên, Input dưới */
+  gap: 6px;
+}
+
+/* Riêng ô Search Group không cần Label hiển thị (để trống hoặc ẩn) */
+.filter-group.search-group {
+  justify-content: flex-end;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 700; /* In đậm tiêu đề "Trạng thái" */
+  color: #374151;
+  margin-left: 2px;
+}
+
+/* Search Box Wrapper */
+.search-box {
+  position: relative;
+  width: 320px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ĐỒNG BỘ CHIỀU CAO & STYLE CHO INPUT VÀ BUTTON */
+.form-input,
+.form-select,
+.btn {
+  height: 42px; /* Chiều cao cố định bằng nhau */
+  border-radius: 8px; /* Bo góc giống nhau */
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
 .form-input,
 .form-select {
-  box-sizing: border-box;
   width: 100%;
-  height: 42px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid #d1d5db;
   padding: 0 12px;
   outline: none;
+  background-color: #fff;
   transition: all 0.2s;
 }
+
+.form-input.ps-icon {
+  padding-left: 40px; /* Chừa chỗ cho icon search */
+}
+
+.form-select {
+  min-width: 180px; /* Độ rộng tối thiểu cho combobox trạng thái */
+  cursor: pointer;
+}
+
 .form-input:focus,
 .form-select:focus {
   border-color: #63391f;
-  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
-.button-group {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 20px;
-}
+
+/* BUTTON STYLES */
 .btn {
-  height: 40px;
   padding: 0 20px;
-  border-radius: 6px;
   font-weight: 600;
-  font-size: 13.5px;
   cursor: pointer;
-  transition: 0.2s;
-  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border: 1px solid transparent; /* Để tránh lệch size do border */
 }
+
 .btn-primary {
-  background-color: #63391f;
-  color: #fff;
+  height: 42px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
+  border: 1px solid #ccc;
+  border-radius: 10px; /* 👈 bo y hệt */
+  background: #fff;
+  cursor: pointer;
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #484848;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .btn-primary:hover {
-  background-color: #4e2c18;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.btn-outline {
-  background-color: #fff;
+  border-color: #63391f;
   color: #63391f;
-  border: 1px solid #63391f;
-}
-.btn-outline:hover {
   background-color: #fdf8f6;
 }
 
-/* --- TABLE (UPDATED CLEAN STYLE) --- */
-.table-responsive {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+.btn-outline {
+  background-color: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.btn-outline:hover {
+  border-color: #63391f;
+  color: #63391f;
+  background-color: #fdf8f6;
+}
+
+/* Hiệu ứng bấm nút */
+.hover-effect:active {
+  transform: translateY(1px);
+}
+/* =========================================
+   5. TABLE
+   ========================================= */
+.table-container {
+  width: 100%;
   overflow-x: auto;
 }
 .custom-table {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 1300px;
-  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1000px;
+  table-layout: fixed;
 }
 .custom-table th {
-  background-color: #f9fafb;
-  color: #374151;
   font-weight: 700;
-  padding: 14px 10px;
+  padding: 16px 12px;
   text-align: left;
-  font-size: 12px;
+  font-size: 15px;
   text-transform: uppercase;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #000000;
 }
 .custom-table td {
-  padding: 14px 10px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 13px;
-  color: #4b5563;
+  padding: 14px 12px;
+  font-size: 15px;
+  color: #000000;
   vertical-align: middle;
-  height: auto;
+  border-bottom: 1px solid #f1f5f9;
 }
-.custom-table tbody tr:hover {
-  background-color: #fafafa;
+.custom-table tbody tr:hover td {
+  background-color: var(--primary-light);
 }
 .fw-bold {
   font-weight: 600;
 }
 .text-muted {
-  color: #9ca3af !important;
+  color: #000000 !important;
   font-size: 13px;
 }
 .text-dark {
@@ -1097,7 +1150,7 @@ const showNotification = (message, type = "success") => {
 .avatar-img {
   width: 45px;
   height: 45px;
-  border-radius: 6px;
+  border-radius: 8px;
   object-fit: cover;
   border: 1px solid #e5e7eb;
   display: block;
@@ -1105,7 +1158,7 @@ const showNotification = (message, type = "success") => {
 .avatar-placeholder {
   width: 45px;
   height: 45px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1114,6 +1167,7 @@ const showNotification = (message, type = "success") => {
   font-size: 14px;
   border: 1px solid #e5e7eb;
   flex-shrink: 0;
+  margin: 0 auto;
 }
 
 /* === STATUS BADGE === */
@@ -1121,22 +1175,29 @@ const showNotification = (message, type = "success") => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
   min-width: 90px;
-  background: none !important;
-  border: none !important;
 }
 .status-badge.active {
-  color: #059669;
+  color: #1b7f4b;
+  background: #e7f7ef;
+  border-color: #a8e5c7;
+  font-size: 10px;
 }
 .status-badge.inactive {
-  color: #dc2626;
+  color: #ea580c;
+  background: #ffedd5;
+  border-color: #fdba74;
+  font-size: 10px;
 }
 .status-badge.locked {
-  color: #6b7280;
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  font-size: 10px;
 }
 
 /* === SWITCH & ACTIONS === */
@@ -1150,7 +1211,7 @@ const showNotification = (message, type = "success") => {
   position: relative;
   display: inline-block;
   width: 46px;
-  height: 26px;
+  height: 24px;
 }
 .switch input {
   opacity: 0;
@@ -1159,66 +1220,53 @@ const showNotification = (message, type = "success") => {
 }
 .slider {
   position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d9534f;
-  transition: 0.4s;
-  border-radius: 20px;
+  inset: 0;
+  background: #ccc;
+  background: #ccc;
+  border-radius: 24px;
+  transition: 0.3s;
 }
-.slider:before {
-  position: absolute;
+.slider::before {
   content: "";
-  height: 20px;
-  width: 20px;
+  position: absolute;
+  width: 18px;
+  height: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
+  background: #fff;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: 0.3s;
 }
 input:checked + .slider {
-  background-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(22px);
 }
 
 .btn-icon {
   width: 36px;
   height: 36px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #63391f;
+  border: 1px solid transparent;
+  background: #f3f4f6;
+  color: #6b7280;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  font-size: 14px;
 }
 .btn-icon:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background-color: #fff;
-  box-shadow: 0 2px 6px rgba(99, 57, 31, 0.08);
-  transform: scale(1.1);
-}
-.btn-edit {
-  border-color: transparent;
-}
-.btn-edit:hover {
-  border-color: #63391f;
-}
-.btn-edit {
-  color: #63391f;
+  background: var(--primary-brown);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 57, 31, 0.2);
 }
 
-/* === PAGINATION === */
+/* =========================================
+   6. PAGINATION
+   ========================================= */
 .pagination-footer {
   display: flex;
   justify-content: center;
@@ -1226,24 +1274,28 @@ input:checked + .slider:before {
   margin-top: 24px;
 }
 .p-btn {
-  width: 36px;
-  height: 36px;
+  min-width: 38px;
+  height: 38px;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  color: #4b5563;
-  font-weight: 500;
-  transition: 0.2s;
+  color: #374151;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .p-btn.active {
-  background: #63391f;
-  border-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  border-color: #6b3f23;
   color: #fff;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 .p-btn:hover:not(.active):not(:disabled) {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
 }
 .p-btn:disabled {
   background: #f9f9f9;
@@ -1257,7 +1309,9 @@ input:checked + .slider:before {
   font-weight: bold;
 }
 
-/* === MODAL === */
+/* =========================================
+   7. MODAL
+   ========================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1356,10 +1410,11 @@ input:checked + .slider:before {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
+  font-size: 14px;
 }
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #63391f;
+  border-color: var(--primary-brown);
   box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
   outline: none;
 }
@@ -1399,23 +1454,23 @@ input:checked + .slider:before {
   color: #374151;
 }
 .btn-orange {
-  background-color: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
 }
-/* --- CUSTOM TOOLTIP --- */
-/* Tạo vị trí tương đối để tooltip con bám theo */
+
+/* =========================================
+   8. CUSTOM TOOLTIP
+   ========================================= */
 .custom-tooltip {
   position: relative;
 }
-
-/* Tạo nội dung tooltip */
 .custom-tooltip::before {
-  content: attr(data-tooltip); /* Lấy nội dung từ attribute data-tooltip */
+  content: attr(data-tooltip);
   position: absolute;
-  bottom: 125%; /* Hiện phía trên */
+  bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #333; /* Màu nền đen xám */
+  background-color: #333;
   color: #fff;
   padding: 6px 10px;
   border-radius: 6px;
@@ -1427,16 +1482,14 @@ input:checked + .slider:before {
     opacity 0.2s,
     visibility 0.2s;
   z-index: 100;
-  pointer-events: none; /* Để chuột không bị vướng vào tooltip */
+  pointer-events: none;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   font-weight: 500;
 }
-
-/* Tạo mũi tên nhỏ ở dưới tooltip */
 .custom-tooltip::after {
   content: "";
   position: absolute;
-  bottom: 115%; /* Phải khớp với tooltip phía trên */
+  bottom: 115%;
   left: 50%;
   transform: translateX(-50%);
   border-width: 5px;
@@ -1449,20 +1502,19 @@ input:checked + .slider:before {
     visibility 0.2s;
   z-index: 100;
 }
-
-/* Hiệu ứng khi di chuột vào */
 .custom-tooltip:hover::before,
 .custom-tooltip:hover::after {
   opacity: 1;
   visibility: visible;
-  bottom: 135%; /* Hiệu ứng bay lên nhẹ */
+  bottom: 135%;
 }
-
-/* Riêng mũi tên thì bay ít hơn chút */
 .custom-tooltip:hover::after {
   bottom: 125%;
 }
-/* TOAST */
+
+/* =========================================
+   9. TOAST
+   ========================================= */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -1517,7 +1569,9 @@ input:checked + .slider:before {
   }
 }
 
-/* === CONFIRM DIALOG === */
+/* =========================================
+   10. CONFIRM DIALOG
+   ========================================= */
 .modal-confirm {
   position: fixed;
   inset: 0;
@@ -1528,7 +1582,6 @@ input:checked + .slider:before {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
 }
-
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -1540,18 +1593,6 @@ input:checked + .slider:before {
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
-
-@keyframes zoomIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
@@ -1565,31 +1606,26 @@ input:checked + .slider:before {
   font-size: 40px;
   line-height: 1;
 }
-
 .confirm-icon-wrapper i,
 .confirm-icon-wrapper svg,
 .confirm-icon-wrapper span {
   display: block;
   margin: 0;
 }
-
 .confirm-title {
-  color: #63391f;
+  color: var(--primary-brown);
   margin-bottom: 10px;
   font-size: 20px;
 }
-
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
 }
-
 .confirm-actions {
   display: flex;
   gap: 20px;
 }
-
 .btn-cancel {
   background: #f3f4f6;
   color: #374151;
@@ -1602,13 +1638,11 @@ input:checked + .slider:before {
   flex: 1;
   height: 42px;
 }
-
 .btn-cancel:hover {
   background: #e5e7eb;
 }
-
 .btn-confirm {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 10px 24px;
@@ -1619,19 +1653,77 @@ input:checked + .slider:before {
   flex: 1;
   height: 42px;
 }
-
 .btn-confirm:hover {
-  background: #4e2c17;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
-
 .fade-modal-enter-active,
 .fade-modal-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
+}
+
+/* =========================================
+   RESPONSIVE STYLES
+   ========================================= */
+@media (max-width: 1024px) {
+  .left-controls {
+    gap: 12px;
+  }
+
+  .search-box {
+    width: 250px;
+  }
+
+  .form-select {
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .left-controls,
+  .right-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .form-select {
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .right-controls {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
 }
 </style>

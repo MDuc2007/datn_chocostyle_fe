@@ -79,10 +79,9 @@
                     {{ isAllSanPhamSelected ? "✓" : "+" }}
                   </button>
                 </th>
-                <th>STT</th>
+                <th>Ảnh</th>
                 <th>Mã sản phẩm</th>
                 <th>Tên sản phẩm</th>
-                <th>Ảnh</th>
               </tr>
             </thead>
             <tbody>
@@ -96,10 +95,9 @@
                     {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
                   </button>
                 </td>
-                <td>{{ i + 1 }}</td>
+                <td><img :src="sp.hinhAnh" /></td>
                 <td>{{ sp.maSp }}</td>
                 <td>{{ sp.tenSp }}</td>
-                <td><img :src="sp.hinhAnh" /></td>
               </tr>
             </tbody>
           </table>
@@ -123,7 +121,9 @@
 
           <select v-model="filterMau">
             <option value="">Màu sắc</option>
-            <option v-for="m in mauOptions" :key="m" :value="m">{{ m }}</option>
+            <option v-for="m in mauOptions" :key="m" :value="m">
+              {{ m }}
+            </option>
           </select>
 
           <select v-model="filterSize">
@@ -146,20 +146,48 @@
               {{ k }}
             </option>
           </select>
-
           <button
             v-if="
               variantKeyword ||
               filterMau ||
               filterSize ||
               filterLoai ||
-              filterKieu
+              filterKieu ||
+              selectedMaxPrice !== maxPrice
             "
             class="btn-clear"
             @click="clearFilters"
           >
             Xóa lọc
           </button>
+        </div>
+
+        <!-- 🔥 PRICE FILTER FULL WIDTH -->
+        <div class="price-filter-full">
+          <div class="price-label">
+            <span>Khoảng giá:</span>
+            <span class="price-value">
+              0 ₫ - {{ formatPrice(selectedMaxPrice) }}
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min="0"
+            :max="maxPrice"
+            step="1"
+            v-model.number="selectedMaxPrice"
+            class="price-slider"
+            :style="{
+              background: `linear-gradient(
+        to right,
+        #63391f 0%,
+        #63391f ${maxPrice ? (selectedMaxPrice / maxPrice) * 100 : 0}%,
+        #e0e0e0 ${maxPrice ? (selectedMaxPrice / maxPrice) * 100 : 0}%,
+        #e0e0e0 99%
+      )`,
+            }"
+          />
         </div>
 
         <table class="variant">
@@ -174,13 +202,15 @@
                   {{ isAllChiTietSelectedAll ? "✓" : "+" }}
                 </button>
               </th>
-
+              <th>Ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Mã chi tiết</th>
               <th>Màu sắc</th>
               <th>Kích cỡ</th>
               <th>Loại áo</th>
               <th>Kiểu dáng</th>
+              <th>Số lượng</th>
+              <th>Giá bán</th>
             </tr>
           </thead>
 
@@ -194,6 +224,14 @@
                 >
                   {{ selectedChiTietIds.includes(ct.id) ? "✓" : "+" }}
                 </button>
+              </td>
+              <td>
+                <div class="img-wrapper">
+                  <img :src="ct.anhHienThi" class="variant-img" />
+                  <span v-if="promotionMap[ct.id]" class="discount-badge">
+                    -{{ promotionMap[ct.id] }}%
+                  </span>
+                </div>
               </td>
 
               <td>{{ ct.tenSp }}</td>
@@ -217,6 +255,29 @@
 
               <td>{{ ct.tenLoaiAo }}</td>
               <td>{{ ct.tenKieuDang }}</td>
+              <td>{{ ct.soLuong }}</td>
+              <td class="price-cell">
+                <div class="price-box">
+                  <span v-if="promotionMap[ct.id]" class="old-price">
+                    {{ formatPrice(ct.giaBan) }}
+                  </span>
+
+                  <span :class="{ 'new-price': promotionMap[ct.id] }">
+                    {{
+                      formatPrice(
+                        promotionMap[ct.id]
+                          ? ct.giaBan * (1 - promotionMap[ct.id] / 100)
+                          : ct.giaBan,
+                      )
+                    }}
+                  </span>
+                </div>
+
+                <!-- ⭐ sup tách riêng -->
+                <sup v-if="promotionCountMap[ct.id] > 1" class="row-sup">
+                  {{ promotionCountMap[ct.id] }}
+                </sup>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -273,10 +334,27 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { computed } from "vue";
+const allChiTietList = computed(() => {
+  return selectedSanPhamIds.value.flatMap((spId) => {
+    const sp = sanPhamList.find((s) => s.id === spId);
+
+    return (chiTietMap[spId] || []).map((ct) => {
+      return {
+        ...ct,
+        soLuong: ct.soLuongTon,
+        anhHienThi:
+          ct.hinhAnhUrls?.length > 0 ? ct.hinhAnhUrls[0] : sp?.hinhAnh,
+        tenSp: sp?.tenSp,
+        tenLoaiAo: sp?.tenLoaiAo,
+        tenKieuDang: sp?.tenKieuDang,
+      };
+    });
+  });
+});
 
 const router = useRouter();
 const clearFilters = () => {
@@ -285,6 +363,7 @@ const clearFilters = () => {
   filterSize.value = "";
   filterLoai.value = "";
   filterKieu.value = "";
+  selectedMaxPrice.value = maxPrice.value;
 };
 
 const form = reactive({
@@ -353,7 +432,22 @@ const filteredChiTietList = computed(() => {
 
     const matchKieu = !filterKieu.value || ct.tenKieuDang === filterKieu.value;
 
-    return matchKeyword && matchMau && matchSize && matchLoai && matchKieu;
+    // 🔥 LỌC THEO SLIDER
+    const percent = promotionMap.value[ct.id] || 0;
+
+    const finalPrice = percent ? ct.giaBan * (1 - percent / 100) : ct.giaBan;
+
+    const matchPrice =
+      !selectedMaxPrice.value || finalPrice <= selectedMaxPrice.value;
+
+    return (
+      matchKeyword &&
+      matchMau &&
+      matchSize &&
+      matchLoai &&
+      matchKieu &&
+      matchPrice
+    );
   });
 });
 
@@ -550,7 +644,10 @@ const toggleAllChiTiet = (spId: number) => {
   });
 };
 
-onMounted(fetchSanPham);
+onMounted(() => {
+  fetchSanPham();
+  fetchPromotions();
+});
 
 const submit = async () => {
   if (!validate()) return;
@@ -581,18 +678,17 @@ const toggleChiTiet = (ctId: number) => {
     selectedChiTietIds.value.push(ctId);
   }
 };
-const allChiTietList = computed(() => {
-  return selectedSanPhamIds.value.flatMap((spId) => {
-    const sp = sanPhamList.find((s) => s.id === spId);
+const formatPrice = (price: number) => {
+  if (!price) return "0";
+  return price.toLocaleString("vi-VN") + " ₫";
+};
 
-    return (chiTietMap[spId] || []).map((ct) => ({
-      ...ct,
-      tenSp: sp?.tenSp,
-      tenLoaiAo: sp?.tenLoaiAo,
-      tenKieuDang: sp?.tenKieuDang,
-    }));
-  });
-});
+const getDiscountPrice = (price: number) => {
+  if (!price) return 0;
+
+  const percent = form.giaTriGiam || 0;
+  return Math.round(price * (1 - percent / 100));
+};
 
 const isAllChiTietSelectedAll = computed(() => {
   return (
@@ -608,6 +704,57 @@ const toggleAllChiTietAll = () => {
     selectedChiTietIds.value = allChiTietList.value.map((ct) => ct.id);
   }
 };
+const promotionMap = ref<Record<number, number>>({});
+const promotionCountMap = ref<Record<number, number>>({}); // ⭐ thêm
+
+const fetchPromotions = async () => {
+  const res = await axios.get("http://localhost:8080/api/promotions");
+
+  const percentMap: Record<number, number> = {};
+  const countMap: Record<number, number> = {};
+  const today = new Date();
+
+  res.data
+    .filter((dgg: any) => {
+      // 1️⃣ phải đang active
+      if (dgg.trangThai !== 1) return false;
+
+      // 2️⃣ phải trong thời gian hiệu lực
+      const start = new Date(dgg.ngayBatDau);
+      const end = new Date(dgg.ngayKetThuc);
+
+      return today >= start && today <= end;
+    })
+    .forEach((dgg: any) => {
+      dgg.chiTietSanPhamIds.forEach((id: number) => {
+        countMap[id] = (countMap[id] || 0) + 1;
+        percentMap[id] = Math.max(percentMap[id] || 0, dgg.giaTriGiam);
+      });
+    });
+
+  promotionMap.value = percentMap;
+  promotionCountMap.value = countMap;
+};
+
+const selectedMaxPrice = ref(0);
+
+const maxPrice = computed(() => {
+  if (!allChiTietList.value.length) return 0;
+
+  const prices = allChiTietList.value.map((ct) => {
+    const percent = promotionMap.value[ct.id] || 0;
+
+    const finalPrice = percent ? ct.giaBan * (1 - percent / 100) : ct.giaBan;
+
+    return Math.round(finalPrice); // 🔥 QUAN TRỌNG
+  });
+
+  return Math.max(...prices);
+});
+
+watch(maxPrice, (val) => {
+  selectedMaxPrice.value = val;
+});
 
 const back = () => router.push("/admin/promotion");
 </script>
@@ -765,19 +912,21 @@ const back = () => router.push("/admin/promotion");
   flex-direction: column;
 }
 .btn-clear {
-  height: 30px;
+  height: 40px;
+  min-width: 120px;
   padding: 0 12px;
   border-radius: 10px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
   cursor: pointer;
-  font-size: 13px;
+  transition: 0.2s;
 }
 
 .btn-clear:hover {
-  background: #63391f;
-  color: white;
-  border-color: #63391f;
+  background: #fff;
+  color: black;
+  border: 1px solid #ddd;
 }
 
 .table-wrapper::before {
@@ -858,6 +1007,22 @@ td {
 .search-input:focus {
   border-color: #63391f;
   box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.15);
+}
+.price-box {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.old-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 12px;
+}
+
+.new-price {
+  color: #e53935;
+  font-weight: 600;
 }
 
 img {
@@ -1109,14 +1274,13 @@ th {
 
 /* select đẹp hơn */
 .variant-toolbar select {
-  height: 32px;
-  padding: 0 10px;
-
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
+  height: 40px;
+  min-width: 120px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
   background: #fff;
-
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -1131,25 +1295,77 @@ th {
 }
 
 /* nút clear nhìn như action button */
-.btn-clear {
-  height: 32px;
-  padding: 0 12px;
-
-  border-radius: 8px;
-  border: none;
-
-  background: #63391f;
-  color: #fff;
-
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-
-  transition: 0.2s;
+.img-wrapper {
+  position: relative;
+  width: fit-content;
 }
 
-.btn-clear:hover {
-  background: #4b2c18;
-  transform: translateY(-1px);
+.variant-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* badge giảm giá */
+.discount-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+
+  background: #e53935;
+  color: white;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  padding: 3px 6px;
+  border-radius: 6px;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.price-cell {
+  position: relative;
+}
+
+.row-sup {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+
+  font-size: 10px;
+  color: #999;
+}
+.price-filter {
+  width: 470px; /* 👈 tăng chiều dài */
+  margin-bottom: 20px;
+}
+.price-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 5px;
+  outline: none;
+}
+
+/* Chrome, Edge */
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  cursor: pointer;
+  border: none;
+}
+
+/* Firefox */
+.price-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  cursor: pointer;
+  border: none;
 }
 </style>

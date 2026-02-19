@@ -39,17 +39,23 @@
             <input type="date" v-model="filter.end" />
           </div>
           <div class="filter-item clear-wrap">
-            <button class="btn-clear" @click="clearFilter">Đặt lại</button>
+            <button class="btn-clear" @click="clearFilter">
+              <img
+                src="/src/assets/icon/refesh.svg"
+                style="width: 20px; height: 20px"
+                alt=""
+              />
+            </button>
           </div>
+        </div>
+        <div class="add-btn">
+          <button @click="$router.push('/admin/promotion/create')">
+            <span>＋</span> Thêm đợt giảm
+          </button>
         </div>
       </div>
 
       <!-- RIGHT -->
-      <div class="add-btn">
-        <button @click="$router.push('/admin/promotion/create')">
-          <span>＋</span> Thêm đợt giảm
-        </button>
-      </div>
     </div>
   </div>
   <!-- ===== CONTENT ===== -->
@@ -416,7 +422,7 @@ const statusText = (s: number) =>
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 160px;
+  width: 150px;
 }
 
 .filter-item label {
@@ -446,7 +452,7 @@ const statusText = (s: number) =>
 
 .add-btn button {
   height: 40px;
-  /* 👈 bằng input */
+  width: 160px;
   padding: 0 16px;
   /* ngang vừa tay */
   border: 1px solid #ccc;
@@ -501,31 +507,39 @@ const statusText = (s: number) =>
   border-bottom: 1px solid #ddd;
 }
 
+/* Base badge */
 .status {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 12px;
+  padding: 6px 14px;
+  border-radius: 999px; /* bo tròn full */
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
   border: 1px solid transparent;
 }
 
 /* Đang áp dụng */
 .status.selling {
-  color: #2ecc71;
-  font-weight: 600;
+  color: #1b7f4b;
+  background: #e7f7ef;
+  border-color: #a8e5c7;
+  font-size: 10px;
 }
 
 /* Sắp diễn ra */
 .status.upcoming {
-  color: #f39c12;
-  font-weight: 600;
+  color: #ea580c;
+  background: #ffedd5;
+  border-color: #fdba74;
+  font-size: 10px;
 }
 
 /* Đã kết thúc */
 .status.stopped {
-  color: #e74c3c;
-  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  font-size: 10px;
 }
 
 .action {
@@ -706,18 +720,18 @@ Stashed changes
 }
 
 .btn-clear {
-  height: 40px;
-  padding: 0 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  /* 👈 bo y hệt */
+  height: 42px;
+  width: 42px;
+  border: 1px solid #e0e0e0;
   background: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  color: #484848;
-
+  border-radius: 12px;
   cursor: pointer;
-  transition: 0.2s;
+  font-size: 18px;
+  color: #666;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 /* ===== TOAST CONTAINER ===== */
 .toast-container {

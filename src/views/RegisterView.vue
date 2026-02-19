@@ -42,8 +42,8 @@
         </div>
 
         <div class="form-group">
-          <label for="username">Tên đăng nhập</label>
-          <div class="input-wrapper" :class="{ 'has-error': errors.username }">
+          <label for="phone">Số điện thoại</label>
+          <div class="input-wrapper" :class="{ 'has-error': errors.phone }">
             <span class="input-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -56,21 +56,20 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path>
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.28-2.28a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+                ></path>
               </svg>
             </span>
             <input
-              id="username"
-              v-model="username"
+              id="phone"
+              v-model="phone"
               type="text"
-              placeholder="username123"
-              @input="errors.username = ''"
+              placeholder="0987xxxxxx"
+              @input="errors.phone = ''"
             />
           </div>
-          <span v-if="errors.username" class="error-text">{{
-            errors.username
-          }}</span>
+          <span v-if="errors.phone" class="error-text">{{ errors.phone }}</span>
         </div>
 
         <div class="form-group">
@@ -190,9 +189,7 @@
             v-if="message"
             :class="['msg-box', isError ? 'error-msg' : 'success-msg']"
           >
-            <span class="msg-icon">
-              {{ isError ? "⚠️" : "✅" }}
-            </span>
+            <span class="msg-icon">{{ isError ? "⚠️" : "✅" }}</span>
             <span>{{ message }}</span>
           </div>
         </transition>
@@ -217,7 +214,6 @@
             />
             <span>Google</span>
           </a>
-
           <a
             href="http://localhost:8080/oauth2/authorization/facebook"
             class="btn-social btn-facebook"
@@ -233,9 +229,9 @@
         <div class="auth-footer">
           <p>
             Đã có tài khoản?
-            <router-link to="/login" class="login-link">
-              Đăng nhập ngay
-            </router-link>
+            <router-link to="/login" class="login-link"
+              >Đăng nhập ngay</router-link
+            >
           </p>
         </div>
       </form>
@@ -249,7 +245,7 @@ import { useRouter } from "vue-router";
 import AuthService from "../services/authService.js";
 
 const fullname = ref("");
-const username = ref("");
+const phone = ref(""); // Biến mới
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
@@ -262,6 +258,7 @@ const isError = ref(false);
 const router = useRouter();
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidPhone = (phone) => /(84|0[3|5|7|8|9])+([0-9]{8})\b/g.test(phone); // Regex SĐT Việt Nam
 
 const validateForm = () => {
   let isValid = true;
@@ -272,16 +269,16 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (!username.value.trim()) {
-    errors.value.username = "Thiếu tên đăng nhập";
+  if (!phone.value.trim()) {
+    errors.value.phone = "Vui lòng nhập số điện thoại";
     isValid = false;
-  } else if (username.value.length < 4) {
-    errors.value.username = "Username tối thiểu 4 ký tự";
+  } else if (!isValidPhone(phone.value)) {
+    errors.value.phone = "Số điện thoại không đúng định dạng";
     isValid = false;
   }
 
   if (!email.value.trim()) {
-    errors.value.email = "Thiếu email";
+    errors.value.email = "Vui lòng nhập email";
     isValid = false;
   } else if (!isValidEmail(email.value)) {
     errors.value.email = "Email không hợp lệ";
@@ -289,15 +286,15 @@ const validateForm = () => {
   }
 
   if (!password.value) {
-    errors.value.password = "Thiếu mật khẩu";
+    errors.value.password = "Vui lòng nhập mật khẩu";
     isValid = false;
   } else if (password.value.length < 6) {
-    errors.value.password = "Mật khẩu quá ngắn (>6)";
+    errors.value.password = "Mật khẩu tối thiểu 6 ký tự";
     isValid = false;
   }
 
   if (password.value !== confirmPassword.value) {
-    errors.value.confirmPassword = "Mật khẩu không khớp";
+    errors.value.confirmPassword = "Mật khẩu nhập lại không khớp";
     isValid = false;
   }
 
@@ -313,11 +310,14 @@ const handleRegister = async () => {
   loading.value = true;
 
   try {
+    // Gửi đúng field Backend yêu cầu (theo Entity KhachHang)
+    // Thay đổi 'tenKhachHang' thành 'hoTen'
+    // RegisterView.vue (Sửa lại cho khớp với authService.js)
     await AuthService.register({
-      fullname: fullname.value,
-      username: username.value,
-      email: email.value,
-      password: password.value,
+      fullname: fullname.value, // Đổi thành 'fullname'
+      phone: phone.value, // Đổi thành 'phone'
+      email: email.value, // Giữ nguyên
+      password: password.value, // Đổi thành 'password'
     });
 
     isError.value = false;
@@ -336,7 +336,8 @@ const handleRegister = async () => {
 };
 </script>
 
-<style scoped>
+<style>
+/* Toàn bộ CSS giữ nguyên từ file gốc của bạn */
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap");
 
 :root {
@@ -363,7 +364,6 @@ const handleRegister = async () => {
   padding: 20px;
 }
 
-/* Họa tiết nền */
 .bg-pattern {
   position: absolute;
   top: -50%;
@@ -410,12 +410,10 @@ const handleRegister = async () => {
   margin-top: 5px;
 }
 
-/* --- FORM & INPUTS --- */
 .form-group {
   margin-bottom: 18px;
 }
 
-/* Layout 2 cột cho mật khẩu */
 .row-group {
   display: flex;
   gap: 15px;
@@ -450,7 +448,7 @@ label {
 
 .input-wrapper input {
   width: 100%;
-  padding: 13px 14px 13px 48px; /* Chừa chỗ cho Icon */
+  padding: 13px 14px 13px 48px;
   border: 2px solid transparent;
   background-color: #f9f9f9;
   border-radius: var(--radius);
@@ -471,7 +469,6 @@ label {
   color: var(--primary-color);
 }
 
-/* Trạng thái lỗi */
 .input-wrapper.has-error input {
   border-color: #ffcdd2;
   background-color: #fff8f8;
@@ -493,7 +490,6 @@ label {
   margin-bottom: 15px;
 }
 
-/* --- BUTTONS --- */
 .btn-register {
   width: 100%;
   padding: 15px;
@@ -528,7 +524,6 @@ label {
   box-shadow: none;
 }
 
-/* --- DIVIDER --- */
 .divider {
   display: flex;
   align-items: center;
@@ -548,7 +543,6 @@ label {
   padding: 0 15px;
 }
 
-/* --- SOCIAL BUTTONS --- */
 .social-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -593,7 +587,6 @@ label {
   box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
 }
 
-/* --- FOOTER --- */
 .auth-footer {
   margin-top: 25px;
   text-align: center;
@@ -611,7 +604,6 @@ label {
   text-decoration: underline;
 }
 
-/* --- NOTIFICATIONS --- */
 .msg-box {
   padding: 12px;
   border-radius: 8px;
@@ -634,7 +626,6 @@ label {
   border: 1px solid #ef9a9a;
 }
 
-/* --- ANIMATIONS --- */
 .spinner {
   width: 20px;
   height: 20px;
@@ -660,7 +651,6 @@ label {
   }
 }
 
-/* Responsive Mobile */
 @media (max-width: 480px) {
   .register-card {
     padding: 30px 20px;

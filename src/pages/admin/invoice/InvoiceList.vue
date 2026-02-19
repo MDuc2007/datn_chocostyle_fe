@@ -7,7 +7,12 @@
 
       <div class="filter-row">
         <div class="search-box">
-          <span class="search-icon">🔍</span>
+          <img
+            src="/src//assets/icon/search.svg"
+            alt="Search"
+            class="search-icon-img"
+          />
+
           <input
             v-model="filters.keyword"
             type="text"
@@ -63,7 +68,7 @@
               @click="resetFilters"
               title="Làm mới bộ lọc"
             >
-              ⟳
+              <img src="/src/assets/icon/refesh.svg" style="width: 20px;height: 20px" alt="">
             </button>
           </div>
         </div>
@@ -117,7 +122,11 @@
                   @click="goToDetail(hd.id)"
                   title="Xem chi tiết"
                 >
-                  📝
+                  <img
+                    src="/src/assets/icon/edit.svg"
+                    alt="Edit"
+                    class="icon-svg"
+                  />
                 </button>
               </td>
             </tr>
@@ -306,7 +315,7 @@ onMounted(() => {
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 800;
   color: #63391f; /* Màu nâu chủ đạo */
   text-transform: uppercase;
@@ -335,6 +344,14 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
+/* 👇 CSS MỚI CHO ICON SEARCH */
+.search-icon-img {
+  width: 18px; /* Kích thước icon */
+  height: 18px;
+  margin-right: 12px; /* Khoảng cách với ô input */
+  opacity: 0.5; /* Làm mờ nhẹ để trông giống placeholder */
+  object-fit: contain;
+}
 .search-box:focus-within {
   border-color: #63391f;
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
@@ -367,9 +384,9 @@ onMounted(() => {
 }
 
 .control-item label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
-  color: #888;
+  color: #000000;
   margin-bottom: 6px;
   margin-left: 4px;
 }
@@ -399,7 +416,7 @@ onMounted(() => {
 }
 
 .btn-reset {
-  height: 45px;
+  height: 47px;
   width: 45px;
   border: 1px solid #e0e0e0;
   background: #fff;
@@ -573,5 +590,35 @@ onMounted(() => {
   padding: 40px;
   color: #b2bec3;
   font-style: italic;
+}
+.btn-icon {
+  /* Giữ nguyên các thuộc tính cũ của .btn-icon */
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+/* Style mới cho ảnh SVG bên trong */
+.icon-svg {
+  width: 20px; /* Kích thước icon */
+  height: 20px;
+  object-fit: contain;
+  transition: transform 0.2s;
+}
+
+.btn-icon:hover {
+  background: #f1f2f6; /* Màu nền tròn khi hover */
+}
+
+/* Hiệu ứng phóng to nhẹ icon khi hover (tùy chọn) */
+.btn-icon:hover .icon-svg {
+  transform: scale(1.1);
 }
 </style>

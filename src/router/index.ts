@@ -292,7 +292,6 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 3. Đã đăng nhập mà cố vào trang Login/Register
   if (
     user &&
     (to.path === "/login" ||
@@ -301,11 +300,14 @@ router.beforeEach((to, from, next) => {
   ) {
     const role = user?.role;
 
-    if (role === "ROLE_ADMIN" || role === "ROLE_STAFF") {
-      return next("/admin/dashboard");
+    switch (role) {
+      case "ROLE_ADMIN":
+        return next("/admin/dashboard");
+      case "ROLE_STAFF":
+        return next("/staff/pos");
+      default:
+        return next("/"); // Khách hàng hoặc các role khác
     }
-
-    return next("/");
   }
 
   next();

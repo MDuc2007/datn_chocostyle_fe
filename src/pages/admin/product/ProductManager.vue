@@ -3,6 +3,7 @@
     <h2 class="title">QUẢN LÝ SẢN PHẨM</h2>
     <div class="top-bar" style="margin-top: 30px">
       <div class="left-actions">
+        <label>Tìm kiếm</label>
         <div class="search-wrapper">
           <img
             src="/src/assets/icon/search.svg"
@@ -107,22 +108,82 @@
             <tr v-for="(item, index) in products" :key="item.id">
               <td>{{ currentPage * pageSize + index + 1 }}</td>
               <td>
-                <img :src="item.image" />
+                <div class="product-image-wrapper">
+                  <span v-if="promotionMap[item.id]" class="discount-badge">
+                    -{{ promotionMap[item.id] }}%
+                  </span>
+
+                  <img :src="item.image" />
+                </div>
               </td>
+
               <td>{{ item.ma }}</td>
               <td>{{ item.name }}</td>
               <td>{{ item.origin }}</td>
               <td>{{ item.material }}</td>
               <td>{{ item.quantity }}</td>
               <td>
-                <span v-if="typeof item.price === 'number'">
-                  {{ formatCurrency(item.price) }}
-                </span>
-                <span v-else-if="typeof item.price === 'string'">
-                  {{ formatPriceRange(item.price) }}
-                </span>
+                <!-- ===== GIÁ LÀ NUMBER ===== -->
+                <template v-if="typeof item.price === 'number'">
+                  <!-- Có giảm giá -->
+                  <div v-if="promotionMap[item.id]">
+                    <div
+                      style="
+                        font-size: 12px;
+                        color: #999;
+                        text-decoration: line-through;
+                      "
+                    >
+                      {{ formatCurrency(item.price) }}
+                    </div>
+
+                    <div style="color: #e53935; font-weight: 700">
+                      {{
+                        formatCurrency(getDiscountedPrice(item.price, item.id))
+                      }}
+                    </div>
+                  </div>
+
+                  <!-- Không giảm -->
+                  <div v-else>
+                    {{ formatCurrency(item.price) }}
+                  </div>
+                </template>
+
+                <!-- ===== GIÁ LÀ MIN ~ MAX ===== -->
+                <template
+                  v-else-if="
+                    typeof item.price === 'string' && item.price.includes('~')
+                  "
+                >
+                  <div v-if="promotionMap[item.id]">
+                    <!-- Giá gốc -->
+                    <div
+                      style="
+                        font-size: 12px;
+                        color: #999;
+                        text-decoration: line-through;
+                      "
+                    >
+                      {{ formatPriceRange(item.price) }}
+                    </div>
+
+                    <!-- Giá sau giảm -->
+                    <div
+                      style="color: #e53935; font-weight: 700; font-size: 12px"
+                    >
+                      {{ formatDiscountRange(item.price, item.id) }}
+                    </div>
+                  </div>
+
+                  <div v-else>
+                    {{ formatPriceRange(item.price) }}
+                  </div>
+                </template>
+
                 <span v-else>0 ₫</span>
               </td>
+
               <td>
                 <span
                   class="status"
@@ -354,6 +415,8 @@ const goToUpdate = (id) => {
 };
 
 const products = ref([]);
+const promotionMap = ref({});
+
 const currentPage = ref(0);
 const pageSize = ref(8);
 const totalPages = ref(1);
@@ -374,6 +437,54 @@ const modal = ref({
   item: null,
   newStatus: null,
 });
+
+const fetchPromotions = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/promotions");
+
+    const data = res.data || [];
+    const percentMap = {};
+    const now = new Date();
+
+    data.forEach((dgg) => {
+      const start = new Date(dgg.ngayBatDau);
+      const end = new Date(dgg.ngayKetThuc);
+
+      // chỉ lấy promotion đang hoạt động
+      if (dgg.trangThai === 1 && now >= start && now <= end) {
+        dgg.chiTietSanPhamIds?.forEach((id) => {
+          percentMap[id] = Math.max(percentMap[id] || 0, dgg.giaTriGiam);
+        });
+      }
+    });
+
+    promotionMap.value = percentMap;
+
+    console.log("PromotionMap:", promotionMap.value);
+  } catch (error) {
+    console.error("Lỗi lấy khuyến mãi:", error);
+  }
+};
+
+const getDiscountedPrice = (price, productId) => {
+  const percent = promotionMap.value[productId];
+
+  if (!percent || !price) return null;
+
+  return price - (price * percent) / 100;
+};
+
+const formatDiscountRange = (range, productId) => {
+  const percent = promotionMap.value[productId];
+  if (!percent) return formatPriceRange(range);
+
+  const [min, max] = range.split("~").map(Number);
+
+  const minAfter = min - (min * percent) / 100;
+  const maxAfter = max - (max * percent) / 100;
+
+  return `${formatCurrency(minAfter)} ~ ${formatCurrency(maxAfter)}`;
+};
 
 function toggleStatus(item) {
   const newStatus = item.trangThai === 1 ? 2 : 1;
@@ -828,6 +939,7 @@ const initSelect2 = (selector, placeholder, modelRef) => {
 onMounted(() => {
   fetchFilterData();
   fetchProducts();
+  fetchPromotions();
   setTimeout(() => {
     initSelect2(".select2-xuatxu", "Chọn xuất xứ", selectedOrigin);
     initSelect2(".select2-chatlieu", "Chọn chất liệu", selectedMaterial);
@@ -857,15 +969,19 @@ onMounted(() => {
 }
 
 .left-actions {
-  display: flex;
-  align-items: flex-end;
   gap: 12px;
+}
+.left-actions label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
 }
 
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
-  width: 320px;
+  width: 400px;
+  margin-top: 10px;
 }
 
 .search-icon {
@@ -888,6 +1004,7 @@ onMounted(() => {
   display: flex;
   gap: 12px; /* 👈 GỌN HƠN */
   align-items: flex-end;
+  margin-top: 20px;
 }
 
 .filter-item {
@@ -972,17 +1089,44 @@ onMounted(() => {
   height: 70px;
 }
 
+/* Base badge */
+.status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px; /* bo tròn full */
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+/* Đang bán */
 .status.selling {
-  color: #2ecc71;
-  font-weight: 600;
+  color: #1b7f4b;
+  background: #e7f7ef;
+  border-color: #a8e5c7;
+  font-size: 10px;
 }
-.status.upcoming {
-  color: #f39c12;
-  font-weight: 600;
+
+/* Hết hàng */
+.status.out {
+  color: #ea580c;
+  background: #ffedd5;
+  border-color: #fdba74;
+  font-size: 10px;
 }
+
+/* Ngừng bán */
 .status.stopped {
-  color: #e74c3c;
-  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  font-size: 10px;
+}
+
+/* (tuỳ chọn) hover đẹp hơn */
+.status:hover {
+  filter: brightness(0.95);
 }
 
 .action {
@@ -1020,7 +1164,7 @@ onMounted(() => {
   transition: 0.3s;
 }
 input:checked + .slider {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 input:checked + .slider::before {
   transform: translateX(26px);
@@ -1052,14 +1196,14 @@ input:checked + .slider::before {
 }
 
 .page-btn.active {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border-color: #63391f;
   font-weight: 600;
 }
 
 .page-btn.active:hover {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .page-btn:disabled {
@@ -1519,7 +1663,7 @@ input:checked + .slider::before {
 }
 /* Mũi tên */
 :deep(.select2-container .select2-selection__arrow) {
-  height: 30px;
+  height: 40px;
 }
 
 /* text bên trong */
@@ -1656,5 +1800,28 @@ input:checked + .slider::before {
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
+}
+.product-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.product-image-wrapper img {
+  width: 60px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: #e53935;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 </style>

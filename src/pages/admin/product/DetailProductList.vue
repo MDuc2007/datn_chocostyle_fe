@@ -139,12 +139,16 @@
               </td>
 
               <td>{{ index + 1 }}</td>
-              <td>
+              <td style="position: relative">
                 <img
                   v-if="item.hinhAnh?.length"
                   :src="item.hinhAnh[0]"
                   class="variant-img"
                 />
+
+                <span v-if="promotionMap[item.id]" class="discount-badge">
+                  -{{ promotionMap[item.id] }}%
+                </span>
               </td>
               <td>{{ item.maSanPham }}</td>
               <td>{{ item.maChiTietSanPham }}</td>
@@ -156,7 +160,29 @@
               </td>
               <td>{{ item.soLuongTon }}</td>
               <td>{{ formatCurrency(item.giaNhap) }}</td>
-              <td>{{ formatCurrency(item.giaBan) }}</td>
+              <td>
+                <div v-if="promotionMap[item.id]">
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: #999;
+                      text-decoration: line-through;
+                    "
+                  >
+                    {{ formatCurrency(item.giaBan) }}
+                  </div>
+
+                  <div style="color: #e53935; font-weight: 700">
+                    {{
+                      formatCurrency(getDiscountedPrice(item.giaBan, item.id))
+                    }}
+                  </div>
+                </div>
+
+                <div v-else>
+                  {{ formatCurrency(item.giaBan) }}
+                </div>
+              </td>
               <td>
                 <span
                   class="status"
@@ -189,7 +215,7 @@
                     <input
                       type="checkbox"
                       :checked="item.trangThai === 1"
-                      @change="toggleStatus(item)"
+                      @click.prevent="toggleStatus(item)"
                       :disabled="item.trangThai === 0"
                     />
                     <span class="slider"></span>
@@ -306,6 +332,37 @@
       {{ notif.message }}
     </div>
   </div>
+  <transition name="fade-modal">
+    <div v-if="modal.show" class="modal-confirm" @click.self="closeModal">
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="40"
+            height="40"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeModal">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -314,6 +371,38 @@ import { useRouter, useRoute } from "vue-router";
 import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
 import axios from "axios";
 const notifications = ref([]);
+
+const promotionMap = ref({});
+const fetchPromotions = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/promotions");
+
+    const now = new Date();
+    const map = {};
+
+    res.data.forEach((dgg) => {
+      const start = new Date(dgg.ngayBatDau);
+      const end = new Date(dgg.ngayKetThuc);
+
+      if (dgg.trangThai === 1 && now >= start && now <= end) {
+        dgg.chiTietSanPhamIds.forEach((ctspId) => {
+          map[ctspId] = Math.max(map[ctspId] || 0, dgg.giaTriGiam);
+        });
+      }
+    });
+
+    promotionMap.value = map;
+  } catch (err) {
+    console.error("Lỗi load giảm giá:", err);
+  }
+};
+
+const getDiscountedPrice = (price, variantId) => {
+  const percent = promotionMap.value[variantId];
+  if (!percent) return null;
+
+  return price - (price * percent) / 100;
+};
 
 const showNotification = (message, type = "success") => {
   const id = Date.now();
@@ -633,31 +722,56 @@ const fetchVariants = async () => {
     console.error("Lỗi load CTSP:", e);
   }
 };
-async function toggleStatus(item) {
-  const oldStatus = item.trangThai;
+const modal = ref({
+  show: false,
+  title: "",
+  message: "",
+  onConfirm: null,
+});
 
-  // 🔁 toggle 1 ↔ 2
+function toggleStatus(item) {
+  const oldStatus = item.trangThai;
   const newStatus = oldStatus === 1 ? 2 : 1;
 
-  // optimistic update
-  item.trangThai = newStatus;
+  modal.value = {
+    show: true,
+    title: newStatus === 1 ? "Xác nhận bán lại" : "Xác nhận ngừng bán",
+    message:
+      newStatus === 1
+        ? "Bạn có chắc muốn bán lại sản phẩm này?"
+        : "Bạn có chắc muốn ngừng bán sản phẩm này?",
+    onConfirm: async () => {
+      try {
+        await axios.put(
+          `http://localhost:8080/api/chi-tiet-san-pham/${item.id}/change-status`,
+          null,
+          {
+            params: {
+              trangThai: newStatus,
+              nguoiCapNhat: "admin",
+            },
+          },
+        );
 
-  try {
-    await axios.put(
-      `http://localhost:8080/api/chi-tiet-san-pham/${item.id}/change-status`,
-      null,
-      {
-        params: {
-          trangThai: newStatus,
-          nguoiCapNhat: "admin",
-        },
-      },
-    );
-  } catch (error) {
-    // rollback
-    item.trangThai = oldStatus;
-    alert("Lỗi cập nhật trạng thái sản phẩm!");
+        item.trangThai = newStatus;
+        showNotification("Cập nhật trạng thái thành công", "success");
+      } catch (error) {
+        showNotification("Lỗi cập nhật trạng thái!", "error");
+      }
+
+      modal.value.show = false;
+    },
+  };
+}
+
+function handleModalConfirm() {
+  if (modal.value.onConfirm) {
+    modal.value.onConfirm();
   }
+}
+
+function closeModal() {
+  modal.value.show = false;
 }
 
 const initSelect2 = (selector, placeholder, modelRef) => {
@@ -692,6 +806,7 @@ onMounted(() => {
   fetchVariants();
   fetchMauSac();
   fetchKichCo();
+  fetchPromotions();
   setTimeout(() => {
     initSelect2(".select2-mausac", "Chọn màu sắc", selectedMauSacList);
     initSelect2(".select2-kichco", "Chọn kích cỡ", selectedKichCoList);
@@ -721,15 +836,13 @@ onMounted(() => {
 }
 
 .left-actions {
-  display: flex;
-  align-items: flex-end;
   gap: 12px;
 }
 
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
-  width: 300px;
+  width: 400px;
 }
 
 .search-icon {
@@ -752,6 +865,7 @@ onMounted(() => {
   display: flex;
   gap: 12px; /* 👈 GỌN HƠN */
   align-items: flex-end;
+  margin-top: 20px;
 }
 
 .filter-item {
@@ -834,22 +948,43 @@ onMounted(() => {
   padding: 18px 12px;
   border-bottom: 1px solid #ddd;
   text-align: center;
-  height: 50px;
+  height: 65px;
 }
 
+/* Base badge */
+.status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px; /* bo tròn full */
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+/* Đang bán */
 .status.selling {
-  color: #2ecc71;
-  font-weight: 600;
-}
-.status.upcoming {
-  color: #f39c12;
-  font-weight: 600;
-}
-.status.stopped {
-  color: #e74c3c;
-  font-weight: 600;
+  color: #1b7f4b;
+  background: #e7f7ef;
+  border-color: #a8e5c7;
+  font-size: 10px;
 }
 
+/* Hết hàng */
+.status.out {
+  color: #ea580c;
+  background: #ffedd5;
+  border-color: #fdba74;
+  font-size: 10px;
+}
+
+/* Ngừng bán */
+.status.stopped {
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  font-size: 10px;
+}
 .action {
   display: flex;
   justify-content: center;
@@ -885,7 +1020,7 @@ onMounted(() => {
   transition: 0.3s;
 }
 input:checked + .slider {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 input:checked + .slider::before {
   transform: translateX(26px);
@@ -917,14 +1052,14 @@ input:checked + .slider::before {
 }
 
 .page-btn.active {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border-color: #63391f;
   font-weight: 600;
 }
 
 .page-btn.active:hover {
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
 
 .page-btn:disabled {
@@ -969,11 +1104,11 @@ input:checked + .slider::before {
   background: #fff;
 }
 .product-table img {
-  width: 40px;
+  width: 60px;
   height: auto;
 }
 .price-filter {
-  width: 700px; /* 👈 tăng chiều dài */
+  width: 470px; /* 👈 tăng chiều dài */
   margin-bottom: 20px;
 }
 .price-slider {
@@ -990,7 +1125,7 @@ input:checked + .slider::before {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   cursor: pointer;
   border: none;
 }
@@ -1000,7 +1135,7 @@ input:checked + .slider::before {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #63391f;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   cursor: pointer;
   border: none;
 }
@@ -1336,7 +1471,7 @@ input:checked + .slider::before {
 }
 /* Mũi tên */
 :deep(.select2-container .select2-selection__arrow) {
-  height: 30px;
+  height: 40px;
 }
 
 /* text bên trong */
@@ -1365,5 +1500,130 @@ input:checked + .slider::before {
 ) {
   border-color: #a9744f;
   box-shadow: 0 0 0 1px rgba(169, 116, 79, 0.35);
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+.variant-img {
+  width: 60px;
+  border-radius: 10px;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: #e53935;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 </style>
