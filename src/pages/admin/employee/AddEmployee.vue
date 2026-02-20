@@ -922,6 +922,8 @@ select:focus {
   left: 0;
   right: 0;
   bottom: 0;
+  background: rgba(44, 28, 20, 0.75);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;

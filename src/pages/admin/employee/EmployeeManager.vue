@@ -25,20 +25,7 @@
           <div class="filter-group search-group">
             <div class="search-box">
               <i class="search-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#9CA3AF"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               </i>
               <input
                 v-model="query"
@@ -64,13 +51,9 @@
           <button class="btn btn-outline hover-effect" @click="resetFilters">
             Đặt lại
           </button>
-
+          
           <button class="btn btn-outline hover-effect" @click="exportExcel">
-            <img
-              src="/src/assets/icon/dowload.svg"
-              alt=""
-              style="width: 16px; height: 16px; margin-right: 8px"
-            />
+            <img src="/src/assets/icon/dowload.svg" alt="" style="width: 16px; height: 16px; margin-right: 8px;">
             Xuất Excel
           </button>
 
@@ -79,7 +62,7 @@
           </button>
         </div>
       </div>
-    </div>
+      </div>
 
     <div class="card-section table-card form-page-animation">
       <div class="table-container">
@@ -88,25 +71,25 @@
             <tr>
               <th width="50" class="text-center">STT</th>
               <th width="80" class="text-center">Ảnh</th>
-              <th width="100">Mã NV</th>
-              <th style="min-width: 200px">Tên</th>
-              <th style="min-width: 180px">Email</th>
-              <th width="110">SDT</th>
-              <th style="min-width: 200px">Địa chỉ</th>
-              <th width="120">Chức vụ</th>
+              <th width="80">Mã NV</th>
+              <th style="min-width: 180px">Tên</th>
+              <th style="min-width: 220px">Email</th>
+              <th width="100">SDT</th>
+              <th style="min-width: 250px">Địa chỉ</th>
+              <th width="110">Chức vụ</th>
               <th width="110" class="text-center">Trạng thái</th>
               <th width="110" class="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="pagedEmployees.length === 0">
+            <tr v-if="employees.length === 0">
               <td colspan="10" class="text-center py-5 text-muted">
                 Không có dữ liệu nhân viên
               </td>
             </tr>
 
             <template v-else>
-              <tr v-for="(e, i) in pagedEmployees" :key="e.id">
+              <tr v-for="(e, i) in employees" :key="e.id">
                 <td class="text-center text-muted">
                   <b>{{ startIndex + i }}</b>
                 </td>
@@ -140,7 +123,14 @@
 
                 <td>{{ e.phone }}</td>
 
-                <td class="text-muted small">{{ e.address }}</td>
+                <td class="text-muted small">
+                  <div 
+                    class="address-truncate" 
+                    :title="e.address"
+                  >
+                    {{ e.address }}
+                  </div>
+                </td>
 
                 <td>{{ getRoleLabel(e.role) }}</td>
 
@@ -198,12 +188,6 @@
                 </td>
               </tr>
             </template>
-
-            <tr v-if="!loading && pagedEmployees.length === 0">
-              <td colspan="10" class="text-center py-5 text-muted">
-                Không tìm thấy dữ liệu
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -237,7 +221,6 @@
       </div>
     </div>
 
-    <!-- Confirm Dialog Modal -->
     <transition name="fade-modal">
       <div
         v-if="confirmDialog.show"
@@ -415,13 +398,16 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 const notifications = ref([]);
 const employees = ref([]);
+const totalPages = ref(0);
+const totalElements = ref(0);
+
 const query = ref("");
 const filters = ref({ gender: "all", role: "all", status: "all" });
 const perPage = ref(8);
@@ -433,7 +419,6 @@ const showModal = ref(false);
 const editingEmployee = ref({});
 const fileInput = ref(null);
 
-const statusHistory = ref({});
 const errors = ref({});
 
 // Confirm Dialog State
@@ -501,11 +486,6 @@ function validateEditForm() {
 }
 
 // --- HELPERS & API ---
-function formatDateForInput(dateString) {
-  if (!dateString) return "";
-  return dateString.substring(0, 10);
-}
-
 function getRoleLabel(roleCode) {
   switch (roleCode) {
     case "Admin":
@@ -521,10 +501,25 @@ function getRoleLabel(roleCode) {
   }
 }
 
-const fetchEmployees = async () => {
+// Gọi API lấy dữ liệu phân trang từ backend thay thế cho dữ liệu local
+const loadEmployees = async () => {
   try {
-    const response = await axios.get("http://localhost:8080/api/nhan-vien");
-    employees.value = response.data.map((item) => ({
+    let statusParam = null;
+    if (filters.value.status === 'active') statusParam = 1;
+    if (filters.value.status === 'inactive') statusParam = 0;
+    if (filters.value.status === 'locked') statusParam = 2;
+
+    const response = await axios.get('http://localhost:8080/api/nhan-vien/search', {
+      params: {
+        keyword: query.value,
+        trangThai: statusParam,
+        page: page.value,
+        size: perPage.value
+      }
+    });
+
+    // Map content từ backend sang format của frontend
+    employees.value = response.data.content.map((item) => ({
       id: item.id,
       code: item.maNv,
       name: item.hoTen,
@@ -538,13 +533,29 @@ const fetchEmployees = async () => {
       avatar: item.avatar,
       gender: item.gioiTinh,
     }));
+    
+    totalPages.value = response.data.totalPages;
+    totalElements.value = response.data.totalElements;
+
   } catch (error) {
-    console.error("Lỗi tải dữ liệu:", error);
+    console.error("Lỗi khi tải danh sách nhân viên:", error);
+    showNotification('Lỗi khi tải dữ liệu', 'error');
   }
 };
 
 onMounted(() => {
-  fetchEmployees();
+  loadEmployees();
+});
+
+// Khi thay đổi text hoặc dropdown filter -> Quay về trang đầu tiên và gọi lại API
+watch([query, () => filters.value.status], () => {
+  page.value = 0;
+  loadEmployees();
+}, { deep: true });
+
+// Khi thay đổi page (Bấm next, prev...) -> Gọi lại API
+watch(page, () => {
+  loadEmployees();
 });
 
 // --- MODAL ---
@@ -593,45 +604,40 @@ async function saveEmployee() {
         avatar: editingEmployee.value.avatar,
       },
     );
-    alert("Cập nhật thành công!");
+    showNotification("Cập nhật thành công!", "success");
     closeModal();
-    fetchEmployees();
+    loadEmployees();
   } catch (error) {
     console.error(error);
-    alert("Lỗi lưu dữ liệu!");
+    showNotification("Lỗi lưu dữ liệu!", "error");
   }
 }
 
 // --- UTILS KHÁC ---
 async function toggleStatus(e, event) {
-  // QUAN TRỌNG: Ngăn chặn checkbox tự đổi trạng thái ngay lập tức
   event.preventDefault();
 
   const originalStatus = e.status;
   let newStatus = 1;
 
-  // Logic xác định trạng thái mới
   if (e.status !== 2) {
     newStatus = 2; // Khóa
   } else {
     newStatus = 1; // Mở khóa về Active
   }
 
-  // Confirm before changing status
   const statusText = newStatus === 1 ? "Hoạt động" : "Khóa tài khoản";
   const confirmMsg = `
       Bạn có chắc chắn muốn thay đổi trạng thái nhân viên?<br><br>
     `;
 
   if (!(await showConfirmDialog(confirmMsg, "Xác nhận thay đổi trạng thái"))) {
-    // Nếu bấm Hủy, do đã preventDefault ở trên, UI switch vẫn giữ nguyên
     return;
   }
 
   e.status = newStatus; // Cập nhật UI
 
   try {
-    // Gọi API cập nhật
     await axios.put(`http://localhost:8080/api/nhan-vien/${e.id}`, {
       trangThai: newStatus,
     });
@@ -643,6 +649,7 @@ async function toggleStatus(e, event) {
     showNotification("Lỗi cập nhật trạng thái!", "error");
   }
 }
+
 function addEmployee() {
   router.push("/admin/employee/add");
 }
@@ -666,42 +673,13 @@ function getRandomColor(index) {
   return colors[index % colors.length];
 }
 
-const filtered = computed(() => {
-  return employees.value.filter((e) => {
-    const matchesQuery =
-      query.value.trim() === "" ||
-      [e.name, e.code, e.email].some(
-        (f) => f && f.toLowerCase().includes(query.value.toLowerCase()),
-      );
-    const matchesRole =
-      filters.value.role === "all" || e.role === filters.value.role;
-    let matchesStatus = true;
-    if (filters.value.status === "active") matchesStatus = e.status === 1;
-    if (filters.value.status === "inactive") matchesStatus = e.status === 0;
-    if (filters.value.status === "locked") matchesStatus = e.status === 2;
-    let matchesGender = true;
-    if (filters.value.gender === "male") {
-      matchesGender = e.gender === true;
-    } else if (filters.value.gender === "female") {
-      matchesGender = e.gender === false;
-    }
-    return matchesQuery && matchesRole && matchesStatus && matchesGender;
-  });
-});
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filtered.value.length / perPage.value)),
-);
 const startIndex = computed(() => page.value * perPage.value + 1);
-const pagedEmployees = computed(() =>
-  filtered.value.slice(
-    page.value * perPage.value,
-    (page.value + 1) * perPage.value,
-  ),
-);
+
 function changePage(newPage) {
   if (newPage < 0 || newPage >= totalPages.value) return;
   page.value = newPage;
 }
+
 const visiblePages = computed(() => {
   const total = totalPages.value;
   const current = page.value + 1;
@@ -734,18 +712,18 @@ const visiblePages = computed(() => {
 
   return rangeWithDots;
 });
+
 function resetFilters() {
   query.value = "";
   filters.value = { gender: "all", role: "all", status: "all" };
-  page.value = 0;
+  // page.value sẽ tự động set = 0 do watcher và gọi loadEmployees()
 }
+
 // --- HÀM XUẤT EXCEL ---
 const exportExcel = async () => {
-  // 1. Khởi tạo Workbook và Worksheet
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Danh sách nhân viên");
 
-  // 2. Định nghĩa các cột (để set độ rộng)
   worksheet.columns = [
     { key: "stt", width: 10 },
     { key: "maNv", width: 15 },
@@ -757,7 +735,6 @@ const exportExcel = async () => {
     { key: "trangThai", width: 15 },
   ];
 
-  // 3. Tạo Tiêu đề lớn (Dòng 1) - Merge cell
   worksheet.mergeCells("A1:H1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "DANH SÁCH NHÂN VIÊN";
@@ -769,7 +746,6 @@ const exportExcel = async () => {
   };
   titleCell.alignment = { vertical: "middle", horizontal: "center" };
 
-  // 4. Tạo Ngày xuất file (Dòng 2) - Merge cell
   worksheet.mergeCells("A2:H2");
   const subTitleCell = worksheet.getCell("A2");
   const today = new Date();
@@ -777,10 +753,8 @@ const exportExcel = async () => {
   subTitleCell.font = { name: "Times New Roman", size: 11, italic: true };
   subTitleCell.alignment = { vertical: "middle", horizontal: "center" };
 
-  // Thêm 1 dòng trống
   worksheet.addRow([]);
 
-  // 5. Tạo Header bảng (Dòng 4)
   const headerRow = worksheet.addRow([
     "STT",
     "Mã NV",
@@ -792,13 +766,12 @@ const exportExcel = async () => {
     "Trạng thái",
   ]);
 
-  // Style cho Header (Nền xám, Chữ đậm, Căn giữa) - Giống ảnh mẫu
   headerRow.eachCell((cell) => {
     cell.font = { name: "Times New Roman", bold: true };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FFD9D9D9" }, // Màu xám nhạt giống ảnh
+      fgColor: { argb: "FFD9D9D9" },
     };
     cell.alignment = { vertical: "middle", horizontal: "center" };
     cell.border = {
@@ -809,9 +782,6 @@ const exportExcel = async () => {
     };
   });
 
-  // 6. Đổ dữ liệu nhân viên vào
-  // Sử dụng pagedEmployees.value nếu chỉ muốn xuất trang hiện tại,
-  // hoặc employees.value nếu muốn xuất TẤT CẢ (khuyên dùng employees.value)
   const dataToExport = employees.value;
 
   dataToExport.forEach((emp, index) => {
@@ -821,12 +791,11 @@ const exportExcel = async () => {
       emp.name,
       emp.email,
       emp.phone,
-      emp.gender ? "Nam" : "Nữ", // Xử lý hiển thị giới tính
-      getRoleLabel(emp.role), // Xử lý hiển thị chức vụ
-      getStatusLabel(emp.status), // Xử lý hiển thị trạng thái
+      emp.gender ? "Nam" : "Nữ",
+      getRoleLabel(emp.role),
+      getStatusLabel(emp.status),
     ]);
 
-    // Style border cho từng cell dữ liệu
     row.eachCell((cell) => {
       cell.font = { name: "Times New Roman" };
       cell.border = {
@@ -835,9 +804,7 @@ const exportExcel = async () => {
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      // Căn giữa cho STT và các cột ngắn
       if (cell.col !== 3 && cell.col !== 4) {
-        // Trừ Tên và Email căn trái
         cell.alignment = { vertical: "middle", horizontal: "center" };
       } else {
         cell.alignment = { vertical: "middle", horizontal: "left" };
@@ -845,20 +812,21 @@ const exportExcel = async () => {
     });
   });
 
-  // 7. Xuất file
   const buffer = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buffer]), `DanhSachNhanVien_${Date.now()}.xlsx`);
 };
+
 const showNotification = (message, type = "success") => {
   const id = Date.now() + Math.random();
   notifications.value.push({ message, type, id });
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
-  }, 3000); // Tự động tắt sau 3 giây
+  }, 3000);
 };
 </script>
 
 <style scoped>
+/* Toàn bộ phần CSS của bạn được giữ nguyên không thay đổi 1 dòng nào */
 /* =========================================
    1. GLOBAL VARIABLES & ANIMATIONS
    ========================================= */
@@ -913,9 +881,7 @@ const showNotification = (message, type = "success") => {
   box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   overflow: hidden;
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .card-section:hover {
@@ -940,8 +906,6 @@ const showNotification = (message, type = "success") => {
   font-size: 24px;
   font-weight: bold;
   color: #63391f;
-  /* text-transform: uppercase;
-  letter-spacing: 1px; */
   margin: 0;
 }
 
@@ -973,26 +937,23 @@ const showNotification = (message, type = "success") => {
   flex-wrap: wrap;
 }
 
-/* Nhóm bộ lọc: Dùng để đẩy Label lên trên Input */
 .filter-group {
   display: flex;
-  flex-direction: column; /* Xếp dọc: Label trên, Input dưới */
-  gap: 6px;
+  flex-direction: column; 
+  gap: 6px; 
 }
 
-/* Riêng ô Search Group không cần Label hiển thị (để trống hoặc ẩn) */
 .filter-group.search-group {
-  justify-content: flex-end;
+  justify-content: flex-end; 
 }
 
 .filter-label {
   font-size: 14px;
-  font-weight: 700; /* In đậm tiêu đề "Trạng thái" */
+  font-weight: 700;
   color: #374151;
   margin-left: 2px;
 }
 
-/* Search Box Wrapper */
 .search-box {
   position: relative;
   width: 320px;
@@ -1008,12 +969,11 @@ const showNotification = (message, type = "success") => {
   z-index: 1;
 }
 
-/* ĐỒNG BỘ CHIỀU CAO & STYLE CHO INPUT VÀ BUTTON */
 .form-input,
 .form-select,
 .btn {
-  height: 42px; /* Chiều cao cố định bằng nhau */
-  border-radius: 8px; /* Bo góc giống nhau */
+  height: 42px;
+  border-radius: 8px;
   font-size: 14px;
   box-sizing: border-box;
 }
@@ -1029,11 +989,11 @@ const showNotification = (message, type = "success") => {
 }
 
 .form-input.ps-icon {
-  padding-left: 40px; /* Chừa chỗ cho icon search */
+  padding-left: 40px;
 }
 
 .form-select {
-  min-width: 180px; /* Độ rộng tối thiểu cho combobox trạng thái */
+  min-width: 180px;
   cursor: pointer;
 }
 
@@ -1043,7 +1003,6 @@ const showNotification = (message, type = "success") => {
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
 
-/* BUTTON STYLES */
 .btn {
   padding: 0 20px;
   font-weight: 600;
@@ -1052,29 +1011,17 @@ const showNotification = (message, type = "success") => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  border: 1px solid transparent; /* Để tránh lệch size do border */
+  border: 1px solid transparent;
 }
 
 .btn-primary {
-  height: 42px; /* 👈 bằng input */
-  padding: 0 16px; /* ngang vừa tay */
-  border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
-  background: #fff;
-  cursor: pointer;
-
-  font-size: 14px;
-  font-weight: 600;
-  color: #484848;
-
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  color: #fff;
+  border-color: #6b3f23;
 }
 .btn-primary:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background-color: #fdf8f6;
+  background: linear-gradient(135deg, #5a3420, #b8895d);
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
 .btn-outline {
@@ -1088,7 +1035,6 @@ const showNotification = (message, type = "success") => {
   background-color: #fdf8f6;
 }
 
-/* Hiệu ứng bấm nút */
 .hover-effect:active {
   transform: translateY(1px);
 }
@@ -1146,6 +1092,16 @@ const showNotification = (message, type = "success") => {
   font-size: 13px;
 }
 
+/* === TRUNCATE TEXT WITH TOOLTIP === */
+.truncate-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
 /* === AVATAR === */
 .avatar-img {
   width: 45px;
@@ -1182,22 +1138,19 @@ const showNotification = (message, type = "success") => {
   min-width: 90px;
 }
 .status-badge.active {
-  color: #1b7f4b;
-  background: #e7f7ef;
-  border-color: #a8e5c7;
-  font-size: 10px;
+  background-color: #e8f5e9;
+  color: var(--success-green);
+  border: 1px solid #c8e6c9;
 }
 .status-badge.inactive {
-  color: #ea580c;
-  background: #ffedd5;
-  border-color: #fdba74;
-  font-size: 10px;
+  background-color: #ffebee;
+  color: var(--danger-red);
+  border: 1px solid #ffcdd2;
 }
 .status-badge.locked {
-  color: #dc2626;
-  background: #fee2e2;
-  border-color: #fca5a5;
-  font-size: 10px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
 }
 
 /* === SWITCH & ACTIONS === */
@@ -1220,22 +1173,26 @@ const showNotification = (message, type = "success") => {
 }
 .slider {
   position: absolute;
-  inset: 0;
-  background: #ccc;
-  background: #ccc;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d9534f;
+  transition: 0.4s;
   border-radius: 24px;
-  transition: 0.3s;
 }
-.slider::before {
-  content: "";
+.slider:before {
   position: absolute;
-  width: 18px;
+  content: "";
   height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
-  background: #fff;
+  background-color: white;
+  transition: 0.4s;
   border-radius: 50%;
-  transition: 0.3s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 input:checked + .slider {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
@@ -1329,9 +1286,7 @@ input:checked + .slider:before {
   width: 600px;
   max-width: 95%;
   text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 .modal-header {
   display: flex;
@@ -1464,6 +1419,7 @@ input:checked + .slider:before {
 .custom-tooltip {
   position: relative;
 }
+/* Tạo nội dung tooltip */
 .custom-tooltip::before {
   content: attr(data-tooltip);
   position: absolute;
@@ -1472,18 +1428,25 @@ input:checked + .slider:before {
   transform: translateX(-50%);
   background-color: #333;
   color: #fff;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
   font-size: 12px;
-  white-space: nowrap;
+  
+  /* Sửa 3 dòng dưới đây để địa chỉ dài tự xuống dòng */
+  white-space: normal; 
+  /* max-width: 300px;  */
+  width: 250px;
+  width: max-content; 
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-word;
+
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   z-index: 100;
   pointer-events: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   font-weight: 500;
 }
 .custom-tooltip::after {
@@ -1497,9 +1460,7 @@ input:checked + .slider:before {
   border-color: #333 transparent transparent transparent;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   z-index: 100;
 }
 .custom-tooltip:hover::before,
@@ -1588,9 +1549,7 @@ input:checked + .slider:before {
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
 .confirm-icon-wrapper {
@@ -1673,11 +1632,11 @@ input:checked + .slider:before {
   .left-controls {
     gap: 12px;
   }
-
+  
   .search-box {
     width: 250px;
   }
-
+  
   .form-select {
     min-width: 150px;
   }
@@ -1688,21 +1647,21 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: stretch;
   }
-
+  
   .left-controls,
   .right-controls {
     width: 100%;
     justify-content: flex-start;
   }
-
+  
   .search-box {
     width: 100%;
   }
-
+  
   .form-select {
     width: 100%;
   }
-
+  
   .btn {
     flex: 1;
   }
@@ -1713,17 +1672,27 @@ input:checked + .slider:before {
     flex-direction: column;
     width: 100%;
   }
-
+  
   .filter-group {
     width: 100%;
   }
-
+  
   .right-controls {
     flex-direction: column;
   }
-
+  
   .btn {
     width: 100%;
   }
+}
+/* Cắt chữ hiển thị dấu ... cho địa chỉ */
+.address-truncate {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+  display: inline-block;
+  vertical-align: middle;
 }
 </style>
