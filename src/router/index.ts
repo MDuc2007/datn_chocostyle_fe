@@ -304,8 +304,8 @@ const routes: Array<RouteRecordRaw> = [
   meta: { authorize: ["ROLE_ADMIN", "ROLE_STAFF"] },
   children: [
     {
-      path: "pos",
-      component: () => import("../pages/staff/PosCounter.vue"),
+       path: "pos",
+      component: () => import("../pages/staff/customer/CustomerManager.vue"),
     }
   ]
 },
