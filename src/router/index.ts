@@ -238,12 +238,77 @@ const routes: Array<RouteRecordRaw> = [
     ],
   },
 
-  // 3. STAFF ROUTES (Nếu có giao diện POS riêng ngoài Admin Layout)
   {
-    path: "/staff/pos",
-    component: () => import("../pages/staff/PosCounter.vue"),
-    meta: { authorize: ["ROLE_ADMIN", "ROLE_STAFF"] },
-  },
+  path: "/staff",
+  component: () => import("../pages/staff/StaffLayout.vue"),
+  meta: { authorize: ["ROLE_STAFF"] },
+  children: [
+    // 1. Trang chủ
+    {
+      path: "dashboard",
+      name: "StaffDashboard",
+      component: () =>
+        import("../pages/staff/dashboard/Dashboard.vue"),
+    },
+
+    // 2. Bán hàng tại quầy
+    {
+      path: "sales",
+      name: "StaffSales",
+      component: () =>
+        import("../pages/staff/sales/CounterSales.vue"),
+    },
+
+    // 3. Hóa đơn
+    {
+      path: "invoice",
+      name: "StaffInvoiceList",
+      component: () =>
+        import("../pages/staff/invoice/InvoiceList.vue"),
+    },
+    {
+      path: "invoice/:id",
+      name: "StaffInvoiceDetail",
+      component: () =>
+        import("../pages/staff/invoice/InvoiceDetail.vue"),
+      props: true,
+    },
+
+    // 4. Khách hàng
+    {
+      path: "customer",
+      name: "StaffCustomerList",
+      component: () =>
+        import("../pages/staff/customer/CustomerManager.vue"),
+    },
+
+    // 5. Lịch làm việc
+    {
+      path: "my-schedule",
+      name: "StaffMySchedule",
+      component: () =>
+        import("../pages/staff/calendar/EmployeeScheduleView.vue"),
+    },
+    {
+      path: "shift-report",
+      name: "ShiftReport",
+      component: () =>
+        import("../pages/staff/calendar/ShiftReport.vue"),
+    },
+  ],
+},
+  // 3. STAFF ROUTES (Nếu có giao diện POS riêng ngoài Admin Layout)
+{
+  path: "/staff",
+  component: () => import("../pages/staff/StaffLayout.vue"),
+  meta: { authorize: ["ROLE_ADMIN", "ROLE_STAFF"] },
+  children: [
+    {
+      path: "pos",
+      component: () => import("../pages/staff/PosCounter.vue"),
+    }
+  ]
+},
 
   // Redirect lỗi 404
   { path: "/:pathMatch(.*)*", redirect: "/" },
