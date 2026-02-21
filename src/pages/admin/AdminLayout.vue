@@ -175,6 +175,9 @@
             <router-link to="/admin/schedule" class="submenu-item">
               Lịch làm việc
             </router-link>
+            <router-link to="/admin/giao-ca" class="submenu-item">
+              Giao ca
+            </router-link>
           </div>
         </div>
       </nav>

@@ -230,6 +230,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "CustomerEdit",
         component: () => import("../pages/admin/customer/CustomerEdit.vue"),
       },
+      {
+        path: 'giao-ca',
+        name: 'GiaoCa',
+        component: () => import('../pages/admin/Calendar/ShiftHandover.vue') // Trỏ đúng đường dẫn file vừa tạo
+      }
     ],
   },
 

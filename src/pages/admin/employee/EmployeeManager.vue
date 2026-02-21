@@ -125,10 +125,13 @@
 
                 <td class="text-muted small">
                   <div 
-                    class="address-truncate" 
-                    :title="e.address"
+                    class="custom-tooltip address-tooltip-wrapper" 
+                    :data-tooltip="e.address ? e.address : 'Chưa cập nhật địa chỉ'"
+                    style="display: block; position: relative; width: 100%;"
                   >
-                    {{ e.address }}
+                    <div class="address-truncate">
+                      {{ e.address ? e.address : '---' }}
+                    </div>
                   </div>
                 </td>
 
@@ -1694,5 +1697,19 @@ input:checked + .slider:before {
   cursor: help;
   display: inline-block;
   vertical-align: middle;
+}
+/* Ghi đè vị trí tooltip dành riêng cho cột địa chỉ */
+.address-tooltip-wrapper.custom-tooltip::before {
+  left: 0 !important; /* Ép tooltip bắt đầu từ mép trái của cột */
+  transform: translateX(0) !important; /* Bỏ căn giữa, KHÔNG dùng translateY để không bị bay lên cao */
+  text-align: left; 
+  width: max-content;
+  max-width: 350px; /* Tránh tooltip dài tràn màn hình */
+}
+
+/* Ghi đè vị trí mũi tên của tooltip */
+.address-tooltip-wrapper.custom-tooltip::after {
+  left: 15px !important; /* Dời mũi tên về lề trái cho khớp với bọt thoại */
+  transform: translateX(0) !important; 
 }
 </style>
