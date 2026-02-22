@@ -300,7 +300,7 @@ const routes: Array<RouteRecordRaw> = [
   children: [
     {
       path: "pos",
-      component: () => import("../pages/staff/PosCounter.vue"),
+      component: () => import("../pages/staff/dashboard/Dashboard.vue"),
     }
   ]
 },

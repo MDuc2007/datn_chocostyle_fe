@@ -22,6 +22,9 @@ class AuthService {
   // ==========================
   // 2. LOGIN NHÂN VIÊN
   // ==========================
+// ==========================
+  // 2. LOGIN NHÂN VIÊN
+  // ==========================
   async loginStaff(user) {
     const response = await axios.post(AUTH_URL + "login/staff", {
       email: user.username,
@@ -29,7 +32,13 @@ class AuthService {
     });
 
     if (response.data.accessToken) {
+      // 1. Vẫn lưu cục "user" cũ để không ảnh hưởng các chức năng khác
       localStorage.setItem("user", JSON.stringify(response.data));
+      
+      // 2. 👉 LƯU THÊM CÁC BIẾN RỜI ĐỂ DÙNG CHO DASHBOARD & CHẤM CÔNG
+      localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("idNv", response.data.id); 
+      localStorage.setItem("tenNv", response.data.tenNhanVien); // Lấy tên nhân viên từ Backend
     }
 
     return response.data;
