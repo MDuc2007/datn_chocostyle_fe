@@ -503,10 +503,7 @@ const orderedHistory = computed(() => {
 
 const totalProductQuantity = computed(() => {
   if (!invoice.value || !invoice.value.sanPhamList) return 0;
-  return invoice.value.sanPhamList.reduce(
-    (sum, item) => sum + item.soLuong,
-    0
-  );
+  return invoice.value.sanPhamList.reduce((sum, item) => sum + item.soLuong, 0);
 });
 
 // [LOGIC MỚI] Tính tổng tiền ĐÃ TỪNG THU (Chưa trừ hoàn tiền)
@@ -644,21 +641,7 @@ const getPaymentMethodName = () => {
   ) {
     return invoice.value.thanhToanList[0].phuongThuc;
   }
-  return invoice.value?.loaiDon === 1
-    ? "Tiền mặt"
-    : "Thanh toán khi nhận hàng";
-};
-
-// [NEW HELPER FUNCTIONS FOR MODAL]
-const getModalTypeClass = (type: string) => {
-  if (type === "cancel" || type === "refund") return "icon-danger";
-  if (type === "prev") return "icon-warning";
-  return "icon-primary";
-};
-
-const getConfirmButtonClass = (type: string) => {
-  if (type === "cancel" || type === "refund") return "btn-danger-modern";
-  return "btn-primary-modern";
+  return invoice.value?.loaiDon === 1 ? "Tiền mặt" : "Thanh toán khi nhận hàng";
 };
 
 // [NEW HELPER FUNCTIONS FOR MODAL]
@@ -701,9 +684,7 @@ const confirmAction = (actionType: "next" | "prev" | "cancel") => {
     modal.targetStatus = nextStatus;
     const actionText = actionType === "next" ? "Chuyển sang" : "Quay lại";
     modal.title = `Xác nhận ${actionText.toLowerCase()} trạng thái`;
-    modal.message = `${actionText} trạng thái: "${getStatusName(
-      nextStatus
-    )}"?`;
+    modal.message = `${actionText} trạng thái: "${getStatusName(nextStatus)}"?`;
   }
 };
 
@@ -738,12 +719,10 @@ const handleConfirm = async () => {
     if (!noteToSend) {
       if (modal.type === "next")
         noteToSend = `Chuyển trạng thái sang ${getStatusName(
-          modal.targetStatus
+          modal.targetStatus,
         )}`;
       if (modal.type === "prev")
-        noteToSend = `Quay lại trạng thái ${getStatusName(
-          modal.targetStatus
-        )}`;
+        noteToSend = `Quay lại trạng thái ${getStatusName(modal.targetStatus)}`;
     }
     await executeUpdate(modal.targetStatus, noteToSend);
   }
@@ -758,7 +737,7 @@ const executeUpdate = async (status: number, note: string) => {
       {
         trangThaiMoi: status,
         ghiChu: note,
-      }
+      },
     );
     showToast("Cập nhật thành công!");
     await fetchDetail();
