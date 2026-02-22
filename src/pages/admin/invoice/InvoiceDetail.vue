@@ -295,7 +295,7 @@
                 <td class="index-cell">{{ index + 1 }}</td>
                 <td class="text-left-force">
                   <div class="product-cell">
-                    <div class="product-thumb">👕</div>
+                    <div class="product-thumb"></div>
                     <div class="product-info-text">
                       <div class="product-name">{{ p.tenSanPham }}</div>
                     </div>
@@ -371,41 +371,68 @@
       </div>
     </div>
 
-    <div v-if="showHistoryLog" class="modal-overlay">
-      <div class="modal-content modal-lg">
-        <div class="modal-header-custom">
-          <h3 class="modal-title">📜 Lịch sử cập nhật trạng thái</h3>
-          <button class="close-btn" @click="showHistoryLog = false">×</button>
+    <div
+      v-if="showHistoryLog"
+      class="modal-overlay"
+      @click.self="showHistoryLog = false"
+    >
+      <div class="modal-card modal-large">
+        <div class="modal-header-flex">
+          <h3 class="modal-title-modern">📜 Lịch sử cập nhật trạng thái</h3>
+          <button
+            class="close-icon-btn"
+            @click="showHistoryLog = false"
+            title="Đóng"
+          >
+            ✕
+          </button>
         </div>
-        <div class="modal-body-custom">
-          <table class="history-table">
+
+        <div class="modal-body-scroll">
+          <table class="modern-table text-left-table">
             <thead>
               <tr>
-                <th>Thời gian</th>
+                <th style="width: 150px">Thời gian</th>
                 <th>Hành động</th>
-                <th>Trạng thái mới</th>
-                <th>Người thực hiện</th>
+                <th style="width: 140px">Trạng thái mới</th>
+                <th style="width: 160px">Người thực hiện</th>
                 <th>Ghi chú</th>
               </tr>
             </thead>
             <tbody>
+              <tr v-if="orderedHistory.length === 0">
+                <td colspan="5" class="text-center light-text py-4">
+                  Chưa có lịch sử cập nhật nào.
+                </td>
+              </tr>
               <tr v-for="(log, idx) in orderedHistory" :key="idx">
-                <td>{{ formatDate(log.thoiGian) }}</td>
-                <td>{{ log.hanhDong }}</td>
+                <td class="light-text font-13">
+                  {{ formatDate(log.thoiGian) }}
+                </td>
+                <td class="font-bold text-dark">{{ log.hanhDong }}</td>
                 <td>
-                  <span class="badge-status-log">{{
+                  <span class="badge-status-modern">{{
                     getStatusName(log.trangThai)
                   }}</span>
                 </td>
-                <td>{{ log.nguoiThucHien || "Admin" }}</td>
-                <td>{{ log.ghiChu }}</td>
+                <td>
+                  <div class="user-badge">
+                    <span class="user-icon">👤</span>
+                    {{ log.nguoiThucHien || "Hệ thống" }}
+                  </div>
+                </td>
+                <td class="light-text font-13">{{ log.ghiChu || "---" }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="modal-footer-custom">
-          <button class="btn-modal-cancel" @click="showHistoryLog = false">
-            Đóng
+
+        <div class="modal-footer-right">
+          <button
+            class="btn-modern btn-secondary"
+            @click="showHistoryLog = false"
+          >
+            Đóng cửa sổ
           </button>
         </div>
       </div>
@@ -1698,5 +1725,121 @@ onMounted(() => {
   .stepper-wrapper {
     min-width: 600px;
   }
+}
+/* ================= NEW HISTORY MODAL STYLES ================= */
+.modal-large {
+  max-width: 850px; /* Mở rộng form cho bảng hiển thị đẹp hơn */
+  padding: 24px;
+}
+
+.modal-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.close-icon-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-icon-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: rotate(90deg);
+}
+
+.modal-body-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 8px; /* Tránh text chạm vào thanh cuộn */
+}
+
+/* Custom Thanh cuộn (Scrollbar) cho đẹp */
+.modal-body-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-body-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.modal-body-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.modal-body-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.modal-footer-right {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+/* Ép bảng căn trái thay vì căn giữa như mặc định */
+.text-left-table th,
+.text-left-table td {
+  text-align: left !important;
+}
+
+.font-13 {
+  font-size: 13px !important;
+}
+
+.text-dark {
+  color: #1e293b;
+}
+
+.py-4 {
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+}
+
+/* Badge Trạng thái hiện đại */
+.badge-status-modern {
+  background: #f8fafc;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+}
+
+/* Badge Tên người dùng */
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.user-icon {
+  font-size: 12px;
+  opacity: 0.7;
 }
 </style>

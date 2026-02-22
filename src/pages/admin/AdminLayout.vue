@@ -273,6 +273,7 @@ const logout = () => {
 /* ================= SIDEBAR ================= */
 .sidebar {
   width: 270px;
+  width: 270px;
   background: #fff;
   border-right: 1px solid #ddd;
   display: flex;
@@ -286,11 +287,12 @@ const logout = () => {
 }
 
 .logo-wrapper {
-  padding: 20px;
+  padding-bottom: 5px;
   text-align: center;
 }
 
 .logo {
+  width: 200px;
   width: 200px;
 }
 
@@ -332,12 +334,22 @@ const logout = () => {
   border-radius: 6px;
 }
 
+.menu-item:hover::after,
+.router-link-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+}
+
 /* ================= SUBMENU ================= */
 .menu-group .submenu {
   position: relative;
   margin-left: 20px;
   border-left: 2px solid #ddd;
 }
+
 
 .submenu-item {
   display: block;
@@ -396,6 +408,7 @@ const logout = () => {
 /* ================= MAIN ================= */
 .main {
   margin-left: 270px;
+  margin-left: 270px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -406,6 +419,7 @@ const logout = () => {
 .topbar {
   position: fixed;
   top: 0;
+  left: 270px;
   left: 270px;
   right: 0;
   background: #fff;
@@ -424,6 +438,7 @@ const logout = () => {
 }
 
 .content {
+  margin-top: 65px;
   margin-top: 65px;
   padding: 20px;
   height: calc(100vh - 80px);

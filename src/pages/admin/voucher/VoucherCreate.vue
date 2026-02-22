@@ -183,6 +183,7 @@
             <option value="spend-asc">Chi tiêu ↑</option>
           </select>
         </div>
+
       </div>
 
       <table class="customer-table">
@@ -274,6 +275,15 @@
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
+              fill="currentColor"
+              width="40"
+              height="40"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
               fill="currentColor"
               width="40"
               height="40"
@@ -922,6 +932,7 @@ const back = () => router.push("/admin/voucher");
 
 .btn-save {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
   border: none;
   padding: 8px 18px;
@@ -1356,14 +1367,20 @@ const back = () => router.push("/admin/voucher");
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  z-index: 2000;
 }
+
 
 .confirm-box {
   width: 400px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 24px;
   background: #ffffff;
   border-radius: 20px;
   padding: 30px 24px;
@@ -1372,7 +1389,20 @@ const back = () => router.push("/admin/voucher");
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.25s ease;
+  animation: zoomIn 0.25s ease;
 }
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 
 @keyframes zoomIn {
   from {
@@ -1392,6 +1422,9 @@ const back = () => router.push("/admin/voucher");
   background: #fff4e5;
   color: #ff9800;
   margin: 0 auto 18px;
+  background: #fff4e5;
+  color: #ff9800;
+  margin: 0 auto 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1405,13 +1438,18 @@ const back = () => router.push("/admin/voucher");
 .confirm-title {
   font-size: 20px;
   font-weight: 600;
+  font-size: 20px;
+  font-weight: 600;
   color: #63391f;
   margin-bottom: 10px;
 }
 
+
 .confirm-desc {
   font-size: 14px;
+  font-size: 14px;
   color: #666;
+  margin-bottom: 24px;
   margin-bottom: 24px;
   line-height: 1.5;
 }
@@ -1453,10 +1491,23 @@ const back = () => router.push("/admin/voucher");
   background: #4e2c17;
 }
 
+
+.btn-confirm {
+  background: #63391f;
+  color: #ffffff;
+  border: none;
+}
+
+.btn-confirm:hover {
+  background: #4e2c17;
+}
+
 .fade-modal-enter-active,
 .fade-modal-leave-active {
   transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease;
 }
+
 
 .fade-modal-enter-from,
 .fade-modal-leave-to {

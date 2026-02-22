@@ -191,8 +191,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
-const token = localStorage.getItem("token");
-
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
 const colors = ref([]);
 const allColors = ref([]);
 const selectedStatus = ref("");
@@ -246,7 +247,7 @@ async function handleModalConfirm() {
         `http://localhost:8080/api/kieu-dang/${item.id}/doi-trang-thai`,
         null,
         {
-          params: { nguoiCapNhat: "admin" },
+          params: { nguoiCapNhat: username },
           headers: { Authorization: `Bearer ${token}` },
         },
       );
@@ -303,7 +304,6 @@ const editingId = ref(null);
 
 const newColor = ref({
   tenKieuDang: "",
-  nguoiTao: "admin",
 });
 
 const openModal = () => {
@@ -312,7 +312,7 @@ const openModal = () => {
 
 const closeModal = () => {
   isModalOpen.value = false;
-  newColor.value = { tenKieuDang: "", nguoiTao: "admin" };
+  newColor.value = { tenKieuDang: ""};
   isEdit.value = false;
   editingId.value = null;
 };
@@ -328,7 +328,7 @@ const addColor = async () => {
       "http://localhost:8080/api/kieu-dang",
       {
         tenKieuDang: newColor.value.tenKieuDang,
-        nguoiTao: "admin",
+        nguoiTao: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -364,7 +364,7 @@ const updateColor = async () => {
       `http://localhost:8080/api/kieu-dang/${editingId.value}`,
       {
         tenKieuDang: newColor.value.tenKieuDang,
-        nguoiCapNhat: "admin",
+        nguoiCapNhat: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },

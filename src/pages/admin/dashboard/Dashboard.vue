@@ -548,7 +548,10 @@ const channelRawData = ref<ChannelResponse[]>([]);
 const lowStockProducts = ref<any[]>([]);
 
 const chartType = ref<"line" | "bar">("line");
-const filter = ref({ startDate: "", endDate: "" });
+// Lấy ngày hôm nay theo định dạng YYYY-MM-DD
+const today = new Date().toISOString().slice(0, 10);
+
+const filter = ref({ startDate: today, endDate: today });
 
 const API_URL = "http://localhost:8080/api/thong-ke";
 
@@ -602,9 +605,10 @@ watch(
   },
 );
 const resetFilter = () => {
-  filter.value.startDate = "";
-  filter.value.endDate = "";
-  fetchChartData();
+  filter.value.startDate = today;
+  filter.value.endDate = today;
+  // Không cần gọi fetchChartData() ở đây nữa vì hàm watch() ở ngay phía trên
+  // sẽ tự động nhận diện filter thay đổi và tự gọi fetchChartData() rồi.
 };
 
 // === PHẦN BỔ SUNG: HÀM XỬ LÝ XUẤT EXCEL ===

@@ -191,7 +191,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
-const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
 
 const colors = ref([]);
 const allColors = ref([]);
@@ -248,7 +250,7 @@ async function handleModalConfirm() {
         `http://localhost:8080/api/loai-ao/${item.id}/doi-trang-thai`,
         null,
         {
-          params: { nguoiCapNhat: "admin" },
+          params: { nguoiCapNhat: username },
           headers: { Authorization: `Bearer ${token}` },
         },
       );
@@ -305,7 +307,6 @@ const editingId = ref(null);
 
 const newColor = ref({
   tenLoai: "",
-  nguoiTao: "admin",
 });
 
 const openModal = () => {
@@ -314,7 +315,7 @@ const openModal = () => {
 
 const closeModal = () => {
   isModalOpen.value = false;
-  newColor.value = { tenLoai: "", nguoiTao: "admin" };
+  newColor.value = { tenLoai: "" };
   isEdit.value = false;
   editingId.value = null;
 };
@@ -330,7 +331,7 @@ const addColor = async () => {
       "http://localhost:8080/api/loai-ao",
       {
         tenLoai: newColor.value.tenLoai,
-        nguoiTao: "admin",
+        nguoiTao: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -366,7 +367,7 @@ const updateColor = async () => {
       `http://localhost:8080/api/loai-ao/${editingId.value}`,
       {
         tenLoai: newColor.value.tenLoai,
-        nguoiCapNhat: "admin",
+        nguoiCapNhat: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },

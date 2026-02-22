@@ -1600,8 +1600,8 @@ input:checked + .slider::before {
 
 .discount-badge {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: -6px;
+  left: -6px;
   background: #e53935;
   color: white;
   font-size: 11px;

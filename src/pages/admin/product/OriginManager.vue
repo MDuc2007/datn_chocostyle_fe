@@ -190,8 +190,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
-const token = localStorage.getItem("token");
-
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
 const notifications = ref([]);
 
 const showNotification = (message, type = "success") => {
@@ -246,7 +247,7 @@ async function handleModalConfirm() {
         `http://localhost:8080/api/xuat-xu/${item.id}/doi-trang-thai`,
         null,
         {
-          params: { nguoiCapNhat: "admin" },
+          params: { nguoiCapNhat: username },
           headers: { Authorization: `Bearer ${token}` },
         },
       );
@@ -299,7 +300,6 @@ onMounted(fetchColors);
 const isModalOpen = ref(false);
 const newColor = ref({
   tenXuatXu: "",
-  nguoiTao: "admin", // 👈 tạm thời
 });
 
 const isEdit = ref(false);
@@ -327,7 +327,7 @@ const addColor = async () => {
       "http://localhost:8080/api/xuat-xu",
       {
         tenXuatXu: newColor.value.tenXuatXu,
-        nguoiTao: "admin",
+        nguoiTao: username,
       },
       {
         headers: {
@@ -365,7 +365,7 @@ const updateColor = async () => {
       `http://localhost:8080/api/xuat-xu/${editingId.value}`,
       {
         tenXuatXu: newColor.value.tenXuatXu,
-        nguoiCapNhat: "admin",
+        nguoiCapNhat: username,
       },
       {
         headers: {

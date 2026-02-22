@@ -4,8 +4,9 @@
       <h3 class="page-title">BÁN HÀNG TẠI QUẦY</h3>
       <button class="btn-create" @click="createOrder">+ Tạo đơn hàng</button>
     </div>
+
     <div v-if="orders.length" class="pos-card">
-      <div class="order-tabs" v-if="orders.length">
+      <div class="order-tabs">
         <div
           v-for="(o, index) in orders"
           :key="o.id"
@@ -14,101 +15,168 @@
           @click="activeOrderIndex = index"
         >
           <span>Đơn {{ index + 1 }}</span>
-          <span class="tab-close" @click.stop="removeOrder(index)"> ✕ </span>
+          <span class="tab-close" @click.stop="removeOrder(index)">✕</span>
         </div>
       </div>
+
       <div v-if="currentOrder" class="main-layout">
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
             <div class="actions">
-              <button class="btn-outline">Quét QR sản phẩm</button>
+              <button class="btn-outline">🔍 Quét QR</button>
               <button class="btn-primary" @click="openProductPopup">
-                Chọn sản phẩm
+                + Chọn sản phẩm
               </button>
             </div>
           </div>
-          <div class="product-list">
+
+          <div v-if="!currentOrder.cart.length" class="empty-cart">
+            <div class="empty-icon">📦</div>
+            <p>Chưa có sản phẩm nào trong đơn hàng</p>
+            <button class="btn-outline mt-2" @click="openProductPopup">
+              Thêm sản phẩm ngay
+            </button>
+          </div>
+
+          <div v-else class="product-list">
+            <div class="product-header">
+              <div>Sản phẩm</div>
+              <div class="text-center">Đơn giá</div>
+              <div class="text-center">Số lượng</div>
+              <div class="text-right">Thành tiền</div>
+              <div></div>
+            </div>
             <div
               v-for="(item, index) in currentOrder.cart"
               :key="index"
               class="product-row"
             >
-              <div class="img-wrap">
-                <img :src="item.image" class="product-img" />
-                <span v-if="item.discountPercent > 0" class="sale-badge">
-                  -{{ item.discountPercent }}%
-                </span>
+              <div class="product-cell-info">
+                <div class="img-wrap">
+                  <img :src="item.image" class="product-img" />
+                  <span v-if="item.discountPercent > 0" class="sale-badge">
+                    -{{ item.discountPercent }}%
+                  </span>
+                </div>
+                <div class="product-info">
+                  <div class="name" :title="item.name">{{ item.name }}</div>
+                  <div class="meta">
+                    Màu: {{ item.color }} | Size: {{ item.size || "L" }}
+                  </div>
+                </div>
               </div>
-              <div class="product-info">
-                <div class="name">{{ item.name }}</div>
-                <div class="meta">Size: {{ item.size || "L" }}</div>
-              </div>
-              <div class="price">
-                <del>{{ formatPrice(item.oldPrice || item.price) }}</del>
+
+              <div class="price text-center">
+                <del v-if="item.discountPercent > 0">{{
+                  formatPrice(item.oldPrice || item.price)
+                }}</del>
                 <span class="sale">{{ formatPrice(item.price) }}</span>
               </div>
-              <div class="qty">
-                <button @click="item.quantity--" :disabled="item.quantity <= 1">
+
+              <div class="qty text-center">
+                <button
+                  @click="decreaseQty(item)"
+                  :disabled="item.quantity <= 1"
+                >
                   −
                 </button>
-                <span>{{ item.quantity }}</span>
+                <input type="text" readonly :value="item.quantity" />
                 <button @click="item.quantity++">+</button>
               </div>
-              <div class="total">
+
+              <div class="total text-right">
                 {{ formatPrice(item.price * item.quantity) }}
               </div>
-              <button class="btn-danger" @click="removeItem(index)">X</button>
+
+              <div class="action-delete">
+                <button
+                  class="btn-danger"
+                  @click="removeItem(index)"
+                  title="Xóa"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
         <div class="right-panel">
-          <div class="right-grid">
-            <div class="info-box">
-              <div class="section-header">
-                <span>THÔNG TIN KHÁCH HÀNG</span>
-                <button class="btn-outline" @click="openCustomerPopup">
-                  Chọn khách hàng
-                </button>
+          <div class="info-box">
+            <div class="section-header">
+              <span class="section-title">THÔNG TIN KHÁCH HÀNG</span>
+              <button class="btn-outline" @click="openCustomerPopup">
+                🔍 Tìm khách
+              </button>
+            </div>
+
+            <div class="customer-form">
+              <div class="form-row">
+                <div class="form-item">
+                  <input
+                    v-model="currentOrder.customer.name"
+                    placeholder="Tên khách hàng *"
+                  />
+                  <div v-if="customerErrors.name" class="field-error">
+                    {{ customerErrors.name }}
+                  </div>
+                </div>
+                <div class="form-item">
+                  <input
+                    v-model="currentOrder.customer.phone"
+                    placeholder="Số điện thoại *"
+                  />
+                  <div v-if="customerErrors.phone" class="field-error">
+                    {{ customerErrors.phone }}
+                  </div>
+                </div>
               </div>
-              <div class="customer-form">
-                <div class="form-row">
-                  <div class="form-item">
-                    <label>Tên khách hàng</label>
-                    <input
-                      v-model="currentOrder.customer.name"
-                      placeholder="Nhập tên khách hàng"
-                    />
-                  </div>
-                  <div class="form-item">
-                    <label>Email</label>
-                    <input
-                      v-model="currentOrder.customer.email"
-                      placeholder="Nhập email"
-                    />
+
+              <div class="delivery-toggle-wrap mt-2">
+                <span
+                  class="toggle-label"
+                  :class="{
+                    'active-brown': currentOrder.deliveryType === 'DELIVERY',
+                  }"
+                  >Giao hàng tận nơi</span
+                >
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    :checked="currentOrder.deliveryType === 'DELIVERY'"
+                    @change="toggleDelivery"
+                  />
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div
+                v-if="currentOrder.deliveryType === 'DELIVERY'"
+                class="delivery-form"
+              >
+                <div class="form-item mt-2">
+                  <input
+                    v-model="currentOrder.customer.email"
+                    placeholder="Email (Tùy chọn)"
+                  />
+                  <div v-if="customerErrors.email" class="field-error">
+                    {{ customerErrors.email }}
                   </div>
                 </div>
-                <div class="form-row">
-                  <div class="form-item">
-                    <label>Số điện thoại</label>
-                    <input
-                      v-model="currentOrder.customer.phone"
-                      placeholder="Nhập số điện thoại"
-                    />
-                  </div>
-                  <div class="form-item">
-                    <label>Địa chỉ cụ thể</label>
-                    <input
-                      v-model="currentOrder.customer.address"
-                      placeholder="Số nhà, đường..."
-                    />
+                <div class="form-item mt-2">
+                  <input
+                    v-model="currentOrder.customer.address"
+                    placeholder="Địa chỉ cụ thể (Số nhà, đường) *"
+                  />
+                  <div v-if="customerErrors.address" class="field-error">
+                    {{ customerErrors.address }}
                   </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row mt-2">
                   <div class="form-item">
-                    <label>Tỉnh / Thành phố</label>
                     <select v-model="currentOrder.customer.province">
-                      <option value="">Chọn tỉnh thành phố</option>
+                      <option value="">Tỉnh/Thành phố *</option>
                       <option
                         v-for="p in provinces"
                         :key="p.code"
@@ -117,11 +185,13 @@
                         {{ p.name }}
                       </option>
                     </select>
+                    <div v-if="customerErrors.province" class="field-error">
+                      {{ customerErrors.province }}
+                    </div>
                   </div>
                   <div class="form-item">
-                    <label>Quận / Huyện</label>
                     <select v-model="currentOrder.customer.district">
-                      <option value="">Chọn quận huyện</option>
+                      <option value="">Quận/Huyện *</option>
                       <option
                         v-for="d in districts"
                         :key="d.code"
@@ -130,252 +200,254 @@
                         {{ d.name }}
                       </option>
                     </select>
+                    <div v-if="customerErrors.district" class="field-error">
+                      {{ customerErrors.district }}
+                    </div>
                   </div>
+                </div>
+                <div class="form-row mt-2">
                   <div class="form-item">
-                    <label>Xã / Phường</label>
                     <select v-model="currentOrder.customer.ward">
-                      <option value="">Chọn xã phường</option>
+                      <option value="">Xã/Phường *</option>
                       <option v-for="w in wards" :key="w.code" :value="w.code">
                         {{ w.name }}
                       </option>
                     </select>
+                    <div v-if="customerErrors.ward" class="field-error">
+                      {{ customerErrors.ward }}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="info-box payment-box">
-              <div class="section-header">
-                <span>THÔNG TIN THANH TOÁN</span>
-                <div class="delivery-switch">
-                  <span
-                    :class="{ active: currentOrder.deliveryType === 'COUNTER' }"
-                  >
-                    Tại quầy
-                  </span>
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="currentOrder.deliveryType === 'DELIVERY'"
-                      @change="toggleDelivery"
-                    />
-                    <span class="slider"></span>
-                  </label>
-                  <span
-                    :class="{
-                      active: currentOrder.deliveryType === 'DELIVERY',
-                    }"
-                  >
-                    Giao hàng
-                  </span>
-                </div>
-              </div>
-              <div class="voucher-row">
-                <input
-                  v-model="currentOrder.voucherCode"
-                  placeholder="Mã giảm giá"
-                />
-                <button class="btn-outline" @click="applyVoucher">
-                  Áp dụng
-                </button>
-              </div>
-              <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
-                Áp dụng thành công phiếu giảm giá
-                <b>{{ currentOrder.appliedVoucher.message }}</b>
-                ({{ voucherText }})
-              </div>
+          </div>
+
+          <div class="info-box payment-box">
+            <div class="section-header">
+              <span class="section-title">THÔNG TIN THANH TOÁN</span>
+            </div>
+
+            <div class="voucher-row">
+              <input
+                v-model="currentOrder.voucherCode"
+                placeholder="Mã giảm giá..."
+              />
+              <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
+            </div>
+            <div v-if="voucherSuccess" class="voucher-success">
+              {{ voucherSuccess }}
+            </div>
+            <div v-if="voucherError" class="voucher-errors">
+              {{ voucherError }}
+            </div>
+
+            <div class="payment-summary">
               <div class="payment-row">
-                <span>Tiền hàng</span>
-                <span>{{ formatPrice(subTotal) }}</span>
-              </div>
-              <div class="payment-row">
-                <span>Phí vận chuyển</span>
-                <span>{{ formatPrice(shippingFee) }}</span>
-              </div>
-              <div class="payment-row">
-                <span>Giảm giá</span>
-                <span class="text-red"> - {{ formatPrice(discount) }} </span>
-              </div>
-              <hr />
-              <div class="payment-row total">
-                <span>Tổng số tiền</span>
-                <span>{{ formatPrice(total) }}</span>
-              </div>
-              <div class="payment-row pay-action">
-                <span>Khách thanh toán</span>
-                <button class="pay-btn" @click="openPaymentPopup">
-                  ⬜⬜ ⬜⬜
-                </button>
-                <div class="pay-right">
-                  <span class="money">
-                    {{ formatPrice(currentOrder.paidAmount || 0) }}
-                  </span>
-                </div>
+                <span class="text-muted">Tổng tiền hàng</span>
+                <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
 
               <div
-                v-if="currentOrder.paymentMethod === 'CASH'"
-                class="payment-row text-red"
+                class="payment-row"
+                v-if="currentOrder.deliveryType === 'DELIVERY'"
               >
-                <span>Tiền thừa</span>
-                <span>{{ formatPrice(changeMoney) }}</span>
+                <span class="text-muted">Phí vận chuyển</span>
+                <span class="fw-600">{{ formatPrice(shippingFee) }}</span>
               </div>
-              <button class="btn-submit big" @click="confirmSubmitOrder">
-                XÁC NHẬN ĐẶT HÀNG
-              </button>
+
+              <div class="payment-row" v-if="discount > 0">
+                <span class="text-muted">Giảm giá voucher</span>
+                <span class="text-red fw-600">
+                  - {{ formatPrice(discount) }}
+                </span>
+              </div>
             </div>
+
+            <div class="payment-total-wrap">
+              <div class="payment-row total">
+                <span>Tổng số tiền</span>
+                <span class="total-amount">{{ formatPrice(total) }}</span>
+              </div>
+            </div>
+
+            <div class="payment-method-row">
+              <span>Khách thanh toán</span>
+              <div class="pay-action-right">
+                <span class="money fw-600">
+                  {{ formatPrice(currentOrder.paidAmount || 0) }}
+                </span>
+              </div>
+            </div>
+
+            <div
+              v-if="currentOrder.paymentMethod === 'CASH'"
+              class="payment-row mt-2 text-red fw-600"
+            >
+              <span>Tiền thừa</span>
+              <span>{{ formatPrice(changeMoney) }}</span>
+            </div>
+
+            <button
+              class="btn-submit big mt-4"
+              @click="confirmSubmitOrder"
+              :disabled="!currentOrder.cart.length"
+            >
+              XÁC NHẬN ĐẶT HÀNG
+            </button>
           </div>
         </div>
       </div>
+      <div v-else class="empty-state-global">
+        <p>Vui lòng tạo đơn hàng mới để bắt đầu.</p>
+      </div>
+
       <div class="modal-overlay" v-if="showCustomerPopup">
         <div class="modal">
           <div class="modal-header">
             <h4>CHỌN KHÁCH HÀNG</h4>
             <button class="btn-close" @click="showCustomerPopup = false">
-              Đóng
+              ✕
             </button>
           </div>
           <div class="modal-body">
             <input
               v-model="customerSearch"
               class="search-input"
-              placeholder="Tìm theo tên, email, số điện thoại"
+              placeholder="Tìm theo tên, email, số điện thoại..."
             />
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Tên khách hàng</th>
-                  <th>Email</th>
-                  <th>Số điện thoại</th>
-                  <th>Địa chỉ</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(c, index) in filteredCustomers" :key="c.id">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ c.tenKhachHang }}</td>
-                  <td>{{ c.email }}</td>
-                  <td>{{ c.soDienThoai }}</td>
-                  <td>{{ c.diaChiChinh }}</td>
-                  <td>
-                    <button class="btn-primary" @click="selectCustomer(c)">
-                      Chọn
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Khách hàng</th>
+                    <th>Liên hệ</th>
+                    <th>Địa chỉ</th>
+                    <th width="80"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(c, index) in filteredCustomers" :key="c.id">
+                    <td class="text-center">{{ index + 1 }}</td>
+                    <td class="fw-600">{{ c.tenKhachHang }}</td>
+                    <td>
+                      <div>{{ c.soDienThoai }}</div>
+                      <div class="text-muted text-sm">{{ c.email }}</div>
+                    </td>
+                    <td class="text-wrap">{{ c.diaChiChinh }}</td>
+                    <td>
+                      <button class="btn-primary" @click="selectCustomer(c)">
+                        Chọn
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ================= POPUP CHỌN SẢN PHẨM ================= -->
       <div class="modal-overlay" v-if="showProductPopup">
         <div class="modal large">
           <div class="modal-header">
             <h4>CHỌN SẢN PHẨM</h4>
             <button class="btn-close" @click="showProductPopup = false">
-              Đóng
+              ✕
             </button>
           </div>
-
           <div class="modal-body">
             <div class="filter-row">
               <input
                 v-model="searchText"
-                placeholder="Tìm theo mã, tên sản phẩm"
+                placeholder="🔍 Tìm mã, tên sản phẩm..."
               />
-
               <select v-model="filterColor">
                 <option value="">Tất cả màu</option>
-                <option v-for="c in colors" :key="c" :value="c">
-                  {{ c }}
-                </option>
+                <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
               </select>
-
               <select v-model="filterSize">
                 <option value="">Tất cả size</option>
-                <option v-for="s in sizes" :key="s" :value="s">
-                  {{ s }}
-                </option>
+                <option v-for="s in sizes" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
-
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Mã SP</th>
-                  <th>Ảnh</th>
-                  <th>Tên</th>
-                  <th>Màu</th>
-                  <th>Size</th>
-                  <th>Số lượng</th>
-                  <th>Giá</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(p, index) in filteredProducts" :key="p.id">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ p.code }}</td>
-                  <td>
-                    <div class="img-wrap small">
-                      <img :src="p.image" class="thumb" />
-
+            <div class="table-responsive product-scroll">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th width="50">STT</th>
+                    <th width="80">Ảnh</th>
+                    <th>Sản phẩm</th>
+                    <th>Phân loại</th>
+                    <th>Kho</th>
+                    <th>Giá bán</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, index) in filteredProducts" :key="p.id">
+                    <td class="text-center">{{ index + 1 }}</td>
+                    <td>
+                      <div class="img-wrap small">
+                        <img :src="p.image" class="thumb" />
+                        <span
+                          v-if="p.discountPercent > 0"
+                          class="sale-badge small"
+                          >-{{ p.discountPercent }}%</span
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-600">{{ p.name }}</div>
+                      <div class="text-muted text-sm">{{ p.code }}</div>
+                    </td>
+                    <td>{{ p.color }} - {{ p.size }}</td>
+                    <td class="text-center">
                       <span
-                        v-if="p.discountPercent > 0"
-                        class="sale-badge small"
+                        class="badge-stock"
+                        :class="{ 'out-of-stock': p.stock <= 0 }"
+                        >{{ p.stock }}</span
                       >
-                        -{{ p.discountPercent }}%
-                      </span>
-                    </div>
-                  </td>
-                  <td>{{ p.name }}</td>
-                  <td>{{ p.color }}</td>
-                  <td>{{ p.size }}</td>
-                  <td>{{ p.stock }}</td>
-                  <td class="price-cell">
-                    <del v-if="p.discountPercent > 0">
-                      {{ formatPrice(p.oldPrice) }}
-                    </del>
-                    <span class="sale">
-                      {{ formatPrice(p.price) }}
-                    </span>
-                  </td>
-                  <td>
-                    <button class="btn-primary" @click="addToCart(p)">
-                      Chọn
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </td>
+                    <td class="price-cell">
+                      <del v-if="p.discountPercent > 0">{{
+                        formatPrice(p.oldPrice)
+                      }}</del>
+                      <span class="sale">{{ formatPrice(p.price) }}</span>
+                    </td>
+                    <td>
+                      <button
+                        class="btn-primary"
+                        :disabled="p.stock <= 0"
+                        @click="addToCart(p)"
+                      >
+                        Chọn
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ================= POPUP THANH TOÁN ================= -->
       <div class="modal-overlay" v-if="showPaymentPopup">
         <div class="modal small">
           <div class="modal-header">
-            <h4>PHƯƠNG THỨC THANH TOÁN</h4>
+            <h4>XÁC NHẬN THANH TOÁN</h4>
             <button class="btn-close" @click="showPaymentPopup = false">
-              Đóng
+              ✕
             </button>
           </div>
-
           <div class="modal-body payment-popup">
-            <!-- chọn loại -->
-            <div class="pay-type">
+            <div class="pay-type-tabs">
               <button
                 :class="{ active: paymentMethod === 'CASH' }"
                 @click="paymentMethod = 'CASH'"
               >
                 💵 Tiền mặt
               </button>
-
               <button
                 :class="{ active: paymentMethod === 'BANK' }"
                 @click="paymentMethod = 'BANK'"
@@ -384,75 +456,82 @@
               </button>
             </div>
 
-            <!-- CASH -->
-            <div v-if="paymentMethod === 'CASH'" class="cash-input">
-              <input
-                type="number"
-                v-model.number="cashInput"
-                placeholder="Nhập số tiền khách đưa"
-              />
+            <div v-if="paymentMethod === 'CASH'" class="cash-input-box mt-3">
+              <label class="input-label">Số tiền khách đưa:</label>
+              <div class="money-input-wrapper">
+                <input
+                  type="number"
+                  v-model.number="cashInput"
+                  placeholder="0"
+                  class="input-money-lg"
+                />
+                <span class="currency-unit">₫</span>
+              </div>
+              <div class="quick-money mt-2">
+                <button class="btn-quick-money" @click="cashInput = total">
+                  Đúng số tiền
+                </button>
+              </div>
             </div>
 
-            <!-- BANK -->
-            <div v-if="paymentMethod === 'BANK'" class="bank-box">
+            <div v-if="paymentMethod === 'BANK'" class="bank-box mt-3">
               <img :src="bankQR" class="qr-img" />
-
-              <p class="bank-money">
-                Số tiền: <b>{{ formatPrice(total) }}</b>
-              </p>
-
-              <p>TPBank</p>
-              <p>STK: 00000674626</p>
+              <div class="bank-info mt-2">
+                <p class="text-muted m-0">Số tiền cần chuyển</p>
+                <p class="bank-money text-red">{{ formatPrice(total) }}</p>
+                <p class="m-0"><strong>TPBank</strong> - 00000674626</p>
+              </div>
             </div>
 
-            <!-- confirm -->
-            <button class="btn-submit" @click="confirmPayment">XONG</button>
+            <button class="btn-submit big mt-4" @click="confirmPayment">
+              XÁC NHẬN
+            </button>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- ===== CONFIRM MODAL ===== -->
-  <transition name="fade-modal">
-    <div
-      v-if="modal.show"
-      class="modal-confirm"
-      @click.self="closeConfirmModal"
-    >
-      <div class="confirm-box">
-        <div class="confirm-icon-wrapper">⚠️</div>
 
-        <h3 class="confirm-title">{{ modal.title }}</h3>
-        <p class="confirm-desc">{{ modal.message }}</p>
-
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="closeConfirmModal">Hủy</button>
-          <button class="btn-confirm" @click="handleModalConfirm">
-            Đồng ý
-          </button>
+    <transition name="fade-modal">
+      <div
+        v-if="modal.show"
+        class="modal-confirm"
+        @click.self="closeConfirmModal"
+      >
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">⚠️</div>
+          <h3 class="confirm-title">{{ modal.title }}</h3>
+          <p class="confirm-desc">{{ modal.message }}</p>
+          <div class="confirm-actions">
+            <button class="btn-cancel" @click="closeConfirmModal">
+              Hủy bỏ
+            </button>
+            <button class="btn-confirm" @click="handleModalConfirm">
+              Đồng ý
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </transition>
-  <!-- ===== TOAST ===== -->
-  <div class="toast-container">
-    <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast', toast.type]">
-        {{ toast.message }}
-      </div>
     </transition>
+
+    <div class="toast-container">
+      <transition name="toast-slide">
+        <div v-if="toast.show" :class="['toast', toast.type]">
+          {{ toast.message }}
+        </div>
+      </transition>
+    </div>
   </div>
 </template>
+
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, watchEffect } from "vue";
+import axios from "axios";
 
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
 const MAX_ORDER = 5;
-
-import axios from "axios";
 
 const customers = ref([]);
 
@@ -472,9 +551,7 @@ const promotions = ref([]);
 const fetchProducts = async () => {
   const res = await axios.get("http://localhost:8080/api/pos/san-pham");
 
-  // tạo map: variantId -> percent
   const discountMap = {};
-
   promotions.value.forEach((pr) => {
     pr.chiTietSanPhamIds.forEach((id) => {
       discountMap[id] = Math.max(discountMap[id] || 0, pr.giaTriGiam);
@@ -483,10 +560,8 @@ const fetchProducts = async () => {
 
   products.value = res.data.map((p) => {
     const percent = discountMap[p.id] || 0;
-
     const oldPrice = p.giaBan;
     const newPrice = (oldPrice * (100 - percent)) / 100;
-
     return {
       id: p.id,
       code: p.maSp,
@@ -495,7 +570,6 @@ const fetchProducts = async () => {
       stock: p.soLuongTon,
       color: p.mauSac,
       size: p.kichCo,
-
       oldPrice,
       price: newPrice,
       discountPercent: percent,
@@ -504,9 +578,8 @@ const fetchProducts = async () => {
 };
 
 const openProductPopup = async () => {
-  await fetchPromotions(); // load trước
-  await fetchProducts(); // dùng promotions đã có
-
+  await fetchPromotions();
+  await fetchProducts();
   showProductPopup.value = true;
 };
 
@@ -514,68 +587,216 @@ const currentOrder = computed(
   () => orders.value[activeOrderIndex.value] || null,
 );
 
+const decreaseQty = (item) => {
+  if (item.quantity > 1) {
+    item.quantity--;
+  }
+};
+
 const addToCart = (product) => {
   const cart = currentOrder.value.cart;
-
   const exist = cart.find((i) => i.id === product.id);
-  if (exist) exist.quantity++;
-  else cart.push({ ...product, quantity: 1 });
 
+  if (exist) {
+    if (exist.quantity + 1 > product.stock) {
+      showToast("Số lượng vượt quá tồn kho", "error");
+      return;
+    }
+    exist.quantity++;
+  } else {
+    if (product.stock <= 0) {
+      showToast("Sản phẩm đã hết hàng", "error");
+      return;
+    }
+    cart.push({ ...product, quantity: 1 });
+  }
   showProductPopup.value = false;
+};
+
+const validateCustomer = () => {
+  const order = currentOrder.value;
+  const c = order.customer;
+  customerErrors.value = {
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    province: "",
+    district: "",
+    ward: "",
+  };
+  let isValid = true;
+
+  c.name = c.name?.trim() || "";
+  c.email = c.email?.trim() || "";
+  c.phone = c.phone?.trim() || "";
+  c.address = c.address?.trim() || "";
+  const name = c.name;
+  const email = c.email;
+  const phone = c.phone;
+  const address = c.address;
+
+  if (!name) {
+    customerErrors.value.name = "Vui lòng nhập tên khách hàng";
+    isValid = false;
+  } else if (name.length < 2) {
+    customerErrors.value.name = "Tên phải có ít nhất 2 ký tự";
+    isValid = false;
+  }
+
+  if (email) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      customerErrors.value.email = "Email không hợp lệ";
+      isValid = false;
+    }
+  }
+
+  if (phone) {
+    if (!/^[0-9]+$/.test(phone)) {
+      customerErrors.value.phone = "Số điện thoại chỉ được chứa số";
+      isValid = false;
+    } else if (!/^0[0-9]{8,10}$/.test(phone)) {
+      customerErrors.value.phone = "Số điện thoại không hợp lệ";
+      isValid = false;
+    }
+  }
+
+  if (order.deliveryType === "DELIVERY") {
+    if (!phone) {
+      customerErrors.value.phone = "Giao hàng bắt buộc nhập số điện thoại";
+      isValid = false;
+    }
+    if (!address) {
+      customerErrors.value.address = "Vui lòng nhập địa chỉ cụ thể";
+      isValid = false;
+    }
+    if (!c.province) {
+      customerErrors.value.province = "Vui lòng chọn tỉnh/thành";
+      isValid = false;
+    }
+    if (!c.district) {
+      customerErrors.value.district = "Vui lòng chọn quận/huyện";
+      isValid = false;
+    }
+    if (!c.ward) {
+      customerErrors.value.ward = "Vui lòng chọn xã/phường";
+      isValid = false;
+    }
+  }
+  return isValid;
+};
+
+const validateDelivery = () => {
+  const order = currentOrder.value;
+  const c = order.customer;
+  if (order.deliveryType === "DELIVERY") {
+    let isValid = true;
+    if (!c.phone) {
+      customerErrors.value.phone = "Giao hàng cần số điện thoại";
+      isValid = false;
+    }
+    if (!c.address) {
+      customerErrors.value.address = "Vui lòng nhập địa chỉ cụ thể";
+      isValid = false;
+    }
+    if (!c.province) {
+      customerErrors.value.province = "Vui lòng chọn tỉnh/thành";
+      isValid = false;
+    }
+    if (!c.district) {
+      customerErrors.value.district = "Vui lòng chọn quận/huyện";
+      isValid = false;
+    }
+    if (!c.ward) {
+      customerErrors.value.ward = "Vui lòng chọn xã/phường";
+      isValid = false;
+    }
+    return isValid;
+  }
+  return true;
+};
+
+const validatePayment = () => {
+  const order = currentOrder.value;
+  if (!order.paymentMethod) {
+    showToast("Vui lòng chọn phương thức thanh toán", "error");
+    return false;
+  }
+  if (order.paymentMethod === "CASH") {
+    if (!order.paidAmount || order.paidAmount < total.value) {
+      showToast("Tiền khách đưa không đủ", "error");
+      return false;
+    }
+  }
+  return true;
 };
 
 const confirmSubmitOrder = () => {
   if (!currentOrder.value?.cart.length) {
     showToast("Vui lòng chọn sản phẩm trước khi đặt hàng", "error");
-
     return;
   }
 
-  openConfirmModal(
-    "Xác nhận đặt hàng",
-    "Bạn có chắc muốn tạo đơn này không?",
-    submitOrder,
-  );
+  if (!validateCustomer()) return;
+  if (!validateDelivery()) return;
+
+  openPaymentPopup();
 };
+
+watch(
+  () => currentOrder.value?.voucherCode,
+  () => {
+    voucherError.value = "";
+    voucherSuccess.value = "";
+  },
+);
 
 const removeItem = (index) => {
   currentOrder.value.cart.splice(index, 1);
 };
 const fetchPromotions = async () => {
   const res = await axios.get("http://localhost:8080/api/promotions");
-
-  // chỉ lấy đợt đang hoạt động
   promotions.value = res.data.filter((p) => p.trangThai === 1);
 };
 
+const customerErrors = ref({
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  province: "",
+  district: "",
+  ward: "",
+});
+const voucherError = ref("");
+const voucherSuccess = ref("");
 const isSettingAddress = ref(false);
 
 const selectCustomer = async (c) => {
   const res = await axios.get(`http://localhost:8080/api/khach-hang/${c.id}`);
   const kh = res.data;
-
-  currentOrder.value.customer.id = c.id; // ⭐⭐ QUAN TRỌNG NHẤT
-
+  currentOrder.value.customer.id = c.id;
   currentOrder.value.customer.name = kh.tenKhachHang || "";
   currentOrder.value.customer.email = kh.email || "";
   currentOrder.value.customer.phone = kh.soDienThoai || "";
-
   const diaChi = kh.listDiaChi?.find((d) => d.macDinh) || kh.listDiaChi?.[0];
 
-  if (!diaChi) return;
-
+  if (!diaChi) {
+    showCustomerPopup.value = false;
+    return;
+  }
   if (!provinces.value.length) await fetchProvinces();
-
   isSettingAddress.value = true;
-
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
   const province = provinces.value.find((p) =>
     p.name.toLowerCase().includes(diaChi.thanhPho.toLowerCase()),
   );
-
-  if (!province) return;
-
+  if (!province) {
+    showCustomerPopup.value = false;
+    return;
+  }
   currentOrder.value.customer.province = province.code;
 
   const resDistrict = await axios.get(
@@ -586,9 +807,10 @@ const selectCustomer = async (c) => {
   const district = districts.value.find((d) =>
     d.name.toLowerCase().includes(diaChi.quan.toLowerCase()),
   );
-
-  if (!district) return;
-
+  if (!district) {
+    showCustomerPopup.value = false;
+    return;
+  }
   currentOrder.value.customer.district = district.code;
 
   const resWard = await axios.get(
@@ -599,20 +821,19 @@ const selectCustomer = async (c) => {
   const ward = wards.value.find((w) =>
     w.name.toLowerCase().includes(diaChi.phuong.toLowerCase()),
   );
-
-  if (!ward) return;
-
+  if (!ward) {
+    showCustomerPopup.value = false;
+    return;
+  }
   currentOrder.value.customer.ward = ward.code;
 
   setTimeout(() => {
     isSettingAddress.value = false;
   }, 0);
-
   showCustomerPopup.value = false;
 };
 
 const showPaymentPopup = ref(false);
-
 const paymentMethod = ref("CASH");
 const cashInput = ref(0);
 
@@ -622,7 +843,8 @@ const openPaymentPopup = () => {
   showPaymentPopup.value = true;
 };
 
-const confirmPayment = () => {
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
+const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
   currentOrder.value.paymentMethod = paymentMethod.value;
@@ -630,63 +852,43 @@ const confirmPayment = () => {
   if (paymentMethod.value === "CASH") {
     currentOrder.value.paidAmount = cashInput.value || 0;
   } else {
-    // chuyển khoản = trả đúng tiền
     currentOrder.value.paidAmount = total.value;
   }
 
+  if (!validatePayment()) return;
+
   showPaymentPopup.value = false;
+
+  openConfirmModal(
+    "Xác nhận thanh toán",
+    `Bạn có chắc chắn muốn hoàn tất thanh toán cho đơn ${currentOrder.value.maHoaDon} không?`,
+    async () => {
+      await submitOrder();
+    },
+  );
 };
 
 const changeMoney = computed(() => {
   if (!currentOrder.value) return 0;
   return Math.max((currentOrder.value.paidAmount || 0) - total.value, 0);
 });
-
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
-
 const fetchProvinces = async () => {
   const res = await axios.get("https://provinces.open-api.vn/api/p/");
   provinces.value = res.data;
-};
-
-const fetchDistricts = async (provinceName) => {
-  const province = provinces.value.find((p) => p.name === provinceName);
-
-  if (!province) return;
-
-  const res = await axios.get(
-    `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
-  );
-
-  districts.value = res.data.districts;
-};
-
-const fetchWards = async (districtName) => {
-  const district = districts.value.find((d) => d.name === districtName);
-
-  if (!district) return;
-
-  const res = await axios.get(
-    `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
-  );
-
-  wards.value = res.data.wards;
 };
 
 watch(
   () => currentOrder.value?.customer.province,
   async (newCode) => {
     if (!currentOrder.value || isSettingAddress.value) return;
-
     districts.value = [];
     wards.value = [];
     currentOrder.value.customer.district = "";
     currentOrder.value.customer.ward = "";
-
     if (!newCode) return;
-
     const res = await axios.get(
       `https://provinces.open-api.vn/api/p/${newCode}?depth=2`,
     );
@@ -698,12 +900,9 @@ watch(
   () => currentOrder.value?.customer.district,
   async (newCode) => {
     if (!currentOrder.value || isSettingAddress.value) return;
-
     wards.value = [];
     currentOrder.value.customer.ward = "";
-
     if (!newCode) return;
-
     const res = await axios.get(
       `https://provinces.open-api.vn/api/d/${newCode}?depth=2`,
     );
@@ -716,62 +915,88 @@ const subTotal = computed(() =>
     ? currentOrder.value.cart.reduce((s, i) => s + i.price * i.quantity, 0)
     : 0,
 );
-
 const formatPrice = (v) => {
   if (v === null || v === undefined) return "0 ₫";
   return Number(v).toLocaleString("vi-VN") + " ₫";
 };
+
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
-    alert("Tối đa 5 đơn hàng thôi ");
+    showToast("Tối đa 5 đơn hàng thôi", "error");
     return;
   }
 
-  await fetchProvinces();
+  try {
+    const idNhanVien = 1; // Fix cứng ID nhân viên
+    // Gọi API tạo đơn nháp
+    const res = await axios.post(
+      `http://localhost:8080/api/hoa-don/tai-quay/tao-moi?idNhanVien=${idNhanVien}`,
+    );
+    const draftOrder = res.data;
 
-  const newOrder = {
-    id: Date.now(),
-    cart: [],
-    customer: {
-      id: null, // ⭐⭐ THÊM DÒNG NÀY
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      ward: "",
-      district: "",
-      province: "",
-    },
-    paidAmount: 0,
-    paymentMethod: "CASH",
-    voucherCode: "",
-    appliedVoucher: null,
+    await fetchProvinces();
 
-    // ⭐ THÊM
-    deliveryType: "COUNTER", // COUNTER | DELIVERY
-    shippingFee: 0,
-  };
-  orders.value.push(newOrder);
-  activeOrderIndex.value = orders.value.length - 1;
+    const newOrder = {
+      idHoaDon: draftOrder.id,
+      maHoaDon: draftOrder.maHoaDon,
+      id: Date.now(),
+      cart: [],
+      customer: {
+        id: null,
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        ward: "",
+        district: "",
+        province: "",
+      },
+      paidAmount: 0,
+      paymentMethod: "CASH",
+      voucherCode: "",
+      appliedVoucher: null,
+      deliveryType: "COUNTER",
+      shippingFee: 0,
+    };
+
+    orders.value.push(newOrder);
+    activeOrderIndex.value = orders.value.length - 1;
+
+    showToast(`Đã tạo tab cho ${draftOrder.maHoaDon}`);
+  } catch (error) {
+    showToast(error.response?.data || "Lỗi tạo tab", "error");
+    console.error(error);
+  }
 };
 
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thay vì gọi removeOrder, đóng tab trực tiếp sau khi chốt đơn thành công
 const submitOrder = async () => {
   if (!currentOrder.value) return;
+  if (subTotal.value <= 0) {
+    showToast("Tổng tiền hàng phải lớn hơn 0", "error");
+    return;
+  }
+
+  // Chặn nếu tab bị lỗi mất ID
+  if (!currentOrder.value.idHoaDon) {
+    showToast(
+      "Tab này bị lỗi mất ID Hóa Đơn, vui lòng tắt đi tạo lại!",
+      "error",
+    );
+    return;
+  }
 
   try {
     const order = currentOrder.value;
-
     const payload = {
-      loaiDon: 0,
+      loaiDon: order.deliveryType === "DELIVERY" ? 0 : 1,
       tongTienHang: subTotal.value,
       phiShip: shippingFee.value,
-      ghiChu: "",
-
+      ghiChu:
+        order.paymentMethod === "CASH" ? "Thanh toán tiền mặt" : "Chuyển khoản",
       maVoucher: order.voucherCode || null,
-
       idKhachHang: order.customer.id || null,
       idNhanVien: 1,
-
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
@@ -779,42 +1004,85 @@ const submitOrder = async () => {
       })),
     };
 
-    await axios.post("http://localhost:8080/api/hoa-don", payload);
+    await axios.put(
+      `http://localhost:8080/api/hoa-don/tai-quay/xac-nhan/${order.idHoaDon}`,
+      payload,
+    );
 
-    showToast("Tạo đơn hàng thành công");
+    showToast(`Thanh toán thành công ${order.maHoaDon}!`);
 
-    removeOrder(activeOrderIndex.value);
+    // ĐÓNG TAB NGAY LẬP TỨC
+    const currentIndex = activeOrderIndex.value;
+    orders.value.splice(currentIndex, 1);
+
+    // Tính toán lại để focus vào tab bên cạnh (nếu còn)
+    if (!orders.value.length) {
+      activeOrderIndex.value = -1;
+    } else {
+      activeOrderIndex.value = Math.max(0, currentIndex - 1);
+    }
   } catch (e) {
-    console.error("CREATE ORDER ERROR:", e);
-    console.error("Response:", e.response);
-    console.error("Data:", e.response?.data);
-
-    showToast(e.response?.data || "Lỗi tạo đơn", "error");
+    showToast(e.response?.data || "Lỗi thanh toán", "error");
+    console.error(e);
   }
 };
+
+watch(subTotal, () => {
+  if (currentOrder.value?.appliedVoucher) {
+    currentOrder.value.appliedVoucher = null;
+    currentOrder.value.voucherCode = "";
+  }
+});
 
 const removeOrder = (index) => {
-  orders.value.splice(index, 1);
+  const targetOrder = orders.value[index];
 
-  if (!orders.value.length) {
-    activeOrderIndex.value = -1;
-    return;
-  }
+  openConfirmModal(
+    "Xác nhận xóa hóa đơn",
+    `Bạn có chắc chắn muốn tắt và hủy đơn ${targetOrder.maHoaDon} không?`,
+    async () => {
+      try {
+        if (targetOrder.idHoaDon) {
+          await axios.delete(
+            `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
+          );
+        }
 
-  if (activeOrderIndex.value >= orders.value.length) {
-    activeOrderIndex.value = orders.value.length - 1;
-  }
+        orders.value.splice(index, 1);
+        showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
+
+        if (!orders.value.length) {
+          activeOrderIndex.value = -1;
+          return;
+        }
+
+        if (activeOrderIndex.value === index) {
+          activeOrderIndex.value = Math.max(0, index - 1);
+        } else if (index < activeOrderIndex.value) {
+          activeOrderIndex.value--;
+        }
+      } catch (error) {
+        console.error("Lỗi xóa hóa đơn:", error);
+        showToast(
+          error.response?.data?.error ||
+            error.response?.data ||
+            "Lỗi hệ thống khi xóa hóa đơn!",
+          "error",
+        );
+      }
+    },
+  );
 };
+
 const searchText = ref("");
 const filterColor = ref("");
 const filterSize = ref("");
-const colors = computed(() => {
-  return [...new Set(products.value.map((p) => p.color).filter(Boolean))];
-});
-
-const sizes = computed(() => {
-  return [...new Set(products.value.map((p) => p.size).filter(Boolean))];
-});
+const colors = computed(() => [
+  ...new Set(products.value.map((p) => p.color).filter(Boolean)),
+]);
+const sizes = computed(() => [
+  ...new Set(products.value.map((p) => p.size).filter(Boolean)),
+]);
 const filteredProducts = computed(() => {
   let list = products.value;
   if (searchText.value) {
@@ -824,21 +1092,16 @@ const filteredProducts = computed(() => {
         p.name.toLowerCase().includes(s) || p.code.toLowerCase().includes(s),
     );
   }
-  if (filterColor.value) {
+  if (filterColor.value)
     list = list.filter((p) => p.color === filterColor.value);
-  }
-  if (filterSize.value) {
-    list = list.filter((p) => p.size === filterSize.value);
-  }
-
+  if (filterSize.value) list = list.filter((p) => p.size === filterSize.value);
   return list;
 });
+
 const customerSearch = ref("");
 const filteredCustomers = computed(() => {
   if (!customerSearch.value) return customers.value;
-
   const s = customerSearch.value.toLowerCase();
-
   return customers.value.filter(
     (c) =>
       (c.tenKhachHang || "").toLowerCase().includes(s) ||
@@ -847,54 +1110,40 @@ const filteredCustomers = computed(() => {
   );
 });
 
-import { onMounted, watchEffect } from "vue";
-
 const STORAGE_KEY = "pos_orders_state";
 const isReady = ref(false);
-
 onMounted(async () => {
   isSettingAddress.value = true;
-
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     const data = JSON.parse(saved);
     orders.value = data.orders || [];
     activeOrderIndex.value = data.activeOrderIndex ?? -1;
   }
-
   await fetchProvinces();
-
-  // ⭐ KHÔI PHỤC DISTRICT + WARD
   for (const order of orders.value) {
     const provinceCode = order.customer.province;
     const districtCode = order.customer.district;
-
     if (provinceCode) {
       const resDistrict = await axios.get(
         `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
       );
-
       districts.value = resDistrict.data.districts;
     }
-
     if (districtCode) {
       const resWard = await axios.get(
         `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
       );
-
       wards.value = resWard.data.wards;
     }
   }
-
   await fetchVouchers();
-
   isSettingAddress.value = false;
   isReady.value = true;
 });
 
 watchEffect(() => {
-  if (!isReady.value) return; // 🚨 chặn lần đầu
-
+  if (!isReady.value) return;
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
@@ -904,9 +1153,6 @@ watchEffect(() => {
   );
 });
 
-const clearStorage = () => {
-  localStorage.removeItem(STORAGE_KEY);
-};
 const vouchers = ref([]);
 const fetchVouchers = async () => {
   const res = await axios.get("http://localhost:8080/admin/voucher");
@@ -915,191 +1161,191 @@ const fetchVouchers = async () => {
 
 const bankQR = computed(() => {
   if (!currentOrder.value) return "";
-
   const amount = total.value || 0;
-
-  // TPBank + STK của bạn
   const bank = "tpbank";
   const account = "00000674626";
-
   return `https://img.vietqr.io/image/${bank}-${account}-compact.png?amount=${amount}&addInfo=POS`;
 });
+
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Xử lý VOUCHER
 const applyVoucher = () => {
   if (!currentOrder.value) return;
-  const code = currentOrder.value.voucherCode;
-  if (!code) return;
-
+  voucherError.value = "";
+  voucherSuccess.value = "";
+  const code = currentOrder.value.voucherCode?.trim();
+  if (!code) {
+    voucherError.value = "Vui lòng nhập mã giảm giá";
+    return;
+  }
   const found = vouchers.value.find(
     (v) => v.maPgg.toLowerCase() === code.toLowerCase(),
   );
-
   if (!found) {
-    showToast("Mã giảm giá không tồn tại", "error");
+    voucherError.value = "Mã giảm giá không tồn tại";
     currentOrder.value.appliedVoucher = null;
     return;
   }
+  if (found.trangThai !== 1) {
+    voucherError.value = "Mã giảm giá đã ngừng hoạt động";
+    return;
+  }
+  if (found.donToiThieu && subTotal.value < found.donToiThieu) {
+    voucherError.value = "Đơn hàng chưa đạt giá trị tối thiểu";
+    return;
+  }
 
-  // Log ra để kiểm tra nếu vẫn không chạy
-  console.log("Voucher tìm thấy:", found);
+  let percent = 0;
+  let amount = 0;
+
+  if (
+    found.loaiGiam === "PERCENT" ||
+    found.loaiGiam === "PHAN_TRAM" ||
+    found.loaiGiam === 0
+  ) {
+    percent = Number(found.giaTri);
+  } else {
+    amount = Number(found.giaTri);
+  }
 
   currentOrder.value.appliedVoucher = {
     code: found.maPgg,
-    // Đảm bảo ép kiểu số cho giaTri
-    percent: found.loaiGiam === "PERCENT" ? Number(found.giaTri) : 0,
-    amount:
-      found.loaiGiam === "AMOUNT" || found.loaiGiam === "MONEY"
-        ? Number(found.giaTri)
-        : 0,
+    percent,
+    amount,
     message: found.tenPgg,
   };
+
+  if (
+    found.loaiGiam === "PERCENT" ||
+    found.loaiGiam === "PHAN_TRAM" ||
+    found.loaiGiam === 0
+  ) {
+    voucherSuccess.value = `Áp dụng thành công - Giảm ${found.giaTri}%`;
+  } else {
+    voucherSuccess.value = `Áp dụng thành công - Giảm ${formatPrice(found.giaTri)}`;
+  }
 };
 
-const voucherText = computed(() => {
-  const v = currentOrder.value?.appliedVoucher;
-  if (!v) return "";
-  if (v.percent > 0) return `Giảm ${v.percent}%`;
-  if (v.amount > 0) return `Giảm ${formatPrice(v.amount)}`;
-  return "";
-});
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: TÍNH TIỀN GIẢM GIÁ
 const discount = computed(() => {
   const v = currentOrder.value?.appliedVoucher;
   if (!v) return 0;
 
-  let totalDiscount = 0;
-
-  if (v.percent && v.percent > 0) {
-    totalDiscount = (subTotal.value * v.percent) / 100;
-  } else if (v.amount && v.amount > 0) {
-    totalDiscount = v.amount;
+  if (v.percent > 0) {
+    return Math.min((subTotal.value * v.percent) / 100, subTotal.value);
   }
 
-  // Không cho phép tiền giảm lớn hơn tổng tiền hàng
-  return Math.min(totalDiscount, subTotal.value);
+  if (v.amount > 0) {
+    return Math.min(v.amount, subTotal.value);
+  }
+
+  return 0;
 });
+
 const shippingFee = computed(() => {
   if (!currentOrder.value) return 0;
   return currentOrder.value.deliveryType === "DELIVERY"
     ? currentOrder.value.shippingFee
     : 0;
 });
-
 const total = computed(
   () => subTotal.value - discount.value + shippingFee.value,
 );
 
-const setDelivery = (type) => {
-  if (!currentOrder.value) return;
-
-  currentOrder.value.deliveryType = type;
-
-  if (type === "COUNTER") {
-    currentOrder.value.shippingFee = 0;
-  } else {
-    currentOrder.value.shippingFee = 30000; // ⭐ default ship (bạn đổi tùy ý)
-  }
-};
-
-/* ================= CONFIRM MODAL ================= */
-const modal = ref({
-  show: false,
-  title: "",
-  message: "",
-  onConfirm: null,
-});
-
-const openConfirmModal = (title, message, cb) => {
-  modal.value = {
-    show: true,
-    title,
-    message,
-    onConfirm: cb,
-  };
-};
-
-const closeConfirmModal = () => {
-  modal.value.show = false;
-};
-
-const handleModalConfirm = () => {
-  modal.value.onConfirm?.();
-  closeConfirmModal();
-};
-
-/* ================= TOAST ================= */
-const toast = ref({
-  show: false,
-  message: "",
-  type: "success", // success | error
-});
-
-const showToast = (msg, type = "success") => {
-  toast.value.message = msg;
-  toast.value.type = type;
-  toast.value.show = true;
-
-  setTimeout(() => {
-    toast.value.show = false;
-  }, 2500);
-};
-
 const calculateShipping = async () => {
   if (!currentOrder.value) return;
-
   const districtCode = currentOrder.value.customer.district;
   if (!districtCode) return;
-
   const districtObj = districts.value.find((d) => d.code === districtCode);
-
   if (!districtObj) return;
-
   const res = await axios.get("http://localhost:8080/api/shipping", {
     params: { district: districtObj.name },
   });
-
   currentOrder.value.shippingFee = res.data;
 };
 
 const toggleDelivery = async (e) => {
   const isDelivery = e.target.checked;
-
   if (!currentOrder.value) return;
-
   currentOrder.value.deliveryType = isDelivery ? "DELIVERY" : "COUNTER";
-
   if (isDelivery) {
     await calculateShipping();
   } else {
     currentOrder.value.shippingFee = 0;
   }
 };
+
+const modal = ref({ show: false, title: "", message: "", onConfirm: null });
+const openConfirmModal = (title, message, cb) => {
+  modal.value = { show: true, title, message, onConfirm: cb };
+};
+const closeConfirmModal = () => {
+  modal.value.show = false;
+};
+const handleModalConfirm = () => {
+  modal.value.onConfirm?.();
+  closeConfirmModal();
+};
+
+const toast = ref({ show: false, message: "", type: "success" });
+const showToast = (msg, type = "success") => {
+  toast.value.message = msg;
+  toast.value.type = type;
+  toast.value.show = true;
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 2500);
+};
 </script>
 
 <style scoped>
+/* ================= GLOBAL & THEME (Nâu / Be) ================= */
 .pos-page {
   background: #f7f7f7;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-top: 1px;
-  margin-bottom: 16px;
+  min-height: 100vh;
+  padding: 16px;
+  font-family: "Inter", system-ui, sans-serif;
   color: #333;
 }
 
-/* ===== HEADER PANEL ===== */
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-muted {
+  color: #666;
+}
+.text-red {
+  color: #d32f2f;
+}
+.fw-600 {
+  font-weight: 600;
+}
+.mt-2 {
+  margin-top: 8px;
+}
+.mt-3 {
+  margin-top: 16px;
+}
+.mt-4 {
+  margin-top: 24px;
+}
+.m-0 {
+  margin: 0;
+}
+
+/* ================= HEADER ================= */
 .top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
   background: #fff;
   border-radius: 10px;
   padding: 14px 18px;
   border: 1px solid #e5e5e5;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
 }
-
 .page-title {
   font-size: 18px;
   font-weight: 600;
@@ -1107,6 +1353,7 @@ const toggleDelivery = async (e) => {
   color: #333;
 }
 
+/* ================= BUTTONS ================= */
 .btn-create {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
   color: #fff;
@@ -1116,63 +1363,44 @@ const toggleDelivery = async (e) => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
-
 .btn-create:hover {
   opacity: 0.9;
 }
 
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.main-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* CARD CHUNG */
-.info-box,
-.product-section {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #e5e5e5;
-}
-
-/* HEADER CARD */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-/* ACTIONS */
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* BUTTON */
 .btn-primary {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
-  color: #fff;
+  color: white;
   border: none;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 6px;
+  cursor: pointer;
   font-size: 13px;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-outline {
+  background: white;
   border: 1px solid #c89b6d;
-  background: #fff;
   color: #6b3f23;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 6px;
+  cursor: pointer;
   font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+.btn-outline:hover {
+  background: #c89b6d;
+  color: #fff;
 }
 
 .btn-danger {
@@ -1180,58 +1408,464 @@ const toggleDelivery = async (e) => {
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 4px 8px;
-}
-
-/* TABLE */
-.table th {
-  font-size: 13px;
-  color: #666;
-  font-weight: 600;
-}
-
-.table td {
-  font-size: 13px;
-}
-
-/* BOTTOM LAYOUT */
-.bottom-layout {
-  display: grid;
-  grid-template-columns: 2fr 1.2fr;
-  gap: 16px;
-}
-
-/* PAYMENT */
-.payment-row {
+  padding: 6px 10px;
+  cursor: pointer;
   font-size: 14px;
 }
-
-.payment-row.total {
-  font-size: 16px;
-  color: #c0392b;
+.btn-danger:hover {
+  background: #c0392b;
 }
 
-.btn-submit {
-  margin-top: 12px;
+.btn-submit.big {
   width: 100%;
-  padding: 10px;
+  padding: 14px;
   border-radius: 8px;
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
   color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   border: none;
-  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(107, 63, 35, 0.3);
+}
+.btn-submit.big:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-submit.big:disabled {
+  background: #d8c6b5;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #fff;
 }
 
-.popup-content {
+.actions {
+  display: flex;
+  gap: 12px;
+} /* Đảm bảo 2 nút Quét QR và Chọn SP cách nhau */
+
+/* ================= TABS ================= */
+.pos-card {
+  background: transparent;
+}
+.order-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 0;
+  overflow-x: auto;
+  background: #f7f7f7;
+  padding: 0 12px;
+  overflow: hidden;
+}
+.order-tab {
+  background: #ececec;
+  color: #333;
+  padding: 10px 20px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+.order-tab:hover {
+  background: #ddd;
+}
+.order-tab.active {
   background: #fff;
-  padding: 20px;
-  width: 800px;
+  border: 1px solid #e5e5e5;
+  border-bottom: 1px solid #fff;
+  font-weight: 600;
+  margin-bottom: -1px;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+}
+.tab-close {
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 12px;
+}
+.tab-close:hover {
+  opacity: 1;
+}
+
+/* ================= LAYOUT CHÍNH (65/35) ================= */
+.main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 6.5fr) minmax(0, 3.5fr);
+  gap: 16px;
+  padding: 16px;
+  background: #fff;
   border-radius: 10px;
 }
 
-/* ================= MODAL OVERLAY ================= */
+/* BOX CHUNG */
+.product-section,
+.info-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+/* RIGHT PANEL (Sticky) */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+/* ================= CỘT TRÁI: GIỎ HÀNG ================= */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #eee;
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Empty State */
+.empty-cart {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+.empty-state-global {
+  text-align: center;
+  padding: 60px;
+  background: #fff;
+  border-radius: 12px;
+  color: #666;
+  margin-top: 16px;
+}
+
+/* Product List */
+.product-header {
+  text-align: center;
+  display: grid;
+  grid-template-columns: 2fr 120px 150px 140px 50px;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.product-row {
+  text-align: center;
+  display: flex;
+  grid-template-columns: 2fr 120px 150px 140px 50px;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.product-row:last-child {
+  border-bottom: none;
+}
+
+.product-cell-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.img-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.product-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+.sale-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: #e53935;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.product-info .name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-info .meta {
+  font-size: 12px;
+  color: #777;
+  white-space: nowrap;
+}
+
+.price del {
+  display: block;
+  font-size: 12px;
+  color: #999;
+}
+.price .sale {
+  font-weight: 600;
+  color: red;
+  font-size: 14px;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  width: max-content;
+  margin: 0 auto;
+  gap: 4px;
+}
+.qty button {
+  background: #fff;
+  border: 1px solid #c49a6c;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  color: #333;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qty button:hover {
+  background: #f7f2ee;
+}
+.qty button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+.qty input {
+  width: 45px;
+  text-align: center;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  background: transparent;
+}
+
+.total {
+  font-weight: 600;
+  color: red;
+  white-space: nowrap; /* Thêm dòng này để ép chữ không bao giờ xuống dòng */
+}
+/* ================= CỘT PHẢI: KHÁCH & THANH TOÁN ================= */
+.customer-form .form-item {
+  margin-bottom: 12px;
+  width: 100%;
+}
+.customer-form .form-row {
+  display: flex;
+  gap: 12px;
+}
+.customer-form .form-row .form-item {
+  flex: 1;
+}
+
+input,
+select {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #e0d6cc;
+  font-size: 13px;
+  background: #fafafa;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+input:focus,
+select:focus {
+  border-color: #c89b6d;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
+}
+.field-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Toggle Giao hàng */
+.delivery-toggle-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #faf7f4;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: 0.2s;
+}
+.toggle-label.active-brown {
+  font-weight: 600;
+  color: #6b3f23;
+}
+.switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+.switch input {
+  display: none;
+}
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #ddd;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+.switch input:checked + .slider {
+  background: linear-gradient(90deg, #c89b6d, #6b3f23);
+}
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* Payment Box */
+.payment-box {
+  background: linear-gradient(180deg, #ffffff, #fdf9f6);
+  border: 1px solid #eee;
+}
+.voucher-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.voucher-row input {
+  flex: 1;
+}
+
+.voucher-success {
+  background: #e9f7ef;
+  color: #2e7d32;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.voucher-errors {
+  background: #ffc3c3;
+  color: #d32f2f;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.payment-summary {
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #ddd;
+  margin-bottom: 12px;
+}
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.payment-row:last-child {
+  margin-bottom: 0;
+}
+
+.payment-total-wrap {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 16px;
+}
+.payment-row.total {
+  font-size: 16px;
+  font-weight: 600;
+  align-items: center;
+}
+.total-amount {
+  font-size: 20px;
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+.payment-method-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.pay-action-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-pay-icon {
+  width: 34px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #c49a6c;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn-pay-icon:hover {
+  background: #c89b6d;
+  color: #fff;
+}
+
+/* ================= MODAL & POPUP CHUNG ================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1240,706 +1874,294 @@ const toggleDelivery = async (e) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.25s ease;
+  overflow: hidden;
 }
 
-/* ================= MODAL BOX ================= */
+/* Tìm đoạn này và sửa lại */
 .modal {
-  width: 1100px;
-  max-width: 95vw;
-  max-height: 85vh;
-  background: #ffffff;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  width: 95vw;
+  max-width: 1200px;
+  /* height: 85vh;  <--- XÓA DÒNG NÀY ĐI */
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s ease;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
 .modal.large {
-  width: 1300px;
+  width: 95vw;
+  max-width: 1400px;
+  height: 85vh; /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
 }
 
-/* ================= HEADER ================= */
+.modal.small {
+  width: 90vw;
+  max-width: 500px;
+  /* Form thanh toán dùng modal.small sẽ tự động co ngắn lại ôm vừa nội dung */
+}
+
 .modal-header {
-  padding: 14px 20px;
-  background: #f7f2ee;
+  padding: 16px 20px;
   border-bottom: 1px solid #e5d6c8;
-  border-radius: 12px 12px 0 0;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  background: #faf6f3;
+  border-radius: 12px 12px 0 0;
 }
-
 .modal-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #7b4a2f;
 }
-
-/* ================= BODY ================= */
-.modal-body {
-  padding: 16px 20px;
-  overflow-y: auto;
-}
-
-/* ================= CLOSE BUTTON ================= */
 .btn-close {
   background: #c8a27a;
-  color: #fff;
   border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
+  font-size: 14px;
+  color: #fff;
   cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
   transition: 0.2s;
 }
-
 .btn-close:hover {
   background: #b08b63;
 }
 
-/* ================= FILTER ROW ================= */
+.modal-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Filter & Table Modal */
 .filter-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
-
-.filter-row input,
-.filter-row select {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #d8c6b5;
-  outline: none;
+.table-responsive {
+  overflow-x: auto;
 }
-
-.filter-row input:focus,
-.filter-row select:focus {
-  border-color: #c49a6c;
-}
-
-/* ================= SEARCH INPUT ================= */
-.search-input {
-  width: 100%;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #d8c6b5;
-  margin-bottom: 14px;
-  outline: none;
-}
-
-.search-input:focus {
-  border-color: #c49a6c;
-}
-
-/* ================= TABLE ================= */
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
-
 .table th {
+  padding: 12px;
   background: #faf6f3;
   color: #6b4226;
   font-weight: 600;
-  text-align: left;
-  padding: 10px;
   border-bottom: 1px solid #e3d5c8;
+  white-space: nowrap;
 }
-
 .table td {
-  padding: 10px;
+  padding: 12px;
   border-bottom: 1px solid #eee;
+  vertical-align: middle;
 }
 
 .table th,
 .table td {
   text-align: center;
   vertical-align: middle;
-  white-space: nowrap;
 }
 
 .table tr:hover {
   background: #fff7f1;
 }
-
-.modal .table td {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.badge-stock {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #e9f7ef;
+  color: #2e7d32;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-stock.out-of-stock {
+  background: #ffc3c3;
+  color: #d32f2f;
 }
 
-.table td img.thumb {
-  display: block;
-  margin: 0 auto;
+/* ================= MODAL THANH TOÁN (LÀM LẠI HOÀN TOÀN) ================= */
+.custom-payment-modal {
+  padding-bottom: 10px;
 }
-
-.table td {
-  white-space: nowrap;
-}
-
-.table th,
-.table td {
-  padding: 12px 10px;
-}
-
-/* ================= IMAGE ================= */
-.thumb {
-  width: 48px;
-  height: auto;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.modal.small {
-  width: 400px;
-}
-
-.payment-popup {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.pay-type {
+.pay-type-tabs {
   display: flex;
   gap: 10px;
+  margin-bottom: 20px;
 }
-
-.pay-type button {
+.pay-type-tabs button {
   flex: 1;
-  height: 40px;
+  padding: 12px;
+  border: 1px solid #c49a6c;
   border-radius: 8px;
-  border: 1px solid #c49a6c;
   background: #fff;
-  cursor: pointer;
-}
-
-.pay-type button.active {
-  background: linear-gradient(90deg, #c89b6d, #6b3f23);
-  color: #fff;
-}
-
-.pay-action {
-  align-items: center;
-}
-
-.pay-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.money {
   font-weight: 600;
-}
-
-.pay-btn {
-  width: 34px;
-  height: 30px;
-  border-radius: 6px;
-  border: 1px solid #c49a6c;
-  background: #fff;
-  font-size: 10px;
-  line-height: 10px;
+  color: #6b3f23;
   cursor: pointer;
   transition: 0.2s;
-  padding: 2px;
+}
+.pay-type-tabs button.active {
+  background: linear-gradient(90deg, #c89b6d, #6b3f23);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 10px rgba(107, 63, 35, 0.2);
 }
 
-.pay-btn:hover {
-  background: #c49a6c;
-  color: #fff;
-}
-
-.cash-input input {
-  width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.clickable {
-  cursor: pointer;
+.input-label {
+  font-size: 14px;
   color: #6b3f23;
   font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+.money-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-money-lg {
+  height: 50px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: right;
+  padding-right: 40px;
+  border-radius: 8px;
+  border: 2px solid #e0d6cc;
+  color: #333;
+}
+.input-money-lg:focus {
+  border-color: #c89b6d;
+  box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
+}
+.currency-unit {
+  position: absolute;
+  right: 15px;
+  font-size: 18px;
+  color: #999;
+  font-weight: 600;
+  pointer-events: none;
 }
 
-/* ================= BUTTONS ================= */
-.btn-primary {
-  background: #c49a6c;
-  color: #fff;
-  border: none;
-  padding: 6px 14px;
+.btn-quick-money {
+  background: #f7f2ee;
+  color: #6b3f23;
+  border: 1px solid #e5d6c8;
+  padding: 6px 12px;
   border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
 }
-
-.btn-primary:hover {
-  background: #b0855d;
-}
-
-.btn-outline {
-  background: #fff;
-  border: 1px solid #c49a6c;
-  color: #c49a6c;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.btn-outline:hover {
-  background: #c49a6c;
-  color: #fff;
+.btn-quick-money:hover {
+  background: #e5d6c8;
 }
 
 .bank-box {
   text-align: center;
-  padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
 }
-
 .qr-img {
-  width: 200px;
-  height: 200px;
-  border-radius: 10px;
-  border: 1px solid #eee;
-}
-
-.bank-money {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.customer-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-row:last-child {
-  grid-template-columns: 1fr 1fr 1fr;
-}
-
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-item label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4a2f1b;
-}
-
-.form-item input,
-.form-item select {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #c8a27a;
-  font-size: 13px;
-  outline: none;
-  background: #fff;
-}
-
-.form-item input:focus,
-.form-item select:focus {
-  border-color: #6b3f23;
-  box-shadow: 0 0 0 1px rgba(107, 63, 35, 0.2);
-}
-
-.right-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.product-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.product-row {
-  display: grid;
-  grid-template-columns: 30px 200px 1.5fr 1fr 500px 200px 100px 40px;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.product-img {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid #eee;
-}
-
-.product-info .name {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.product-info .meta {
-  font-size: 12px;
-  color: #777;
-}
-
-.price {
-  font-size: 13px;
-}
-
-.price del {
+  width: 220px;
+  height: 220px;
+  border: 1px solid #e5d6c8;
+  border-radius: 12px;
   display: block;
-  color: #999;
+  margin: 0 auto;
+  padding: 10px;
+  background: #fff;
+}
+.bank-info {
+  text-align: center;
+  margin-top: 15px;
+}
+.bank-money {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 5px 0;
+  color: #d32f2f;
 }
 
-.price .sale {
-  color: red;
-  font-weight: 600;
-}
-
-.price-cell {
+/* ================= MODAL CONFIRM & TOAST ================= */
+.modal-confirm {
+  position: fixed;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  min-width: 90px;
-  line-height: 1.2;
-}
-
-.price-cell del {
-  color: #999;
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.price-cell .sale {
-  color: #e53935;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.table td,
-.table th {
-  vertical-align: middle;
-}
-
-.modal .table td {
-  height: 70px;
-}
-
-.qty {
-  display: flex;
   align-items: center;
-  gap: 8px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
 }
-
-.qty button {
-  width: 28px;
-  height: 28px;
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 1px solid #c49a6c;
-  background: #fff;
-  cursor: pointer;
-}
-
-.qty span {
-  min-width: 20px;
-  text-align: center;
-}
-
-.total {
-  color: red;
-  font-weight: 600;
-}
-
-.btn-danger {
-  background: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-}
-
-/* ================= ANIMATION ================= */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ===== CARD CHA ===== */
-.pos-card {
-  background: #fff;
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-/* ===== TAB BAR ===== */
-.order-tabs {
-  display: flex;
-  background: #f7f7f7;
-  border-bottom: 1px solid #e5e5e5;
-  padding: 0 12px;
-  gap: 0;
-  /* QUAN TRỌNG */
-  margin: 0;
-  /* QUAN TRỌNG */
-}
-
-/* ===== TAB ===== */
-.order-tab {
-  background: #e7e7e7;
-  padding: 10px 18px;
-
-  border: 1px solid transparent;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-
-  margin-right: 2px;
-
+  background: #fff4e5;
+  color: #ff9800;
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.order-tab.active {
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* hover */
-.order-tab:hover {
-  background: #ddd;
-}
-
-/* ===== ACTIVE (mấu chốt) ===== */
-.order-tab.active {
-  background: #fff;
-
-  border: 1px solid #e5e5e5;
-  border-bottom: 1px solid #fff;
-  /* DÍNH LIỀN CONTENT */
-
-  font-weight: 600;
-
-  margin-bottom: -1px;
-  /* trick dính */
-}
-
-/* close */
-.tab-close {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-.tab-close:hover {
-  opacity: 1;
-}
-
-/* content */
-.main-layout {
-  padding: 16px;
-}
-
-.payment-box {
-  font-size: 14px;
-}
-
-.voucher-row {
-  display: grid;
-  grid-template-columns: 1fr 80px;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.voucher-row input {
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.voucher-percent {
-  text-align: center;
-}
-
-.voucher-success {
-  background: #e9f7ef;
-  color: #2e7d32;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.payment-row {
-  display: flex;
-  justify-content: space-between;
-  margin: 6px 0;
-}
-
-.payment-row.total {
-  font-size: 18px;
-  font-weight: 700;
-  color: #d32f2f;
-}
-
-.text-red {
-  color: #d32f2f;
-  font-weight: 600;
-}
-
-.payment-box hr {
-  border: none;
-  border-top: 1px dashed #ddd;
-  margin: 10px 0;
-}
-
-.btn-submit.big {
-  margin-top: 12px;
-  height: 42px;
-  font-size: 15px;
-  border-radius: 20px;
-  border: none;
-}
-
-/* ===== WRAP ẢNH ===== */
-.img-wrap {
-  position: relative;
-  display: inline-block;
-}
-
-.img-wrap.small {
-  width: fit-content;
-}
-
-/* ===== BADGE SALE ===== */
-.sale-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-
-  background: #e53935;
-  color: #fff;
-
-  font-size: 12px;
-  font-weight: 700;
-
-  padding: 3px 7px;
-  border-radius: 6px;
-
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.sale-badge.small {
-  font-size: 10px;
-  padding: 2px 6px;
-}
-
-/* ===== DELIVERY SWITCH ===== */
-.delivery-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   justify-content: center;
-  margin-bottom: 12px;
-  font-size: 13px;
+  font-size: 40px;
+  margin: 0 auto 15px;
+  line-height: 1;
 }
-
-.delivery-switch span {
-  color: #999;
-  font-weight: 500;
+.confirm-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #63391f;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
   transition: 0.2s;
 }
-
-.delivery-switch span.active {
-  color: #6b3f23;
-  font-weight: 700;
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.btn-confirm {
+  background: #63391f;
+  color: white;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
-/* SWITCH */
-.switch {
-  position: relative;
-  width: 46px;
-  height: 24px;
-}
-
-.switch input {
-  display: none;
-}
-
-.slider {
-  position: absolute;
-  inset: 0;
-  background: #ddd;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: 0.25s;
-}
-
-.slider::before {
-  content: "";
-  position: absolute;
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  top: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.25s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
-}
-
-/* ON */
-.switch input:checked + .slider {
-  background: linear-gradient(90deg, #c89b6d, #6b3f23);
-}
-
-.switch input:checked + .slider::before {
-  transform: translateX(22px);
-}
-
-/* ===== TOAST ===== */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -1949,155 +2171,71 @@ const toggleDelivery = async (e) => {
   flex-direction: column;
   gap: 10px;
 }
-
 .toast {
   min-width: 300px;
   padding: 16px 24px;
   border-radius: 8px;
-  background-color: #dcfce7;
+  background: #dcfce7;
   color: #166534;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   border-left: 6px solid #22c55e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: slideIn 0.3s ease-out;
 }
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
 .toast.error {
-  background-color: #fee2e2;
+  background: #fee2e2;
   color: #991b1b;
-  border-left: 6px solid #ef4444;
+  border-left-color: #ef4444;
 }
 
-.modal-confirm {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
 }
-
-.confirm-box {
-  background: #fff;
-  padding: 30px;
-  border-radius: 20px;
-  width: 400px;
-  text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: zoomIn 0.3s ease-out;
-}
-
-/* Tìm đoạn này trong phần 8. MODAL & TOAST */
-/* Sửa lại đoạn này */
-.confirm-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #fff4e5;
-  color: #ff9800;
-  margin: 0 auto 15px auto;
-
-  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 40px;
-
-  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
-  line-height: 1;
-
-  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
-  /* animation: none; */
-}
-
-/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
-.confirm-icon-wrapper i,
-.confirm-icon-wrapper svg,
-.confirm-icon-wrapper span {
-  display: block;
-  /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0;
-  /* Xóa margin mặc định nếu có */
-
-  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
-  /* transform: translateY(2px); */
-}
-
-.confirm-title {
-  color: #63391f;
-  margin-bottom: 10px;
-  font-size: 20px;
-}
-
-.confirm-desc {
-  color: #666;
-  margin-bottom: 25px;
-  line-height: 1.5;
-}
-
-.btn-confirm {
-  background: #63391f;
-  color: #fff;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
-}
-
-.btn-confirm:hover {
-  background: #4e2c17;
-  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 20px;
-}
-
-.btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-  flex: 1;
-  height: 42px;
-}
-
-.btn-cancel:hover {
-  background: #e5e7eb;
-}
-
-.fade-modal-enter-active,
-.fade-modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-modal-enter-from,
-.fade-modal-leave-to {
+.toast-slide-enter-from {
   opacity: 0;
+  transform: translateX(30px);
+}
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.img-wrap.small {
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.img-wrap.small .thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+/* ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Cập nhật CSS height */
+.product-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.price-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.price-cell del {
+  display: inline-block;
+  color: #999;
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+.price-cell .sale {
+  color: #e53935;
+  font-weight: 600;
+  font-size: 14px;
 }
 </style>
