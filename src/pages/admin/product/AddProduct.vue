@@ -367,7 +367,7 @@
         </div>
         <div class="color-list">
           <div
-            v-for="m in mauSacDaChon"
+            v-for="m in mauSacDaChon.filter((x) => x.trangThai === 1)"
             :key="m.id"
             class="color-item"
             :class="{ selected: tempMauSacList.some((x) => x.id === m.id) }"
@@ -392,7 +392,7 @@
         </div>
         <div class="color-list">
           <div
-            v-for="k in kichCoList"
+            v-for="k in kichCoList.filter((x) => x.trangThai === 1)"
             :key="k.id"
             class="color-item"
             :class="{ selected: tempKichCoList.some((x) => x.id === k.id) }"
@@ -521,6 +521,10 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
+
 const route = useRoute();
 const router = useRouter();
 const showQuickAllModal = ref(false);
@@ -626,7 +630,7 @@ const fetchProductDetail = async () => {
   try {
     const res = await axios.get(`${API_BASE}/san-pham/${productId}`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     const data = res.data;
@@ -808,20 +812,26 @@ const saveModal = async () => {
         `${API_BASE}/kich-co`,
         {
           tenKichCo: modalInput.value,
-          nguoiTao: "admin",
+          nguoiTao: username,
         },
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         },
       );
 
+      const newSize = res.data.data || res.data;
+
       showNotification("Thêm kích cỡ thành công");
-      kichCoList.value.push(res.data); // Cập nhật danh sách kích cỡ ngay lập tức
+
+      kichCoList.value.unshift(newSize);
+
+      tempKichCoList.value.push(newSize);
+
       modalType.value = "kich-co";
-      closeModal();
+      modalInput.value = "";
     } catch (e) {
       showNotification(
         e.response?.data?.message || "Lỗi khi thêm kích cỡ",
@@ -842,12 +852,12 @@ const saveModal = async () => {
         `${API_BASE}/${modalType.value}`,
         {
           [fieldMap[modalType.value]]: modalInput.value,
-          nguoiTao: "admin",
+          nguoiTao: username,
         },
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         },
       );
@@ -899,12 +909,12 @@ const saveColorModal = async () => {
       {
         tenMauSac: modalInput.value,
         rgb: modalColorRgb.value,
-        nguoiTao: "admin",
+        nguoiTao: username,
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -1032,7 +1042,7 @@ const fetchDropdownData = async () => {
         axios
           .get(`${API_BASE}/${a}`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              Authorization: `Bearer ${token}`,
             },
           })
           .then((response) => response.data),
@@ -1051,7 +1061,7 @@ const fetchMauSac = async () => {
   try {
     const res = await axios.get(`${API_BASE}/mau-sac`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     mauSacDaChon.value = res.data.data || res.data;
@@ -1065,7 +1075,7 @@ const fetchKichCo = async () => {
   try {
     const res = await axios.get(`${API_BASE}/kich-co`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     kichCoList.value = res.data.data || res.data;
@@ -1193,8 +1203,8 @@ const submit = async () => {
     bienTheList: bienTheList.value,
     hinhAnh: hinhAnhCloud.value,
     ...(productId
-      ? { nguoiCapNhat: "admin" } // UPDATE
-      : { nguoiTao: "admin" }),
+      ? { nguoiCapNhat: username } // UPDATE
+      : { nguoiTao: username }),
   };
 
   const method = productId ? "PUT" : "POST";
@@ -1208,7 +1218,7 @@ const submit = async () => {
       url: url,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        Authorization: `Bearer ${token}`,
       },
       data: payload,
     });
@@ -1423,8 +1433,8 @@ textarea {
 }
 
 .add-btn {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 7px;
   border: 1px solid #c7b2a3;
   background: white;

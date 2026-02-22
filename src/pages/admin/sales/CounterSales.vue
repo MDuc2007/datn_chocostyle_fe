@@ -275,7 +275,7 @@
                   {{ formatPrice(currentOrder.paidAmount || 0) }}
                 </span>
               </div>
-            </div>  
+            </div>
 
             <div
               v-if="currentOrder.paymentMethod === 'CASH'"
@@ -841,7 +841,6 @@ const openPaymentPopup = () => {
   cashInput.value = total.value;
   showPaymentPopup.value = true;
 };
-
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
@@ -857,8 +856,8 @@ const confirmPayment = async () => {
 
   showPaymentPopup.value = false;
 
-  await submitOrder();
-};;
+  await submitOrder(); // 👈 gọi ở đây
+};
 
 const changeMoney = computed(() => {
   if (!currentOrder.value) return 0;
@@ -917,58 +916,96 @@ const createOrder = async () => {
     showToast("Tối đa 5 đơn hàng thôi", "error");
     return;
   }
-  await fetchProvinces();
-  const newOrder = {
-    id: Date.now(),
-    cart: [],
-    customer: {
-      id: null,
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      ward: "",
-      district: "",
-      province: "",
-    },
-    paidAmount: 0,
-    paymentMethod: "CASH",
-    voucherCode: "",
-    appliedVoucher: null,
-    deliveryType: "COUNTER",
-    shippingFee: 0,
-  };
-  orders.value.push(newOrder);
-  activeOrderIndex.value = orders.value.length - 1;
+
+  try {
+    const idNhanVien = 1; // Fix cứng ID nhân viên
+    // Gọi API tạo đơn nháp
+    const res = await axios.post(
+      `http://localhost:8080/api/hoa-don/tai-quay/tao-moi?idNhanVien=${idNhanVien}`,
+    );
+    const draftOrder = res.data;
+
+    await fetchProvinces();
+
+    const newOrder = {
+      idHoaDon: draftOrder.id, // BẮT BUỘC PHẢI CÓ DÒNG NÀY ĐỂ LẤY ID LÚC SAU UPDATE
+      maHoaDon: draftOrder.maHoaDon, // BẮT BUỘC PHẢI CÓ DÒNG NÀY
+      id: Date.now(),
+      cart: [],
+      customer: {
+        id: null,
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        ward: "",
+        district: "",
+        province: "",
+      },
+      paidAmount: 0,
+      paymentMethod: "CASH",
+      voucherCode: "",
+      appliedVoucher: null,
+      deliveryType: "COUNTER",
+      shippingFee: 0,
+    };
+
+    orders.value.push(newOrder);
+    activeOrderIndex.value = orders.value.length - 1;
+
+    showToast(`Đã tạo tab cho ${draftOrder.maHoaDon}`);
+  } catch (error) {
+    showToast(error.response?.data || "Lỗi tạo tab", "error");
+    console.error(error);
+  }
 };
 
+// 2. SỬA HÀM SUBMIT (Đổi thành axios.put để cập nhật đúng vào cái ID nháp kia)
 const submitOrder = async () => {
   if (!currentOrder.value) return;
   if (subTotal.value <= 0) {
     showToast("Tổng tiền hàng phải lớn hơn 0", "error");
     return;
   }
+
+  // Chặn nếu tab bị lỗi mất ID
+  if (!currentOrder.value.idHoaDon) {
+    showToast(
+      "Tab này bị lỗi mất ID Hóa Đơn, vui lòng tắt đi tạo lại!",
+      "error",
+    );
+    return;
+  }
+
   try {
     const order = currentOrder.value;
     const payload = {
-      // Nếu là Giao hàng tận nơi -> truyền 0 (Online/Cần ship). Nếu tại quầy -> truyền 1
       loaiDon: order.deliveryType === "DELIVERY" ? 0 : 1,
       tongTienHang: subTotal.value,
       phiShip: shippingFee.value,
-      ghiChu: "",
+      ghiChu:
+        order.paymentMethod === "CASH" ? "Thanh toán tiền mặt" : "Chuyển khoản",
       maVoucher: order.voucherCode || null,
       idKhachHang: order.customer.id || null,
+      idNhanVien: 1,
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
         donGia: i.price,
       })),
     };
-    await axios.post("http://localhost:8080/api/hoa-don", payload);
-    showToast("Tạo đơn hàng thành công");
+
+    // ĐÂY LÀ ĐIỂM QUAN TRỌNG NHẤT: DÙNG AXIOS.PUT
+    await axios.put(
+      `http://localhost:8080/api/hoa-don/tai-quay/xac-nhan/${order.idHoaDon}`,
+      payload,
+    );
+
+    showToast(`Thanh toán thành công ${order.maHoaDon}!`); // Thông báo mới để nhận biết code đã ăn
     removeOrder(activeOrderIndex.value);
   } catch (e) {
-    showToast(e.response?.data || "Lỗi tạo đơn", "error");
+    showToast(e.response?.data || "Lỗi thanh toán", "error");
+    console.error(e);
   }
 };
 
@@ -979,14 +1016,51 @@ watch(subTotal, () => {
   }
 });
 const removeOrder = (index) => {
-  orders.value.splice(index, 1);
-  if (!orders.value.length) {
-    activeOrderIndex.value = -1;
-    return;
-  }
-  if (activeOrderIndex.value >= orders.value.length) {
-    activeOrderIndex.value = orders.value.length - 1;
-  }
+  const targetOrder = orders.value[index];
+
+  // Sử dụng popup Confirm có sẵn trong code của bạn để hỏi người dùng
+  openConfirmModal(
+    "Xác nhận xóa hóa đơn",
+    `Bạn có chắc chắn muốn tắt và hủy đơn ${targetOrder.maHoaDon} không?`,
+    async () => {
+      try {
+        // 1. Gọi API xóa hóa đơn dưới Backend
+        // Lưu ý: Đảm bảo đường dẫn API khớp với Controller bạn đã viết
+        if (targetOrder.idHoaDon) {
+          await axios.delete(
+            `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
+          );
+        }
+
+        // 2. Xóa thành công DB -> Xóa tab khỏi mảng UI
+        orders.value.splice(index, 1);
+        showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
+
+        // 3. Xử lý lại trạng thái Tab đang Focus
+        if (!orders.value.length) {
+          activeOrderIndex.value = -1; // Hết tab
+          return;
+        }
+
+        // Nếu xóa đúng cái tab đang mở, lùi về tab bên trái nó
+        if (activeOrderIndex.value === index) {
+          activeOrderIndex.value = Math.max(0, index - 1);
+        }
+        // Nếu xóa cái tab đứng trước tab đang mở, phải trừ index đi 1 để giữ đúng focus
+        else if (index < activeOrderIndex.value) {
+          activeOrderIndex.value--;
+        }
+      } catch (error) {
+        console.error("Lỗi xóa hóa đơn:", error);
+        showToast(
+          error.response?.data?.error ||
+            error.response?.data ||
+            "Lỗi hệ thống khi xóa hóa đơn!",
+          "error",
+        );
+      }
+    },
+  );
 };
 
 const searchText = ref("");

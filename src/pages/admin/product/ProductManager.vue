@@ -441,26 +441,26 @@ const modal = ref({
 const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/promotions");
-
     const data = res.data || [];
-    const percentMap = {};
     const now = new Date();
+
+    const percentMap = {};
 
     data.forEach((dgg) => {
       const start = new Date(dgg.ngayBatDau);
       const end = new Date(dgg.ngayKetThuc);
 
-      // chỉ lấy promotion đang hoạt động
       if (dgg.trangThai === 1 && now >= start && now <= end) {
-        dgg.chiTietSanPhamIds?.forEach((id) => {
-          percentMap[id] = Math.max(percentMap[id] || 0, dgg.giaTriGiam);
+        dgg.sanPhamApDung?.forEach((sp) => {
+          percentMap[sp.idSp] = Math.max(
+            percentMap[sp.idSp] || 0,
+            dgg.giaTriGiam,
+          );
         });
       }
     });
 
     promotionMap.value = percentMap;
-
-    console.log("PromotionMap:", promotionMap.value);
   } catch (error) {
     console.error("Lỗi lấy khuyến mãi:", error);
   }
@@ -1814,8 +1814,8 @@ input:checked + .slider::before {
 
 .discount-badge {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: -6px;
+  left: -6px;
   background: #e53935;
   color: white;
   font-size: 11px;

@@ -152,17 +152,42 @@
       <button class="save-btn" @click="handleOpenConfirm">Lưu sản phẩm</button>
     </div>
   </div>
-  <div v-if="showConfirmModal" class="modal-overlay">
-    <div class="modal">
-      <h3>Xác nhận cập nhật</h3>
-      <p>Bạn có muốn lưu thay đổi không?</p>
-
-      <div class="modal-actions">
-        <button @click="showConfirmModal = false">Hủy</button>
-        <button class="save-btn" @click="submitUpdate">Xác nhận</button>
+  <transition name="fade-modal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeConfirmModal"
+    >
+      <div class="confirm-box">
+        <div class="confirm-icon-wrapper">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12l3 3 5-5"></path>
+          </svg>
+        </div>
+        <h3 class="confirm-title">{{ modal.title }}</h3>
+        <p class="confirm-desc">{{ modal.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel hover-effect" @click="closeConfirmModal">
+            Hủy
+          </button>
+          <button class="btn-confirm hover-effect" @click="handleModalConfirm">
+            Đồng ý
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -174,10 +199,16 @@ import axios from "axios";
 const route = useRoute();
 const router = useRouter();
 const ctspId = Number(route.params.id);
-const showConfirmModal = ref(false);
+const modal = ref({
+  show: false,
+  title: "",
+  message: "",
+  onConfirm: null,
+});
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
 
-/* ===== AUTH ===== */
-const token = localStorage.getItem("token");
 const authHeader = {
   Authorization: `Bearer ${token}`,
 };
@@ -398,13 +429,28 @@ const validateForm = () => {
 
 const handleOpenConfirm = () => {
   if (!validateForm()) return;
-  showConfirmModal.value = true;
+
+  modal.value = {
+    show: true,
+    title: "Xác nhận cập nhật",
+    message: "Bạn có chắc muốn lưu thay đổi không?",
+    onConfirm: submitUpdate,
+  };
 };
 
+const closeConfirmModal = () => {
+  modal.value.show = false;
+};
+
+const handleModalConfirm = () => {
+  if (modal.value.onConfirm) {
+    modal.value.onConfirm();
+  }
+  modal.value.show = false;
+};
 /* ===== SUBMIT UPDATE ===== */
 const submitUpdate = async () => {
-  showConfirmModal.value = false;
-
+  modal.value.show = false;
   const payload = {
     id: ctspId,
     idSanPham: route.params.sanPhamId,
@@ -417,7 +463,7 @@ const submitUpdate = async () => {
     giaBan: giaBan.value,
     giaNhap: giaNhap.value,
     trangThai: soLuongTon.value > 0 ? 1 : 0,
-    nguoiCapNhat: "admin",
+    nguoiCapNhat: username,
     hinhAnh: imageUrl.value ? [imageUrl.value] : [],
   };
 
@@ -767,5 +813,113 @@ input[type="number"] {
 .btn-download-qr:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+.modal-confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: zoomIn 0.3s ease-out;
+}
+/* Tìm đoạn này trong phần 8. MODAL & TOAST */
+/* Sửa lại đoạn này */
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9;
+  color: #22c55e;
+  margin: 0 auto 15px auto;
+
+  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 40px;
+
+  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
+  line-height: 1;
+
+  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
+  /* animation: none; */
+}
+
+/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
+.confirm-icon-wrapper i,
+.confirm-icon-wrapper svg,
+.confirm-icon-wrapper span {
+  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0; /* Xóa margin mặc định nếu có */
+
+  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
+  /* transform: translateY(2px); */
+}
+.confirm-title {
+  color: #63391f;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.btn-confirm {
+  background: #63391f;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-confirm:hover {
+  background: #4e2c17;
+  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
+}
+.confirm-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  flex: 1;
+  height: 42px;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
 }
 </style>

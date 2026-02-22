@@ -200,8 +200,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
-const token = localStorage.getItem("token");
-
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const token = user?.accessToken;
+const username = user?.username;
 const notifications = ref([]);
 
 const showNotification = (message, type = "success") => {
@@ -254,7 +255,7 @@ async function handleModalConfirm() {
         null,
         {
           params: {
-            nguoiCapNhat: "admin",
+            nguoiCapNhat: username,
           },
           headers: {
             Authorization: `Bearer ${token}`,
@@ -321,7 +322,6 @@ const editingId = ref(null);
 const newColor = ref({
   tenMauSac: "",
   rgb: "",
-  nguoiTao: "admin",
 });
 
 const openModal = () => {
@@ -333,7 +333,6 @@ const closeModal = () => {
   newColor.value = {
     tenMauSac: "",
     rgb: "",
-    nguoiTao: "admin",
   };
   isEdit.value = false;
   editingId.value = null;
@@ -350,7 +349,7 @@ const addColor = async () => {
       {
         tenMauSac: newColor.value.tenMauSac,
         rgb: newColor.value.rgb,
-        nguoiTao: "admin",
+        nguoiTao: username,
       },
       {
         headers: {
@@ -387,7 +386,7 @@ const updateColor = async () => {
       {
         tenMauSac: newColor.value.tenMauSac,
         rgb: newColor.value.rgb,
-        nguoiCapNhat: "admin",
+        nguoiCapNhat: username,
       },
       {
         headers: {

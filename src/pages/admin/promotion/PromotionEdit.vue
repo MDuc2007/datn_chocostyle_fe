@@ -244,7 +244,13 @@
                 </button>
               </td>
               <td>
-                <img :src="ct.anhHienThi" class="variant-img" />
+                <div class="img-wrapper">
+                  <img :src="ct.anhHienThi" class="variant-img" />
+
+                  <div v-if="form.giaTriGiam > 0" class="discount-badge">
+                    -{{ form.giaTriGiam }}%
+                  </div>
+                </div>
               </td>
 
               <td>{{ ct.tenSp }}</td>
@@ -1290,5 +1296,34 @@ img {
   font-weight: 600;
   color: #e53935;
   font-size: 16px;
+}
+.img-wrapper {
+  position: relative;
+  width: 55px;
+  height: 55px;
+}
+
+.variant-img {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.discount-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+
+  background: linear-gradient(135deg, #ff4d4f, #d32f2f);
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  padding: 4px 6px;
+  border-radius: 8px;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 </style>
