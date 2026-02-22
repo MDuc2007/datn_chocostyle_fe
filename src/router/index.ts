@@ -211,7 +211,7 @@ const routes: Array<RouteRecordRaw> = [
         path: "employee-schedule",
         name: "MySchedule",
         component: () =>
-          import("../pages/admin/Calendar/EmployeeScheduleView.vue"),
+          import("../pages/staff/calendar/EmployeeScheduleView.vue"),
       },
 
       // 2.6. Quản lý khách hàng
