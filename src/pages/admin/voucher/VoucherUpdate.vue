@@ -106,21 +106,12 @@
           <label> Số lượng <span class="required">*</span> </label>
           <input
             type="number"
-            :value="
-              form.kieuApDung === 'PERSONAL'
-                ? selectedCustomerIds.length
-                : form.soLuong
-            "
+            v-model="displaySoLuong"
             :disabled="
               form.kieuApDung === 'PERSONAL' ||
               voucherMeta.trangThai !== 'CHUA_DIEN_RA'
             "
             :class="{ error: errors.soLuong }"
-            @input="
-              form.soLuong = isNaN($event.target.valueAsNumber)
-                ? null
-                : Math.floor($event.target.valueAsNumber)
-            "
           />
           <small v-if="errors.soLuong" class="error-text">
             {{ errors.soLuong }}
@@ -597,6 +588,29 @@ const validateForm = () => {
   return valid;
 };
 
+const displaySoLuong = computed({
+  get() {
+    if (form.kieuApDung === "PERSONAL") {
+      return selectedCustomerIds.value.length;
+    }
+
+    if (form.soLuong == null) return "";
+
+    return Math.max(0, form.soLuong - (voucherMeta.soLuongDaSuDung || 0));
+  },
+  set(val) {
+    if (form.kieuApDung === "ALL") {
+      const inputVal = Number(val);
+
+      if (isNaN(inputVal)) {
+        form.soLuong = null;
+      } else {
+        form.soLuong = inputVal + (voucherMeta.soLuongDaSuDung || 0);
+      }
+    }
+  },
+});
+
 const cannotRemoveIds = ref([]);
 
 watch(
@@ -768,7 +782,7 @@ onMounted(async () => {
     ngayKetThuc,
     soLuong,
     trangThai,
-    soLuongDaSuDung,
+    soLuongDaDung,
   } = res.data;
 
   Object.assign(form, {
@@ -790,8 +804,11 @@ onMounted(async () => {
     form.giaTriToiDa = null;
   }
 
-  voucherMeta.trangThai = trangThai;
-  voucherMeta.soLuongDaSuDung = soLuongDaSuDung;
+  if (trangThai === 0) voucherMeta.trangThai = "CHUA_DIEN_RA";
+  else if (trangThai === 1) voucherMeta.trangThai = "DANG_DIEN_RA";
+  else voucherMeta.trangThai = "DA_KET_THUC";
+
+  voucherMeta.soLuongDaSuDung = soLuongDaDung || 0;
 
   if (res.data.khachHangIds) {
     selectedCustomerIds.value = [...res.data.khachHangIds];
