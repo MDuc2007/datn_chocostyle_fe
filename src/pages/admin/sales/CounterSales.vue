@@ -246,6 +246,7 @@
                 <span class="text-muted">Tổng tiền hàng</span>
                 <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
+
               <div
                 class="payment-row"
                 v-if="currentOrder.deliveryType === 'DELIVERY'"
@@ -253,11 +254,12 @@
                 <span class="text-muted">Phí vận chuyển</span>
                 <span class="fw-600">{{ formatPrice(shippingFee) }}</span>
               </div>
+
               <div class="payment-row" v-if="discount > 0">
                 <span class="text-muted">Giảm giá voucher</span>
-                <span class="text-red fw-600"
-                  >- {{ formatPrice(discount) }}</span
-                >
+                <span class="text-red fw-600">
+                  - {{ formatPrice(discount) }}
+                </span>
               </div>
             </div>
 
@@ -522,7 +524,6 @@
 </template>
 
 <script setup>
-// GIỮ NGUYÊN 100% SCRIPT CỦA BẠN, KHÔNG SỬA DÒNG NÀO
 import { ref, computed, watch, onMounted, watchEffect } from "vue";
 import axios from "axios";
 
@@ -841,6 +842,8 @@ const openPaymentPopup = () => {
   cashInput.value = total.value;
   showPaymentPopup.value = true;
 };
+
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
@@ -856,7 +859,13 @@ const confirmPayment = async () => {
 
   showPaymentPopup.value = false;
 
-  await submitOrder(); // 👈 gọi ở đây
+  openConfirmModal(
+    "Xác nhận thanh toán",
+    `Bạn có chắc chắn muốn hoàn tất thanh toán cho đơn ${currentOrder.value.maHoaDon} không?`,
+    async () => {
+      await submitOrder();
+    },
+  );
 };
 
 const changeMoney = computed(() => {
@@ -928,8 +937,8 @@ const createOrder = async () => {
     await fetchProvinces();
 
     const newOrder = {
-      idHoaDon: draftOrder.id, // BẮT BUỘC PHẢI CÓ DÒNG NÀY ĐỂ LẤY ID LÚC SAU UPDATE
-      maHoaDon: draftOrder.maHoaDon, // BẮT BUỘC PHẢI CÓ DÒNG NÀY
+      idHoaDon: draftOrder.id,
+      maHoaDon: draftOrder.maHoaDon,
       id: Date.now(),
       cart: [],
       customer: {
@@ -960,7 +969,7 @@ const createOrder = async () => {
   }
 };
 
-// 2. SỬA HÀM SUBMIT (Đổi thành axios.put để cập nhật đúng vào cái ID nháp kia)
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thay vì gọi removeOrder, đóng tab trực tiếp sau khi chốt đơn thành công
 const submitOrder = async () => {
   if (!currentOrder.value) return;
   if (subTotal.value <= 0) {
@@ -995,14 +1004,23 @@ const submitOrder = async () => {
       })),
     };
 
-    // ĐÂY LÀ ĐIỂM QUAN TRỌNG NHẤT: DÙNG AXIOS.PUT
     await axios.put(
       `http://localhost:8080/api/hoa-don/tai-quay/xac-nhan/${order.idHoaDon}`,
       payload,
     );
 
-    showToast(`Thanh toán thành công ${order.maHoaDon}!`); // Thông báo mới để nhận biết code đã ăn
-    removeOrder(activeOrderIndex.value);
+    showToast(`Thanh toán thành công ${order.maHoaDon}!`);
+
+    // ĐÓNG TAB NGAY LẬP TỨC
+    const currentIndex = activeOrderIndex.value;
+    orders.value.splice(currentIndex, 1);
+
+    // Tính toán lại để focus vào tab bên cạnh (nếu còn)
+    if (!orders.value.length) {
+      activeOrderIndex.value = -1;
+    } else {
+      activeOrderIndex.value = Math.max(0, currentIndex - 1);
+    }
   } catch (e) {
     showToast(e.response?.data || "Lỗi thanh toán", "error");
     console.error(e);
@@ -1015,39 +1033,32 @@ watch(subTotal, () => {
     currentOrder.value.voucherCode = "";
   }
 });
+
 const removeOrder = (index) => {
   const targetOrder = orders.value[index];
 
-  // Sử dụng popup Confirm có sẵn trong code của bạn để hỏi người dùng
   openConfirmModal(
     "Xác nhận xóa hóa đơn",
     `Bạn có chắc chắn muốn tắt và hủy đơn ${targetOrder.maHoaDon} không?`,
     async () => {
       try {
-        // 1. Gọi API xóa hóa đơn dưới Backend
-        // Lưu ý: Đảm bảo đường dẫn API khớp với Controller bạn đã viết
         if (targetOrder.idHoaDon) {
           await axios.delete(
             `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
           );
         }
 
-        // 2. Xóa thành công DB -> Xóa tab khỏi mảng UI
         orders.value.splice(index, 1);
         showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
 
-        // 3. Xử lý lại trạng thái Tab đang Focus
         if (!orders.value.length) {
-          activeOrderIndex.value = -1; // Hết tab
+          activeOrderIndex.value = -1;
           return;
         }
 
-        // Nếu xóa đúng cái tab đang mở, lùi về tab bên trái nó
         if (activeOrderIndex.value === index) {
           activeOrderIndex.value = Math.max(0, index - 1);
-        }
-        // Nếu xóa cái tab đứng trước tab đang mở, phải trừ index đi 1 để giữ đúng focus
-        else if (index < activeOrderIndex.value) {
+        } else if (index < activeOrderIndex.value) {
           activeOrderIndex.value--;
         }
       } catch (error) {
@@ -1156,6 +1167,7 @@ const bankQR = computed(() => {
   return `https://img.vietqr.io/image/${bank}-${account}-compact.png?amount=${amount}&addInfo=POS`;
 });
 
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Xử lý VOUCHER
 const applyVoucher = () => {
   if (!currentOrder.value) return;
   voucherError.value = "";
@@ -1182,29 +1194,51 @@ const applyVoucher = () => {
     return;
   }
 
+  let percent = 0;
+  let amount = 0;
+
+  if (
+    found.loaiGiam === "PERCENT" ||
+    found.loaiGiam === "PHAN_TRAM" ||
+    found.loaiGiam === 0
+  ) {
+    percent = Number(found.giaTri);
+  } else {
+    amount = Number(found.giaTri);
+  }
+
   currentOrder.value.appliedVoucher = {
     code: found.maPgg,
-    percent: found.loaiGiam === "PERCENT" ? Number(found.giaTri) : 0,
-    amount: found.loaiGiam === "AMOUNT" ? Number(found.giaTri) : 0,
+    percent,
+    amount,
     message: found.tenPgg,
   };
-  if (found.loaiGiam === "PERCENT") {
+
+  if (
+    found.loaiGiam === "PERCENT" ||
+    found.loaiGiam === "PHAN_TRAM" ||
+    found.loaiGiam === 0
+  ) {
     voucherSuccess.value = `Áp dụng thành công - Giảm ${found.giaTri}%`;
   } else {
     voucherSuccess.value = `Áp dụng thành công - Giảm ${formatPrice(found.giaTri)}`;
   }
 };
 
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: TÍNH TIỀN GIẢM GIÁ
 const discount = computed(() => {
   const v = currentOrder.value?.appliedVoucher;
   if (!v) return 0;
-  let totalDiscount = 0;
-  if (v.percent && v.percent > 0) {
-    totalDiscount = (subTotal.value * v.percent) / 100;
-  } else if (v.amount && v.amount > 0) {
-    totalDiscount = v.amount;
+
+  if (v.percent > 0) {
+    return Math.min((subTotal.value * v.percent) / 100, subTotal.value);
   }
-  return Math.min(totalDiscount, subTotal.value);
+
+  if (v.amount > 0) {
+    return Math.min(v.amount, subTotal.value);
+  }
+
+  return 0;
 });
 
 const shippingFee = computed(() => {
@@ -1423,7 +1457,6 @@ const showToast = (msg, type = "success") => {
   background: #f7f7f7;
   padding: 0 12px;
   overflow: hidden;
-  border-bottom: 1px solid #e5e5e5;
 }
 .order-tab {
   background: #ececec;
@@ -1464,7 +1497,7 @@ const showToast = (msg, type = "success") => {
   gap: 16px;
   padding: 16px;
   background: #fff;
-  border-radius: 0 0 20px 20px;
+  border-radius: 10px;
 }
 
 /* BOX CHUNG */
@@ -1536,7 +1569,7 @@ const showToast = (msg, type = "success") => {
 
 .product-row {
   text-align: center;
-  display: grid;
+  display: flex;
   grid-template-columns: 2fr 120px 150px 140px 50px;
   gap: 12px;
   align-items: center;
@@ -1844,25 +1877,31 @@ select:focus {
   overflow: hidden;
 }
 
+/* Tìm đoạn này và sửa lại */
 .modal {
   background: #fff;
   border-radius: 12px;
-  width: 800px;
-  max-width: 95vw;
-  max-height: 85vh;
+  width: 95vw;
+  max-width: 1200px;
+  /* height: 85vh;  <--- XÓA DÒNG NÀY ĐI */
+  max-height: 90vh;
   display: flex;
-  position: relative;
-  margin: 0 auto;
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
+
 .modal.large {
-  width: 1100px;
+  width: 95vw;
+  max-width: 1400px;
+  height: 85vh; /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
 }
+
 .modal.small {
-  width: 450px;
-} /* Mở rộng xíu cho modal thanh toán */
+  width: 90vw;
+  max-width: 500px;
+  /* Form thanh toán dùng modal.small sẽ tự động co ngắn lại ôm vừa nội dung */
+}
 
 .modal-header {
   padding: 16px 20px;
@@ -1895,8 +1934,8 @@ select:focus {
 
 .modal-body {
   padding: 20px;
-  overflow-y: hidden;
   flex: 1;
+  overflow-y: auto;
 }
 
 /* Filter & Table Modal */
@@ -2176,8 +2215,9 @@ select:focus {
   border: 1px solid #eee;
 }
 
+/* ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Cập nhật CSS height */
 .product-scroll {
-  max-height: 500px;
+  max-height: 60vh;
   overflow-y: auto;
 }
 
