@@ -671,7 +671,7 @@ onMounted(() => {
   border-color: #5a2d0c;
   box-shadow: 0 0 0 2px rgba(90, 45, 12, 0.15);
 }
-/* 
+
 .filters button {
   cursor: pointer;
   background: #f3f3f3;
@@ -679,7 +679,7 @@ onMounted(() => {
 
 .filters button:hover {
   background: #eaeaea;
-} */
+}
 
 /* ================= BUTTON ADD ================= */
 .btn-add {
@@ -1051,18 +1051,5 @@ onMounted(() => {
   height: 22px;
   display: inline-block;
 }
-.btn-clear {
-  height: 42px;
-  width: 42px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 18px;
-  color: #666;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+
 </style>
