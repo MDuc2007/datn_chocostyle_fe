@@ -297,19 +297,6 @@ const routes: Array<RouteRecordRaw> = [
     },
   ],
 },
-  // 3. STAFF ROUTES (Nếu có giao diện POS riêng ngoài Admin Layout)
-{
-  path: "/staff",
-  component: () => import("../pages/staff/StaffLayout.vue"),
-  meta: { authorize: ["ROLE_ADMIN", "ROLE_STAFF"] },
-  children: [
-    {
-       path: "pos",
-      component: () => import("../pages/staff/customer/CustomerManager.vue"),
-    }
-  ]
-},
-
   // Redirect lỗi 404
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
@@ -374,7 +361,7 @@ router.beforeEach((to, from, next) => {
       case "ROLE_ADMIN":
         return next("/admin/dashboard");
       case "ROLE_STAFF":
-        return next("/staff/pos");
+        return next("/staff/shift-report");
       default:
         return next("/"); // Khách hàng hoặc các role khác
     }

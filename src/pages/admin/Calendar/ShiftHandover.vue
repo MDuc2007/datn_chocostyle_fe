@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 
 // --- STATE ---
@@ -20,70 +20,42 @@ const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
   setTimeout(() => notifications.value = notifications.value.filter(n => n.id !== id), 3000);
 };
 
-// Dữ liệu mẫu (Mock data)
-// Sau này sẽ thay bằng axios.get('/api/giao-ca')
-const handovers = ref([
-  {
-    id: 3,
-    nhanVien: 'Văn Nhân',
-    ca: '-',
-    thoiGianMo: '18:34:54 12/2/2026',
-    thoiGianDong: '-',
-    tienMat: 0,
-    tienChuyenKhoan: 0,
-    tongDoanhThu: 0,
-    tienChenh: 0,
-    trangThai: 2 // 2: Đang mở
-  },
-  {
-    id: 2,
-    nhanVien: 'Thắng Nguyễn Như',
-    ca: 'Ca Tối',
-    thoiGianMo: '18:32:26 12/2/2026',
-    thoiGianDong: '19:27:42 12/2/2026',
-    tienMat: 0,
-    tienChuyenKhoan: 0,
-    tongDoanhThu: 0,
-    tienChenh: 0,
-    trangThai: 1 // 1: Đã đóng
-  },
-  {
-    id: 1,
-    nhanVien: 'Nguyễn Quốc Khánh',
-    ca: '-',
-    thoiGianMo: '17:49:50 12/2/2026',
-    thoiGianDong: '-',
-    tienMat: 0,
-    tienChuyenKhoan: 0,
-    tongDoanhThu: 0,
-    tienChenh: 0,
-    trangThai: 2 // 2: Đang mở
-  }
-]);
+// Dữ liệu lấy từ API
+const handovers = ref<any[]>([]);
 
 // --- HELPER FUNCTIONS ---
 const formatCurrency = (value: number) => {
+  if (value === null || value === undefined) return '0 đ';
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ');
 };
 
+// --- ÁNH XẠ TEXT TRẠNG THÁI ---
 const getStatusText = (status: number) => {
-  return status === 2 ? 'Đang mở' : 'Đã đóng';
+  if (status === 1) return 'Đã đóng';
+  if (status === 2) return 'Đang mở';
+  if (status === 3) return 'Đang làm'; // Đã đổi thành Đang làm
+  return 'Không xác định';
 };
 
+// --- ÁNH XẠ MÀU SẮC (CLASS CSS) ---
 const getStatusClass = (status: number) => {
-  return status === 2 ? 'active' : 'inactive';
+  if (status === 1) return 'status-badge closed'; // Đỏ
+  if (status === 2) return 'status-badge open';   // Xanh lá
+  if (status === 3) return 'status-badge active'; // Vàng cam
+  return 'status-badge';
 };
 
 // --- API CALLS ---
 const fetchHandovers = async () => {
   loading.value = true;
   try {
-    // TODO: Gọi API Backend tại đây
-    // const res = await axios.get('/api/giao-ca/search', { params: filters });
-    // handovers.value = res.data;
-    
-    // Giả lập load API
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const params: any = {};
+    if (filters.keyword) params.keyword = filters.keyword;
+    if (filters.fromDate) params.fromDate = filters.fromDate;
+    if (filters.toDate) params.toDate = filters.toDate;
+
+    const res = await axios.get('http://localhost:8080/api/cham-cong/giao-ca', { params });
+    handovers.value = res.data;
   } catch (error) {
     console.error("Lỗi lấy danh sách giao ca:", error);
     showToast('Lỗi kết nối server', 'error');
@@ -111,7 +83,6 @@ onMounted(() => {
 <template>
   <div class="page-container">
     
-    <!-- Toast Container -->
     <div class="toast-container">
       <TransitionGroup name="toast">
         <div v-for="notif in notifications" :key="notif.id" class="toast" :class="notif.type">
@@ -120,7 +91,6 @@ onMounted(() => {
       </TransitionGroup>
     </div>
 
-    <!-- Filter Card -->
     <div class="card-section filter-card form-page-animation">
       <div class="filter-card-header">
         <h2 class="card-title">GIAO CA & KẾT TOÁN</h2>
@@ -128,7 +98,6 @@ onMounted(() => {
 
       <div class="filter-controls">
         <div class="left-controls">
-          <!-- Search Input -->
           <div class="filter-group search-group">
             <div class="search-box">
               <i class="search-icon">
@@ -142,17 +111,18 @@ onMounted(() => {
                 class="form-input ps-icon" 
                 v-model="filters.keyword"
                 placeholder="Tìm theo nhân viên / mã ca..."
+                @keyup.enter="applyFilter"
               />
             </div>
           </div>
 
-          <!-- Date Range -->
           <div class="filter-group">
             <label class="filter-label">Từ ngày:</label>
             <input 
               type="date" 
               class="form-input mini-input" 
               v-model="filters.fromDate"
+              @change="applyFilter"
             />
           </div>
 
@@ -162,6 +132,7 @@ onMounted(() => {
               type="date" 
               class="form-input mini-input" 
               v-model="filters.toDate"
+              @change="applyFilter"
             />
           </div>
         </div>
@@ -175,7 +146,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Table Card -->
     <div class="card-section table-card form-page-animation">
       <div class="table-container">
         <table class="custom-table">
@@ -216,8 +186,12 @@ onMounted(() => {
               </td>
               <td class="text-right">{{ formatCurrency(item.tienMat) }}</td>
               <td class="text-right">{{ formatCurrency(item.tienChuyenKhoan) }}</td>
-              <td class="text-right font-bold">{{ formatCurrency(item.tongDoanhThu) }}</td>
-              <td class="text-right">{{ formatCurrency(item.tienChenh) }}</td>
+              <td class="text-right font-bold text-blue-600">{{ formatCurrency(item.tongDoanhThu) }}</td>
+              
+              <td class="text-right font-bold" :class="item.tienChenh < 0 ? 'text-red-600' : (item.tienChenh > 0 ? 'text-green-600' : '')">
+                {{ formatCurrency(item.tienChenh) }}
+              </td>
+
               <td class="text-center">
                 <span class="status-badge" :class="getStatusClass(item.trangThai)">
                   {{ getStatusText(item.trangThai) }}
@@ -511,6 +485,11 @@ onMounted(() => {
   color: #9ca3af;
 }
 
+/* Thêm màu chữ cho số tiền */
+.text-red-600 { color: #dc2626 !important; }
+.text-green-600 { color: #16a34a !important; }
+.text-blue-600 { color: #2563eb !important; }
+
 .py-4 {
   padding-top: 20px;
   padding-bottom: 20px;
@@ -551,17 +530,36 @@ onMounted(() => {
   font-weight: 700;
   display: inline-block;
   min-width: 90px;
+  text-align: center;
 }
 
-.status-badge.active {
+/* 2: ĐANG MỞ (Màu Xanh lá) */
+.status-badge.open {
   background-color: #dcfce7;
   color: #166534;
   border: 1px solid #22c55e;
 }
 
-.status-badge.inactive {
+/* 3: ĐANG LÀM (Màu nâu gradient wave) */
+.status-badge.active {
+  background: linear-gradient(90deg, #6b3f23 0%, #c89b6d 25%, #5a3420 50%, #c89b6d 75%, #6b3f23 100%);
+  background-size: 200% 100%;
+  color: white;
+  border: none;
+  animation: gradientWave 2s linear infinite;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(107, 63, 35, 0.4);
+}
+
+@keyframes gradientWave {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* 1: ĐÃ ĐÓNG (Màu Đỏ) */
+.status-badge.closed {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: #b91c1c;
   border: 1px solid #ef4444;
 }
 
