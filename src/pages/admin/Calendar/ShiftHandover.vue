@@ -99,6 +99,7 @@ onMounted(() => {
       <div class="filter-controls">
         <div class="left-controls">
           <div class="filter-group search-group">
+            <label class="filter-label">Tìm kiếm</label>
             <div class="search-box">
               <i class="search-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -139,9 +140,6 @@ onMounted(() => {
 
         <div class="right-controls">
           <button class="btn btn-outline hover-effect" @click="resetFilters">Đặt lại</button>
-          <button class="btn btn-primary hover-effect" @click="applyFilter">
-            Lọc
-          </button>
         </div>
       </div>
     </div>
@@ -171,7 +169,7 @@ onMounted(() => {
               <td colspan="10" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
             </tr>
             <tr v-else v-for="(item, index) in handovers" :key="item.id">
-              <td class="text-center font-bold text-gray-500">{{ index + 1 }}</td>
+              <td class="text-center" style="color: #333333">{{ index + 1 }}</td>
               <td>
                 <span class="name-text">{{ item.nhanVien }}</span>
               </td>
@@ -184,11 +182,11 @@ onMounted(() => {
               <td>
                 <span class="time-text">{{ item.thoiGianDong }}</span>
               </td>
-              <td class="text-right">{{ formatCurrency(item.tienMat) }}</td>
-              <td class="text-right">{{ formatCurrency(item.tienChuyenKhoan) }}</td>
-              <td class="text-right font-bold text-blue-600">{{ formatCurrency(item.tongDoanhThu) }}</td>
+              <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienMat) }}</td>
+              <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienChuyenKhoan) }}</td>
+              <td class="text-right" style="color: #000000; font-weight: 500;">{{ formatCurrency(item.tongDoanhThu) }}</td>
               
-              <td class="text-right font-bold" :class="item.tienChenh < 0 ? 'text-red-600' : (item.tienChenh > 0 ? 'text-green-600' : '')">
+              <td class="text-right" style="font-weight: 500;" :style="{ color: item.tienChenh < 0 ? '#dc2626' : (item.tienChenh > 0 ? '#16a34a' : '#333333') }">
                 {{ formatCurrency(item.tienChenh) }}
               </td>
 
@@ -474,7 +472,7 @@ onMounted(() => {
 }
 
 .font-bold {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .text-gray-500 {
@@ -497,26 +495,26 @@ onMounted(() => {
 
 /* Table-specific elements */
 .name-text {
-  font-weight: 600;
-  color: #000000;
+  font-weight: 400;
+  color: #333333;
   font-size: 14px;
 }
 
 .shift-badge {
-  background: #e0e7ff;
-  color: #000000;
+  background: #f3f4f6;
+  color: #333333;
   padding: 4px 10px;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 13px;
   display: inline-block;
 }
 
 .time-text {
-  font-family: monospace;
-  font-weight: 500;
-  color: #000000;
-  background: #f3f4f6;
+  font-family: Arial, sans-serif;
+  font-weight: 400;
+  color: #333333;
+  background: #f9fafb;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 13px;
@@ -540,20 +538,12 @@ onMounted(() => {
   border: 1px solid #22c55e;
 }
 
-/* 3: ĐANG LÀM (Màu nâu gradient wave) */
+/* 3: ĐANG LÀM (Màu nâu gradient bình thường) */
 .status-badge.active {
-  background: linear-gradient(90deg, #6b3f23 0%, #c89b6d 25%, #5a3420 50%, #c89b6d 75%, #6b3f23 100%);
-  background-size: 200% 100%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
-  animation: gradientWave 2s linear infinite;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(107, 63, 35, 0.4);
-}
-
-@keyframes gradientWave {
-  0% { background-position: 100% 0; }
-  100% { background-position: 0 0; }
 }
 
 /* 1: ĐÃ ĐÓNG (Màu Đỏ) */
