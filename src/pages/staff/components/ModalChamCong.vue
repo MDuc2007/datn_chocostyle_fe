@@ -2,7 +2,7 @@
   <div v-if="show" class="modal-overlay">
     <div class="modal-content">
       
-      <div class="modal-header animated-gradient">
+      <div class="modal-header">
         <h3>MỞ CA LÀM VIỆC</h3>
         <p>Hệ thống quản lý bán hàng ChocoStyle Shop</p>
       </div>
@@ -14,6 +14,7 @@
         </div>
 
         <div v-if="!ca || !ca.caLamViec" class="alert-box error">
+          <span class="alert-icon">⚠️</span>
           <p>Hôm nay bạn không có lịch phân công ca làm việc.</p>
         </div>
 
@@ -32,27 +33,33 @@
             <div class="form-group">
               <label>Tiền mặt đầu ca</label>
               <div class="input-wrapper">
-                <input type="number" v-model="form.tienMat" class="form-control" />
+                <input type="number" v-model="form.tienMat" class="form-control" placeholder="0" />
                 <span class="currency-unit">VNĐ</span>
               </div>
             </div>
+            
             <div class="form-group">
               <label>Tiền tài khoản đầu ca</label>
               <div class="input-wrapper">
-                <input type="number" v-model="form.tienTaiKhoan" class="form-control" />
+                <input type="number" v-model="form.tienTaiKhoan" class="form-control" placeholder="0" />
                 <span class="currency-unit">VNĐ</span>
               </div>
             </div>
+            
             <p class="previous-balance">Số dự kiến từ ca trước: <strong>0 VNĐ</strong></p>
           </div>
 
           <div v-else-if="chamCong && !chamCong.gioCheckOut" class="alert-box success">
-            <p class="status-title">✅ Đang trong ca làm việc</p>
-            <p>Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong></p>
+            <div class="status-header">
+              <span class="alert-icon">✅</span>
+              <p class="status-title">Đang trong ca làm việc</p>
+            </div>
+            <p class="status-time">Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong></p>
             <p class="status-note">Hãy bấm kết thúc ca khi bạn làm xong nhé!</p>
           </div>
           
-          <div v-else class="alert-box disabled">
+          <div v-else class="alert-box disabled-box">
+            <span class="alert-icon">🔒</span>
             <p>Ca làm việc hôm nay của bạn đã hoàn thành.</p>
           </div>
         </div>
@@ -60,27 +67,34 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-outline" @click="close">Chế độ xem</button>
+        
+        <template v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)">
+          <button class="btn btn-outline" style="width: 100%" @click="close">Đóng lại</button>
+        </template>
 
-        <template v-if="ca && ca.caLamViec">
+        <template v-else-if="ca && ca.caLamViec && !chamCong">
+          <button class="btn btn-outline" @click="close">Hủy bỏ</button>
           <button 
-            v-if="!chamCong" 
-            class="btn btn-primary animated-gradient" 
+            class="btn btn-primary" 
             @click="checkIn" 
             :disabled="isLoading"
           >
             {{ isLoading ? 'Đang xử lý...' : 'Xác nhận vào ca' }}
           </button>
+        </template>
 
+        <template v-else-if="chamCong && !chamCong.gioCheckOut">
+          <button class="btn btn-outline" @click="close">Vào ca</button>
+          
           <button 
-            v-else-if="chamCong && !chamCong.gioCheckOut" 
-            class="btn btn-danger" 
+            class="btn btn-primary btn-danger-custom" 
             @click="checkOut" 
-            :disabled="isLoading"
+            :disabled="isLoading || isChuaHetCa"
           >
-            {{ isLoading ? 'Đang xử lý...' : 'Kết thúc ca' }}
+            {{ isLoading ? 'Đang xử lý...' : (isChuaHetCa ? 'Chưa tới giờ nghỉ' : 'Kết thúc ca') }}
           </button>
         </template>
+
       </div>
 
     </div>
@@ -89,10 +103,9 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onUnmounted } from "vue";
-import Swal from 'sweetalert2'; // 👉 Thêm import SweetAlert2
+import { ref, onMounted, onUnmounted, computed } from "vue"; // 👉 Đã import thêm computed
+import Swal from 'sweetalert2';
 
-// Thêm tenNv vào danh sách nhận dữ liệu
 const props = defineProps(["ca", "idNv", "tenNv", "token"]);
 const emit = defineEmits(["close"]);
 
@@ -105,14 +118,28 @@ const form = ref({
 });
 
 const chamCong = ref(null); 
-
+const currentDateObj = ref(new Date()); // 👉 Biến theo dõi thời gian thực
 const currentTime = ref('');
 let timer;
 
 const updateTime = () => {
-  const now = new Date();
-  currentTime.value = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
+  currentDateObj.value = new Date(); // Cập nhật liên tục mỗi giây
+  currentTime.value = currentDateObj.value.toLocaleTimeString('vi-VN') + ' ' + currentDateObj.value.toLocaleDateString('vi-VN');
 };
+
+// 👉 LOGIC KHÓA NÚT NẾU CHƯA ĐẾN GIỜ (Được tính toán liên tục)
+const isChuaHetCa = computed(() => {
+  if (!props.ca || !props.ca.caLamViec || !props.ca.caLamViec.gioKetThuc) return false;
+
+  const endTimeStr = props.ca.caLamViec.gioKetThuc; // Lấy "23:10:00"
+  const [hours, minutes] = endTimeStr.split(':');
+  
+  const endTime = new Date();
+  endTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+  // Trả về true (khóa nút) nếu thời gian hiện tại vẫn nhỏ hơn giờ kết thúc
+  return currentDateObj.value.getTime() < endTime.getTime(); 
+});
 
 const headers = {
   Authorization: `Bearer ${props.token}`
@@ -131,7 +158,6 @@ const checkIn = async () => {
       { headers }
     );
     
-    // Báo thành công
     await Swal.fire({
       title: 'Thành công!',
       text: 'Mở ca làm việc thành công!',
@@ -142,8 +168,6 @@ const checkIn = async () => {
     location.reload(); 
   } catch (error) {
     console.error("Lỗi check-in:", error);
-    
-    // Báo lỗi
     Swal.fire({
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi mở ca.",
@@ -157,7 +181,6 @@ const checkIn = async () => {
 
 // HÀM KẾT THÚC CA VỚI SWEETALERT2
 const checkOut = async () => {
-  // Thêm popup hỏi lại xem có chắc chắn muốn đóng ca không
   const confirmResult = await Swal.fire({
     title: 'Xác nhận kết thúc ca',
     text: "Bạn có chắc chắn muốn kết thúc ca làm việc này không?",
@@ -179,7 +202,6 @@ const checkOut = async () => {
       { headers }
     );
     
-    // Báo thành công
     await Swal.fire({
       title: 'Thành công!',
       text: 'Đã kết thúc ca làm việc!',
@@ -190,8 +212,6 @@ const checkOut = async () => {
     location.reload();
   } catch (error) {
     console.error("Lỗi check-out:", error);
-    
-    // Báo lỗi
     Swal.fire({
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi kết thúc ca.",
@@ -232,38 +252,12 @@ const close = () => {
 </script>
 
 <style scoped>
-/* ================= Biến màu sắc ================= */
-:root {
-  --primary-color: #63391F;
-  --primary-light: #8a5735;
-  --primary-dark: #452614;
-  --bg-color: #F7F7F7;
-  --white-color: #FFFFFF;
-  --text-main: #333333;
-  --text-muted: #666666;
-  --border-color: #E2E8F0;
-}
-
-/* ================= HIỆU ỨNG SÓNG GRADIENT CỦA BẠN ================= */
-.animated-gradient {
-  background: linear-gradient(90deg, #6b3f23 0%, #c89b6d 25%, #5a3420 50%, #c89b6d 75%, #6b3f23 100%);
-  background-size: 200% 100%;
-  color: white;
-  animation: gradientWave 2s linear infinite;
-  border: none;
-}
-
-@keyframes gradientWave { 
-  0% { background-position: 100% 0; } 
-  100% { background-position: 0 0; } 
-}
-
 /* Lớp phủ màn hình tối */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(2px);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -276,8 +270,9 @@ const close = () => {
   width: 480px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
   animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 @keyframes slideDown {
@@ -287,9 +282,11 @@ const close = () => {
 
 /* Header */
 .modal-header {
+  background-color: #63391F;
+  color: #FFFFFF;
   text-align: center;
-  padding: 20px 20px;
-  border-bottom: 3px solid #452614;
+  padding: 24px 20px;
+  border-bottom: 4px solid #452614; 
 }
 
 .modal-header h3 {
@@ -301,10 +298,11 @@ const close = () => {
 
 .modal-header p {
   margin: 0;
-  font-size: 14px;
-  opacity: 0.85;
+  font-size: 13px;
+  opacity: 0.9;
 }
 
+/* Body */
 .modal-body {
   padding: 25px;
   background-color: #F7F7F7;
@@ -318,13 +316,6 @@ const close = () => {
   border-bottom: 1px dashed #D1D5DB;
 }
 
-.staff-name {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #333333;
-}
-
 .staff-code {
   margin: 0;
   font-size: 14px;
@@ -332,20 +323,20 @@ const close = () => {
   font-family: monospace;
   background: #E5E7EB;
   display: inline-block;
-  padding: 4px 10px;
+  padding: 6px 14px;
   border-radius: 20px;
 }
 
 /* Các ô Input */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
   font-size: 14px;
-  color: #4B5563;
-  margin-bottom: 6px;
+  color: #333333;
+  margin-bottom: 8px;
   font-weight: 600;
 }
 
@@ -357,8 +348,8 @@ const close = () => {
 
 .form-control {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #D1D5DB;
+  padding: 12px 45px 12px 15px; 
+  border: 1px solid #E2E8F0;
   border-radius: 8px;
   font-size: 15px;
   color: #333333;
@@ -368,9 +359,9 @@ const close = () => {
   transition: all 0.2s ease;
 }
 
-.form-control:focus {
+.form-control:focus:not(:disabled) {
   border-color: #63391F;
-  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
 
 .disabled-input {
@@ -378,12 +369,11 @@ const close = () => {
   color: #6B7280;
   font-weight: 500;
   cursor: not-allowed;
-  border-color: #D1D5DB;
 }
 
 .currency-unit {
   position: absolute;
-  right: 14px;
+  right: 15px;
   color: #9CA3AF;
   font-size: 14px;
   font-weight: 500;
@@ -402,59 +392,66 @@ const close = () => {
   color: #63391F;
 }
 
-/* Thông báo trạng thái */
+/* Thông báo trạng thái (Alert Boxes) */
 .alert-box {
   padding: 16px;
   border-radius: 8px;
   font-size: 14px;
   text-align: center;
-  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.alert-box p {
-  margin: 0;
-  line-height: 1.5;
-}
+.alert-box p { margin: 0; line-height: 1.5; }
+.alert-icon { font-size: 24px; }
 
 .alert-box.error { 
   background: #FEF2F2; 
-  border-color: #FCA5A5; 
+  border: 1px solid #FCA5A5; 
   color: #991B1B; 
 }
 
 .alert-box.success { 
   background: #ECFDF5; 
-  border-color: #A7F3D0; 
+  border: 1px solid #A7F3D0; 
   color: #065F46; 
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .alert-box.success .status-title {
   font-weight: 700;
-  font-size: 15px;
-  margin-bottom: 6px;
+  font-size: 16px;
 }
 
+.alert-box.success .status-time { font-size: 14px; }
 .alert-box.success .status-note {
-  font-size: 12px;
+  font-size: 13px;
   color: #047857;
-  margin-top: 6px;
   font-style: italic;
+  margin-top: 4px;
 }
 
-.alert-box.disabled { 
+.alert-box.disabled-box { 
   background: #F3F4F6; 
-  border-color: #E5E7EB; 
+  border: 1px solid #E5E7EB; 
   color: #4B5563; 
 }
 
 /* Nút bấm (Footer) */
 .modal-footer {
-  padding: 16px 25px;
+  padding: 20px 25px;
   background-color: #FFFFFF;
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #E2E8F0;
 }
 
 .btn {
@@ -465,7 +462,7 @@ const close = () => {
   border: none;
   font-size: 14px;
   flex: 1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -474,40 +471,46 @@ const close = () => {
 .btn-outline {
   background-color: #FFFFFF;
   border: 1px solid #D1D5DB;
-  color: #4B5563;
+  color: #666666;
 }
 
 .btn-outline:hover { 
-  background-color: #F3F4F6; 
-  color: #111827;
+  background-color: #F9FAFB; 
+  color: #333333;
 }
 
 .btn-primary {
-  box-shadow: 0 2px 4px rgba(99, 57, 31, 0.2);
+  background-color: #63391F;
+  color: #FFFFFF;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) { 
+  background-color: #452614; 
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.3);
 }
 
-.btn-danger {
-  background-color: #DC2626;
-  color: #FFFFFF;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+/* Tùy chỉnh nút Kết thúc ca */
+.btn-danger-custom {
+  background-color: #DC2626 !important;
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
 }
 
-.btn-danger:hover:not(:disabled) { 
-  background-color: #B91C1C; 
-  transform: translateY(-1px);
+.btn-danger-custom:hover:not(:disabled) {
+  background-color: #B91C1C !important;
 }
 
 .btn:disabled {
-  opacity: 0.65;
+  background-color: #D1D5DB !important;
+  color: #9CA3AF !important;
+  box-shadow: none !important;
   cursor: not-allowed;
   transform: none !important;
-  box-shadow: none !important;
-  animation: none !important; /* Tắt hiệu ứng sóng khi nút bị vô hiệu hóa */
-  background: #a8a29e !important;
 }
+</style>
+
+<style>
+  div.swal2-container {
+    z-index: 10000 !important;
+  }
 </style>
