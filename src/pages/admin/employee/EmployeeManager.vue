@@ -23,6 +23,7 @@
       <div class="filter-controls">
         <div class="left-controls">
           <div class="filter-group search-group">
+            <label class="filter-label">Tìm kiếm</label>
             <div class="search-box">
               <i class="search-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -53,12 +54,12 @@
           </button>
           
           <button class="btn btn-outline hover-effect" @click="exportExcel">
-            <img src="/src/assets/icon/dowload.svg" alt="" style="width: 16px; height: 16px; margin-right: 8px;">
+            <img src="/src/assets/icon/dowload.svg" alt="" style="width: 20px; height: 20px">
             Xuất Excel
           </button>
 
-          <button class="btn btn-primary hover-effect" @click="addEmployee">
-            + Thêm nhân viên
+          <button class="btn btn-add hover-effect" @click="addEmployee">
+            <span>+</span> Thêm nhân viên
           </button>
         </div>
       </div>
@@ -145,48 +146,22 @@
 
                 <td class="text-center">
                   <div class="actions-group">
-                    <label
-                      class="switch custom-tooltip"
-                      :data-tooltip="
-                        e.status === 1
-                          ? 'Khóa nhân viên'
-                          : e.status === 2
-                            ? 'Mở khóa'
-                            : 'Kích hoạt lại'
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        :checked="e.status === 1"
-                        @click="toggleStatus(e, $event)"
-                      />
-                      <span class="slider round"></span>
-                    </label>
+                    <div class="tooltip-wrapper" :data-tooltip="e.status === 1 ? 'Khóa nhân viên' : e.status === 2 ? 'Mở khóa' : 'Kích hoạt lại'">
+                      <label class="switch">
+                        <input
+                          type="checkbox"
+                          :checked="e.status === 1"
+                          @click="toggleStatus(e, $event)"
+                        />
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
 
-                    <button
-                      class="btn-icon btn-edit custom-tooltip"
-                      data-tooltip="Chi tiết"
-                      @click="openEditModal(e)"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                        ></path>
-                        <path
-                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                        ></path>
-                      </svg>
-                    </button>
+                    <div class="tooltip-wrapper" data-tooltip="Chi tiết">
+                      <span class="icon edit" @click="openEditModal(e)">
+                        <img src="/src/assets/icon/edit.svg" style="width: 20px; height: 20px" />
+                      </span>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -1007,7 +982,7 @@ const showNotification = (message, type = "success") => {
 }
 
 .btn {
-  padding: 0 20px;
+  padding: 0 16px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
@@ -1015,6 +990,10 @@ const showNotification = (message, type = "success") => {
   justify-content: center;
   transition: all 0.2s;
   border: 1px solid transparent;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .btn-primary {
@@ -1027,10 +1006,34 @@ const showNotification = (message, type = "success") => {
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
+/* Add button style matching ProductManager */
+.btn-add {
+  background: #fff;
+  color: #484848;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-add:hover {
+  border-color: #63391f;
+  color: #63391f;
+  background: #fdf8f6;
+}
+
 .btn-outline {
   background-color: #fff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  color: #484848;
+  border: 1px solid #ccc;
+  border-radius: 10px;
 }
 .btn-outline:hover {
   border-color: #63391f;
@@ -1161,47 +1164,57 @@ const showNotification = (message, type = "success") => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
+}
+
+/* Icon button styles from ProductManager */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.icon.edit {
+  color: #63391f;
 }
 .switch {
   position: relative;
-  display: inline-block;
-  width: 46px;
+  width: 50px;
   height: 24px;
 }
 .switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+  display: none;
 }
 .slider {
   position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d9534f;
-  transition: 0.4s;
+  inset: 0;
+  background: #ccc;
   border-radius: 24px;
+  transition: 0.3s;
 }
-.slider:before {
-  position: absolute;
+.slider::before {
   content: "";
-  height: 18px;
+  position: absolute;
   width: 18px;
+  height: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
+  background: #fff;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: 0.3s;
 }
 input:checked + .slider {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
-input:checked + .slider:before {
-  transform: translateX(22px);
+input:checked + .slider::before {
+  transform: translateX(26px);
 }
 
 .btn-icon {
@@ -1419,6 +1432,50 @@ input:checked + .slider:before {
 /* =========================================
    8. CUSTOM TOOLTIP
    ========================================= */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
 .custom-tooltip {
   position: relative;
 }
@@ -1694,7 +1751,7 @@ input:checked + .slider:before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: help;
+  cursor: default;
   display: inline-block;
   vertical-align: middle;
 }

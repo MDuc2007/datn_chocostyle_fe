@@ -23,7 +23,11 @@
             </p>
             <p>
               <span class="label">Mở lúc:</span> 
-              <span class="value"><strong>{{ chamCong ? chamCong.gioCheckIn : 'Chưa mở ca' }}</strong></span>
+              <span class="value">
+                <strong :class="{'text-danger': !chamCong}">
+                  {{ chamCong ? chamCong.gioCheckIn : 'Chưa mở ca' }}
+                </strong>
+              </span>
             </p>
             <p>
               <span class="label">Còn lại:</span> 
@@ -33,45 +37,93 @@
         </div>
 
         <div class="input-box">
-          <h3 class="box-title">Nhập tiền thực tế (kết toán)</h3>
           
-          <div class="form-group">
-            <label>Tiền mặt</label>
-            <div class="input-wrapper">
-              <input 
-                type="number" 
-                v-model="cashAmount" 
-                class="custom-input" 
-                placeholder="0" 
-                :disabled="isViewOnly"
-              />
-              <span class="currency">VNĐ</span>
+          <template v-if="caHomNay && !chamCong">
+            <h3 class="box-title">Nhập tiền đầu ca (Mở ca)</h3>
+            
+            <div class="form-group">
+              <label>Tiền mặt đầu ca</label>
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  v-model="cashInAmount" 
+                  class="custom-input" 
+                  placeholder="0" 
+                />
+                <span class="currency">VNĐ</span>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>Chuyển khoản</label>
-            <div class="input-wrapper">
-              <input 
-                type="number" 
-                v-model="transferAmount" 
-                class="custom-input" 
-                placeholder="0" 
-                :disabled="isViewOnly"
-              />
-              <span class="currency">VNĐ</span>
+            <div class="form-group">
+              <label>Tiền tài khoản đầu ca</label>
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  v-model="transferInAmount" 
+                  class="custom-input" 
+                  placeholder="0" 
+                />
+                <span class="currency">VNĐ</span>
+              </div>
             </div>
-          </div>
+            
+            <p class="warning-text info-text">
+              Bạn cần <strong>Xác nhận vào ca</strong> mới có thể sử dụng các chức năng bán hàng và kết toán.
+            </p>
+          </template>
 
-          <p class="warning-text" v-if="isViewOnly">
-            Bạn đang ở <strong>chế độ xem</strong> (Chưa mở ca hoặc đã kết thúc). Không thể xác nhận đóng ca.
-          </p>
+          <template v-else>
+            <h3 class="box-title">Nhập tiền thực tế (kết toán)</h3>
+            
+            <div class="form-group">
+              <label>Tiền mặt</label>
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  v-model="cashAmount" 
+                  class="custom-input" 
+                  placeholder="0" 
+                  :disabled="isViewOnly"
+                />
+                <span class="currency">VNĐ</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Chuyển khoản</label>
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  v-model="transferAmount" 
+                  class="custom-input" 
+                  placeholder="0" 
+                  :disabled="isViewOnly"
+                />
+                <span class="currency">VNĐ</span>
+              </div>
+            </div>
+
+            <p class="warning-text" v-if="isViewOnly">
+              Bạn đang ở <strong>chế độ xem</strong> (Chưa mở ca hoặc đã kết thúc). Không thể thao tác.
+            </p>
+          </template>
+
         </div>
 
       </div>
 
       <div class="card-actions">
         <button 
+          v-if="caHomNay && !chamCong"
+          class="btn-primary" 
+          @click="handleCheckIn"
+          :disabled="isLoading"
+        >
+          {{ isLoading ? 'Đang xử lý...' : 'Xác nhận vào ca' }}
+        </button>
+
+        <button 
+          v-else
           class="btn-primary" 
           @click="handleCheckout"
           :disabled="isViewOnly || isLoading"
@@ -79,6 +131,7 @@
           {{ isLoading ? 'Đang xử lý...' : 'Xác nhận đóng ca' }}
         </button>
       </div>
+      
     </div>
   </div>
 </template>
@@ -86,9 +139,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
-import Swal from 'sweetalert2' // 👉 Đã import SweetAlert2
+import Swal from 'sweetalert2' 
 
-// Biến lưu trữ giá trị nhập vào
+// Biến lưu trữ giá trị nhập vào (MỞ CA)
+const cashInAmount = ref(0)
+const transferInAmount = ref(0)
+
+// Biến lưu trữ giá trị nhập vào (KẾT TOÁN / ĐÓNG CA)
 const cashAmount = ref(0)
 const transferAmount = ref(0)
 
@@ -106,7 +163,7 @@ const idNv = localStorage.getItem("idNv") || JSON.parse(localStorage.getItem("us
 const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user") || "{}").accessToken
 const headers = { Authorization: `Bearer ${token}` }
 
-// TÍNH TOÁN: Trạng thái khóa/mở giao diện
+// TÍNH TOÁN: Trạng thái khóa/mở giao diện (Cho form Kết toán)
 const isViewOnly = computed(() => {
   if (!caHomNay.value) return true; // Không có ca hôm nay
   if (!chamCong.value) return true; // Có ca nhưng chưa bấm Mở ca
@@ -140,24 +197,56 @@ const updateCountdown = () => {
   }
 }
 
-// HÀM: Xử lý nút Kết toán (Check-out) với SweetAlert2
+// HÀM: Xử lý MỞ CA (Check-in)
+const handleCheckIn = async () => {
+  isLoading.value = true;
+  try {
+    await axios.post(
+      `http://localhost:8080/api/cham-cong/check-in/${idNv}`,
+      {
+        tienMatDauCa: cashInAmount.value,
+        tienTaiKhoanDauCa: transferInAmount.value
+      },
+      { headers }
+    );
+    
+    await Swal.fire({
+      title: 'Thành công!',
+      text: 'Đã xác nhận mở ca làm việc!',
+      icon: 'success',
+      confirmButtonColor: '#63391F'
+    });
+    
+    location.reload(); 
+  } catch (error: any) {
+    console.error("Lỗi mở ca:", error);
+    Swal.fire({
+      title: 'Thất bại!',
+      text: error.response?.data || "Có lỗi xảy ra khi mở ca.",
+      icon: 'error',
+      confirmButtonColor: '#63391F'
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// HÀM: Xử lý KẾT TOÁN (Check-out)
 const handleCheckout = async () => {
   if (isViewOnly.value) return;
 
-  // Cảnh báo nếu chưa nhập tiền bằng SweetAlert2
   if (cashAmount.value === 0 && transferAmount.value === 0) {
     const result = await Swal.fire({
       title: 'Chưa nhập tiền!',
       text: "Bạn chưa nhập số tiền kết toán. Bạn có chắc chắn muốn kết thúc ca không?",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#63391F', // Màu nút đồng ý
-      cancelButtonColor: '#d33',     // Màu nút hủy
+      confirmButtonColor: '#63391F', 
+      cancelButtonColor: '#d33',    
       confirmButtonText: 'Đồng ý đóng ca',
       cancelButtonText: 'Hủy bỏ'
     });
     
-    // Nếu người dùng bấm "Hủy bỏ", dừng luồng chạy
     if (!result.isConfirmed) return;
   }
 
@@ -172,7 +261,6 @@ const handleCheckout = async () => {
       { headers }
     );
 
-    // Thông báo thành công bằng SweetAlert2
     await Swal.fire({
       title: 'Thành công!',
       text: 'Kết toán và đóng ca thành công!',
@@ -184,8 +272,6 @@ const handleCheckout = async () => {
 
   } catch (error: any) {
     console.error("Lỗi đóng ca:", error);
-    
-    // Thông báo lỗi bằng SweetAlert2
     Swal.fire({
       title: 'Thất bại!',
       text: error.response?.data || "Chưa đến giờ kết thúc ca!",
@@ -228,28 +314,14 @@ onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)
 })
 </script>
-
-<style>
-/* ================= Biến màu sắc (Theme) ================= */
-:root {
-  --primary-color: #63391F;       /* Màu chủ đạo (Nâu) */
-  --primary-light: #8a5735;       /* Màu nâu sáng hơn cho hover/border */
-  --bg-color: #F7F7F7;            /* Màu nền trang */
-  --white-color: #FFFFFF;         /* Màu nền card/input focus */
-  --text-main: #333333;           /* Màu chữ chính */
-  --text-muted: #666666;          /* Màu chữ phụ */
-  --border-color: #E2E8F0;        /* Màu đường viền */
-  --input-bg: #F3F4F6;            /* Màu nền input mặc định */
-  --warning-color: #D97706;       /* Màu cảnh báo (Vàng nâu) */
-}
-
+<style scoped>
 /* Tổng thể trang */
 .shift-page {
-  background-color: var(--bg-color);
+  background-color: #F7F7F7;
   padding: 25px;
   min-height: 100%;
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: var(--text-main);
+  color: #333333;
 }
 
 /* Header */
@@ -268,13 +340,13 @@ onUnmounted(() => {
 
 .main-icon {
   font-size: 20px;
-  color: var(--primary-color);
+  color: #63391F;
 }
 
 .page-title {
   font-size: 18px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: #63391F;
   margin: 0;
   letter-spacing: 0.5px;
 }
@@ -283,13 +355,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--white-color);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #666666;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: all 0.2s ease;
@@ -298,12 +370,12 @@ onUnmounted(() => {
 .btn-outline:hover {
   background-color: #F9FAFB;
   border-color: #D1D5DB;
-  color: var(--text-main);
+  color: #333333;
 }
 
 /* Card chính */
 .main-card {
-  background-color: var(--white-color);
+  background-color: #FFFFFF;
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -318,8 +390,8 @@ onUnmounted(() => {
 
 /* Các khối box bên trong */
 .info-box, .input-box {
-  background-color: #FAFAFA; /* Nền nhẹ cho các box con */
-  border: 1px solid var(--border-color);
+  background-color: #FAFAFA; 
+  border: 1px solid #E2E8F0;
   border-radius: 10px;
   padding: 25px;
 }
@@ -327,10 +399,10 @@ onUnmounted(() => {
 .box-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: #63391F;
   margin: 0 0 20px 0;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(99, 57, 31, 0.1); /* Đường gạch chân màu chủ đạo nhạt */
+  border-bottom: 2px solid rgba(99, 57, 31, 0.1); 
 }
 
 /* CSS cho cột trái (Thông tin ca) */
@@ -347,16 +419,20 @@ onUnmounted(() => {
 }
 
 .info-content .label {
-  color: var(--text-muted);
+  color: #666666;
 }
 
 .info-content .value {
   font-weight: 500;
-  color: var(--text-main);
+  color: #333333;
 }
 
 .info-content .highlight {
-  color: var(--primary-color);
+  color: #63391F;
+}
+
+.text-danger {
+  color: #DC2626; /* Chữ đỏ cảnh báo chưa mở ca */
 }
 
 /* CSS cho cột phải (Form nhập) */
@@ -368,7 +444,7 @@ onUnmounted(() => {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-main);
+  color: #333333;
   margin-bottom: 8px;
 }
 
@@ -380,40 +456,41 @@ onUnmounted(() => {
 
 .custom-input {
   width: 100%;
-  background-color: var(--white-color);
-  border: 1px solid var(--border-color);
-  padding: 12px 45px 12px 15px; /* Padding phải rộng để chừa chỗ cho chữ VNĐ */
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  padding: 12px 45px 12px 15px; 
   border-radius: 8px;
   font-size: 15px;
-  color: var(--text-main);
+  color: #333333;
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
 .custom-input:focus:not(:disabled) {
   outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); /* Shadow màu chủ đạo khi focus */
+  border-color: #63391F;
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); 
 }
 
 .custom-input:disabled {
   background-color: #E5E7EB;
   color: #9CA3AF;
   cursor: not-allowed;
+  border-color: #D1D5DB;
 }
 
 .currency {
   position: absolute;
   right: 15px;
   font-size: 14px;
-  color: var(--text-muted);
+  color: #9CA3AF;
   font-weight: 500;
   pointer-events: none;
 }
 
 .warning-text {
   font-size: 13px;
-  color: var(--warning-color);
+  color: #D97706;
   background-color: #FFFBEB;
   border: 1px solid #FCD34D;
   padding: 12px;
@@ -424,13 +501,22 @@ onUnmounted(() => {
   gap: 8px;
 }
 
+.info-text {
+  color: #047857;
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+}
+
 .warning-text::before {
   content: '⚠️';
   font-size: 16px;
 }
 
+.info-text::before {
+  content: '💡';
+}
+
 .warning-text strong {
-  color: #92400E;
   font-weight: 700;
 }
 
@@ -438,13 +524,13 @@ onUnmounted(() => {
 .card-actions {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #E2E8F0;
   padding-top: 20px;
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
-  color: var(--white-color);
+  background-color: #63391F;
+  color: #FFFFFF;
   border: none;
   padding: 12px 30px;
   border-radius: 8px;
@@ -456,7 +542,7 @@ onUnmounted(() => {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #452614; /* Màu nâu đậm hơn khi hover */
+  background-color: #452614; 
   transform: translateY(-1px);
   box-shadow: 0 6px 8px rgba(99, 57, 31, 0.25);
 }
@@ -495,4 +581,10 @@ onUnmounted(() => {
     padding: 20px;
   }
 }
+</style>
+
+<style>
+  div.swal2-container {
+    z-index: 10000 !important;
+  }
 </style>

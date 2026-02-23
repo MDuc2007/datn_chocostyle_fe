@@ -8,7 +8,34 @@ import { saveAs } from 'file-saver';
 interface Employee { id: number; maNv: string; hoTen: string; chucVu?: string; trangThai: number; }
 interface Shift { idCa: number; tenCa: string; gioBatDau: string; gioKetThuc: string; trangThai: number; }
 interface Schedule { id: number; ngayLamViec: string; nhanVien: Employee; caLamViec: Shift; ghiChu?: string; trangThai: number; maLapLai?: string; }
+// 1. Thêm avatar vào Employee interface
+interface Employee { id: number; maNv: string; hoTen: string; chucVu?: string; trangThai: number; avatar?: string; }
 
+// ... (Giữ nguyên code cũ) ...
+
+// 2. Thêm computed property để sắp xếp ca làm việc theo giờ bắt đầu
+const sortedShifts = computed(() => {
+  return [...shifts.value].sort((a, b) => timeToMinutes(a.gioBatDau) - timeToMinutes(b.gioBatDau));
+});
+
+// 3. Thêm hàm lọc lịch làm việc theo Ngày và ID Ca
+const getSchedulesForShiftAndDate = (idCa: number, dateStr: string) => {
+  if (!dateStr || !idCa) return [];
+  return schedules.value.filter(s => {
+    if (s.ngayLamViec !== dateStr || s.caLamViec?.idCa !== idCa) return false;
+    // Áp dụng bộ lọc tìm kiếm
+    const searchName = filters.employeeName.toLowerCase();
+    const matchEmpName = !filters.employeeName || (s.nhanVien?.hoTen?.toLowerCase().includes(searchName) || s.nhanVien?.maNv?.toLowerCase().includes(searchName));
+    const matchStatus = filters.status === 'all' || s.trangThai === filters.status;
+    return matchEmpName && matchStatus;
+  });
+};
+
+// 4. Thêm hàm mở Modal và tự động chọn sẵn Ngày + Ca khi click vào ô trống
+const openAddModalWithDateAndShift = (dateStr: string, idCa: number) => {
+  openAddModalWithDate(dateStr);
+  form.idCa = idCa; // Gán sẵn ca làm việc
+};
 // API Endpoints
 const API_URL = 'http://localhost:8080/api/lich-lam-viec';
 const API_EMP = 'http://localhost:8080/api/nhan-vien';
@@ -359,19 +386,116 @@ const getStatusClass = (status: number) => {
   return 'inactive';
 };
 const exportExcel = async () => {
-  const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Lịch làm việc');
-  worksheet.columns = [ { key: 'stt', width: 10 }, { key: 'ngayLamViec', width: 15 }, { key: 'maNv', width: 15 }, { key: 'hoTen', width: 30 }, { key: 'tenCa', width: 20 }, { key: 'gioBatDau', width: 12 }, { key: 'gioKetThuc', width: 12 }, { key: 'ghiChu', width: 30 }, { key: 'trangThai', width: 15 } ];
-  worksheet.mergeCells('A1:I1'); worksheet.getCell('A1').value = 'DANH SÁCH LỊCH LÀM VIỆC';
-  worksheet.addRow([]);
-  worksheet.addRow(['STT', 'Ngày', 'Mã NV', 'Họ và tên', 'Ca', 'Bắt đầu', 'Kết thúc', 'Ghi chú', 'Trạng thái']);
-  
-  // Dùng dữ liệu theo chế độ xem để xuất
-  const dataToExport = viewMode.value === 'table' ? pagedSchedules.value : schedules.value;
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Lịch làm việc');
 
-  dataToExport.forEach((sche, index) => {
-    worksheet.addRow([ index + 1, sche.ngayLamViec, sche.nhanVien?.maNv, sche.nhanVien?.hoTen, sche.caLamViec?.tenCa, formatTime(sche.caLamViec?.gioBatDau), formatTime(sche.caLamViec?.gioKetThuc), sche.ghiChu || '',getStatusText(sche.trangThai) ]);
-  });
-  const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `LichLamViec_${Date.now()}.xlsx`);
+  // Kiểm tra xem có đang ở chế độ Lịch Tuần không
+  const isWeekView = viewMode.value === 'calendar' && calendarView.value === 'week';
+
+  if (isWeekView) {
+    // ==============================================================
+    // 1. XUẤT EXCEL DẠNG MA TRẬN (DÀNH CHO LỊCH TUẦN)
+    // ==============================================================
+    
+    // Tạo cấu trúc cột: Cột đầu là Ca, các cột sau là các Ngày trong tuần
+    const columns = [
+      { header: 'CA / NGÀY', key: 'shift', width: 25 },
+      ...calendarDays.value.map(day => {
+        const dayLabel = weekDays.find(d => d.val === new Date(day.dateStr).getDay())?.label || '';
+        const dateLabel = formatDate(day.dateStr);
+        return { header: `${dayLabel}\n${dateLabel}`, key: day.dateStr, width: 25 };
+      })
+    ];
+    worksheet.columns = columns;
+
+    // Chèn Tiêu đề ở Dòng 1
+    worksheet.insertRow(1, ['BẢNG PHÂN CA LÀM VIỆC TUẦN']);
+    // Merge ô tiêu đề (Từ cột A đến cột cuối cùng của tuần)
+    const lastColChar = String.fromCharCode(65 + calendarDays.value.length);
+    worksheet.mergeCells(`A1:${lastColChar}1`);
+    
+    const titleCell = worksheet.getCell('A1');
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FF63391F' } }; // Chữ nâu
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).height = 30;
+
+    // Format Dòng Header (Dòng 2: Ca / Ngày)
+    worksheet.getRow(2).height = 40;
+    worksheet.getRow(2).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FF374151' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } }; // Nền xám nhạt
+      cell.border = { 
+        top: {style:'thin'}, left: {style:'thin'}, 
+        bottom: {style:'thin'}, right: {style:'thin'} 
+      };
+    });
+
+    // Điền dữ liệu các Ca làm việc
+    sortedShifts.value.forEach(shift => {
+      // Cột đầu tiên: Tên ca và Giờ
+      const rowData: Record<string, string> = {
+      shift: `${shift.tenCa}\n(${formatTime(shift.gioBatDau)} - ${formatTime(shift.gioKetThuc)})`
+      };
+
+      // Các cột tiếp theo: Tìm nhân viên làm trong ngày đó, ca đó
+      calendarDays.value.forEach(day => {
+        // Tận dụng luôn hàm có sẵn bộ lọc bạn vừa làm
+        const employeesInShift = getSchedulesForShiftAndDate(shift.idCa, day.dateStr);
+        
+        if (employeesInShift.length > 0) {
+          // Nối tên các nhân viên bằng dấu xuống dòng (\n)
+          rowData[day.dateStr] = employeesInShift.map(s => `- ${s.nhanVien?.hoTen} (${s.nhanVien?.maNv})`).join('\n\n');
+        } else {
+          rowData[day.dateStr] = ''; // Ô trống nếu không có ai làm
+        }
+      });
+
+      // Thêm dòng vào Excel
+      const addedRow = worksheet.addRow(rowData);
+      
+      // Format cho dòng nội dung (Tự động giãn chiều cao để hiển thị hết tên)
+      addedRow.eachCell(cell => {
+        cell.alignment = { vertical: 'top', wrapText: true }; // wrapText giúp \n xuống dòng được trong Excel
+        cell.border = { 
+          top: {style:'thin'}, left: {style:'thin'}, 
+          bottom: {style:'thin'}, right: {style:'thin'} 
+        };
+      });
+    });
+
+  } else {
+    // ==============================================================
+    // 2. XUẤT EXCEL DẠNG DANH SÁCH (NHƯ CŨ DÀNH CHO BẢNG)
+    // ==============================================================
+    worksheet.columns = [
+      { key: 'stt', width: 10 }, { key: 'ngayLamViec', width: 15 }, { key: 'maNv', width: 15 }, 
+      { key: 'hoTen', width: 30 }, { key: 'tenCa', width: 20 }, { key: 'gioBatDau', width: 12 }, 
+      { key: 'gioKetThuc', width: 12 }, { key: 'ghiChu', width: 30 }, { key: 'trangThai', width: 15 }
+    ];
+    worksheet.mergeCells('A1:I1'); 
+    worksheet.getCell('A1').value = 'DANH SÁCH LỊCH LÀM VIỆC';
+    worksheet.addRow([]);
+    worksheet.addRow(['STT', 'Ngày', 'Mã NV', 'Họ và tên', 'Ca', 'Bắt đầu', 'Kết thúc', 'Ghi chú', 'Trạng thái']);
+    
+    // Format Header của bảng
+    worksheet.getRow(3).font = { bold: true };
+    worksheet.getRow(3).alignment = { horizontal: 'center' };
+
+    const dataToExport = viewMode.value === 'table' ? pagedSchedules.value : schedules.value;
+
+    dataToExport.forEach((sche, index) => {
+      worksheet.addRow([ 
+        index + 1, sche.ngayLamViec, sche.nhanVien?.maNv, sche.nhanVien?.hoTen, 
+        sche.caLamViec?.tenCa, formatTime(sche.caLamViec?.gioBatDau), 
+        formatTime(sche.caLamViec?.gioKetThuc), sche.ghiChu || '', getStatusText(sche.trangThai) 
+      ]);
+    });
+  }
+
+  // Ghi ra file
+  const buffer = await workbook.xlsx.writeBuffer(); 
+  saveAs(new Blob([buffer]), `LichLamViec_${Date.now()}.xlsx`);
 };
 
 // ... Các logic mở/đóng Modal, context menu, lấy list Calendar (Giữ nguyên)
@@ -438,6 +562,7 @@ onMounted(fetchInitialData);
       <div class="filter-controls">
         <div class="left-controls">
           <div class="filter-group search-group">
+            <label class="filter-label">Tìm kiếm</label>
             <div class="search-box">
               <i class="search-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -473,7 +598,7 @@ onMounted(fetchInitialData);
             <img src="/src/assets/icon/dowload.svg" alt="" style="width: 16px; height: 16px; margin-right: 8px;">
             Xuất Excel
           </button>
-          <button class="btn btn-primary hover-effect" @click="openAddModal">
+          <button class="btn btn-outline hover-effect" @click="openAddModal">
             + Phân lịch
           </button>
         </div>
@@ -540,13 +665,16 @@ onMounted(fetchInitialData);
                 </span>
               </td>
               <td class="text-center">
-                <div class="action-group center-actions">
-                  <button class="action-btn" @click="openEditModal(item)" data-tooltip="Sửa">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                  </button>
-                  <button class="action-btn delete-btn" @click="handleDelete(item)" data-tooltip="Xóa">
+                <div class="tooltip-wrapper tooltip-left" data-tooltip="Sửa">
+                  <span class="icon edit" @click="openEditModal(item)">
+                    <img src="/src/assets/icon/edit.svg" style="width: 20px; height: 20px" />
+                  </span>
+                </div>
+
+                <div class="tooltip-wrapper tooltip-right" data-tooltip="Xóa" style="display: inline-block; margin-left: 12px;">
+                  <span class="icon delete" @click="handleDelete(item)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  </button>
+                  </span>
                 </div>
               </td>
             </tr>
@@ -629,53 +757,106 @@ onMounted(fetchInitialData);
             </div>
         </div>
 
-        <div v-else class="scheduler-view">
-            
-            <div class="scheduler-header">
-                <div class="gutter-head"></div> 
-                
-                <div class="days-head-row">
-                    <div v-for="(cell, index) in calendarDays" :key="index" 
-                         class="day-head-cell"
-                         :class="{ 'today': cell.dateStr === todayDateStr }">
-                        <div class="day-name">
-                            {{ weekDays.find(d => d.val === new Date(cell.dateStr).getDay())?.label }}
-                        </div>
-                        <div class="day-num">{{ cell.day }}</div>
+        <div v-else-if="calendarView === 'week'" class="week-matrix-view">
+            <div class="matrix-header">
+                <div class="matrix-cell-head shift-col-head">CA / NGÀY</div>
+                <div v-for="(cell, index) in calendarDays" :key="index"
+                     class="matrix-cell-head"
+                     :class="{ 'today': cell.dateStr === todayDateStr }">
+                    <div class="day-name">
+                        {{ weekDays.find(d => d.val === new Date(cell.dateStr).getDay())?.label }}
                     </div>
+                    <div class="day-date">{{ formatDate(cell.dateStr) }}</div>
                 </div>
-                
-                <div class="scrollbar-spacer"></div>
             </div>
 
-            <div class="scheduler-body">
-                <div class="time-labels-col">
-                    <div v-for="h in hours" :key="h" class="time-slot-label">
-                        <span>{{ h === 0 ? '' : (h > 12 ? (h-12) + ' PM' : h + ' AM') }}</span>
+            <div class="matrix-body">
+                <div v-for="shift in sortedShifts" :key="shift.idCa" class="matrix-row">
+                    <div class="matrix-cell shift-info-cell">
+                        <div class="shift-name">{{ shift.tenCa }}</div>
+                        <div class="shift-time">{{ formatTime(shift.gioBatDau) }} - {{ formatTime(shift.gioKetThuc) }}</div>
+                    </div>
+
+                    <div v-for="(cell, index) in calendarDays" :key="index"
+                         class="matrix-cell data-cell"
+                         :class="{'today-col': cell.dateStr === todayDateStr}"
+                         @click="openAddModalWithDateAndShift(cell.dateStr, shift.idCa)">
+
+                        <button class="cell-add-btn" @click.stop="openAddModalWithDateAndShift(cell.dateStr, shift.idCa)" title="Thêm ca làm việc">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </button>
+                        <div v-for="sche in getSchedulesForShiftAndDate(shift.idCa, cell.dateStr)" :key="sche.id"
+                             class="emp-card"
+                             :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
+                             @click.stop="openDetailPopup($event, sche)"
+                             @contextmenu.prevent="openContextMenu($event, sche)">
+                            
+                            <img :src="sche.nhanVien?.avatar || 'https://ui-avatars.com/api/?name=' + sche.nhanVien?.hoTen + '&background=random'" 
+                                 class="emp-avatar" 
+                                 alt="avt" />
+                            
+                            <div class="emp-details">
+                                <div class="emp-name">{{ sche.nhanVien?.hoTen }}</div>
+                                <div class="emp-code">{{ sche.nhanVien?.maNv }}</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="events-grid-col">
-                    <div v-for="h in hours" :key="'line-'+h" class="grid-horizontal-line"></div>
+        <div v-else class="week-matrix-view">
+            <div class="matrix-header" style="grid-template-columns: 200px 1fr;">
+                <div class="matrix-cell-head shift-col-head" style="justify-content: center;">CA LÀM VIỆC</div>
+                <div class="matrix-cell-head today" style="border-right: none;">
+                    <div class="day-name">
+                        {{ weekDays.find(d => d.val === new Date(calendarDays[0]?.dateStr).getDay())?.label || 'Ngày' }}
+                    </div>
+                    <div class="day-date">{{ formatDate(calendarDays[0]?.dateStr) }}</div>
+                </div>
+            </div>
 
-                    <div class="days-track">
-                        <div v-for="(cell, index) in calendarDays" :key="index" 
-                             class="day-column"
-                             @click="openAddModalWithDate(cell.dateStr)">
+            <div class="matrix-body">
+                <div v-for="shift in sortedShifts" :key="shift.idCa" class="matrix-row" style="grid-template-columns: 200px 1fr;">
+                    
+                    <div class="matrix-cell shift-info-cell" style="justify-content: center; align-items: center; text-align: center;">
+                        <div class="shift-name" style="font-size: 15px;">{{ shift.tenCa }}</div>
+                        <div class="shift-time" style="font-size: 13px; margin-top: 4px;">
+                            {{ formatTime(shift.gioBatDau) }} - {{ formatTime(shift.gioKetThuc) }}
+                        </div>
+                    </div>
+
+                    <div class="matrix-cell data-cell"
+                         @click="openAddModalWithDateAndShift(calendarDays[0].dateStr, shift.idCa)"
+                         style="border-right: none; display: flex; flex-direction: column; gap: 16px; padding: 16px !important; position: relative;">
+                        
+                        <button class="cell-add-btn" @click.stop="openAddModalWithDateAndShift(calendarDays[0].dateStr, shift.idCa)" title="Thêm ca làm việc">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </button>
+
+                        <div v-for="sche in getSchedulesForShiftAndDate(shift.idCa, calendarDays[0].dateStr)" :key="sche.id"
+                             class="emp-card"
+                             :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
+                             @click.stop="openDetailPopup($event, sche)"
+                             @contextmenu.prevent="openContextMenu($event, sche)"
+                             style="width: 100%; min-height: 100px;"> <img :src="sche.nhanVien?.avatar || 'https://ui-avatars.com/api/?name=' + sche.nhanVien?.hoTen + '&background=random'" 
+                                 class="emp-avatar" 
+                                 alt="avt" />
                             
-                            <div v-for="sche in getSchedulesForCalendarCell(cell.dateStr)" :key="sche.id"
-                                 class="event-card"
-                                 :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
-                                 :style="getEventStyle(sche, cell.dateStr, getSchedulesForCalendarCell(cell.dateStr))"
-                                 @click.stop="openDetailPopup($event, sche)"
-                                 @contextmenu.prevent="openContextMenu($event, sche)"
-                            >
-                                <div class="event-time">
-                                    {{ formatTime(sche.caLamViec?.gioBatDau) }} - {{ formatTime(sche.caLamViec?.gioKetThuc) }}
-                                </div>
-                                <div class="event-title">{{ sche.nhanVien?.hoTen }}</div>
-                                <div class="event-shift">{{ sche.caLamViec?.tenCa }}</div>
+                            <div class="emp-details">
+                                <div class="emp-name">{{ sche.nhanVien?.hoTen }}</div>
+                                <div class="emp-code">{{ sche.nhanVien?.maNv }}</div>
                             </div>
+                        </div>
+
+                        <div v-if="getSchedulesForShiftAndDate(shift.idCa, calendarDays[0].dateStr).length === 0"
+                             style="color: #9ca3af; font-size: 13px; font-style: italic; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 80px;">
+                            + Bấm vào đây để thêm nhân viên vào ca này
                         </div>
                     </div>
                 </div>
@@ -914,6 +1095,7 @@ onMounted(fetchInitialData);
        <div class="modal-box detail-box form-page-animation">
           
           <div class="detail-header">
+             <h3 class="modal-title">Chi tiết ca</h3>
              <div class="right-actions">
                 <button class="icon-btn" @click="editFromDetail" title="Chỉnh sửa">
                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -1395,14 +1577,8 @@ onMounted(fetchInitialData);
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
-  animation: rainbowWave 2s ease-in-out infinite;
 }
 
-@keyframes rainbowWave {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
 
 .action-group.center-actions {
   display: flex;
@@ -1438,6 +1614,97 @@ onMounted(fetchInitialData);
   border-color: #dc2626;
   color: #dc2626;
   background: #fef2f2;
+}
+
+/* Tooltip wrapper - matching EmployeeManager */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Action buttons wrapper for alignment */
+.action-buttons-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Offset tooltip positions to prevent overlap - left tooltip */
+.tooltip-wrapper.tooltip-left::after,
+.tooltip-wrapper.tooltip-left::before {
+  left: 20%;
+}
+
+/* Offset tooltip positions to prevent overlap - right tooltip */
+.tooltip-wrapper.tooltip-right::after,
+.tooltip-wrapper.tooltip-right::before {
+  left: 80%;
+}
+
+/* Icon styles - matching EmployeeManager */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.icon.edit {
+  color: #63391f;
+}
+
+.icon.delete {
+  color: #dc2626;
+}
+
+.icon.delete:hover {
+  color: #b91c1c;
 }
 
 /* =========================================
@@ -1531,16 +1798,45 @@ onMounted(fetchInitialData);
 .day-number { font-weight: 700; font-size: 13px; color: #374151; margin-bottom: 6px; flex-shrink: 0; }
 .today .day-number { color: #63391F; text-decoration: underline; }
 .shifts-container { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; max-height: 60px; }
-.shift-item { background: #dcfce7; color: #166534; border-left: 3px solid #22c55e; cursor: pointer; position: relative; flex-shrink: 0; font-size: 10px; padding: 2px 4px; }
+
+/* ==================================
+   SỬA CHỮ LỊCH THÁNG
+   ================================== */
+.shift-item { 
+  background: #dcfce7; 
+  color: #166534; 
+  border-left: 3px solid #22c55e; 
+  cursor: pointer; 
+  position: relative; 
+  flex-shrink: 0; 
+  padding: 3px 6px; 
+  margin-bottom: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .shift-item.draft { background: #fee2e2; color: #dc2626; border-left-color: #ef4444; }
-.shift-item.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; border-left-color: #8B5A2B; animation: rainbowWave 2s ease-in-out infinite; }
-.shift-time { font-weight: 700; margin-right: 4px; }
-.shift-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shift-item.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; border-left-color: #8B5A2B; }
+
+/* Ép font nhỏ và thanh mảnh gọn gàng */
+.shift-time { 
+  font-weight: 500; /* Mảnh hơn */
+  font-size: 11px; 
+}
+.shift-name { 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+  font-weight: 400; /* Không in đậm */
+  font-size: 11px; /* Nhỏ lại bằng giờ */
+}
+
 .legend-mini { display: flex; gap: 15px; font-size: 12px; color: #555; padding-right: 10px; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.active { background: #22c55e; }
-.dot.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); animation: rainbowWave 2s ease-in-out infinite; background-size: 200% 200%; }
+.dot.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); }
 .dot.draft { background: #ef4444; }
 /* === THÊM CSS NÀY === */
 
@@ -1590,14 +1886,7 @@ onMounted(fetchInitialData);
   background: #8B5A2B;
   transform: scale(1.1);
 }
-/* TOOLTIP */
-[data-tooltip] { position: relative; }
-[data-tooltip]::before {
-  content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-5px);
-  background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap;
-  opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; z-index: 100;
-}
-[data-tooltip]:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-10px); }
+/* TOOLTIP - Using .tooltip-wrapper class only */
 
 
 /* MODAL */
@@ -1870,10 +2159,19 @@ onMounted(fetchInitialData);
 
 .detail-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 12px;
   background: #f8f9fa;
   border-bottom: 1px solid #dadce0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
 }
 
 .right-actions { display: flex; gap: 4px; }
@@ -1917,7 +2215,7 @@ onMounted(fetchInitialData);
 }
 .status-tag.active { background: #e6f4ea; color: #137333; }
 .status-tag.draft { background: #fef7e0; color: #b06000; }
-.status-tag.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; animation: rainbowWave 2s ease-in-out infinite; }
+.status-tag.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; }
 
 .repeat-info {
   margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;
@@ -2196,6 +2494,7 @@ onMounted(fetchInitialData);
   transition: all 0.1s;
   z-index: 10;
   line-height: 1.2;
+  font-weight: 400;
 }
 
 .event-card:hover {
@@ -2220,51 +2519,208 @@ onMounted(fetchInitialData);
   border-top-color: #8B5A2B;
   border-bottom-color: #8B5A2B;
   color: white;
-  animation: rainbowWave 2s ease-in-out infinite;
-}
-
-.event-card.working {
-  background: linear-gradient(135deg, #6b3f23, #c89b6d);
-  border-left-color: #8B5A2B;
-  border-right-color: #8B5A2B;
-  border-top-color: #8B5A2B;
-  border-bottom-color: #8B5A2B;
-  color: white;
-  animation: rainbowWave 2s ease-in-out infinite;
 }
 
 .event-time { font-weight: 700; margin-bottom: 1px; font-size: 9px; }
 .event-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
 .event-shift { opacity: 0.8; font-size: 9px; }
-/* --- TRẠNG THÁI ĐANG LÀM KÈM ANIMATION WAVE --- */
+/* --- TRẠNG THÁI ĐANG LÀM (Gradient bình thường, không animation) --- */
 .status-badge.in-progress {
-  /* Dải màu gradient lặp lại để tạo hiệu ứng nối tiếp */
-  background: linear-gradient(
-    90deg, 
-    #6b3f23 0%, 
-    #c89b6d 25%, 
-    #5a3420 50%, 
-    #c89b6d 75%, 
-    #6b3f23 100%
-  );
-  /* Phóng to background gấp 2 lần để có không gian chạy qua lại */
-  background-size: 200% 100%;
-  color: #fff;
+  background: linear-gradient(135deg, #5a3016, #c89b6d);
+  color: white;
   border: none;
   font-weight: bold;
-  box-shadow: 0 2px 6px rgba(107, 63, 35, 0.4);
-  /* Kích hoạt animation */
-  animation: gradientWave 2s linear infinite;
 }
 
-/* Keyframes cho sóng gradient */
-@keyframes gradientWave {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
+/* =========================================
+   GIAO DIỆN LỊCH DẠNG TUẦN (FIX LỆCH CỘT VÀ TRÀN Ô)
+   ========================================= */
+.week-matrix-view,
+.week-matrix-view * {
+  box-sizing: border-box; /* Ép border-box để grid không bị phình to do padding */
+}
+
+.week-matrix-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  overflow: auto;
+  max-height: 600px;
+}
+
+.matrix-header {
+  display: grid;
+  grid-template-columns: 140px repeat(7, minmax(130px, 1fr));
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border-bottom: 2px solid #edf2f7;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.matrix-cell-head {
+  padding: 12px 8px; 
+  text-align: center;
+  border-right: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  min-width: 0; /* QUAN TRỌNG: Ngăn Header phình to */
+}
+.matrix-cell-head:last-child { border-right: none; }
+
+.matrix-cell-head.shift-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 16px;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 13px;
+}
+
+.day-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.day-date { font-size: 12px; opacity: 0.8; }
+
+.matrix-cell-head.today { background: #fff8f5 !important; } 
+.matrix-cell-head.today .day-name, 
+.matrix-cell-head.today .day-date { color: #63391F !important; }
+
+.matrix-row {
+  display: grid;
+  grid-template-columns: 140px repeat(7, minmax(130px, 1fr)); /* Đồng bộ hoàn toàn với Header */
+  border-bottom: 1px solid #e5e7eb;
+}
+.matrix-row:last-child { border-bottom: none; }
+
+.matrix-cell {
+  border-right: 1px solid #e5e7eb;
+  min-height: 120px; 
+  min-width: 0; /* QUAN TRỌNG: Ép cột tuân thủ kích thước, không phình theo text dài */
+}
+.matrix-cell:last-child { border-right: none; }
+
+/* Cột Ca làm việc bên trái */
+.shift-info-cell {
+  background: #fcfcfc;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 16px;
+}
+.shift-time { 
+  font-weight: normal !important; /* Ép bỏ in đậm */
+  font-size: 11px; 
+}
+.shift-name { 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+  font-weight: normal !important; /* Ép bỏ in đậm */
+  font-size: 11px; 
+}
+
+/* Ô dữ liệu Ngày */
+.data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 12px !important; 
+  vertical-align: top;
+}
+.data-cell:hover { background: #f8fafc; }
+.data-cell.today-col { background: #fafaf9; } 
+
+/* =========================================
+   THẺ NHÂN VIÊN (GIỐNG ẢNH MẪU SỐ 3)
+   ========================================= */
+.emp-card {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  
+  background: #ffffff !important; 
+  border: 1px solid #e5e7eb !important; 
+  border-left: 4px solid #22c55e !important; 
+  border-radius: 8px !important; 
+  
+  padding: 10px 8px !important;
+  width: 100%;
+  min-width: 0; /* Ngăn Flexbox vỡ khung */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; 
+  transition: all 0.2s;
+}
+
+.emp-card:hover {
+  transform: translateY(-2px) !important; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
+
+.emp-card.working { border-left-color: #f59e0b !important; }
+.emp-card.draft { border-left-color: #ef4444 !important; }
+
+.emp-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.emp-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  min-width: 0; 
+  overflow: hidden;
+}
+
+.emp-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Tự động cắt thành "..." nếu tên dài */
+  width: 100%;
+}
+
+.emp-code {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+/* Ô dữ liệu Ngày */
+.data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 12px !important; 
+  vertical-align: top;
+  position: relative; /* <-- BẮT BUỘC ĐỂ GIỮ DẤU CỘNG Ở GÓC TRÁI */
+}
+.data-cell:hover { background: #f8fafc; }
+.data-cell.today-col { background: #fafaf9; } 
+
+/* Bổ sung hiệu ứng hiển thị dấu cộng khi hover chuột */
+.data-cell:hover .cell-add-btn {
+  opacity: 1;
+  transform: scale(1);
 }
 </style>
 

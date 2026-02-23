@@ -422,8 +422,8 @@ onMounted(fetchShifts);
         </div>
         <button class="btn btn-outline" @click="resetFilters">Làm mới</button>
         <div class="header-actions">
-           <button class="btn btn-primary" @click="openAddModal">
-             <span class="plus-icon">+</span> Thiết lập ca
+           <button class="btn btn-add hover-effect" @click="openAddModal">
+             <span>+</span> Thiết lập ca
            </button>
         </div>
       </div>
@@ -463,18 +463,19 @@ onMounted(fetchShifts);
                 </span>
               </td>
               <td class="text-center">
-                <div class="action-group center-actions">
-                    <button class="action-btn" @click="openEditModal(shift)" data-tooltip="Chỉnh sửa">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                      </svg>
-                    </button>
+                <div class="action-buttons-wrapper">
+                  <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                    <span class="icon edit" @click="openEditModal(shift)">
+                      <img src="/src/assets/icon/edit.svg" style="width: 20px; height: 20px" />
+                    </span>
+                  </div>
 
-                    <label class="switch" data-tooltip="Kích hoạt/Tắt">
+                  <div class="tooltip-wrapper" data-tooltip="Kích hoạt/Tắt" style="margin-left: 8px;">
+                    <label class="switch">
                       <input type="checkbox" :checked="shift.trangThai === 1" @click="toggleStatus(shift, $event)" />
                       <span class="slider"></span>
                     </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -642,22 +643,24 @@ onMounted(fetchShifts);
 }
 
 .btn {
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 0 16px;
   font-weight: 600;
-  font-size: 14px;
-  border: none;
   cursor: pointer;
-  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
-  color: white;
+  color: #fff;
+  border-color: #6b3f23;
   box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
 .btn-primary:hover {
@@ -668,8 +671,31 @@ onMounted(fetchShifts);
 .btn-secondary { background: #e5e7eb; color: #374151; }
 .btn-secondary:hover { background: #d1d5db; }
 
-.btn-outline { background: white; border: 1px solid #d1d5db; color: #4b5563; }
-.btn-outline:hover { border-color: #63391F; color: #63391F; background: #fff8f5; }
+.btn-outline { background: white; border: 1px solid #ccc; color: #484848; border-radius: 10px; }
+.btn-outline:hover { border-color: #63391F; color: #63391F; background: #fdf8f6; }
+
+/* Add button style - matching EmployeeManager */
+.btn-add {
+  background: #fff;
+  color: #484848;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-add:hover {
+  border-color: #63391f;
+  color: #63391f;
+  background: #fdf8f6;
+}
 
 /* === FILTER BAR === */
 .filter-row {
@@ -799,6 +825,78 @@ onMounted(fetchShifts);
   box-shadow: 0 4px 8px rgba(99, 57, 31, 0.15);
 }
 
+/* Tooltip wrapper - matching EmployeeManager */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Action buttons wrapper for alignment */
+.action-buttons-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  vertical-align: middle;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+}
+
+.tooltip-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.tooltip-wrapper:hover::after,
+.tooltip-wrapper:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Icon styles - matching EmployeeManager */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.icon.edit {
+  color: #63391f;
+}
+
 /* === PAGINATION === */
 .pagination-footer { 
   display: flex; 
@@ -893,15 +991,7 @@ input:checked + .slider { background: linear-gradient(135deg, #6b3f23, #c89b6d) 
 input:checked + .slider:before { transform: translateX(22px); }
 
 /* Tooltip */
-[data-tooltip] { position: relative; }
-[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
-  background: #1f2937; color: white; padding: 6px 12px; border-radius: 6px;
-  font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0;
-  animation: fadeIn 0.2s forwards; z-index: 100; margin-bottom: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
+.tooltip-wrapper[data-tooltip] { position: relative; }
 @keyframes fadeIn { to { opacity: 1; } }
 
 /* --- VALIDATION STYLES --- */

@@ -4,17 +4,42 @@ import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 // --- INTERFACES ---
-interface Employee { id: number; maNv: string; hoTen: string; chucVu?: string; trangThai: number; }
+// 1. Thêm avatar vào interface
+interface Employee { id: number; maNv: string; hoTen: string; chucVu?: string; trangThai: number; avatar?: string; }
 interface Shift { idCa: number; tenCa: string; gioBatDau: string; gioKetThuc: string; trangThai: number; }
 interface Schedule { id: number; ngayLamViec: string; nhanVien: Employee; caLamViec: Shift; ghiChu?: string; trangThai: number; }
+// 2. Thêm computed tự động lọc ra các ca làm việc duy nhất từ lịch của nhân viên
 
+const sortedShifts = computed(() => {
+  const shiftMap = new Map<number, Shift>();
+  schedules.value.forEach(s => {
+    if (s.caLamViec && !shiftMap.has(s.caLamViec.idCa)) {
+      shiftMap.set(s.caLamViec.idCa, s.caLamViec);
+    }
+  });
+  // Sắp xếp các ca theo thời gian bắt đầu
+   return [...shifts.value].sort((a, b) => timeToMinutes(a.gioBatDau) - timeToMinutes(b.gioBatDau));
+});
+
+// 3. Hàm lọc lịch làm việc cho từng ô trong Ma trận (Không cần lọc theo tên NV vì đây là lịch cá nhân)
+const getSchedulesForShiftAndDate = (idCa: number, dateStr: string) => {
+  if (!dateStr || !idCa) return [];
+  return schedules.value.filter(s => {
+    if (s.ngayLamViec !== dateStr || s.caLamViec?.idCa !== idCa) return false;
+    const matchStatus = filters.status === 'all' || s.trangThai === filters.status;
+    return matchStatus;
+  });
+};
 // --- STATE ---
 // API lấy lịch của nhân viên đang đăng nhập
+// API lấy lịch của nhân viên đang đăng nhập
 const API_URL = 'http://localhost:8080/api/lich-lam-viec/my-schedule';
-
+// THÊM: API lấy danh sách tất cả các ca
+const API_SHIFT = 'http://localhost:8080/api/ca-lam-viec';
 // Lấy ID nhân viên từ localStorage
 // const currentUserId = ref<number | null>(15); // Mock ID cho test
 // Khởi tạo ref trống
+const shifts = ref<Shift[]>([]);
 const currentUserId = ref(null);
 // Lấy thông tin user từ LocalStorage
 const userStr = localStorage.getItem('user');
@@ -62,10 +87,11 @@ const formatDate = (dateStr: string | undefined) => {
   const [y, m, d] = dateStr.split('-');
   return `${d}/${m}/${y}`;
 };
+// Hàm hỗ trợ đổi giờ ra phút để sắp xếp
 const timeToMinutes = (timeStr: string) => {
   if (!timeStr) return 0;
-  const [h, m] = timeStr.split(':').map(Number);
-  return h * 60 + m;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
 };
 
 const getStatusText = (status: number) => {
@@ -297,11 +323,21 @@ const visiblePages = computed(() => {
 
 // Reset filters
 const resetFilters = () => { filters.fromDate = ''; filters.toDate = ''; filters.status = 'all'; page.value = 0; refreshData(); };
-
+// THÊM: Hàm gọi API lấy danh sách toàn bộ Ca Làm Việc
+const fetchShifts = async () => {
+  try {
+    const response = await axios.get(API_SHIFT);
+    // Lọc lấy các ca đang hoạt động (trangThai === 1) nếu cần thiết, hoặc lấy hết
+    shifts.value = response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách ca làm việc:', error);
+  }
+};
 // --- INIT ---
 onMounted(() => {
   // Sử dụng mock ID cho test
   if (currentUserId.value) {
+    fetchShifts(); // Gọi API lấy danh sách ca làm việc
     refreshData();
   }
 });
@@ -492,52 +528,104 @@ onMounted(() => {
       </div>
 
       <!-- Week/Day View (Scheduler) -->
-      <div v-else class="scheduler-view">
-        
-        <div class="scheduler-header">
-            <div class="gutter-head"></div> 
-            
-            <div class="days-head-row">
-                <div v-for="(cell, index) in calendarDays" :key="index" 
-                    class="day-head-cell"
-                    :class="{ 'today': cell.dateStr === todayDateStr }">
-                    <div class="day-name">
-                        {{ weekDays.find(d => d.val === new Date(cell.dateStr).getDay())?.label }}
-                    </div>
-                    <div class="day-num">{{ cell.day }}</div>
-                </div>
-            </div>
-            
-            <div class="scrollbar-spacer"></div>
-        </div>
+      <div v-else-if="calendarView === 'week'" class="week-matrix-view">
+          <div class="matrix-header">
+              <div class="matrix-cell-head shift-col-head">CA / NGÀY</div>
+              <div v-for="(cell, index) in calendarDays" :key="index"
+                   class="matrix-cell-head"
+                   :class="{ 'today': cell.dateStr === todayDateStr }">
+                  <div class="day-name">
+                      {{ weekDays.find(d => d.val === new Date(cell.dateStr).getDay())?.label }}
+                  </div>
+                  <div class="day-date">{{ formatDate(cell.dateStr) }}</div>
+              </div>
+          </div>
 
-        <div class="scheduler-body">
-            <div class="time-labels-col">
-                <div v-for="h in hours" :key="h" class="time-slot-label">
-                    <span>{{ h === 0 ? '' : (h > 12 ? (h-12) + ' PM' : h + ' AM') }}</span>
-                </div>
-            </div>
+          <div class="matrix-body">
+              <div v-if="sortedShifts.length === 0" class="text-center py-4 text-muted" style="padding: 20px;">
+                  Tuần này bạn không có lịch làm việc nào.
+              </div>
 
-            <div class="events-grid-col">
-                <div v-for="h in hours" :key="'line-'+h" class="grid-horizontal-line"></div>
+              <div v-else v-for="shift in sortedShifts" :key="shift.idCa" class="matrix-row">
+                  <div class="matrix-cell shift-info-cell">
+                      <div class="shift-name">{{ shift.tenCa }}</div>
+                      <div class="shift-time">{{ formatTime(shift.gioBatDau) }} - {{ formatTime(shift.gioKetThuc) }}</div>
+                  </div>
 
-                <div class="days-track">
-                    <div v-for="(cell, index) in calendarDays" :key="index" class="day-column">
-                        <div v-for="sche in getSchedulesForCalendarCell(cell.dateStr)" :key="sche.id"
-                            class="event-card"
-                            :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
-                            :style="getEventStyle(sche, cell.dateStr, getSchedulesForCalendarCell(cell.dateStr))"
-                            @click.stop="openDetailPopup(sche)"
-                        >
-                            <div class="event-time">
-                                {{ formatTime(sche.caLamViec?.gioBatDau) }} - {{ formatTime(sche.caLamViec?.gioKetThuc) }}
-                            </div>
-                            <div class="event-title">{{ sche.caLamViec?.tenCa }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                  <div v-for="(cell, index) in calendarDays" :key="index"
+                       class="matrix-cell data-cell"
+                       :class="{'today-col': cell.dateStr === todayDateStr}">
+
+                      <div v-for="sche in getSchedulesForShiftAndDate(shift.idCa, cell.dateStr)" :key="sche.id"
+                           class="emp-card"
+                           :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
+                           @click.stop="openDetailPopup(sche)">
+                          
+                          <img :src="sche.nhanVien?.avatar || 'https://ui-avatars.com/api/?name=' + sche.nhanVien?.hoTen + '&background=random'" 
+                               class="emp-avatar" 
+                               alt="avt" />
+                          
+                          <div class="emp-details">
+                              <div class="emp-name">{{ sche.nhanVien?.hoTen }}</div>
+                              <div class="emp-code">{{ sche.nhanVien?.maNv }}</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div v-else class="week-matrix-view">
+          <div class="matrix-header" style="grid-template-columns: 200px 1fr;">
+              <div class="matrix-cell-head shift-col-head" style="justify-content: center;">CA LÀM VIỆC</div>
+              <div class="matrix-cell-head today" style="border-right: none;">
+                  <div class="day-name">
+                      {{ weekDays.find(d => d.val === new Date(calendarDays[0]?.dateStr).getDay())?.label || 'Ngày' }}
+                  </div>
+                  <div class="day-date">{{ formatDate(calendarDays[0]?.dateStr) }}</div>
+              </div>
+          </div>
+
+          <div class="matrix-body">
+              <div v-if="sortedShifts.length === 0" class="text-center py-4 text-muted" style="padding: 20px;">
+                  Hôm nay bạn không có lịch làm việc nào.
+              </div>
+
+              <div v-else v-for="shift in sortedShifts" :key="shift.idCa" class="matrix-row" style="grid-template-columns: 200px 1fr;">
+                  
+                  <div class="matrix-cell shift-info-cell" style="justify-content: center; align-items: center; text-align: center;">
+                      <div class="shift-name" style="font-size: 15px;">{{ shift.tenCa }}</div>
+                      <div class="shift-time" style="font-size: 13px; margin-top: 4px;">
+                          {{ formatTime(shift.gioBatDau) }} - {{ formatTime(shift.gioKetThuc) }}
+                      </div>
+                  </div>
+
+                  <div class="matrix-cell data-cell"
+                       style="border-right: none; display: flex; flex-direction: column; gap: 16px; padding: 16px !important; position: relative;">
+
+                      <div v-for="sche in getSchedulesForShiftAndDate(shift.idCa, calendarDays[0].dateStr)" :key="sche.id"
+                           class="emp-card"
+                           :class="{'draft': sche.trangThai === 1, 'working': sche.trangThai === 3}"
+                           @click.stop="openDetailPopup(sche)"
+                           style="width: 100%; min-height: 100px;"> 
+                          
+                          <img :src="sche.nhanVien?.avatar || 'https://ui-avatars.com/api/?name=' + sche.nhanVien?.hoTen + '&background=random'" 
+                               class="emp-avatar" 
+                               alt="avt" />
+                          
+                          <div class="emp-details">
+                              <div class="emp-name">{{ sche.nhanVien?.hoTen }}</div>
+                              <div class="emp-code">{{ sche.nhanVien?.maNv }}</div>
+                          </div>
+                      </div>
+
+                      <div v-if="getSchedulesForShiftAndDate(shift.idCa, calendarDays[0].dateStr).length === 0"
+                           style="color: #9ca3af; font-size: 13px; font-style: italic; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 80px;">
+                          Trống (Không có phân công)
+                      </div>
+                  </div>
+              </div>
+          </div>
       </div>
     </div>
 
@@ -546,6 +634,7 @@ onMounted(() => {
       <div class="modal-box detail-box form-page-animation">
          
         <div class="detail-header">
+            <h3 class="modal-title">CHI TIẾT CA</h3>
             <div class="right-actions">
               <button class="icon-btn close" @click="closeDetailPopup" title="Đóng">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1097,172 +1186,188 @@ onMounted(() => {
   background: #e5e7eb;
 }
 
+/* ==================================
+   SỬA CHỮ LỊCH THÁNG (Ép mảnh lại)
+   ================================== */
+.shift-time { 
+  font-weight: normal !important; 
+  font-size: 11px; 
+}
+.shift-name { 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+  font-weight: normal !important; 
+  font-size: 11px; 
+}
+
 /* =========================================
-   SCHEDULER VIEW (Week/Day)
+   GIAO DIỆN LỊCH DẠNG TUẦN (FIX LỆCH CỘT VÀ TRÀN Ô)
    ========================================= */
-.scheduler-view {
+.week-matrix-view,
+.week-matrix-view * {
+  box-sizing: border-box; 
+}
+
+.week-matrix-view {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 500px;
-  max-height: 600px;
   border: 1px solid #e5e7eb;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
   background: white;
-  overflow: hidden;
+  overflow: auto;
+  max-height: 600px;
 }
 
-.scheduler-header {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-  flex-shrink: 0;
+.matrix-header, .matrix-row {
+  display: grid;
+  grid-template-columns: 140px repeat(7, minmax(130px, 1fr)); 
+  width: 100%;
+}
+
+.matrix-header {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  border-bottom: 2px solid #edf2f7;
+  position: sticky;
+  top: 0;
   z-index: 20;
-  height: 50px;
 }
 
-.gutter-head {
-  width: 60px;
-  flex-shrink: 0;
-  border-right: 1px solid #e5e7eb;
-  background: white;
+.matrix-row {
+  border-bottom: 1px solid #e5e7eb;
+}
+.matrix-row:last-child { border-bottom: none; }
+
+.matrix-cell-head, .matrix-cell {
+  min-width: 0; 
+  overflow: hidden; 
 }
 
-.days-head-row {
-  display: flex;
-  flex: 1;
-}
-
-.day-head-cell {
-  flex: 1;
+.matrix-cell-head {
+  padding: 12px 8px; 
   text-align: center;
+  border-right: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+.matrix-cell-head:last-child { border-right: none; }
+
+.matrix-cell-head.shift-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 16px;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 13px;
+}
+
+.day-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.day-date { font-size: 12px; opacity: 0.8; }
+
+.matrix-cell-head.today { background: #fff8f5 !important; } 
+.matrix-cell-head.today .day-name, 
+.matrix-cell-head.today .day-date { color: #63391F !important; }
+
+.matrix-cell {
   border-right: 1px solid #e5e7eb;
+  min-height: 120px; 
+}
+.matrix-cell:last-child { border-right: none; }
+
+.shift-info-cell {
+  background: #fcfcfc;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 16px;
+}
+.shift-name { font-weight: 700; color: #1e293b; font-size: 13px; margin-bottom: 4px; }
+.shift-time { font-size: 12px; color: #6b7280; }
+
+.data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 12px !important; 
+  vertical-align: top;
+}
+.data-cell:hover { background: #f8fafc; }
+.data-cell.today-col { background: #fafaf9; } 
+
+/* =========================================
+   THẺ NHÂN VIÊN
+   ========================================= */
+.emp-card {
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  
+  background: #ffffff !important; 
+  border: 1px solid #e5e7eb !important; 
+  border-left: 4px solid #22c55e !important; 
+  border-radius: 8px !important; 
+  
+  padding: 10px 8px !important;
+  width: 100%;
+  min-width: 0; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; 
+  transition: all 0.2s;
+}
+
+.emp-card:hover {
+  transform: translateY(-2px) !important; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
+
+.emp-card.working { border-left-color: #f59e0b !important; }
+.emp-card.draft { border-left-color: #ef4444 !important; }
+
+.emp-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.emp-details {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-}
-.day-head-cell:last-child { border-right: none; }
-
-.day-head-cell .day-name { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; line-height: 1; margin-bottom: 2px; }
-.day-head-cell .day-num { font-size: 18px; font-weight: 600; color: #374151; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; }
-
-.day-head-cell.today .day-name { color: #63391F; }
-.day-head-cell.today .day-num { background: #63391F; color: white; }
-
-.scrollbar-spacer {
-  width: 10px;
-  flex-shrink: 0;
-  background: #f9fafb;
-  border-left: 1px solid #e5e7eb;
-}
-
-.scheduler-body {
-  display: flex;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-}
-
-.time-labels-col {
-  width: 60px;
-  flex-shrink: 0;
-  border-right: 1px solid #e5e7eb;
-  background: white;
-}
-
-.time-slot-label {
-  height: 60px;
-  position: relative;
-  text-align: right;
-  padding-right: 8px;
-  font-size: 11px;
-  color: #9ca3af;
-}
-.time-slot-label span {
-  position: relative;
-  top: -6px;
-  background: white;
-  padding-left: 4px;
-}
-
-.events-grid-col {
-  flex: 1;
-  position: relative;
-}
-
-.grid-horizontal-line {
-  height: 60px;
-  border-bottom: 1px solid #f3f4f6;
-  box-sizing: border-box;
-}
-.grid-horizontal-line:last-child { border-bottom: none; }
-
-.days-track {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  height: 1440px;
-}
-
-.day-column {
-  flex: 1;
-  border-right: 1px solid #f3f4f6;
-  position: relative;
-  height: 100%;
-}
-.day-column:hover { background-color: rgba(99, 57, 31, 0.02); }
-
-/* EVENT CARD */
-.event-card {
-  position: absolute;
-  left: 2px; right: 2px;
-  background-color: #dcfce7;
-  border-left: 3px solid #22c55e;
-  border-right: 1px solid #22c55e;
-  border-top: 1px solid #22c55e;
-  border-bottom: 1px solid #22c55e;
-  border-radius: 4px;
-  padding: 4px;
-  font-size: 11px;
-  color: #166534;
+  text-align: center;
+  width: 100%;
+  min-width: 0; 
   overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  transition: all 0.1s;
-  z-index: 10;
-  line-height: 1.2;
 }
 
-.event-card:hover {
-  z-index: 20 !important;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  transform: scale(1.02);
+.emp-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; 
+  width: 100%;
+  display: block;
 }
 
-.event-card.draft {
-  background-color: #fee2e2;
-  border-left-color: #ef4444;
-  border-right-color: #ef4444;
-  border-top-color: #ef4444;
-  border-bottom-color: #ef4444;
-  color: #dc2626;
+.emp-code {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
 }
-
-.event-card.working {
-  background: linear-gradient(135deg, #6b3f23, #c89b6d);
-  border-left-color: #8B5A2B;
-  border-right-color: #8B5A2B;
-  border-top-color: #8B5A2B;
-  border-bottom-color: #8B5A2B;
-  color: white;
-  animation: rainbowWave 2s ease-in-out infinite;
-}
-
-.event-time { font-weight: 700; margin-bottom: 1px; font-size: 9px; }
-.event-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
-
 /* =========================================
    MODAL
    ========================================= */
@@ -1292,10 +1397,19 @@ onMounted(() => {
 
 .detail-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 12px;
   background: #f8f9fa;
   border-bottom: 1px solid #dadce0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
 }
 
 .right-actions { display: flex; gap: 4px; }
