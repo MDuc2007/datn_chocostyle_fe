@@ -6,19 +6,18 @@
       </div>
 
       <div class="filter-row">
-        <div class="search-box">
-          <img
-            src="/src//assets/icon/search.svg"
-            alt="Search"
-            class="search-icon-img"
-          />
+        <div class="control-item search-item">
+          <label>Tìm kiếm</label>
+          <div class="search-box">
+            <img :src="iconSearch" alt="Search" class="search-icon-img" />
 
-          <input
-            v-model="filters.keyword"
-            type="text"
-            placeholder="Tìm theo mã hoặc tên khách hàng..."
-            @input="handleSearch"
-          />
+            <input
+              v-model="filters.keyword"
+              type="text"
+              placeholder="Tìm theo mã hoặc tên khách hàng..."
+              @input="handleSearch"
+            />
+          </div>
         </div>
 
         <div class="filter-controls">
@@ -68,7 +67,7 @@
               @click="resetFilters"
               title="Làm mới bộ lọc"
             >
-              <img src="/src/assets/icon/refesh.svg" style="width: 20px;height: 20px" alt="">
+              ⟳
             </button>
           </div>
         </div>
@@ -122,11 +121,7 @@
                   @click="goToDetail(hd.id)"
                   title="Xem chi tiết"
                 >
-                  <img
-                    src="/src/assets/icon/edit.svg"
-                    alt="Edit"
-                    class="icon-svg"
-                  />
+                  <img :src="iconEdit" alt="Edit" class="icon-svg" />
                 </button>
               </td>
             </tr>
@@ -168,6 +163,10 @@ import { ref, reactive, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import invoiceService from "../../../services/invoiceService";
 import type { InvoiceResponse } from "../../../types/invoice";
+
+// ✅ Thay bằng dòng này (Đi lùi ra 3 cấp thư mục để về thư mục src)
+import iconSearch from "../../../assets/icon/search.svg";
+import iconEdit from "../../../assets/icon/edit.svg";
 
 const router = useRouter();
 
@@ -296,12 +295,11 @@ onMounted(() => {
 }
 
 /* --- 2. Card Section (Dùng chung cho Filter & Table) --- */
-/* Đây là class quy định style: Không viền, bo góc, bóng mờ */
 .card-section {
   background: #fff;
-  border: none; /* QUAN TRỌNG: Không viền */
-  border-radius: 24px; /* Bo tròn lớn */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); /* Bóng nhẹ */
+  border: none;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   padding: 25px;
   margin-bottom: 24px;
 }
@@ -317,7 +315,7 @@ onMounted(() => {
 .section-title {
   font-size: 25px;
   font-weight: 800;
-  color: #63391f; /* Màu nâu chủ đạo */
+  color: #63391f;
   text-transform: uppercase;
   margin: 0;
 }
@@ -329,10 +327,29 @@ onMounted(() => {
   align-items: flex-end;
 }
 
-/* Ô tìm kiếm */
-.search-box {
+/* Bọc ô tìm kiếm */
+.search-item {
   flex: 1;
   min-width: 250px;
+}
+
+/* Ghi đè CSS để input bên trong search-box không bị dính viền và padding của control-item */
+.control-item .search-box input {
+  border: none !important;
+  outline: none !important;
+  width: 100%;
+  height: auto !important;
+  padding: 0 !important;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  min-width: unset;
+  box-shadow: none !important;
+}
+
+/* Đảm bảo khung search-box vẫn giữ được viền và box-sizing chuẩn */
+.search-box {
+  width: 100%;
   position: relative;
   display: flex;
   align-items: center;
@@ -342,16 +359,17 @@ onMounted(() => {
   height: 45px;
   background: #fff;
   transition: all 0.2s;
+  box-sizing: border-box; /* Thêm dòng này để padding không làm phình chiều rộng */
 }
 
-/* 👇 CSS MỚI CHO ICON SEARCH */
 .search-icon-img {
-  width: 18px; /* Kích thước icon */
+  width: 18px;
   height: 18px;
-  margin-right: 12px; /* Khoảng cách với ô input */
-  opacity: 0.5; /* Làm mờ nhẹ để trông giống placeholder */
+  margin-right: 12px;
+  opacity: 0.5;
   object-fit: contain;
 }
+
 .search-box:focus-within {
   border-color: #63391f;
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
@@ -412,11 +430,11 @@ onMounted(() => {
 }
 
 .control-item.no-label {
-  justify-content: flex-end; /* Để nút reset nằm dưới cùng */
+  justify-content: flex-end;
 }
 
 .btn-reset {
-  height: 47px;
+  height: 45px;
   width: 45px;
   border: 1px solid #e0e0e0;
   background: #fff;
@@ -546,12 +564,22 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   transition: all 0.2s;
 }
+
+.icon-svg {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  transition: transform 0.2s;
+}
+
 .btn-icon:hover {
   background: #f1f2f6;
-  color: #63391f;
+}
+
+.btn-icon:hover .icon-svg {
+  transform: scale(1.1);
 }
 
 /* Pagination */
@@ -590,35 +618,5 @@ onMounted(() => {
   padding: 40px;
   color: #b2bec3;
   font-style: italic;
-}
-.btn-icon {
-  /* Giữ nguyên các thuộc tính cũ của .btn-icon */
-  background: transparent;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-/* Style mới cho ảnh SVG bên trong */
-.icon-svg {
-  width: 20px; /* Kích thước icon */
-  height: 20px;
-  object-fit: contain;
-  transition: transform 0.2s;
-}
-
-.btn-icon:hover {
-  background: #f1f2f6; /* Màu nền tròn khi hover */
-}
-
-/* Hiệu ứng phóng to nhẹ icon khi hover (tùy chọn) */
-.btn-icon:hover .icon-svg {
-  transform: scale(1.1);
 }
 </style>

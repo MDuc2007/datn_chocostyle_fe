@@ -485,7 +485,11 @@ const validateForm = () => {
       valid = false;
     }
 
-    if (form.giaTriToiDa > form.dieuKienDonHang) {
+    if (
+      form.giaTriToiDa !== null &&
+      form.dieuKienDonHang !== null &&
+      form.giaTriToiDa > form.dieuKienDonHang
+    ) {
       errors.giaTriToiDa =
         "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
       valid = false;

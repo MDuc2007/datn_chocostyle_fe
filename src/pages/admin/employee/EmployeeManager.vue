@@ -26,7 +26,20 @@
             <label class="filter-label">Tìm kiếm</label>
             <div class="search-box">
               <i class="search-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9CA3AF"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
               </i>
               <input
                 v-model="query"
@@ -52,9 +65,13 @@
           <button class="btn btn-outline hover-effect" @click="resetFilters">
             Đặt lại
           </button>
-          
+
           <button class="btn btn-outline hover-effect" @click="exportExcel">
-            <img src="/src/assets/icon/dowload.svg" alt="" style="width: 20px; height: 20px">
+            <img
+              src="/src/assets/icon/dowload.svg"
+              alt=""
+              style="width: 16px; height: 16px; margin-right: 8px"
+            />
             Xuất Excel
           </button>
 
@@ -63,7 +80,7 @@
           </button>
         </div>
       </div>
-      </div>
+    </div>
 
     <div class="card-section table-card form-page-animation">
       <div class="table-container">
@@ -125,13 +142,15 @@
                 <td>{{ e.phone }}</td>
 
                 <td class="text-muted small">
-                  <div 
-                    class="custom-tooltip address-tooltip-wrapper" 
-                    :data-tooltip="e.address ? e.address : 'Chưa cập nhật địa chỉ'"
-                    style="display: block; position: relative; width: 100%;"
+                  <div
+                    class="custom-tooltip address-tooltip-wrapper"
+                    :data-tooltip="
+                      e.address ? e.address : 'Chưa cập nhật địa chỉ'
+                    "
+                    style="display: block; position: relative; width: 100%"
                   >
                     <div class="address-truncate">
-                      {{ e.address ? e.address : '---' }}
+                      {{ e.address ? e.address : "---" }}
                     </div>
                   </div>
                 </td>
@@ -483,18 +502,21 @@ function getRoleLabel(roleCode) {
 const loadEmployees = async () => {
   try {
     let statusParam = null;
-    if (filters.value.status === 'active') statusParam = 1;
-    if (filters.value.status === 'inactive') statusParam = 0;
-    if (filters.value.status === 'locked') statusParam = 2;
+    if (filters.value.status === "active") statusParam = 1;
+    if (filters.value.status === "inactive") statusParam = 0;
+    if (filters.value.status === "locked") statusParam = 2;
 
-    const response = await axios.get('http://localhost:8080/api/nhan-vien/search', {
-      params: {
-        keyword: query.value,
-        trangThai: statusParam,
-        page: page.value,
-        size: perPage.value
-      }
-    });
+    const response = await axios.get(
+      "http://localhost:8080/api/nhan-vien/search",
+      {
+        params: {
+          keyword: query.value,
+          trangThai: statusParam,
+          page: page.value,
+          size: perPage.value,
+        },
+      },
+    );
 
     // Map content từ backend sang format của frontend
     employees.value = response.data.content.map((item) => ({
@@ -511,13 +533,12 @@ const loadEmployees = async () => {
       avatar: item.avatar,
       gender: item.gioiTinh,
     }));
-    
+
     totalPages.value = response.data.totalPages;
     totalElements.value = response.data.totalElements;
-
   } catch (error) {
     console.error("Lỗi khi tải danh sách nhân viên:", error);
-    showNotification('Lỗi khi tải dữ liệu', 'error');
+    showNotification("Lỗi khi tải dữ liệu", "error");
   }
 };
 
@@ -526,10 +547,14 @@ onMounted(() => {
 });
 
 // Khi thay đổi text hoặc dropdown filter -> Quay về trang đầu tiên và gọi lại API
-watch([query, () => filters.value.status], () => {
-  page.value = 0;
-  loadEmployees();
-}, { deep: true });
+watch(
+  [query, () => filters.value.status],
+  () => {
+    page.value = 0;
+    loadEmployees();
+  },
+  { deep: true },
+);
 
 // Khi thay đổi page (Bấm next, prev...) -> Gọi lại API
 watch(page, () => {
@@ -859,7 +884,9 @@ const showNotification = (message, type = "success") => {
   box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 }
 
 .card-section:hover {
@@ -917,12 +944,12 @@ const showNotification = (message, type = "success") => {
 
 .filter-group {
   display: flex;
-  flex-direction: column; 
-  gap: 6px; 
+  flex-direction: column;
+  gap: 6px;
 }
 
 .filter-group.search-group {
-  justify-content: flex-end; 
+  justify-content: flex-end;
 }
 
 .filter-label {
@@ -997,48 +1024,26 @@ const showNotification = (message, type = "success") => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #6b3f23, #c89b6d);
-  color: #fff;
-  border-color: #6b3f23;
-}
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a3420, #b8895d);
-  box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
-}
-
-/* Add button style matching ProductManager */
-.btn-add {
-  background: #fff;
-  color: #484848;
+  height: 42px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
   border: 1px solid #ccc;
-  border-radius: 10px;
-  height: 42px;
-  padding: 0 16px;
+  border-radius: 10px; /* 👈 bo y hệt */
+  background: #fff;
+  cursor: pointer;
+
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
+  color: #484848;
+
+  display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-add:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background: #fdf8f6;
 }
 
 .btn-outline {
   background-color: #fff;
-  color: #484848;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-}
-.btn-outline:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background-color: #fdf8f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
 .hover-effect:active {
@@ -1075,9 +1080,14 @@ const showNotification = (message, type = "success") => {
   vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
 }
-.custom-table tbody tr:hover td {
-  background-color: var(--primary-light);
+.custom-table td,
+.custom-table th {
+  word-break: break-word;
+  white-space: normal;
 }
+/* .custom-table tbody tr:hover td {
+  background-color: var(--primary-light);
+} */
 .fw-bold {
   font-weight: 600;
 }
@@ -1108,28 +1118,34 @@ const showNotification = (message, type = "success") => {
   cursor: default;
 }
 
-/* === AVATAR === */
+/* Căn giữa nội dung trong cột ảnh */
+.custom-table td:nth-child(2) {
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Ảnh thật */
 .avatar-img {
   width: 45px;
   height: 45px;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid #e5e7eb;
-  display: block;
+  display: inline-block; /* đổi từ block */
 }
+
+/* Placeholder */
 .avatar-placeholder {
   width: 45px;
   height: 45px;
   border-radius: 8px;
-  display: flex;
+  display: inline-flex; /* đổi sang inline-flex */
   align-items: center;
   justify-content: center;
   font-weight: 700;
   color: #fff;
   font-size: 14px;
   border: 1px solid #e5e7eb;
-  flex-shrink: 0;
-  margin: 0 auto;
 }
 
 /* === STATUS BADGE === */
@@ -1302,7 +1318,9 @@ input:checked + .slider::before {
   width: 600px;
   max-width: 95%;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 .modal-header {
   display: flex;
@@ -1491,22 +1509,24 @@ input:checked + .slider::before {
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 12px;
-  
+
   /* Sửa 3 dòng dưới đây để địa chỉ dài tự xuống dòng */
-  white-space: normal; 
+  white-space: normal;
   /* max-width: 300px;  */
   width: 250px;
-  width: max-content; 
+  width: max-content;
   line-height: 1.4;
   text-align: center;
   word-break: break-word;
 
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   z-index: 100;
   pointer-events: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   font-weight: 500;
 }
 .custom-tooltip::after {
@@ -1520,7 +1540,9 @@ input:checked + .slider::before {
   border-color: #333 transparent transparent transparent;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   z-index: 100;
 }
 .custom-tooltip:hover::before,
@@ -1609,7 +1631,9 @@ input:checked + .slider::before {
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
 .confirm-icon-wrapper {
@@ -1692,11 +1716,11 @@ input:checked + .slider::before {
   .left-controls {
     gap: 12px;
   }
-  
+
   .search-box {
     width: 250px;
   }
-  
+
   .form-select {
     min-width: 150px;
   }
@@ -1707,21 +1731,21 @@ input:checked + .slider::before {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .left-controls,
   .right-controls {
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .search-box {
     width: 100%;
   }
-  
+
   .form-select {
     width: 100%;
   }
-  
+
   .btn {
     flex: 1;
   }
@@ -1732,15 +1756,15 @@ input:checked + .slider::before {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .filter-group {
     width: 100%;
   }
-  
+
   .right-controls {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
   }
@@ -1752,21 +1776,20 @@ input:checked + .slider::before {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: default;
-  display: inline-block;
+  /* display: inline-block; */
+  word-break: break-word;
+  overflow-wrap: break-word;
   vertical-align: middle;
 }
-/* Ghi đè vị trí tooltip dành riêng cho cột địa chỉ */
 .address-tooltip-wrapper.custom-tooltip::before {
-  left: 0 !important; /* Ép tooltip bắt đầu từ mép trái của cột */
-  transform: translateX(0) !important; /* Bỏ căn giữa, KHÔNG dùng translateY để không bị bay lên cao */
-  text-align: left; 
-  width: max-content;
-  max-width: 350px; /* Tránh tooltip dài tràn màn hình */
+  left: 0 !important;
+  transform: none !important;
+  text-align: left;
+  max-width: 350px;
 }
 
-/* Ghi đè vị trí mũi tên của tooltip */
 .address-tooltip-wrapper.custom-tooltip::after {
-  left: 15px !important; /* Dời mũi tên về lề trái cho khớp với bọt thoại */
-  transform: translateX(0) !important; 
+  left: 20px !important;
+  transform: none !important;
 }
 </style>

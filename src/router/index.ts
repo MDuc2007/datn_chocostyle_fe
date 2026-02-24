@@ -231,10 +231,10 @@
         component: () => import("../pages/admin/customer/CustomerEdit.vue"),
       },
       {
-        path: 'giao-ca',
-        name: 'GiaoCa',
-        component: () => import('../pages/admin/Calendar/ShiftHandover.vue') // Trỏ đúng đường dẫn file vừa tạo
-      }
+        path: "giao-ca",
+        name: "GiaoCa",
+        component: () => import("../pages/admin/Calendar/ShiftHandover.vue"), // Trỏ đúng đường dẫn file vừa tạo
+      },
     ],
   },
 
@@ -255,22 +255,19 @@
       {
         path: "sales",
         name: "StaffSales",
-        component: () =>
-          import("../pages/staff/sales/CounterSales.vue"),
+        component: () => import("../pages/admin/sales/CounterSales.vue"),
       },
 
       // 3. Hóa đơn
       {
         path: "invoice",
         name: "StaffInvoiceList",
-        component: () =>
-          import("../pages/staff/invoice/InvoiceList.vue"),
+        component: () => import("../pages/admin/invoice/InvoiceList.vue"),
       },
       {
         path: "invoice/:id",
         name: "StaffInvoiceDetail",
-        component: () =>
-          import("../pages/staff/invoice/InvoiceDetail.vue"),
+        component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
       },
 
@@ -278,8 +275,7 @@
       {
         path: "customer",
         name: "StaffCustomerList",
-        component: () =>
-          import("../pages/staff/customer/CustomerManager.vue"),
+        component: () => import("../pages/admin/customer/CustomerManager.vue"),
       },
 
       // 5. Lịch làm việc
