@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="modal-overlay">
+  <div v-if="show && isReady" class="modal-overlay">
     <div class="modal-content">
       
       <div class="modal-header">
@@ -103,13 +103,14 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onUnmounted, computed } from "vue"; // 👉 Đã import thêm computed
+import { ref, onMounted, onUnmounted, computed } from "vue"; 
 import Swal from 'sweetalert2';
 
 const props = defineProps(["ca", "idNv", "tenNv", "token"]);
 const emit = defineEmits(["close"]);
 
 const show = ref(true);
+const isReady = ref(false); 
 const isLoading = ref(false);
 
 const form = ref({
@@ -118,26 +119,24 @@ const form = ref({
 });
 
 const chamCong = ref(null); 
-const currentDateObj = ref(new Date()); // 👉 Biến theo dõi thời gian thực
+const currentDateObj = ref(new Date()); 
 const currentTime = ref('');
 let timer;
 
 const updateTime = () => {
-  currentDateObj.value = new Date(); // Cập nhật liên tục mỗi giây
+  currentDateObj.value = new Date(); 
   currentTime.value = currentDateObj.value.toLocaleTimeString('vi-VN') + ' ' + currentDateObj.value.toLocaleDateString('vi-VN');
 };
 
-// 👉 LOGIC KHÓA NÚT NẾU CHƯA ĐẾN GIỜ (Được tính toán liên tục)
 const isChuaHetCa = computed(() => {
   if (!props.ca || !props.ca.caLamViec || !props.ca.caLamViec.gioKetThuc) return false;
 
-  const endTimeStr = props.ca.caLamViec.gioKetThuc; // Lấy "23:10:00"
+  const endTimeStr = props.ca.caLamViec.gioKetThuc; 
   const [hours, minutes] = endTimeStr.split(':');
   
   const endTime = new Date();
   endTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-  // Trả về true (khóa nút) nếu thời gian hiện tại vẫn nhỏ hơn giờ kết thúc
   return currentDateObj.value.getTime() < endTime.getTime(); 
 });
 
@@ -145,7 +144,6 @@ const headers = {
   Authorization: `Bearer ${props.token}`
 };
 
-// HÀM MỞ CA VỚI SWEETALERT2
 const checkIn = async () => {
   isLoading.value = true;
   try {
@@ -179,7 +177,6 @@ const checkIn = async () => {
   }
 };
 
-// HÀM KẾT THÚC CA VỚI SWEETALERT2
 const checkOut = async () => {
   const confirmResult = await Swal.fire({
     title: 'Xác nhận kết thúc ca',
@@ -234,10 +231,22 @@ onMounted(async () => {
         { headers }
       );
       chamCong.value = res.data;
+      
+      // Đã có ca nhưng ĐÃ CHẤM CÔNG (đang làm / đã nghỉ) -> Tự đóng, không làm phiền
+      if (chamCong.value) {
+        close();
+        return;
+      }
     } catch (err) {
-      chamCong.value = null;
+      chamCong.value = null; 
     }
+  } else {
+    // Không có ca -> Tự đóng, không làm phiền
+    close();
+    return;
   }
+
+  isReady.value = true;
 });
 
 onUnmounted(() => {
