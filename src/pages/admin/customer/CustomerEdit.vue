@@ -264,35 +264,24 @@
 
     <transition name="toast-slide">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
+        <div class="toast-indicator"></div>
         <div class="toast-content">{{ toast.message }}</div>
-        <button class="toast-close" @click="toast.show = false">×</button>
-      </div>
+        </div>
     </transition>
 
     <transition name="fade-modal">
       <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 12l3 3 5-5"></path>
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="#f59e0b">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
             </svg>
           </div>
           <h3 class="confirm-title">{{ modal.title }}</h3>
           <p class="confirm-desc">{{ modal.message }}</p>
           <div class="confirm-actions">
             <button class="btn-cancel hover-effect" @click="closeModal">
-              Xem lại
+              Hủy
             </button>
             <button
               class="btn-confirm hover-effect"
@@ -512,8 +501,8 @@ const handleUpdateClick = () => {
   }
   modal.value = {
     show: true,
-    title: "Xác nhận cập nhật",
-    message: `Bạn có chắc chắn muốn lưu thay đổi cho khách hàng "${editForm.value.tenKhachHang}"?`,
+    title: "Xác nhận thay đổi trạng thái", // 👉 Cập nhật title theo ảnh
+    message: `Bạn có chắc chắn muốn thay đổi trạng thái nhân viên?`, // 👉 Cập nhật message theo ảnh
   };
 };
 
@@ -936,7 +925,7 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
-   6. FOOTER, LOADING & MISC
+   6. FOOTER & MISC
    ========================================= */
 .footer-actions {
   display: flex;
@@ -996,38 +985,55 @@ const showToast = (msg, type = "success") => {
   margin: 0 auto 15px;
 }
 
-/* Toast, Modal, Animations */
+/* =========================================
+   7. TOAST NOTIFICATION STYLES (ĐÃ CHỈNH SỬA)
+   ========================================= */
 .toast-notification {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 9999;
-  min-width: 300px;
-  padding: 15px;
-  border-radius: 10px;
+  min-width: 250px;
+  padding: 12px 15px;
+  border-radius: 6px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  font-weight: 600;
-  background: #fff;
-}
-.toast-notification.success {
-  color: #065f46;
-  border-left: 5px solid #10b981;
-}
-.toast-notification.error {
-  color: #991b1b;
-  border-left: 5px solid #ef4444;
-}
-.toast-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
+  font-weight: 500;
+  background: #F0FDF4; /* Màu nền xanh nhạt giống ảnh */
+  color: #374151; /* Màu chữ xám đen */
 }
 
+.toast-indicator {
+    width: 6px;
+    height: 100%;
+    background-color: #22C55E; /* Thanh màu xanh lá cây đậm bên trái */
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.toast-content {
+    margin-left: 10px;
+}
+
+
+
+.toast-notification.error {
+  background: #FEF2F2;
+  color: #991b1b;
+}
+
+.toast-notification.error .toast-indicator {
+    background-color: #ef4444;
+}
+
+/* =========================================
+   8. MODAL CONFIRMATION STYLES (ĐÃ CHỈNH SỬA)
+   ========================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1051,13 +1057,12 @@ const showToast = (msg, type = "success") => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #e8f5e9;
-  color: #22c55e;
+  background-color: #FEF3C7; /* Nền vàng cam nhạt */
   margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: bounce 1s infinite;
+  /* Bỏ animation bounce để giống thiết kế tĩnh hơn */
 }
 .confirm-title {
   color: var(--primary-brown);
@@ -1085,11 +1090,11 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
 }
 .btn-confirm {
-  background-color: #63391f;
+  background-color: #a88164; /* Nâu nhạt tương tự ảnh */
   color: #fff;
 }
 .btn-confirm:hover {
-  background-color: #4e2c17;
+  background-color: var(--primary-brown);
 }
 .btn-cancel {
   background: #f1f5f9;
@@ -1099,6 +1104,7 @@ const showToast = (msg, type = "success") => {
   background: #e2e8f0;
 }
 
+/* Animations */
 @keyframes zoomIn {
   from {
     opacity: 0;

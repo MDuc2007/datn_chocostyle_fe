@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="modal-overlay">
+  <div v-if="show && isReady" class="modal-overlay">
     <div class="modal-content">
       
       <div class="modal-header">
@@ -103,13 +103,14 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onUnmounted, computed } from "vue"; // 👉 Đã import thêm computed
+import { ref, onMounted, onUnmounted, computed } from "vue"; 
 import Swal from 'sweetalert2';
 
 const props = defineProps(["ca", "idNv", "tenNv", "token"]);
 const emit = defineEmits(["close"]);
 
 const show = ref(true);
+const isReady = ref(false); 
 const isLoading = ref(false);
 
 const form = ref({
@@ -118,26 +119,24 @@ const form = ref({
 });
 
 const chamCong = ref(null); 
-const currentDateObj = ref(new Date()); // 👉 Biến theo dõi thời gian thực
+const currentDateObj = ref(new Date()); 
 const currentTime = ref('');
 let timer;
 
 const updateTime = () => {
-  currentDateObj.value = new Date(); // Cập nhật liên tục mỗi giây
+  currentDateObj.value = new Date(); 
   currentTime.value = currentDateObj.value.toLocaleTimeString('vi-VN') + ' ' + currentDateObj.value.toLocaleDateString('vi-VN');
 };
 
-// 👉 LOGIC KHÓA NÚT NẾU CHƯA ĐẾN GIỜ (Được tính toán liên tục)
 const isChuaHetCa = computed(() => {
   if (!props.ca || !props.ca.caLamViec || !props.ca.caLamViec.gioKetThuc) return false;
 
-  const endTimeStr = props.ca.caLamViec.gioKetThuc; // Lấy "23:10:00"
+  const endTimeStr = props.ca.caLamViec.gioKetThuc; 
   const [hours, minutes] = endTimeStr.split(':');
   
   const endTime = new Date();
   endTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-  // Trả về true (khóa nút) nếu thời gian hiện tại vẫn nhỏ hơn giờ kết thúc
   return currentDateObj.value.getTime() < endTime.getTime(); 
 });
 
@@ -145,7 +144,21 @@ const headers = {
   Authorization: `Bearer ${props.token}`
 };
 
-// HÀM MỞ CA VỚI SWEETALERT2
+// ==========================================
+// CẤU HÌNH THIẾT KẾ CHUNG CHO SWEETALERT2
+// ==========================================
+const customSwalConfig = {
+  customClass: {
+    popup: 'custom-swal-popup',
+    title: 'custom-swal-title',
+    htmlContainer: 'custom-swal-text',
+    confirmButton: 'custom-swal-confirm-btn',
+    cancelButton: 'custom-swal-cancel-btn',
+    actions: 'custom-swal-actions'
+  },
+  buttonsStyling: false, // Tắt style mặc định để dùng CSS tự viết
+};
+
 const checkIn = async () => {
   isLoading.value = true;
   try {
@@ -159,37 +172,37 @@ const checkIn = async () => {
     );
     
     await Swal.fire({
+      ...customSwalConfig,
       title: 'Thành công!',
       text: 'Mở ca làm việc thành công!',
       icon: 'success',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đồng ý',
     });
     
     location.reload(); 
   } catch (error) {
     console.error("Lỗi check-in:", error);
     Swal.fire({
+      ...customSwalConfig,
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi mở ca.",
       icon: 'error',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đóng',
     });
   } finally {
     isLoading.value = false;
   }
 };
 
-// HÀM KẾT THÚC CA VỚI SWEETALERT2
 const checkOut = async () => {
   const confirmResult = await Swal.fire({
+    ...customSwalConfig,
     title: 'Xác nhận kết thúc ca',
     text: "Bạn có chắc chắn muốn kết thúc ca làm việc này không?",
-    icon: 'question',
+    icon: 'warning', // 👉 Đổi sang icon cảnh báo (dấu chấm than)
     showCancelButton: true,
-    confirmButtonColor: '#63391F',
-    cancelButtonColor: '#d33',
     confirmButtonText: 'Đồng ý',
-    cancelButtonText: 'Hủy bỏ'
+    cancelButtonText: 'Hủy'
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -203,20 +216,22 @@ const checkOut = async () => {
     );
     
     await Swal.fire({
+      ...customSwalConfig,
       title: 'Thành công!',
       text: 'Đã kết thúc ca làm việc!',
       icon: 'success',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đồng ý',
     });
     
     location.reload();
   } catch (error) {
     console.error("Lỗi check-out:", error);
     Swal.fire({
+      ...customSwalConfig,
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi kết thúc ca.",
       icon: 'error',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đóng',
     });
   } finally {
     isLoading.value = false;
@@ -234,10 +249,20 @@ onMounted(async () => {
         { headers }
       );
       chamCong.value = res.data;
+      
+      // Đã có ca nhưng ĐÃ CHẤM CÔNG (đang làm / đã nghỉ) -> Tự đóng, không làm phiền
+      if (chamCong.value) {
+
+      }
     } catch (err) {
-      chamCong.value = null;
+      chamCong.value = null; 
     }
+  } else {
+    // Không có ca -> Tự đóng, không làm phiền
+
   }
+
+  isReady.value = true;
 });
 
 onUnmounted(() => {
@@ -512,5 +537,70 @@ const close = () => {
 <style>
   div.swal2-container {
     z-index: 10000 !important;
+  }
+
+  /* Định dạng popup */
+  .custom-swal-popup {
+    border-radius: 16px !important;
+    padding: 2em !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  }
+
+  /* Tiêu đề */
+  .custom-swal-title {
+    color: #63391F !important;
+    font-size: 1.25em !important;
+    font-weight: 700 !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Nội dung */
+  .custom-swal-text {
+    color: #666666 !important;
+    font-size: 1em !important;
+  }
+
+  /* Vùng chứa nút bấm */
+  .custom-swal-actions {
+    display: flex !important;
+    gap: 15px !important;
+    margin-top: 25px !important;
+    width: 100% !important;
+  }
+
+  /* Nút Đồng ý */
+  .custom-swal-confirm-btn {
+    flex: 1;
+    background-color: #9b7054 !important; /* Màu nâu nhạt giống thiết kế */
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 1em !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+  }
+
+  .custom-swal-confirm-btn:hover {
+    background-color: #63391F !important; /* Đậm hơn khi hover */
+  }
+
+  /* Nút Hủy */
+  .custom-swal-cancel-btn {
+    flex: 1;
+    background-color: #F3F4F6 !important; /* Nền xám nhạt */
+    color: #4B5563 !important; /* Chữ xám đậm */
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 1em !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+  }
+
+  .custom-swal-cancel-btn:hover {
+    background-color: #E5E7EB !important;
   }
 </style>

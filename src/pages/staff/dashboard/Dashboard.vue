@@ -45,8 +45,8 @@
 
     <div class="info-grid">
       <div class="dashboard-card info-box">
-        <div class="info-header"><span class="icon">👔</span><h4>VestShop</h4></div>
-        <p class="desc">Chuyên vest cưới/tiệc, đo may & chỉnh sửa theo form. Trải nghiệm mua hàng nhanh gọn cho nhân viên.</p>
+        <div class="info-header"><span class="icon">👔</span><h4>ChocoStyle Shop</h4></div>
+        <p class="desc">Chuyên âu phục, vest cưới/tiệc, đo may & chỉnh sửa theo form. Trải nghiệm mua sắm chuyên nghiệp và nhanh gọn.</p>
       </div>
       <div class="dashboard-card info-box">
         <div class="info-header"><span class="icon">📦</span><h4>Quy trình làm việc</h4></div>
@@ -90,10 +90,9 @@ const orderStats = ref({
   cancelled: 2
 });
 
-// 👉 ĐÃ SỬA LẠI CÁCH GỌI DỮ LIỆU TỪ LOCAL STORAGE (Dùng các biến rời rạc như đã cài đặt)
 const idNv = localStorage.getItem("idNv");
 const token = localStorage.getItem("token");
-const tenNv = localStorage.getItem("tenNv"); // Lấy tên ra từ đây
+const tenNv = localStorage.getItem("tenNv");
 
 const ca = ref(null);
 const showModal = ref(false);
@@ -119,13 +118,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* ================= Biến màu sắc theo yêu cầu ================= */
-:root {
-  --primary-color: #63391F;
-  --bg-color: #F7F7F7;
-  --white-color: #FFFFFF;
-}
-
+/* Tổng thể trang */
 .dashboard-page {
   background-color: #F7F7F7;
   padding: 20px;
@@ -136,6 +129,7 @@ onMounted(async () => {
   position: relative; 
 }
 
+/* Thẻ Card */
 .dashboard-card {
   background-color: #FFFFFF;
   border-radius: 12px;
@@ -144,43 +138,167 @@ onMounted(async () => {
   border: 1px solid #eaeaea;
 }
 
+/* Tiêu đề chung */
 .title {
   font-size: 16px;
   font-weight: 700;
-  color: #333;
+  color: #63391F;
   margin: 0 0 15px 0;
 }
 
 /* ================= SLIDER SECTION ================= */
-.slider-header { display: flex; justify-content: space-between; align-items: center; }
-.slider-dots { display: flex; gap: 6px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background-color: #ddd; }
-.dot.active { background-color: #2b55cc; }
-.slider-container { display: flex; align-items: center; gap: 15px; position: relative; }
-.nav-btn { background-color: #FFFFFF; border: 1px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: #666; z-index: 2; }
-.nav-btn:hover { background-color: #f0f0f0; }
-.image-grid { display: flex; flex: 1; gap: 20px; overflow: hidden; }
-.img-wrapper { flex: 1; border-radius: 12px; overflow: hidden; height: 350px; }
-.img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.slider-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
+
+.slider-dots { 
+  display: flex; 
+  gap: 6px; 
+}
+
+.dot { 
+  width: 8px; 
+  height: 8px; 
+  border-radius: 50%; 
+  background-color: #D1D5DB; 
+}
+
+.dot.active { 
+  background-color: #63391F; 
+}
+
+.slider-container { 
+  display: flex; 
+  align-items: center; 
+  gap: 15px; 
+  position: relative; 
+}
+
+.nav-btn { 
+  background-color: #FFFFFF; 
+  border: 1px solid #E2E8F0; 
+  border-radius: 50%; 
+  width: 40px; 
+  height: 40px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 24px; 
+  cursor: pointer; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+  color: #666666; 
+  z-index: 2; 
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover { 
+  background-color: #F7F7F7; 
+  color: #63391F;
+  border-color: #63391F;
+}
+
+.image-grid { 
+  display: flex; 
+  flex: 1; 
+  gap: 20px; 
+  overflow: hidden; 
+}
+
+.img-wrapper { 
+  flex: 1; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  height: 350px; 
+  background-color: #E2E8F0; /* Màu nền chờ cho ảnh */
+}
+
+.img-wrapper img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+}
 
 /* ================= STATUS SECTION ================= */
-.status-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-.status-box { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-radius: 8px; border: 1px solid transparent; }
-.status-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
-.status-box .value { font-size: 24px; font-weight: 700; }
+.status-grid { 
+  display: grid; 
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 15px; 
+}
+
+.status-box { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 15px 20px; 
+  border-radius: 8px; 
+  border: 1px solid transparent; 
+}
+
+.status-info { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  font-weight: 600; 
+  font-size: 14px; 
+}
+
+.status-box .value { 
+  font-size: 24px; 
+  font-weight: 700; 
+}
+
+/* Giữ nguyên màu sắc semantic cho trạng thái đơn hàng để dễ nhận diện */
 .pending { background-color: #FFF8EE; border-color: #FFE6C7; color: #C05621; }
 .delivering { background-color: #F0F7FF; border-color: #D6E8FF; color: #2B6CB0; }
 .completed { background-color: #F0FFF4; border-color: #C6F6D5; color: #2F855A; }
 .cancelled { background-color: #FFF5F5; border-color: #FED7D7; color: #C53030; }
 
 /* ================= INFO GRID SECTION ================= */
-.info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.info-box { display: flex; flex-direction: column; gap: 10px; }
-.info-header { display: flex; align-items: center; gap: 10px; }
-.info-header h4 { margin: 0; font-size: 15px; color: #333; }
-.info-header .icon { font-size: 18px; }
-.desc { font-size: 13px; color: #666; line-height: 1.5; margin: 0; }
-.info-list { margin: 0; padding-left: 20px; font-size: 13px; color: #666; line-height: 1.8; }
+.info-grid { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 20px; 
+}
+
+.info-box { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+}
+
+.info-header { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+}
+
+.info-header h4 { 
+  margin: 0; 
+  font-size: 15px; 
+  color: #63391F; 
+  font-weight: 700;
+}
+
+.info-header .icon { 
+  font-size: 18px; 
+}
+
+.desc { 
+  font-size: 13px; 
+  color: #666666; 
+  line-height: 1.5; 
+  margin: 0; 
+}
+
+.info-list { 
+  margin: 0; 
+  padding-left: 20px; 
+  font-size: 13px; 
+  color: #666666; 
+  line-height: 1.8; 
+}
 
 @media (max-width: 1024px) {
   .status-grid { grid-template-columns: repeat(2, 1fr); }
