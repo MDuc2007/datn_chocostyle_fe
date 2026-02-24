@@ -896,9 +896,7 @@ input:checked + .slider:before {
     margin-left: 10px;
 }
 
-.toast-notification.success {
-  /* Các thuộc tính success cụ thể đã được gộp vào .toast-notification */
-}
+
 
 .toast-notification.error {
   background: #FEF2F2;
