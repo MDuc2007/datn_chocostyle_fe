@@ -968,8 +968,8 @@ const showToast = (msg, type = "success") => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #e0f2fe;
-  color: #0284c7;
+  background-color: #e8f5e9;
+  color: #22c55e;
   margin: 0 auto 20px;
   display: flex;
   align-items: center;

@@ -3,21 +3,20 @@
     <h2 class="title">QUẢN LÝ SẢN PHẨM</h2>
     <div class="top-bar" style="margin-top: 30px">
       <div class="left-actions">
-        <label>Tìm kiếm</label>
-        <div class="search-wrapper">
-          <img
-            src="/src/assets/icon/search.svg"
-            class="search-icon"
-            alt="icon"
-          />
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Tìm kiếm sản phẩm theo mã và tên sản phẩm"
-            v-model="keyword"
-            @input="handleSearch"
-            style="border: 1px solid #d6c3b4"
-          />
+        <div>
+          <label>Tìm kiếm</label>
+          <div class="search-wrapper">
+            <img
+              src="/src/assets/icon/search.svg"
+              class="search-icon"
+              alt="icon"
+            />
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Tìm kiếm loại áo theo tên"
+            />
+          </div>
         </div>
         <div class="filters">
           <div class="filter-item">
@@ -129,7 +128,7 @@
                   <div v-if="promotionMap[item.id]">
                     <div
                       style="
-                        font-size: 12px;
+                        font-size: 10px;
                         color: #999;
                         text-decoration: line-through;
                       "
@@ -1035,7 +1034,6 @@ onMounted(() => {
 .add-btn {
   display: flex;
   justify-content: end;
-  margin-right: 20px;
   align-self: flex-end;
   gap: 10px;
 }

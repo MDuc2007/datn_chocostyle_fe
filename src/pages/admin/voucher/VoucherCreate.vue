@@ -183,7 +183,6 @@
             <option value="spend-asc">Chi tiêu ↑</option>
           </select>
         </div>
-
       </div>
 
       <table class="customer-table">
@@ -284,10 +283,7 @@
                 d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
                 clip-rule="evenodd"
               />
-              fill="currentColor"
-              width="40"
-              height="40"
-            >
+              fill="currentColor" width="40" height="40" >
               <path
                 fill-rule="evenodd"
                 d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
@@ -518,11 +514,6 @@ const validateGiaTriToiDa = () => {
     return false;
   }
 
-  if (form.dieuKienDonHang && form.giaTriToiDa > form.dieuKienDonHang) {
-    errors.giaTriToiDa = "Giá trị tối đa không được lớn hơn điều kiện đơn hàng";
-    return false;
-  }
-
   return true;
 };
 
@@ -636,6 +627,10 @@ const validateForm = async () => {
   if (form.loaiGiam === "MONEY" && form.dieuKienDonHang < form.giaTri) {
     errors.dieuKienDonHang = "Điều kiện đơn hàng phải ≥ giá trị giảm";
     valid = false;
+  }
+
+  if (form.loaiGiam === "PERCENT" && form.giaTriToiDa > form.dieuKienDonHang) {
+    showToast("Cảnh báo: Giá trị tối đa lớn hơn điều kiện đơn hàng", "error");
   }
 
   return valid;
@@ -1375,7 +1370,6 @@ const back = () => router.push("/admin/voucher");
   z-index: 2000;
 }
 
-
 .confirm-box {
   width: 400px;
   background: #ffffff;
@@ -1402,7 +1396,6 @@ const back = () => router.push("/admin/voucher");
     transform: scale(1);
   }
 }
-
 
 @keyframes zoomIn {
   from {
@@ -1443,7 +1436,6 @@ const back = () => router.push("/admin/voucher");
   color: #63391f;
   margin-bottom: 10px;
 }
-
 
 .confirm-desc {
   font-size: 14px;
@@ -1491,7 +1483,6 @@ const back = () => router.push("/admin/voucher");
   background: #4e2c17;
 }
 
-
 .btn-confirm {
   background: #63391f;
   color: #ffffff;
@@ -1507,7 +1498,6 @@ const back = () => router.push("/admin/voucher");
   transition: opacity 0.25s ease;
   transition: opacity 0.25s ease;
 }
-
 
 .fade-modal-enter-from,
 .fade-modal-leave-to {

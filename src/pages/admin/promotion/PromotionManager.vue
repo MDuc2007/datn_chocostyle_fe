@@ -3,19 +3,22 @@
   <div class="header">
     <h2 class="title">QUẢN LÝ ĐỢT GIẢM GIÁ</h2>
 
-    <div class="top-bar">
+    <div class="top-bar" style="margin-top: 30px">
       <!-- LEFT -->
       <div class="left-actions">
-        <!-- SEARCH -->
-        <div class="search-wrapper">
-          <img src="/src/assets/icon/search.svg" class="search-icon" />
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Tìm theo mã hoặc tên"
-            v-model="filter.keyword"
-          />
+        <div>
+          <label>Tìm kiếm</label>
+          <div class="search-wrapper">
+            <img src="/src/assets/icon/search.svg" class="search-icon" />
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Tìm theo mã hoặc tên"
+              v-model="filter.keyword"
+            />
+          </div>
         </div>
+        <!-- SEARCH -->
 
         <!-- FILTER -->
         <div class="filters">
@@ -48,15 +51,16 @@
             </button>
           </div>
         </div>
-        <div class="add-btn">
-          <button @click="$router.push('/admin/promotion/create')">
-            <span>＋</span> Thêm đợt giảm
-          </button>
-        </div>
       </div>
 
-      <!-- RIGHT -->
+      <div class="add-btn">
+        <button @click="$router.push('/admin/promotion/create')">
+          <span>＋</span> Thêm đợt giảm
+        </button>
+      </div>
     </div>
+
+    <!-- RIGHT -->
   </div>
   <!-- ===== CONTENT ===== -->
   <div class="product-page">
@@ -383,15 +387,19 @@ const statusText = (s: number) =>
 }
 
 .left-actions {
-  display: flex;
-  align-items: flex-end;
   gap: 12px;
+}
+.left-actions label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
 }
 
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
-  width: 300px;
+  width: 400px;
+  margin-top: 10px;
 }
 
 .search-icon {
@@ -400,7 +408,6 @@ const statusText = (s: number) =>
   left: 10px;
   transform: translateY(-50%);
 }
-
 .search-input {
   width: 100%;
   height: 40px;
@@ -413,16 +420,16 @@ const statusText = (s: number) =>
 /* ===== FILTER ===== */
 .filters {
   display: flex;
-  gap: 12px;
-  /* 👈 GỌN HƠN */
+  gap: 12px; /* 👈 GỌN HƠN */
   align-items: flex-end;
+  margin-top: 20px;
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 150px;
+  width: 160px;
 }
 
 .filter-item label {
@@ -433,8 +440,7 @@ const statusText = (s: number) =>
 
 .filter-item select,
 .filter-item input {
-  height: 40px;
-  /* 👈 BẰNG SEARCH */
+  height: 40px; /* 👈 BẰNG SEARCH */
   padding: 0 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -445,19 +451,17 @@ const statusText = (s: number) =>
 
 /* ===== ADD ===== */
 .add-btn {
-  margin: 0;
+  display: flex;
+  justify-content: end;
   align-self: flex-end;
-  /* 👈 ép nút xuống cùng hàng */
+  gap: 10px;
 }
 
 .add-btn button {
-  height: 40px;
-  width: 160px;
-  padding: 0 16px;
-  /* ngang vừa tay */
+  height: 40px; /* 👈 bằng input */
+  padding: 0 16px; /* ngang vừa tay */
   border: 1px solid #ccc;
-  border-radius: 10px;
-  /* 👈 bo y hệt */
+  border-radius: 10px; /* 👈 bo y hệt */
   background: #fff;
   cursor: pointer;
 
@@ -469,7 +473,6 @@ const statusText = (s: number) =>
   align-items: center;
   gap: 6px;
 }
-
 /* ===== TABLE PANEL ===== */
 .product-page {
   background: transparent;

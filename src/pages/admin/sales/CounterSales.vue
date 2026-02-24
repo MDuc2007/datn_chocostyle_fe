@@ -520,18 +520,29 @@
         </div>
       </transition>
     </div>
+
+    <Teleport to="body">
+      <InvoicePrintTemplate v-if="invoiceToPrint" :invoice="invoiceToPrint" />
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, watchEffect } from "vue";
+// Thêm nextTick vào phần import
+import { ref, computed, watch, onMounted, watchEffect, nextTick } from "vue";
 import axios from "axios";
+
+// Import component in hóa đơn
+import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
 const MAX_ORDER = 5;
+
+// Biến lưu trữ dữ liệu in
+const invoiceToPrint = ref(null);
 
 const customers = ref([]);
 
@@ -843,7 +854,6 @@ const openPaymentPopup = () => {
   showPaymentPopup.value = true;
 };
 
-// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
@@ -922,16 +932,23 @@ const formatPrice = (v) => {
 
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
-    showToast("Tối đa 5 đơn hàng thôi", "error");
+    showToast("Vui lòng chỉ thêm tối đa 5 đơn hàng", "error");
     return;
   }
 
   try {
-    const idNhanVien = 1; // Fix cứng ID nhân viên
-    // Gọi API tạo đơn nháp
+    const token = localStorage.getItem("token");
+
     const res = await axios.post(
-      `http://localhost:8080/api/hoa-don/tai-quay/tao-moi?idNhanVien=${idNhanVien}`,
+      "http://localhost:8080/api/hoa-don/tai-quay/tao-moi",
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
+
     const draftOrder = res.data;
 
     await fetchProvinces();
@@ -965,11 +982,12 @@ const createOrder = async () => {
     showToast(`Đã tạo tab cho ${draftOrder.maHoaDon}`);
   } catch (error) {
     showToast(error.response?.data || "Lỗi tạo tab", "error");
-    console.error(error);
   }
 };
 
-// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thay vì gọi removeOrder, đóng tab trực tiếp sau khi chốt đơn thành công
+// ==========================================
+// CẬP NHẬT: Tích hợp logic gọi in hóa đơn sau thanh toán
+// ==========================================
 const submitOrder = async () => {
   if (!currentOrder.value) return;
   if (subTotal.value <= 0) {
@@ -996,7 +1014,7 @@ const submitOrder = async () => {
         order.paymentMethod === "CASH" ? "Thanh toán tiền mặt" : "Chuyển khoản",
       maVoucher: order.voucherCode || null,
       idKhachHang: order.customer.id || null,
-      idNhanVien: 1,
+      idNhanVien: null, // Bỏ idNhanVien để Backend lấy từ Token
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
@@ -1004,14 +1022,48 @@ const submitOrder = async () => {
       })),
     };
 
+    const token = localStorage.getItem("token");
+
+    // 1. Gửi request thanh toán
     await axios.put(
       `http://localhost:8080/api/hoa-don/tai-quay/xac-nhan/${order.idHoaDon}`,
       payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
 
     showToast(`Thanh toán thành công ${order.maHoaDon}!`);
 
-    // ĐÓNG TAB NGAY LẬP TỨC
+    // 2. Tự động hiển thị cửa sổ in hóa đơn
+    try {
+      // Lấy chi tiết hóa đơn hoàn chỉnh từ server
+      const resInvoice = await axios.get(
+        `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      invoiceToPrint.value = resInvoice.data;
+
+      // Đợi DOM cập nhật và gọi window.print()
+      await nextTick();
+      setTimeout(() => {
+        window.print();
+        // Xóa data in sau khi mở cửa sổ in
+        invoiceToPrint.value = null;
+      }, 500); // Trì hoãn một chút để CSS in kịp load
+    } catch (printError) {
+      console.error("Lỗi lấy dữ liệu in hóa đơn:", printError);
+      showToast("Thanh toán xong nhưng có lỗi khi in hóa đơn!", "error");
+    }
+
+    // 3. ĐÓNG TAB NGAY LẬP TỨC
     const currentIndex = activeOrderIndex.value;
     orders.value.splice(currentIndex, 1);
 
@@ -1167,7 +1219,6 @@ const bankQR = computed(() => {
   return `https://img.vietqr.io/image/${bank}-${account}-compact.png?amount=${amount}&addInfo=POS`;
 });
 
-// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Xử lý VOUCHER
 const applyVoucher = () => {
   if (!currentOrder.value) return;
   voucherError.value = "";
@@ -1225,7 +1276,6 @@ const applyVoucher = () => {
   }
 };
 
-// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: TÍNH TIỀN GIẢM GIÁ
 const discount = computed(() => {
   const v = currentOrder.value?.appliedVoucher;
   if (!v) return 0;
@@ -1443,7 +1493,7 @@ const showToast = (msg, type = "success") => {
 .actions {
   display: flex;
   gap: 12px;
-} /* Đảm bảo 2 nút Quét QR và Chọn SP cách nhau */
+}
 
 /* ================= TABS ================= */
 .pos-card {
@@ -1680,7 +1730,7 @@ const showToast = (msg, type = "success") => {
 .total {
   font-weight: 600;
   color: red;
-  white-space: nowrap; /* Thêm dòng này để ép chữ không bao giờ xuống dòng */
+  white-space: nowrap;
 }
 /* ================= CỘT PHẢI: KHÁCH & THANH TOÁN ================= */
 .customer-form .form-item {
@@ -1877,13 +1927,11 @@ select:focus {
   overflow: hidden;
 }
 
-/* Tìm đoạn này và sửa lại */
 .modal {
   background: #fff;
   border-radius: 12px;
   width: 95vw;
   max-width: 1200px;
-  /* height: 85vh;  <--- XÓA DÒNG NÀY ĐI */
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -1894,13 +1942,12 @@ select:focus {
 .modal.large {
   width: 95vw;
   max-width: 1400px;
-  height: 85vh; /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
+  height: 85vh;
 }
 
 .modal.small {
   width: 90vw;
   max-width: 500px;
-  /* Form thanh toán dùng modal.small sẽ tự động co ngắn lại ôm vừa nội dung */
 }
 
 .modal-header {
@@ -1989,7 +2036,7 @@ select:focus {
   color: #d32f2f;
 }
 
-/* ================= MODAL THANH TOÁN (LÀM LẠI HOÀN TOÀN) ================= */
+/* ================= MODAL THANH TOÁN ================= */
 .custom-payment-modal {
   padding-bottom: 10px;
 }
@@ -2215,7 +2262,6 @@ select:focus {
   border: 1px solid #eee;
 }
 
-/* ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Cập nhật CSS height */
 .product-scroll {
   max-height: 60vh;
   overflow-y: auto;

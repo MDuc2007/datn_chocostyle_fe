@@ -5,6 +5,7 @@
     <div class="top-bar">
       <!-- SEARCH -->
       <div class="left-actions">
+        <label>Tìm kiếm</label>
         <div class="search-wrapper">
           <img src="/src/assets/icon/search.svg" class="search-icon" />
           <input
@@ -55,6 +56,7 @@
             <label>Trạng thái:</label>
             <select v-model="selectedTrangThai" @change="handleStatusChange">
               <option value="">Tất cả</option>
+              <option value="0">Hết hàng</option>
               <option value="1">Đang bán</option>
               <option value="2">Ngừng bán</option>
             </select>
@@ -184,11 +186,8 @@
                 </div>
               </td>
               <td>
-                <span
-                  class="status"
-                  :class="item.trangThai === 1 ? 'selling' : 'stopped'"
-                >
-                  {{ item.trangThai === 1 ? "Đang bán" : "Ngừng bán" }}
+                <span class="status" :class="getStatusClass(item)">
+                  {{ getStatusText(item) }}
                 </span>
               </td>
               <td class="action">
@@ -371,6 +370,18 @@ import { useRouter, useRoute } from "vue-router";
 import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
 import axios from "axios";
 const notifications = ref([]);
+
+const getStatusText = (item) => {
+  if (item.trangThai === 0) return "Hết hàng";
+  if (item.trangThai === 1) return "Đang bán";
+  return "Ngừng bán";
+};
+
+const getStatusClass = (item) => {
+  if (item.trangThai === 0) return "out";
+  if (item.trangThai === 1) return "selling";
+  return "stopped";
+};
 
 const promotionMap = ref({});
 const fetchPromotions = async () => {
@@ -839,10 +850,17 @@ onMounted(() => {
   gap: 12px;
 }
 
+.left-actions label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
+}
+
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
   width: 400px;
+  margin-top: 5px;
 }
 
 .search-icon {
@@ -948,7 +966,7 @@ onMounted(() => {
   padding: 18px 12px;
   border-bottom: 1px solid #ddd;
   text-align: center;
-  height: 65px;
+  height: 70px;
 }
 
 /* Base badge */
@@ -1616,8 +1634,8 @@ input:checked + .slider::before {
 
 .discount-badge {
   position: absolute;
-  top: -6px;
-  left: -6px;
+  top: 12px;
+  left: 6px;
   background: #e53935;
   color: white;
   font-size: 11px;

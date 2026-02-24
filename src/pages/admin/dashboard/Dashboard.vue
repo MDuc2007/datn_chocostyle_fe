@@ -352,7 +352,7 @@
             <Doughnut
               v-if="statusChartData"
               :data="statusChartData"
-              :options="doughnutOptions"
+              :options="statusDoughnutOptions as any"
             />
             <div class="center-text">
               <div class="number">{{ totalStatusCount }}</div>
@@ -368,7 +368,7 @@
             <Doughnut
               v-if="channelChartData"
               :data="channelChartData"
-              :options="doughnutOptions"
+              :options="channelDoughnutOptions as any"
             />
             <div class="center-text">
               <div class="number">{{ totalChannelCount }}</div>
@@ -555,14 +555,18 @@ const filter = ref({ startDate: today, endDate: today });
 
 const API_URL = "http://localhost:8080/api/thong-ke";
 
-// === PHẦN BỔ SUNG: KHAI BÁO BIẾN CHO MODAL ===
-const showExportModal = ref(false); // Biến để bật tắt Modal
-const isExporting = ref(false); // Biến trạng thái đang tải
+const showExportModal = ref(false);
+const isExporting = ref(false);
 const exportForm = ref({
-  startDate: new Date().toISOString().slice(0, 10), // Mặc định hôm nay
+  startDate: new Date().toISOString().slice(0, 10),
   endDate: new Date().toISOString().slice(0, 10),
 });
-// ===============================================
+
+// ============================================
+// KHAI BÁO BIẾN THEO DÕI ẨN/HIỆN CHART
+// ============================================
+const hiddenStatusIndices = ref<number[]>([]);
+const hiddenChannelIndices = ref<number[]>([]);
 
 const fetchData = async () => {
   try {
@@ -575,9 +579,12 @@ const fetchData = async () => {
     const resChannel = await axios.get(`${API_URL}/loai-don`);
     channelRawData.value = resChannel.data;
 
-    // Gọi API sản phẩm sắp hết hàng
     const resLowStock = await axios.get(`${API_URL}/sap-het`);
     lowStockProducts.value = resLowStock.data;
+
+    // Đặt lại các chỉ mục bị ẩn khi load dữ liệu mới
+    hiddenStatusIndices.value = [];
+    hiddenChannelIndices.value = [];
 
     await fetchChartData();
   } catch (error) {
@@ -607,11 +614,8 @@ watch(
 const resetFilter = () => {
   filter.value.startDate = today;
   filter.value.endDate = today;
-  // Không cần gọi fetchChartData() ở đây nữa vì hàm watch() ở ngay phía trên
-  // sẽ tự động nhận diện filter thay đổi và tự gọi fetchChartData() rồi.
 };
 
-// === PHẦN BỔ SUNG: HÀM XỬ LÝ XUẤT EXCEL ===
 const handleExportExcel = async () => {
   if (!exportForm.value.startDate || !exportForm.value.endDate) {
     alert("Vui lòng chọn đầy đủ ngày tháng!");
@@ -639,7 +643,7 @@ const handleExportExcel = async () => {
     link.click();
 
     document.body.removeChild(link);
-    showExportModal.value = false; // Đóng modal sau khi xong
+    showExportModal.value = false;
   } catch (error) {
     console.error("Lỗi xuất file:", error);
     alert("Có lỗi xảy ra khi xuất file!");
@@ -647,7 +651,6 @@ const handleExportExcel = async () => {
     isExporting.value = false;
   }
 };
-// ============================================
 
 // --- CONFIG CHART DOANH THU ---
 const chartData = computed(() => {
@@ -721,7 +724,7 @@ const chartOptions: any = {
   },
 };
 
-// --- CONFIG DONUT CHARTS (GIỮ NGUYÊN) ---
+// --- CONFIG DONUT CHARTS ---
 const statusChartData = computed(() => {
   const statusMap: Record<number, string> = {
     0: "Chờ xác nhận",
@@ -760,9 +763,17 @@ const statusChartData = computed(() => {
     ],
   };
 });
-const totalStatusCount = computed(() =>
-  statusRawData.value.reduce((sum, item) => sum + item.soLuong, 0),
-);
+
+// ============================================
+// TÍNH LẠI TỔNG DỰA TRÊN CÁC MỤC KHÔNG BỊ ẨN
+// ============================================
+const totalStatusCount = computed(() => {
+  return statusRawData.value.reduce((sum, item, index) => {
+    // Bỏ qua mục nếu index của mục đó nằm trong danh sách đang bị ẩn
+    if (hiddenStatusIndices.value.includes(index)) return sum;
+    return sum + item.soLuong;
+  }, 0);
+});
 
 const channelChartData = computed(() => {
   const colors = ["#f472b6", "#3b82f6", "#fb7185"];
@@ -778,11 +789,18 @@ const channelChartData = computed(() => {
     ],
   };
 });
-const totalChannelCount = computed(() =>
-  channelRawData.value.reduce((sum, item) => sum + item.soLuong, 0),
-);
 
-const doughnutOptions: any = {
+const totalChannelCount = computed(() => {
+  return channelRawData.value.reduce((sum, item, index) => {
+    if (hiddenChannelIndices.value.includes(index)) return sum;
+    return sum + item.soLuong;
+  }, 0);
+});
+
+// ============================================
+// OPTIONS BẮT SỰ KIỆN CLICK CHO TỪNG BIỂU ĐỒ
+// ============================================
+const statusDoughnutOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   cutout: "70%",
@@ -790,9 +808,54 @@ const doughnutOptions: any = {
     legend: {
       position: "bottom",
       labels: { usePointStyle: true, padding: 10, font: { size: 10 } },
+      onClick: (e: any, legendItem: any, legend: any) => {
+        const index = legendItem.index;
+        const chart = legend.chart;
+
+        // Điều khiển ẩn hiện phần biểu đồ
+        chart.toggleDataVisibility(index);
+        chart.update();
+
+        // Cập nhật mảng lưu trữ index bị ẩn để tính lại Vue Computed
+        if (hiddenStatusIndices.value.includes(index)) {
+          hiddenStatusIndices.value = hiddenStatusIndices.value.filter(
+            (i) => i !== index,
+          );
+        } else {
+          hiddenStatusIndices.value = [...hiddenStatusIndices.value, index];
+        }
+      },
     },
   },
-};
+}));
+
+const channelDoughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: "70%",
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: { usePointStyle: true, padding: 10, font: { size: 10 } },
+      onClick: (e: any, legendItem: any, legend: any) => {
+        const index = legendItem.index;
+        const chart = legend.chart;
+
+        chart.toggleDataVisibility(index);
+        chart.update();
+
+        if (hiddenChannelIndices.value.includes(index)) {
+          hiddenChannelIndices.value = hiddenChannelIndices.value.filter(
+            (i) => i !== index,
+          );
+        } else {
+          hiddenChannelIndices.value = [...hiddenChannelIndices.value, index];
+        }
+      },
+    },
+  },
+}));
+// ============================================
 
 const totalRevenueInChart = computed(() =>
   chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0),
@@ -1265,7 +1328,6 @@ onMounted(() => {
   padding-bottom: 16px;
 }
 
-/* === PHẦN BỔ SUNG: CSS CHO MODAL === */
 .modal-overlay {
   position: fixed;
   top: 0;

@@ -247,7 +247,12 @@
                 <div class="img-wrapper">
                   <img :src="ct.anhHienThi" class="variant-img" />
 
-                  <div v-if="form.giaTriGiam > 0" class="discount-badge">
+                  <div
+                    v-if="
+                      form.giaTriGiam > 0 && selectedChiTietIds.includes(ct.id)
+                    "
+                    class="discount-badge"
+                  >
                     -{{ form.giaTriGiam }}%
                   </div>
                 </div>
@@ -263,13 +268,24 @@
               <td>{{ ct.tenKieuDang }}</td>
               <td>{{ ct.soLuong }}</td>
 
-              <td class="price-cell">
-                <div class="old-price">
-                  {{ formatPrice(ct.giaBan) }}
-                </div>
-                <div class="new-price">
-                  {{ formatPrice(getDiscountPrice(ct.giaBan)) }}
-                </div>
+              <td
+                class="price-cell"
+                :class="{ discounted: getDiscountPrice(ct) < ct.giaBan }"
+              >
+                <template v-if="getDiscountPrice(ct) < ct.giaBan">
+                  <div class="old-price">
+                    {{ formatPrice(ct.giaBan) }}
+                  </div>
+                  <div class="new-price">
+                    {{ formatPrice(getDiscountPrice(ct)) }}
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div>
+                    {{ formatPrice(ct.giaBan) }}
+                  </div>
+                </template>
               </td>
             </tr>
           </tbody>
@@ -749,10 +765,23 @@ watch(maxPrice, (val) => {
 const formatPrice = (price: number) => {
   return (price || 0).toLocaleString("vi-VN") + " ₫";
 };
-const getDiscountPrice = (gia: number) => {
-  if (!gia) return 0;
-  const discount = form.giaTriGiam || 0;
-  return Math.round(gia - (gia * discount) / 100);
+const getDiscountPrice = (ct: any) => {
+  if (!ct?.giaBan) return 0;
+
+  // nếu biến thể này được chọn trong form hiện tại
+  if (selectedChiTietIds.value.includes(ct.id)) {
+    return Math.round(ct.giaBan - (ct.giaBan * form.giaTriGiam) / 100);
+  }
+
+  // nếu có khuyến mãi khác đang active
+  const percent = promotionMap.value[ct.id] || 0;
+
+  if (percent > 0) {
+    return Math.round(ct.giaBan * (1 - percent / 100));
+  }
+
+  // không giảm giá
+  return ct.giaBan;
 };
 </script>
 
@@ -1250,10 +1279,6 @@ img {
   border-radius: 6px;
 }
 
-.price-cell {
-  font-weight: 600;
-  color: #e53935;
-}
 .price-filter {
   width: 470px; /* 👈 tăng chiều dài */
   margin-bottom: 20px;

@@ -4,28 +4,24 @@
 
     <div class="top-bar" style="margin-top: 30px">
       <div class="left-actions">
-        <div class="search-wrapper">
-          <img
-            src="/src/assets/icon/search.svg"
-            class="search-icon"
-            alt="icon"
-          />
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Tìm kiếm xuất xứ theo tên"
-          />
+        <div>
+          <label>Tìm kiếm</label>
+          <div class="search-wrapper">
+            <img
+              src="/src/assets/icon/search.svg"
+              class="search-icon"
+              alt="icon"
+            />
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Tìm kiếm loại áo theo tên"
+            />
+          </div>
         </div>
-        <div
-          class="filters"
-          style="display: flex; align-items: center; gap: 10px"
-        >
+        <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select
-            v-model="selectedStatus"
-            @change="handleFilterChange"
-            style="padding: 10px; border: 1px solid #d6c3b4; border-radius: 6px"
-          >
+          <select v-model="selectedStatus" @change="handleFilterChange">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -421,10 +417,17 @@ const deleteColor = async (item) => {
   gap: 12px;
 }
 
+.left-actions label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #484848;
+}
+
 /* ===== SEARCH ===== */
 .search-wrapper {
   position: relative;
-  width: 300px;
+  width: 400px;
+  margin-top: 5px;
 }
 
 .search-icon {
