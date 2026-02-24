@@ -157,16 +157,15 @@ onMounted(() => {
               <th width="10%" class="text-right">DT Tiền mặt</th>
               <th width="10%" class="text-right">DT CK/Thẻ</th>
               <th width="10%" class="text-right">Tổng DT</th>
-              <th width="10%" class="text-right">Chênh</th>
               <th width="10%" class="text-center">Trạng thái</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="10" class="text-center py-4">Đang tải dữ liệu...</td>
+              <td colspan="9" class="text-center py-4">Đang tải dữ liệu...</td>
             </tr>
             <tr v-else-if="handovers.length === 0">
-              <td colspan="10" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
+              <td colspan="9" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
             </tr>
             <tr v-else v-for="(item, index) in handovers" :key="item.id">
               <td class="text-center" style="color: #333333">{{ index + 1 }}</td>
@@ -184,12 +183,11 @@ onMounted(() => {
               </td>
               <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienMat) }}</td>
               <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienChuyenKhoan) }}</td>
-              <td class="text-right" style="color: #000000; font-weight: 500;">{{ formatCurrency(item.tongDoanhThu) }}</td>
               
-              <td class="text-right" style="font-weight: 500;" :style="{ color: item.tienChenh < 0 ? '#dc2626' : (item.tienChenh > 0 ? '#16a34a' : '#333333') }">
-                {{ formatCurrency(item.tienChenh) }}
+              <td class="text-right" style="color: #000000; font-weight: 500;">
+                {{ formatCurrency((item.tienMat || 0) + (item.tienChuyenKhoan || 0)) }}
               </td>
-
+              
               <td class="text-center">
                 <span class="status-badge" :class="getStatusClass(item.trangThai)">
                   {{ getStatusText(item.trangThai) }}

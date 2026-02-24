@@ -205,11 +205,7 @@ const handleSubmit = async () => {
 
   // Confirm Dialog trước khi lưu
   const actionText = isEditing.value ? 'cập nhật' : 'thêm mới';
-  const confirmMsg = `
-    Bạn có chắc chắn muốn <strong>${actionText}</strong> ca làm việc này?<br><br>
-    <strong>Tên ca:</strong> ${form.tenCa}<br>
-    <strong>Thời gian:</strong> ${form.gioBatDau} - ${form.gioKetThuc}
-  `;
+  const confirmMsg = `Bạn có chắc chắn muốn ${actionText} ca làm việc này?`;
 
   if (!await showConfirmDialog(confirmMsg, isEditing.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới')) return;
 
@@ -250,7 +246,7 @@ const toggleStatus = async (shift: Shift, event: Event) => {
   
   // 2. Hỏi xác nhận
   const actionText = newStatus === 1 ? 'kích hoạt' : 'ngưng hoạt động';
-  const confirmMsg = `Bạn có chắc chắn muốn <strong>${actionText}</strong> ca <strong>${shift.tenCa}</strong>?`;
+  const confirmMsg = `Bạn có chắc chắn muốn ${actionText} ca này?`;
   
   if (!await showConfirmDialog(confirmMsg, 'Xác nhận trạng thái')) {
     // Nếu bấm Hủy, do đã preventDefault ở trên, UI switch vẫn giữ nguyên -> Đúng ý bạn.
@@ -279,7 +275,7 @@ const deleteShift = async (id: number) => {
   const shift = shifts.value.find(s => s.idCa === id);
   if (!shift) return;
 
-  const confirmMsg = `Bạn có chắc chắn muốn xóa ca <strong>${shift.tenCa}</strong>?<br>Lưu ý: Hành động này không thể hoàn tác.`;
+  const confirmMsg = `Bạn có chắc chắn muốn xóa ca này?`;
   if (!await showConfirmDialog(confirmMsg, 'Xác nhận xóa')) return;
 
   try {
@@ -321,7 +317,7 @@ const openEditModal = (item: Shift) => {
 const closeModal = async () => {
   // Check nếu có thay đổi chưa lưu
   if (hasFormChanged.value) {
-    const confirmMsg = 'Bạn có thay đổi chưa được lưu.<br>Bạn có chắc chắn muốn hủy bỏ và đóng?';
+    const confirmMsg = 'Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy bỏ và đóng?';
     if (!await showConfirmDialog(confirmMsg, 'Cảnh báo')) return;
   }
   
