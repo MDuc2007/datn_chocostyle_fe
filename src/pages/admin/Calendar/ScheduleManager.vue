@@ -291,9 +291,7 @@ const handleSave = async () => {
       if (originalItem && originalItem.maLapLai) {
           updateOption.value = 'one'; showUpdateOptionModal.value = true; return; 
       }
-      const emp = employees.value.find(e => e.id === Number(form.idNhanVien));
-      const shift = shifts.value.find(s => s.idCa === Number(form.idCa));
-      const confirmMsg = `Bạn có chắc chắn muốn cập nhật lịch làm việc?<br><br><strong>Ngày:</strong> ${form.ngayLamViec}<br><strong>Nhân viên:</strong> ${emp?.hoTen}<br><strong>Ca làm việc:</strong> ${shift?.tenCa}`;
+      const confirmMsg = `Bạn có chắc chắn muốn cập nhật lịch làm việc?`;
       if(!await showConfirmDialog(confirmMsg)) return;
 
       try {
@@ -307,12 +305,16 @@ const handleSave = async () => {
     if (isRepeatEnabled.value) {
         const dates = generateDates();
         if (dates.length === 0) { showToast('Không có ngày nào được chọn', 'warning'); return; }
-        const confirmMsg = `Tạo <strong>${dates.length} lịch làm việc</strong><br>Từ: <strong>${dates[0]}</strong><br>Đến: <strong>${dates[dates.length-1]}</strong>`;
+        const confirmMsg = `Bạn có chắc chắn muốn tạo ${dates.length} lịch làm việc?`;
         if (!await showConfirmDialog(confirmMsg)) return;
         const payloads = dates.map(date => ({ ngayLamViec: date, idNhanVien: Number(form.idNhanVien), idCa: Number(form.idCa), ghiChu: form.ghiChu, trangThai: form.trangThai }));
         await axios.post(`${API_URL}/batch`, payloads);
         showToast(`Đã tạo thành công ${dates.length} lịch`, 'success');
     } else {
+        // Thêm xác nhận trước khi lưu lịch mới
+        const confirmMsg = `Bạn có chắc chắn muốn phân lịch cho nhân viên này?`;
+        if (!await showConfirmDialog(confirmMsg)) return;
+        
         await axios.post(API_URL, { ngayLamViec: form.ngayLamViec, idNhanVien: Number(form.idNhanVien), idCa: Number(form.idCa), ghiChu: form.ghiChu, trangThai: form.trangThai });
         showToast('Phân lịch thành công', 'success');
     }
@@ -338,7 +340,7 @@ const confirmUpdateSeries = async () => {
 const handleDelete = async (item: Schedule) => {
   const today = getTodayStr();
   if (item.ngayLamViec < today) { showToast('Không thể xóa lịch đã qua!', 'error'); return; }
-  const confirmMsg = `Xóa lịch làm việc?<br><br><strong>Ngày:</strong> ${item.ngayLamViec}<br><strong>Nhân viên:</strong> ${item.nhanVien?.hoTen}`;
+        const confirmMsg = `Bạn có chắc chắn muốn xóa lịch làm việc?`;
   if(!await showConfirmDialog(confirmMsg)) return;
   try {
     await axios.delete(`${API_URL}/${item.id}`);

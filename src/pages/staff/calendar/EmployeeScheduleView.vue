@@ -1033,14 +1033,8 @@ onMounted(() => {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
   border: none;
-  animation: rainbowWave 2s ease-in-out infinite;
 }
 
-@keyframes rainbowWave {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
 
 .cursor-pointer {
   cursor: pointer;
@@ -1134,14 +1128,14 @@ onMounted(() => {
 .shifts-container { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; max-height: 60px; }
 .shift-item { background: #dcfce7; color: #166534; border-left: 3px solid #22c55e; cursor: pointer; position: relative; flex-shrink: 0; font-size: 10px; padding: 2px 4px; }
 .shift-item.draft { background: #fee2e2; color: #dc2626; border-left-color: #ef4444; }
-.shift-item.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; border-left-color: #8B5A2B; animation: rainbowWave 2s ease-in-out infinite; }
+.shift-item.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; border-left-color: #8B5A2B; }
 .shift-time { font-weight: 700; margin-right: 4px; }
 .shift-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .legend-mini { display: flex; gap: 15px; font-size: 12px; color: #555; padding-right: 10px; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.active { background: #22c55e; }
-.dot.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); animation: rainbowWave 2s ease-in-out infinite; background-size: 200% 200%; }
+.dot.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); }
 .dot.draft { background: #ef4444; }
 
 /* TOOLTIP */
@@ -1453,20 +1447,13 @@ onMounted(() => {
 }
 .status-tag.active { background: #e6f4ea; color: #137333; }
 .status-tag.draft { background: #fef7e0; color: #b06000; }
-.status-tag.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; animation: rainbowWave 2s ease-in-out infinite; }
-/* Animation Sóng Gradient cho trạng thái Đang làm */
+.status-tag.working { background: linear-gradient(135deg, #6b3f23, #c89b6d); color: white; }
+/* Gradient for trạng thái Đang làm (không có animation) */
 .status-badge.in-progress, 
 .event-pill.in-progress, 
 .color-dot.in-progress {
-  background: linear-gradient(90deg, #6b3f23 0%, #c89b6d 25%, #5a3420 50%, #c89b6d 75%, #6b3f23 100%);
-  background-size: 200% 100%;
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
-  animation: gradientWave 2s linear infinite;
   border: none;
-}
-
-@keyframes gradientWave { 
-  0% { background-position: 100% 0; } 
-  100% { background-position: 0 0; } 
 }
 </style>
