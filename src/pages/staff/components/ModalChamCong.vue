@@ -144,6 +144,21 @@ const headers = {
   Authorization: `Bearer ${props.token}`
 };
 
+// ==========================================
+// CẤU HÌNH THIẾT KẾ CHUNG CHO SWEETALERT2
+// ==========================================
+const customSwalConfig = {
+  customClass: {
+    popup: 'custom-swal-popup',
+    title: 'custom-swal-title',
+    htmlContainer: 'custom-swal-text',
+    confirmButton: 'custom-swal-confirm-btn',
+    cancelButton: 'custom-swal-cancel-btn',
+    actions: 'custom-swal-actions'
+  },
+  buttonsStyling: false, // Tắt style mặc định để dùng CSS tự viết
+};
+
 const checkIn = async () => {
   isLoading.value = true;
   try {
@@ -157,20 +172,22 @@ const checkIn = async () => {
     );
     
     await Swal.fire({
+      ...customSwalConfig,
       title: 'Thành công!',
       text: 'Mở ca làm việc thành công!',
       icon: 'success',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đồng ý',
     });
     
     location.reload(); 
   } catch (error) {
     console.error("Lỗi check-in:", error);
     Swal.fire({
+      ...customSwalConfig,
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi mở ca.",
       icon: 'error',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đóng',
     });
   } finally {
     isLoading.value = false;
@@ -179,14 +196,13 @@ const checkIn = async () => {
 
 const checkOut = async () => {
   const confirmResult = await Swal.fire({
+    ...customSwalConfig,
     title: 'Xác nhận kết thúc ca',
     text: "Bạn có chắc chắn muốn kết thúc ca làm việc này không?",
-    icon: 'question',
+    icon: 'warning', // 👉 Đổi sang icon cảnh báo (dấu chấm than)
     showCancelButton: true,
-    confirmButtonColor: '#63391F',
-    cancelButtonColor: '#d33',
     confirmButtonText: 'Đồng ý',
-    cancelButtonText: 'Hủy bỏ'
+    cancelButtonText: 'Hủy'
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -200,20 +216,22 @@ const checkOut = async () => {
     );
     
     await Swal.fire({
+      ...customSwalConfig,
       title: 'Thành công!',
       text: 'Đã kết thúc ca làm việc!',
       icon: 'success',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đồng ý',
     });
     
     location.reload();
   } catch (error) {
     console.error("Lỗi check-out:", error);
     Swal.fire({
+      ...customSwalConfig,
       title: 'Thất bại!',
       text: error.response?.data || "Có lỗi xảy ra khi kết thúc ca.",
       icon: 'error',
-      confirmButtonColor: '#63391F'
+      confirmButtonText: 'Đóng',
     });
   } finally {
     isLoading.value = false;
@@ -234,16 +252,14 @@ onMounted(async () => {
       
       // Đã có ca nhưng ĐÃ CHẤM CÔNG (đang làm / đã nghỉ) -> Tự đóng, không làm phiền
       if (chamCong.value) {
-        close();
-        return;
+
       }
     } catch (err) {
       chamCong.value = null; 
     }
   } else {
     // Không có ca -> Tự đóng, không làm phiền
-    close();
-    return;
+
   }
 
   isReady.value = true;
@@ -521,5 +537,70 @@ const close = () => {
 <style>
   div.swal2-container {
     z-index: 10000 !important;
+  }
+
+  /* Định dạng popup */
+  .custom-swal-popup {
+    border-radius: 16px !important;
+    padding: 2em !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  }
+
+  /* Tiêu đề */
+  .custom-swal-title {
+    color: #63391F !important;
+    font-size: 1.25em !important;
+    font-weight: 700 !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Nội dung */
+  .custom-swal-text {
+    color: #666666 !important;
+    font-size: 1em !important;
+  }
+
+  /* Vùng chứa nút bấm */
+  .custom-swal-actions {
+    display: flex !important;
+    gap: 15px !important;
+    margin-top: 25px !important;
+    width: 100% !important;
+  }
+
+  /* Nút Đồng ý */
+  .custom-swal-confirm-btn {
+    flex: 1;
+    background-color: #9b7054 !important; /* Màu nâu nhạt giống thiết kế */
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 1em !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+  }
+
+  .custom-swal-confirm-btn:hover {
+    background-color: #63391F !important; /* Đậm hơn khi hover */
+  }
+
+  /* Nút Hủy */
+  .custom-swal-cancel-btn {
+    flex: 1;
+    background-color: #F3F4F6 !important; /* Nền xám nhạt */
+    color: #4B5563 !important; /* Chữ xám đậm */
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    font-size: 1em !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+  }
+
+  .custom-swal-cancel-btn:hover {
+    background-color: #E5E7EB !important;
   }
 </style>

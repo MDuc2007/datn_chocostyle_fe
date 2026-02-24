@@ -115,7 +115,7 @@
       <div class="card-actions">
         <button 
           v-if="caHomNay && !chamCong"
-          class="btn-primary" 
+          class="btn-primary hover-effect" 
           @click="handleCheckIn"
           :disabled="isLoading"
         >
@@ -124,7 +124,7 @@
 
         <button 
           v-else
-          class="btn-primary" 
+          class="btn-primary hover-effect" 
           @click="handleCheckout"
           :disabled="isViewOnly || isLoading"
         >
@@ -133,13 +133,46 @@
       </div>
       
     </div>
+
+    <transition name="toast-slide">
+      <div v-if="toast.show" :class="['toast-notification', toast.type]">
+        <div class="toast-indicator"></div>
+        <div class="toast-content">{{ toast.message }}</div>
+      </div>
+    </transition>
+
+    <transition name="fade-modal">
+      <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
+        <div class="confirm-box">
+          <div class="confirm-icon-wrapper">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="#f59e0b">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <h3 class="confirm-title">{{ modal.title }}</h3>
+          <p class="confirm-desc">{{ modal.message }}</p>
+          <div class="confirm-actions">
+            <button class="btn-cancel hover-effect" @click="closeModal">
+              Hủy
+            </button>
+            <button class="btn-confirm hover-effect" @click="executeModalAction">
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
-import Swal from 'sweetalert2' 
+
+// --- TRẠNG THÁI GIAO DIỆN & THÔNG BÁO ---
+const toast = ref({ show: false, message: '', type: 'success' })
+const modal = ref({ show: false, title: '', message: '', action: '' })
 
 // Biến lưu trữ giá trị nhập vào (MỞ CA)
 const cashInAmount = ref(0)
@@ -162,6 +195,23 @@ let countdownTimer: any = null
 const idNv = localStorage.getItem("idNv") || JSON.parse(localStorage.getItem("user") || "{}").id
 const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user") || "{}").accessToken
 const headers = { Authorization: `Bearer ${token}` }
+
+// --- HÀM XỬ LÝ THÔNG BÁO ---
+const showToast = (msg: string, type = 'success') => {
+  toast.value = { show: true, message: msg, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
+const closeModal = () => {
+  modal.value.show = false
+}
+
+const executeModalAction = async () => {
+  if (modal.value.action === 'CHECKOUT') {
+    closeModal()
+    await processCheckout()
+  }
+}
 
 // TÍNH TOÁN: Trạng thái khóa/mở giao diện (Cho form Kết toán)
 const isViewOnly = computed(() => {
@@ -210,46 +260,36 @@ const handleCheckIn = async () => {
       { headers }
     );
     
-    await Swal.fire({
-      title: 'Thành công!',
-      text: 'Đã xác nhận mở ca làm việc!',
-      icon: 'success',
-      confirmButtonColor: '#63391F'
-    });
-    
-    location.reload(); 
+    showToast('Đã xác nhận mở ca làm việc!', 'success');
+    setTimeout(() => location.reload(), 1500);
+
   } catch (error: any) {
     console.error("Lỗi mở ca:", error);
-    Swal.fire({
-      title: 'Thất bại!',
-      text: error.response?.data || "Có lỗi xảy ra khi mở ca.",
-      icon: 'error',
-      confirmButtonColor: '#63391F'
-    });
+    showToast(error.response?.data || "Có lỗi xảy ra khi mở ca.", 'error');
   } finally {
     isLoading.value = false;
   }
 }
 
-// HÀM: Xử lý KẾT TOÁN (Check-out)
-const handleCheckout = async () => {
+// HÀM: Xác nhận KẾT TOÁN (Check-out)
+const handleCheckout = () => {
   if (isViewOnly.value) return;
 
   if (cashAmount.value === 0 && transferAmount.value === 0) {
-    const result = await Swal.fire({
+    modal.value = {
+      show: true,
       title: 'Chưa nhập tiền!',
-      text: "Bạn chưa nhập số tiền kết toán. Bạn có chắc chắn muốn kết thúc ca không?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#63391F', 
-      cancelButtonColor: '#d33',    
-      confirmButtonText: 'Đồng ý đóng ca',
-      cancelButtonText: 'Hủy bỏ'
-    });
-    
-    if (!result.isConfirmed) return;
+      message: "Bạn chưa nhập số tiền kết toán. Bạn có chắc chắn muốn kết thúc ca không?",
+      action: 'CHECKOUT'
+    };
+    return;
   }
 
+  processCheckout();
+}
+
+// HÀM: Thực thi API KẾT TOÁN (Check-out)
+const processCheckout = async () => {
   isLoading.value = true;
   try {
     await axios.post(
@@ -261,23 +301,12 @@ const handleCheckout = async () => {
       { headers }
     );
 
-    await Swal.fire({
-      title: 'Thành công!',
-      text: 'Kết toán và đóng ca thành công!',
-      icon: 'success',
-      confirmButtonColor: '#63391F'
-    });
-    
-    location.reload(); 
+    showToast('Kết toán và đóng ca thành công!', 'success');
+    setTimeout(() => location.reload(), 1500);
 
   } catch (error: any) {
     console.error("Lỗi đóng ca:", error);
-    Swal.fire({
-      title: 'Thất bại!',
-      text: error.response?.data || "Chưa đến giờ kết thúc ca!",
-      icon: 'error',
-      confirmButtonColor: '#63391F'
-    });
+    showToast(error.response?.data || "Chưa đến giờ kết thúc ca!", 'error');
   } finally {
     isLoading.value = false;
   }
@@ -314,14 +343,28 @@ onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)
 })
 </script>
-<style scoped>
+
+<style>
+/* ================= Biến màu sắc (Theme) ================= */
+:root {
+  --primary-color: #63391F;       /* Màu chủ đạo (Nâu) */
+  --primary-light: #8a5735;       /* Màu nâu sáng hơn cho hover/border */
+  --bg-color: #F7F7F7;            /* Màu nền trang */
+  --white-color: #FFFFFF;         /* Màu nền card/input focus */
+  --text-main: #333333;           /* Màu chữ chính */
+  --text-muted: #666666;          /* Màu chữ phụ */
+  --border-color: #E2E8F0;        /* Màu đường viền */
+  --input-bg: #F3F4F6;            /* Màu nền input mặc định */
+  --warning-color: #D97706;       /* Màu cảnh báo (Vàng nâu) */
+}
+
 /* Tổng thể trang */
 .shift-page {
-  background-color: #F7F7F7;
+  background-color: var(--bg-color);
   padding: 25px;
   min-height: 100%;
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #333333;
+  color: var(--text-main);
 }
 
 /* Header */
@@ -340,13 +383,13 @@ onUnmounted(() => {
 
 .main-icon {
   font-size: 20px;
-  color: #63391F;
+  color: var(--primary-color);
 }
 
 .page-title {
   font-size: 18px;
   font-weight: 700;
-  color: #63391F;
+  color: var(--primary-color);
   margin: 0;
   letter-spacing: 0.5px;
 }
@@ -355,13 +398,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  background-color: var(--white-color);
+  border: 1px solid var(--border-color);
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #666666;
+  color: var(--text-muted);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: all 0.2s ease;
@@ -370,12 +413,12 @@ onUnmounted(() => {
 .btn-outline:hover {
   background-color: #F9FAFB;
   border-color: #D1D5DB;
-  color: #333333;
+  color: var(--text-main);
 }
 
 /* Card chính */
 .main-card {
-  background-color: #FFFFFF;
+  background-color: var(--white-color);
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -391,7 +434,7 @@ onUnmounted(() => {
 /* Các khối box bên trong */
 .info-box, .input-box {
   background-color: #FAFAFA; 
-  border: 1px solid #E2E8F0;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 25px;
 }
@@ -399,7 +442,7 @@ onUnmounted(() => {
 .box-title {
   font-size: 16px;
   font-weight: 700;
-  color: #63391F;
+  color: var(--primary-color);
   margin: 0 0 20px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid rgba(99, 57, 31, 0.1); 
@@ -419,16 +462,16 @@ onUnmounted(() => {
 }
 
 .info-content .label {
-  color: #666666;
+  color: var(--text-muted);
 }
 
 .info-content .value {
   font-weight: 500;
-  color: #333333;
+  color: var(--text-main);
 }
 
 .info-content .highlight {
-  color: #63391F;
+  color: var(--primary-color);
 }
 
 .text-danger {
@@ -444,7 +487,7 @@ onUnmounted(() => {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #333333;
+  color: var(--text-main);
   margin-bottom: 8px;
 }
 
@@ -456,19 +499,19 @@ onUnmounted(() => {
 
 .custom-input {
   width: 100%;
-  background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  background-color: var(--white-color);
+  border: 1px solid var(--border-color);
   padding: 12px 45px 12px 15px; 
   border-radius: 8px;
   font-size: 15px;
-  color: #333333;
+  color: var(--text-main);
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
 .custom-input:focus:not(:disabled) {
   outline: none;
-  border-color: #63391F;
+  border-color: var(--primary-light);
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); 
 }
 
@@ -476,21 +519,20 @@ onUnmounted(() => {
   background-color: #E5E7EB;
   color: #9CA3AF;
   cursor: not-allowed;
-  border-color: #D1D5DB;
 }
 
 .currency {
   position: absolute;
   right: 15px;
   font-size: 14px;
-  color: #9CA3AF;
+  color: var(--text-muted);
   font-weight: 500;
   pointer-events: none;
 }
 
 .warning-text {
   font-size: 13px;
-  color: #D97706;
+  color: var(--warning-color);
   background-color: #FFFBEB;
   border: 1px solid #FCD34D;
   padding: 12px;
@@ -524,13 +566,13 @@ onUnmounted(() => {
 .card-actions {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid #E2E8F0;
+  border-top: 1px solid var(--border-color);
   padding-top: 20px;
 }
 
 .btn-primary {
-  background-color: #63391F;
-  color: #FFFFFF;
+  background-color: var(--primary-color);
+  color: var(--white-color);
   border: none;
   padding: 12px 30px;
   border-radius: 8px;
@@ -559,6 +601,160 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
+.hover-effect:active {
+  transform: scale(0.96);
+}
+
+/* =========================================
+   CUSTOM TOAST & MODAL STYLES TỪ CÁC TRANG KHÁC
+   ========================================= */
+
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 250px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  background: #F0FDF4; 
+  color: #374151; 
+}
+
+.toast-indicator {
+  width: 6px;
+  height: 100%;
+  background-color: #22C55E; 
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.toast-content {
+  margin-left: 10px;
+}
+
+.toast-notification.error {
+  background: #FEF2F2;
+  color: #991b1b;
+}
+
+.toast-notification.error .toast-indicator {
+  background-color: #ef4444;
+}
+
+/* Modal Confirmation */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: zoomIn 0.3s ease-out;
+}
+
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #FEF3C7; 
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-title {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-confirm {
+  background-color: #a88164;
+  color: #fff;
+}
+
+.btn-confirm:hover {
+  background-color: var(--primary-color);
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+/* Animations */
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* Responsive cơ bản */
 @media (max-width: 768px) {
   .content-grid {
@@ -581,10 +777,4 @@ onUnmounted(() => {
     padding: 20px;
   }
 }
-</style>
-
-<style>
-  div.swal2-container {
-    z-index: 10000 !important;
-  }
 </style>
