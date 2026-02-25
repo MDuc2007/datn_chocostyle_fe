@@ -6,11 +6,12 @@ import type {
 
 const API_URL = "http://localhost:8080/api/khach-hang";
 // Thay đổi dòng này thành địa chỉ server BE chứa thư mục uploads của bạn
-const BASE_IMAGE_URL = "http://localhost:8080"; 
+const BASE_IMAGE_URL = "http://localhost:8080";
 const PROVINCE_API = "https://provinces.open-api.vn/api";
+// Thêm đường dẫn API cho địa chỉ
+const ADDRESS_API_URL = "http://localhost:8080/api/dia-chi";
 
 export const customerService = {
-  
   // ==========================================
   // 1. THÊM MỚI (POST)
   // ==========================================
@@ -23,7 +24,7 @@ export const customerService = {
       type: "application/json",
     });
     formData.append("data", jsonBlob);
-    
+
     // Gửi File vào biến 'avatarFile' (Khớp với Java @RequestPart("avatarFile"))
     if (file) {
       formData.append("avatarFile", file);
@@ -142,6 +143,17 @@ export const customerService = {
   },
 
   // ==========================================
+  // 5. QUẢN LÝ SỔ ĐỊA CHỈ (ĐÃ THÊM MỚI Ở ĐÂY)
+  // ==========================================
+  async getAddressesByCustomer(customerId: number) {
+    return axios.get(`${ADDRESS_API_URL}/khach-hang/${customerId}`);
+  },
+
+  async addAddress(payload: any) {
+    return axios.post(ADDRESS_API_URL, payload);
+  },
+
+  // ==========================================
   // CÁC HÀM BỔ TRỢ KHÁC
   // ==========================================
   async toggleStatus(id: number) {
@@ -165,7 +177,7 @@ export const customerService = {
     return {
       ...data,
       tenTaiKhoan: data.tenTaiKhoan?.trim() || null,
-      avatarFullUrl: undefined, 
+      avatarFullUrl: undefined,
       listDiaChi: data.listDiaChi.map((addr: any) => ({
         id: addr.id || null,
         thanhPho: addr.provinceName || addr.thanhPho,

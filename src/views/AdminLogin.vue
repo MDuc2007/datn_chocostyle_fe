@@ -13,7 +13,7 @@
 
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">Tài khoản quản trị</label>
+          <label for="username">Email</label>
           <div class="input-wrapper" :class="{ 'has-error': isError }">
             <span class="input-icon">
               <svg
@@ -34,7 +34,7 @@
               id="username"
               v-model="username"
               type="text"
-              placeholder="Nhập tài khoản admin"
+              placeholder="Nhập email"
               required
               @input="isError = false"
             />

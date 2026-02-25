@@ -10,7 +10,7 @@
 
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">Tài khoản</label>
+          <label for="username">Email</label>
           <div class="input-wrapper" :class="{ 'has-error': isError }">
             <span class="input-icon">
               <svg
@@ -32,7 +32,7 @@
               id="username"
               v-model="username"
               type="text"
-              placeholder="Nhập email tài khoản"
+              placeholder="Nhập email"
               required
               @input="isError = false"
             />

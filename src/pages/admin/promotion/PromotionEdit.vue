@@ -91,10 +91,9 @@
                     {{ isAllSpSelected ? "✓" : "+" }}
                   </button>
                 </th>
-                <th>STT</th>
+                <th>Ảnh</th>
                 <th>Mã SP</th>
                 <th>Tên sản phẩm</th>
-                <th>Ảnh</th>
               </tr>
             </thead>
             <tbody>
@@ -108,10 +107,10 @@
                     {{ selectedSanPhamIds.includes(sp.id) ? "✓" : "+" }}
                   </button>
                 </td>
-                <td>{{ index + 1 }}</td>
+                <td><img :src="sp.hinhAnh" /></td>
+
                 <td>{{ sp.maSp }}</td>
                 <td>{{ sp.tenSp }}</td>
-                <td><img :src="sp.hinhAnh" /></td>
               </tr>
               <tr v-if="sanPhamList.length === 0">
                 <td colspan="5" class="empty">
@@ -796,9 +795,11 @@ const getDiscountPrice = (ct: any) => {
   margin-top: 1px;
 }
 
+
 .full {
   grid-column: 1 / -1;
 }
+
 
 /* === CARD === */
 .card {
@@ -809,6 +810,7 @@ const getDiscountPrice = (ct: any) => {
   padding: 20px;
 }
 
+
 .title {
   font-size: 24px;
   font-weight: 700;
@@ -817,11 +819,13 @@ const getDiscountPrice = (ct: any) => {
   color: #333;
 }
 
+
 .subtitle {
   font-weight: 600;
   margin-bottom: 12px;
   color: #63391f;
 }
+
 
 /* === FORM === */
 .form {
@@ -829,12 +833,14 @@ const getDiscountPrice = (ct: any) => {
   gap: 16px;
 }
 
+
 .field label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
   color: #555;
 }
+
 
 .field input {
   height: 50px;
@@ -849,11 +855,13 @@ const getDiscountPrice = (ct: any) => {
   align-items: center; /* căn giữa theo chiều dọc */
 }
 
+
 .input-group input {
   height: 52px;
   border-right: none;
   border-radius: 10px 0 0 10px;
 }
+
 
 .input-group span {
   height: 50px;
@@ -868,6 +876,7 @@ const getDiscountPrice = (ct: any) => {
   font-weight: 600;
 }
 
+
 /* === BUTTONS === */
 .actions {
   display: flex;
@@ -875,6 +884,7 @@ const getDiscountPrice = (ct: any) => {
   gap: 12px;
   margin-top: 24px;
 }
+
 
 .btn.primary {
   width: 100px;
@@ -887,6 +897,7 @@ const getDiscountPrice = (ct: any) => {
   margin-top: 1px;
 }
 
+
 .btn.cancel {
   width: 100px;
   height: 40px;
@@ -898,9 +909,11 @@ const getDiscountPrice = (ct: any) => {
   margin-top: 1px;
 }
 
+
 .btn:hover {
   opacity: 0.9;
 }
+
 
 .btn-icon {
   width: 32px;
@@ -911,6 +924,7 @@ const getDiscountPrice = (ct: any) => {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 
 .btn-icon.active {
   background: #63391f;
@@ -924,85 +938,66 @@ const getDiscountPrice = (ct: any) => {
 /* ===== TABLE DSSP (GIỐNG CREATE) ===== */
 .table-wrapper {
   height: 390px;
-  position: relative;
-  flex: 1;
   border-radius: 16px;
   border: 1px solid #ddd;
   background: #fff;
-
-  overflow: hidden; /* 🔥 giữ bo góc */
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
 }
+
 
 .table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  flex: 1;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-/* thead + tbody tách riêng */
-.table thead,
+
+/* cố định header */
+.table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  background: #fff;
+}
+
+
+/* chỉ body cuộn */
+.table tbody {
+  display: block;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+
+/* mỗi row body giữ đúng width */
 .table tbody tr {
   display: table;
   width: 100%;
   table-layout: fixed;
 }
 
-/* header cố định */
-.table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-/* chỉ tbody cuộn */
-.table tbody {
-  display: block;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-/* bo góc header */
-.table thead th:first-child {
-  border-top-left-radius: 16px;
-}
-
-.table thead th:last-child {
-  border-top-right-radius: 16px;
-}
 
 /* cell */
 .table th,
 .table td {
-  padding: 17px 8px;
+  padding: 14px 8px;
   text-align: center;
-  vertical-align: middle;
   border-bottom: 1px solid #eee;
-  word-wrap: break-word;
 }
 
-/* màu chữ header */
+
+/* header không xuống dòng */
 .table thead th {
-  color: #000000;
+  white-space: nowrap;
 }
 
-/* width các cột giống CREATE */
-.table th:first-child,
-.table td:first-child {
-  width: 70px;
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 200px;
+  white-space: nowrap;
 }
 
-.table th:nth-child(2),
-.table td:nth-child(2) {
-  width: 60px;
-}
-
-.table th:last-child,
-.table td:last-child {
-  width: 100px;
-}
 
 img {
   width: 50px;
@@ -1011,6 +1006,7 @@ img {
   border-radius: 4px;
 }
 
+
 /* === ERROR === */
 .error {
   color: #d32f2f;
@@ -1018,9 +1014,11 @@ img {
   margin-top: 4px;
 }
 
+
 .block {
   display: block;
 }
+
 
 .toast-container {
   position: fixed;
@@ -1031,6 +1029,7 @@ img {
   flex-direction: column;
   gap: 10px;
 }
+
 
 /* Style cho từng cái Toast giống ảnh mẫu */
 .toast {
@@ -1045,6 +1044,7 @@ img {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: slideIn 0.3s ease-out;
 }
+
 
 /* Hiệu ứng trượt từ phải vào */
 @keyframes slideIn {
@@ -1073,12 +1073,15 @@ img {
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
 
+
   display: flex;
   justify-content: center;
   align-items: center;
 
+
   z-index: 3000;
 }
+
 
 .confirm-box {
   background: #fff;
@@ -1087,12 +1090,15 @@ img {
   width: 400px;
   text-align: center;
 
+
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
+
   animation: zoomIn 0.25s ease;
 }
+
 
 .confirm-icon-wrapper {
   width: 80px;
@@ -1101,13 +1107,16 @@ img {
   background-color: #e8f5e9;
   color: #22c55e;
 
+
   display: flex;
   align-items: center;
   justify-content: center;
 
+
   margin: 0 auto 15px;
   font-size: 34px;
 }
+
 
 .confirm-title {
   font-size: 20px;
@@ -1116,15 +1125,18 @@ img {
   margin-bottom: 10px;
 }
 
+
 .confirm-desc {
   color: #666;
   margin-bottom: 24px;
 }
 
+
 .confirm-actions {
   display: flex;
   gap: 16px;
 }
+
 
 .btn-confirm,
 .btn-cancel {
@@ -1136,28 +1148,34 @@ img {
   cursor: pointer;
 }
 
+
 .btn-confirm {
   background: #63391f;
   color: white;
 }
 
+
 .btn-confirm:hover {
   background: #4e2c17;
 }
 
+
 .btn-cancel {
   background: #f3f4f6;
 }
+
 
 .fade-modal-enter-active,
 .fade-modal-leave-active {
   transition: opacity 0.25s;
 }
 
+
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
 }
+
 
 @keyframes zoomIn {
   from {
@@ -1170,6 +1188,7 @@ img {
   }
 }
 
+
 /* ===== PANEL BIẾN THỂ ===== */
 .panel-card {
   background: #fff;
@@ -1177,6 +1196,7 @@ img {
   border-radius: 20px;
   padding: 20px;
 }
+
 
 /* tiêu đề */
 .subtitle {
@@ -1187,6 +1207,7 @@ img {
   color: #000000;
 }
 
+
 /* wrapper chỉ để bo góc */
 .variant-wrapper {
   border: 1px solid #ddd;
@@ -1194,11 +1215,13 @@ img {
   overflow: hidden; /* 🔥 để bo góc table */
 }
 
+
 /* bảng hiển thị BÌNH THƯỜNG */
 .variant-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 
 /* header */
 .variant-table thead th {
@@ -1206,6 +1229,7 @@ img {
   padding: 14px 8px;
   text-align: center;
 }
+
 
 /* cell */
 .variant-table td {
@@ -1222,25 +1246,30 @@ img {
   margin-bottom: 16px;
 }
 
+
 /* select filter */
 .variant-toolbar select {
   height: 40px;
   min-width: 120px;
   padding: 0 12px;
 
+
   border-radius: 10px;
   border: 1px solid #ddd;
   background: #fff;
+
 
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
 
+
 /* hover */
 .variant-toolbar select:hover {
   border-color: #63391f;
 }
+
 
 /* focus */
 .variant-toolbar select:focus {
@@ -1248,6 +1277,7 @@ img {
   border-color: #63391f;
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15);
 }
+
 
 /* nút clear */
 .btn-clear {
@@ -1261,6 +1291,7 @@ img {
   cursor: pointer;
   transition: 0.2s;
 }
+
 
 .btn-clear:hover {
   background: #fff;
@@ -1291,6 +1322,7 @@ img {
   outline: none;
 }
 
+
 /* Chrome, Edge */
 .price-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1301,6 +1333,7 @@ img {
   cursor: pointer;
   border: none;
 }
+
 
 /* Firefox */
 .price-slider::-moz-range-thumb {
@@ -1317,6 +1350,7 @@ img {
   font-size: 12px;
 }
 
+
 .new-price {
   font-weight: 600;
   color: #e53935;
@@ -1328,6 +1362,7 @@ img {
   height: 55px;
 }
 
+
 .variant-img {
   width: 55px;
   height: 55px;
@@ -1335,19 +1370,24 @@ img {
   border-radius: 6px;
 }
 
+
 .discount-badge {
   position: absolute;
   top: -6px;
   left: -6px;
 
+
   background: linear-gradient(135deg, #ff4d4f, #d32f2f);
   color: #fff;
+
 
   font-size: 11px;
   font-weight: 700;
 
+
   padding: 4px 6px;
   border-radius: 8px;
+
 
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }

@@ -13,9 +13,9 @@
       <div class="slider-container">
         <button class="nav-btn prev">‹</button>
         <div class="image-grid">
-          <div class="img-wrapper"><img src="" alt="Vest 1" /></div>
-          <div class="img-wrapper"><img src="" alt="Vest 2" /></div>
-          <div class="img-wrapper"><img src="" alt="Vest 3" /></div>
+          <div class="img-wrapper"><img src="#" alt="" /></div>
+          <div class="img-wrapper"><img src="" alt="" /></div>
+          <div class="img-wrapper"><img src="" alt="" /></div>
         </div>
         <button class="nav-btn next">›</button>
       </div>

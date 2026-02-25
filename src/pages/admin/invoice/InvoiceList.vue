@@ -498,15 +498,9 @@ onMounted(() => {
   text-align: right !important;
 }
 .text-code {
-  font-weight: 600;
   color: #333;
-  font-family: monospace;
-}
-.text-bold {
-  font-weight: 600;
 }
 .text-money {
-  font-weight: 700;
   color: #333;
 }
 

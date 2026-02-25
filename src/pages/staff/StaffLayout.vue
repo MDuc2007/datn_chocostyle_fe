@@ -106,9 +106,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
+const route = useRoute();
 
 // ===== Dropdown =====
 const isScheduleOpen = ref(false);
@@ -131,8 +132,15 @@ const viewProfile = () => {
 
 // ===== Logout =====
 const logout = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   localStorage.removeItem("user");
-  router.push("/login"); // nên dùng router thay vì reload
+
+  if (user.role === "ROLE_ADMIN" || user.role === "ROLE_STAFF") {
+    router.replace("/admin/login");
+  } else {
+    router.replace("/login");
+  }
 };
 </script>
 <style scoped>

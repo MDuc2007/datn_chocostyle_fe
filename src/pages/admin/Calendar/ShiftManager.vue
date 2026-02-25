@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from 'vue';
-import axios from 'axios';
+import { ref, computed, onMounted, reactive, watch } from "vue";
+import axios from "axios";
 
 // --- 1. Interface & Config ---
 interface Shift {
@@ -12,7 +12,7 @@ interface Shift {
   trangThai: number;
 }
 
-const API_URL = 'http://localhost:8080/api/ca-lam-viec';
+const API_URL = "http://localhost:8080/api/ca-lam-viec";
 
 // --- 2. State ---
 const shifts = ref<Shift[]>([]);
@@ -21,9 +21,9 @@ const showModal = ref(false);
 const isEditing = ref(false);
 
 // Filter State
-const filterStatus = ref<string | number>('all');
-const filterStartTime = ref('');
-const filterEndTime = ref('');
+const filterStatus = ref<string | number>("all");
+const filterStartTime = ref("");
+const filterEndTime = ref("");
 
 // Pagination State
 const perPage = ref(8);
@@ -33,11 +33,11 @@ const totalPages = ref(0); // Thay bằng ref để lấy từ API
 // Form Data
 const form = reactive({
   idCa: null as number | null,
-  maCa: '',
-  tenCa: '',
-  gioBatDau: '',
-  gioKetThuc: '',
-  trangThai: 1
+  maCa: "",
+  tenCa: "",
+  gioBatDau: "",
+  gioKetThuc: "",
+  trangThai: 1,
 });
 
 // --- State theo dõi thay đổi Form (Để confirm khi đóng) ---
@@ -53,28 +53,35 @@ const hasFormChanged = computed(() => {
 
 // --- STATE QUẢN LÝ LỖI ---
 const errors = reactive({
-  tenCa: '',
-  gioBatDau: '',
-  gioKetThuc: ''
+  tenCa: "",
+  gioBatDau: "",
+  gioKetThuc: "",
 });
 
 // Toast
 const notifications = ref<{ id: number; message: string; type: string }[]>([]);
-const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
+const showToast = (message: string, type: "success" | "error" | "warning") => {
   const id = Date.now();
   notifications.value.push({ id, message, type });
-  setTimeout(() => notifications.value = notifications.value.filter(n => n.id !== id), 3000);
+  setTimeout(
+    () =>
+      (notifications.value = notifications.value.filter((n) => n.id !== id)),
+    3000,
+  );
 };
 
 // --- CONFIRM DIALOG STATE (Giống ScheduleManager) ---
 const confirmDialog = ref({
   show: false,
-  title: 'Xác nhận',
-  message: '',
-  resolve: null as ((value: boolean) => void) | null
+  title: "Xác nhận",
+  message: "",
+  resolve: null as ((value: boolean) => void) | null,
 });
 
-const showConfirmDialog = (message: string, title: string = 'Xác nhận'): Promise<boolean> => {
+const showConfirmDialog = (
+  message: string,
+  title: string = "Xác nhận",
+): Promise<boolean> => {
   return new Promise((resolve) => {
     confirmDialog.value.message = message;
     confirmDialog.value.title = title;
@@ -88,21 +95,21 @@ const handleConfirm = (result: boolean) => {
     confirmDialog.value.resolve(result);
   }
   confirmDialog.value.show = false;
-  confirmDialog.value.message = '';
+  confirmDialog.value.message = "";
   confirmDialog.value.resolve = null;
 };
 
 // --- 3. HELPER & VALIDATION LOGIC ---
 
 const clearErrors = () => {
-  errors.tenCa = '';
-  errors.gioBatDau = '';
-  errors.gioKetThuc = '';
+  errors.tenCa = "";
+  errors.gioBatDau = "";
+  errors.gioKetThuc = "";
 };
 
 const timeToMinutes = (timeStr: string) => {
   if (!timeStr) return 0;
-  const [h, m] = timeStr.split(':').map(Number);
+  const [h, m] = timeStr.split(":").map(Number);
   return h * 60 + m;
 };
 
@@ -112,26 +119,33 @@ const validateForm = () => {
 
   // Validate Tên
   if (!form.tenCa || !form.tenCa.trim()) {
-    errors.tenCa = 'Tên ca không được để trống';
+    errors.tenCa = "Tên ca không được để trống";
     isValid = false;
   } else if (form.tenCa.length < 2) {
-    errors.tenCa = 'Tên ca phải có ít nhất 2 ký tự';
+    errors.tenCa = "Tên ca phải có ít nhất 2 ký tự";
     isValid = false;
   } else {
     // Check trùng tên ở frontend (Backend cũng sẽ bắt thêm)
-    const isDuplicateName = shifts.value.some(s =>
-      s.tenCa.trim().toLowerCase() === form.tenCa.trim().toLowerCase() &&
-      (!isEditing.value || s.idCa !== form.idCa)
+    const isDuplicateName = shifts.value.some(
+      (s) =>
+        s.tenCa.trim().toLowerCase() === form.tenCa.trim().toLowerCase() &&
+        (!isEditing.value || s.idCa !== form.idCa),
     );
     if (isDuplicateName) {
-      errors.tenCa = 'Tên ca này đã tồn tại';
+      errors.tenCa = "Tên ca này đã tồn tại";
       isValid = false;
     }
   }
 
   // Validate Giờ
-  if (!form.gioBatDau) { errors.gioBatDau = 'Vui lòng chọn giờ bắt đầu'; isValid = false; }
-  if (!form.gioKetThuc) { errors.gioKetThuc = 'Vui lòng chọn giờ kết thúc'; isValid = false; }
+  if (!form.gioBatDau) {
+    errors.gioBatDau = "Vui lòng chọn giờ bắt đầu";
+    isValid = false;
+  }
+  if (!form.gioKetThuc) {
+    errors.gioKetThuc = "Vui lòng chọn giờ kết thúc";
+    isValid = false;
+  }
 
   // Check Logic thời gian
   if (form.gioBatDau && form.gioKetThuc) {
@@ -140,24 +154,24 @@ const validateForm = () => {
     const duration = endMins - startMins;
 
     if (startMins >= endMins) {
-      errors.gioKetThuc = 'Giờ kết thúc phải sau giờ bắt đầu';
+      errors.gioKetThuc = "Giờ kết thúc phải sau giờ bắt đầu";
       isValid = false;
     } else if (duration < 30) {
-      errors.gioKetThuc = 'Ca làm việc quá ngắn (Tối thiểu 30 phút)';
+      errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
       isValid = false;
     }
-    
+
     // Check trùng khung giờ (Frontend bắt trên page hiện tại)
     if (isValid) {
-      const isDuplicateTime = shifts.value.some(s => {
+      const isDuplicateTime = shifts.value.some((s) => {
         if (isEditing.value && s.idCa === form.idCa) return false;
         const sStart = s.gioBatDau?.substring(0, 5);
         const sEnd = s.gioKetThuc?.substring(0, 5);
         return sStart === form.gioBatDau && sEnd === form.gioKetThuc;
       });
       if (isDuplicateTime) {
-        errors.gioBatDau = 'Khung giờ này đã tồn tại';
-        errors.gioKetThuc = 'Khung giờ này đã tồn tại';
+        errors.gioBatDau = "Khung giờ này đã tồn tại";
+        errors.gioKetThuc = "Khung giờ này đã tồn tại";
         isValid = false;
       }
     }
@@ -173,20 +187,20 @@ const fetchShifts = async () => {
     // Chỉ khởi tạo page và size mặc định
     const params: any = {
       page: page.value,
-      size: perPage.value
+      size: perPage.value,
     };
 
     // Chỉ đẩy param trangThai vào nếu khác 'all'
-    if (filterStatus.value !== 'all') {
+    if (filterStatus.value !== "all") {
       params.trangThai = filterStatus.value;
     }
 
     // Chỉ đẩy param giờ vào nếu có chọn giờ
     if (filterStartTime.value) {
-      params.gioBatDau = filterStartTime.value + ':00';
+      params.gioBatDau = filterStartTime.value + ":00";
     }
     if (filterEndTime.value) {
-      params.gioKetThuc = filterEndTime.value + ':00';
+      params.gioKetThuc = filterEndTime.value + ":00";
     }
 
     const res = await axios.get(`${API_URL}/search`, { params });
@@ -194,7 +208,7 @@ const fetchShifts = async () => {
     totalPages.value = res.data.totalPages;
   } catch (error) {
     console.error("Lỗi lấy danh sách ca:", error);
-    showToast('Lỗi kết nối server', 'error');
+    showToast("Lỗi kết nối server", "error");
   } finally {
     loading.value = false;
   }
@@ -207,32 +221,45 @@ const handleSubmit = async () => {
   const actionText = isEditing.value ? 'cập nhật' : 'thêm mới';
   const confirmMsg = `Bạn có chắc chắn muốn ${actionText} ca làm việc này?`;
 
-  if (!await showConfirmDialog(confirmMsg, isEditing.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới')) return;
+  if (
+    !(await showConfirmDialog(
+      confirmMsg,
+      isEditing.value ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
+    ))
+  )
+    return;
 
   try {
     const payload = {
       ...form,
-      gioBatDau: form.gioBatDau.length === 5 ? form.gioBatDau + ':00' : form.gioBatDau,
-      gioKetThuc: form.gioKetThuc.length === 5 ? form.gioKetThuc + ':00' : form.gioKetThuc,
+      gioBatDau:
+        form.gioBatDau.length === 5 ? form.gioBatDau + ":00" : form.gioBatDau,
+      gioKetThuc:
+        form.gioKetThuc.length === 5
+          ? form.gioKetThuc + ":00"
+          : form.gioKetThuc,
     };
 
     if (isEditing.value && form.idCa) {
       await axios.put(`${API_URL}/${form.idCa}`, payload);
-      showToast('Cập nhật thành công', 'success');
+      showToast("Cập nhật thành công", "success");
     } else {
       await axios.post(API_URL, payload);
-      showToast('Thêm mới thành công', 'success');
+      showToast("Thêm mới thành công", "success");
     }
-    
+
     // Reset originalForm để closeModal không hỏi lại
     originalForm.value = null;
     closeModal();
     fetchShifts();
   } catch (error: any) {
-    const msg = error.response?.data?.message || error.response?.data || 'Có lỗi xảy ra';
+    const msg =
+      error.response?.data?.message || error.response?.data || "Có lỗi xảy ra";
     if (msg.toLowerCase().includes("tên ca")) errors.tenCa = msg;
-    else if (msg.toLowerCase().includes("giờ")) { errors.gioBatDau = msg; errors.gioKetThuc = msg; }
-    else showToast(msg, 'error');
+    else if (msg.toLowerCase().includes("giờ")) {
+      errors.gioBatDau = msg;
+      errors.gioKetThuc = msg;
+    } else showToast(msg, "error");
   }
 };
 
@@ -243,7 +270,7 @@ const toggleStatus = async (shift: Shift, event: Event) => {
 
   const oldStatus = shift.trangThai;
   const newStatus = oldStatus === 1 ? 0 : 1;
-  
+
   // 2. Hỏi xác nhận
   const actionText = newStatus === 1 ? 'kích hoạt' : 'ngưng hoạt động';
   const confirmMsg = `Bạn có chắc chắn muốn ${actionText} ca này?`;
@@ -258,21 +285,30 @@ const toggleStatus = async (shift: Shift, event: Event) => {
 
   try {
     const payload = {
-       ...shift,
-       trangThai: newStatus,
-       gioBatDau: shift.gioBatDau.length === 5 ? shift.gioBatDau + ':00' : shift.gioBatDau,
-       gioKetThuc: shift.gioKetThuc.length === 5 ? shift.gioKetThuc + ':00' : shift.gioKetThuc
+      ...shift,
+      trangThai: newStatus,
+      gioBatDau:
+        shift.gioBatDau.length === 5
+          ? shift.gioBatDau + ":00"
+          : shift.gioBatDau,
+      gioKetThuc:
+        shift.gioKetThuc.length === 5
+          ? shift.gioKetThuc + ":00"
+          : shift.gioKetThuc,
     };
     await axios.put(`${API_URL}/${shift.idCa}`, payload);
-    showToast(`Đã ${newStatus === 1 ? 'mở' : 'đóng'} ca ${shift.tenCa}`, 'success');
+    showToast(
+      `Đã ${newStatus === 1 ? "mở" : "đóng"} ca ${shift.tenCa}`,
+      "success",
+    );
   } catch (error) {
     shift.trangThai = oldStatus; // Revert nếu API lỗi
-    showToast('Lỗi khi cập nhật trạng thái', 'error');
+    showToast("Lỗi khi cập nhật trạng thái", "error");
   }
 };
 
 const deleteShift = async (id: number) => {
-  const shift = shifts.value.find(s => s.idCa === id);
+  const shift = shifts.value.find((s) => s.idCa === id);
   if (!shift) return;
 
   const confirmMsg = `Bạn có chắc chắn muốn xóa ca này?`;
@@ -280,20 +316,24 @@ const deleteShift = async (id: number) => {
 
   try {
     await axios.delete(`${API_URL}/${id}`);
-    showToast('Đã xóa thành công', 'success');
+    showToast("Đã xóa thành công", "success");
     fetchShifts();
   } catch (error) {
-    showToast('Lỗi khi xóa (Có thể ca đang được sử dụng)', 'error');
+    showToast("Lỗi khi xóa (Có thể ca đang được sử dụng)", "error");
   }
 };
 
 // --- 5. Modal Handlers ---
 const openAddModal = () => {
   isEditing.value = false;
-  form.idCa = null; form.maCa = ''; form.tenCa = '';
-  form.gioBatDau = ''; form.gioKetThuc = ''; form.trangThai = 1;
+  form.idCa = null;
+  form.maCa = "";
+  form.tenCa = "";
+  form.gioBatDau = "";
+  form.gioKetThuc = "";
+  form.trangThai = 1;
   clearErrors();
-  
+
   // Lưu trạng thái gốc (để check dirty form)
   originalForm.value = { ...form };
   showModal.value = true;
@@ -304,11 +344,11 @@ const openEditModal = (item: Shift) => {
   form.idCa = item.idCa;
   form.maCa = item.maCa;
   form.tenCa = item.tenCa;
-  form.gioBatDau = item.gioBatDau?.substring(0, 5) || '';
-  form.gioKetThuc = item.gioKetThuc?.substring(0, 5) || '';
+  form.gioBatDau = item.gioBatDau?.substring(0, 5) || "";
+  form.gioKetThuc = item.gioKetThuc?.substring(0, 5) || "";
   form.trangThai = item.trangThai;
   clearErrors();
-  
+
   // Lưu trạng thái gốc
   originalForm.value = { ...form };
   showModal.value = true;
@@ -320,16 +360,16 @@ const closeModal = async () => {
     const confirmMsg = 'Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy bỏ và đóng?';
     if (!await showConfirmDialog(confirmMsg, 'Cảnh báo')) return;
   }
-  
+
   showModal.value = false;
   originalForm.value = null; // Reset
 };
 
 // --- 6. Filters & Pagination ---
 const resetFilters = () => {
-  filterStatus.value = 'all';
-  filterStartTime.value = '';
-  filterEndTime.value = '';
+  filterStatus.value = "all";
+  filterStartTime.value = "";
+  filterEndTime.value = "";
   // Watcher sẽ tự bắt và gọi lại API, set page về 0
 };
 
@@ -352,17 +392,21 @@ const visiblePages = computed(() => {
   let l: number | undefined;
 
   for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+    if (
+      i === 1 ||
+      i === total ||
+      (i >= current - delta && i <= current + delta)
+    ) {
       range.push(i);
     }
   }
 
-  range.forEach(i => {
+  range.forEach((i) => {
     if (l) {
       if (i - l === 2) {
         rangeWithDots.push(l + 1);
       } else if (i - l !== 1) {
-        rangeWithDots.push('...');
+        rangeWithDots.push("...");
       }
     }
     rangeWithDots.push(i);
@@ -382,10 +426,14 @@ onMounted(fetchShifts);
 
 <template>
   <div class="page-container">
-    
     <div class="toast-container">
       <TransitionGroup name="toast">
-        <div v-for="notif in notifications" :key="notif.id" class="toast" :class="notif.type">
+        <div
+          v-for="notif in notifications"
+          :key="notif.id"
+          class="toast"
+          :class="notif.type"
+        >
           <span class="toast-msg">{{ notif.message }}</span>
         </div>
       </TransitionGroup>
@@ -394,7 +442,6 @@ onMounted(fetchShifts);
     <div class="card-section filter-card form-page-animation">
       <div class="filter-card-header">
         <h2 class="card-title">QUẢN LÝ CA LÀM VIỆC</h2>
-        
       </div>
 
       <div class="filter-row">
@@ -408,19 +455,19 @@ onMounted(fetchShifts);
             </select>
           </div>
           <div class="input-wrapper">
-             <span class="label-inside">Khung giờ</span>
-             <div class="time-range-box">
-               <input type="time" v-model="filterStartTime" />
-               <span class="arrow">➝</span>
-               <input type="time" v-model="filterEndTime" />
-             </div>
+            <span class="label-inside">Khung giờ</span>
+            <div class="time-range-box">
+              <input type="time" v-model="filterStartTime" />
+              <span class="arrow">➝</span>
+              <input type="time" v-model="filterEndTime" />
+            </div>
           </div>
         </div>
         <button class="btn btn-outline" @click="resetFilters">Làm mới</button>
         <div class="header-actions">
-           <button class="btn btn-add hover-effect" @click="openAddModal">
-             <span>+</span> Thiết lập ca
-           </button>
+          <button class="btn btn-add hover-effect" @click="openAddModal">
+            <span>+</span> Thiết lập ca
+          </button>
         </div>
       </div>
     </div>
@@ -430,7 +477,8 @@ onMounted(fetchShifts);
         <table class="custom-table">
           <thead>
             <tr>
-              <th width="5%" class="text-center">STT</th> <th width="15%">Mã Ca</th>
+              <th width="5%" class="text-center">STT</th>
+              <th width="15%">Mã Ca</th>
               <th width="25%">Tên Ca</th>
               <th width="25%">Thời gian</th>
               <th width="15%" class="text-center">Trạng thái</th>
@@ -442,33 +490,54 @@ onMounted(fetchShifts);
               <td colspan="6" class="text-center py-4">Đang tải dữ liệu...</td>
             </tr>
             <tr v-else-if="shifts.length === 0">
-              <td colspan="6" class="text-center py-4 text-muted">Không có dữ liệu phù hợp</td>
+              <td colspan="6" class="text-center py-4 text-muted">
+                Không có dữ liệu phù hợp
+              </td>
             </tr>
             <tr v-else v-for="(shift, index) in shifts" :key="shift.idCa">
-              <td class="text-center font-bold text-gray-500">{{ page * perPage + index + 1 }}</td>
+              <td class="text-center font-bold text-gray-500">
+                {{ page * perPage + index + 1 }}
+              </td>
               <td class="code-text">{{ shift.maCa }}</td>
-              <td><span class="name-badge">{{ shift.tenCa }}</span></td>
+              <td>
+                <span class="name-badge">{{ shift.tenCa }}</span>
+              </td>
               <td>
                 <span class="time-text">
-                  {{ shift.gioBatDau?.substring(0, 5) }} - {{ shift.gioKetThuc?.substring(0, 5) }}
+                  {{ shift.gioBatDau?.substring(0, 5) }} -
+                  {{ shift.gioKetThuc?.substring(0, 5) }}
                 </span>
               </td>
               <td class="text-center">
-                <span class="status-badge" :class="shift.trangThai === 1 ? 'active' : 'inactive'">
-                  {{ shift.trangThai === 1 ? 'Hoạt động' : 'Ngưng' }}
+                <span
+                  class="status-badge"
+                  :class="shift.trangThai === 1 ? 'active' : 'inactive'"
+                >
+                  {{ shift.trangThai === 1 ? "Hoạt động" : "Ngưng" }}
                 </span>
               </td>
               <td class="text-center">
                 <div class="action-buttons-wrapper">
                   <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
                     <span class="icon edit" @click="openEditModal(shift)">
-                      <img src="/src/assets/icon/edit.svg" style="width: 20px; height: 20px" />
+                      <img
+                        src="/src/assets/icon/edit.svg"
+                        style="width: 20px; height: 20px"
+                      />
                     </span>
                   </div>
 
-                  <div class="tooltip-wrapper" data-tooltip="Kích hoạt/Tắt" style="margin-left: 8px;">
+                  <div
+                    class="tooltip-wrapper"
+                    data-tooltip="Kích hoạt/Tắt"
+                    style="margin-left: 8px"
+                  >
                     <label class="switch">
-                      <input type="checkbox" :checked="shift.trangThai === 1" @click="toggleStatus(shift, $event)" />
+                      <input
+                        type="checkbox"
+                        :checked="shift.trangThai === 1"
+                        @click="toggleStatus(shift, $event)"
+                      />
                       <span class="slider"></span>
                     </label>
                   </div>
@@ -480,23 +549,43 @@ onMounted(fetchShifts);
       </div>
 
       <div class="pagination-footer" v-if="totalPages > 1">
-        <button class="p-btn" :disabled="page === 0" @click="changePage(page - 1)"> &lt; </button>
+        <button
+          class="p-btn"
+          :disabled="page === 0"
+          @click="changePage(page - 1)"
+        >
+          &lt;
+        </button>
         <template v-for="p in visiblePages" :key="p">
-          <button v-if="p !== '...'" class="p-btn number" :class="{ active: p === (page + 1) }" @click="changePage((p as number) - 1)">{{ p }}</button>
+          <button
+            v-if="p !== '...'"
+            class="p-btn number"
+            :class="{ active: p === page + 1 }"
+            @click="changePage((p as number) - 1)"
+          >
+            {{ p }}
+          </button>
           <span v-else class="dots">...</span>
         </template>
-        <button class="p-btn" :disabled="page >= totalPages - 1" @click="changePage(page + 1)"> &gt; </button>
+        <button
+          class="p-btn"
+          :disabled="page >= totalPages - 1"
+          @click="changePage(page + 1)"
+        >
+          &gt;
+        </button>
       </div>
     </div>
 
     <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
       <div class="modal-box">
-        
         <div class="modal-header">
-          <h3>{{ isEditing ? 'CẬP NHẬT CA LÀM VIỆC' : 'THÊM CA LÀM VIỆC MỚI' }}</h3>
+          <h3>
+            {{ isEditing ? "CẬP NHẬT CA LÀM VIỆC" : "THÊM CA LÀM VIỆC MỚI" }}
+          </h3>
           <button class="close-btn" @click="closeModal">×</button>
         </div>
-        
+
         <div class="modal-body">
           <div class="form-group">
             <label>Tên Ca <span class="required">*</span></label>
@@ -507,7 +596,9 @@ onMounted(fetchShifts);
               :class="{ 'red-border': errors.tenCa }"
               placeholder="Ví dụ: Ca Sáng, Ca Chiều..."
             />
-            <span v-if="errors.tenCa" class="error-msg">{{ errors.tenCa }}</span>
+            <span v-if="errors.tenCa" class="error-msg">{{
+              errors.tenCa
+            }}</span>
           </div>
 
           <div class="form-row">
@@ -519,9 +610,11 @@ onMounted(fetchShifts);
                 class="form-control"
                 :class="{ 'red-border': errors.gioBatDau }"
               />
-              <span v-if="errors.gioBatDau" class="error-msg">{{ errors.gioBatDau }}</span>
+              <span v-if="errors.gioBatDau" class="error-msg">{{
+                errors.gioBatDau
+              }}</span>
             </div>
-            
+
             <div class="form-group col">
               <label>Giờ kết thúc <span class="required">*</span></label>
               <input
@@ -530,7 +623,9 @@ onMounted(fetchShifts);
                 class="form-control"
                 :class="{ 'red-border': errors.gioKetThuc }"
               />
-              <span v-if="errors.gioKetThuc" class="error-msg">{{ errors.gioKetThuc }}</span>
+              <span v-if="errors.gioKetThuc" class="error-msg">{{
+                errors.gioKetThuc
+              }}</span>
             </div>
           </div>
         </div>
@@ -538,30 +633,54 @@ onMounted(fetchShifts);
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Hủy bỏ</button>
           <button class="btn btn-primary" @click="handleSubmit">
-            {{ isEditing ? 'Lưu thay đổi' : 'Hoàn tất' }}
+            {{ isEditing ? "Lưu thay đổi" : "Hoàn tất" }}
           </button>
         </div>
       </div>
     </div>
 
     <transition name="fade-modal">
-      <div v-if="confirmDialog.show" class="modal-confirm" @click.self="handleConfirm(false)">
+      <div
+        v-if="confirmDialog.show"
+        class="modal-confirm"
+        @click.self="handleConfirm(false)"
+      >
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="40" height="40">
-              <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
             </svg>
           </div>
           <h3 class="confirm-title">{{ confirmDialog.title }}</h3>
           <p class="confirm-desc" v-html="confirmDialog.message"></p>
           <div class="confirm-actions">
-            <button class="btn-cancel hover-effect" @click="handleConfirm(false)">Hủy</button>
-            <button class="btn-confirm hover-effect" @click="handleConfirm(true)">Đồng ý</button>
+            <button
+              class="btn-cancel hover-effect"
+              @click="handleConfirm(false)"
+            >
+              Hủy
+            </button>
+            <button
+              class="btn-confirm hover-effect"
+              @click="handleConfirm(true)"
+            >
+              Đồng ý
+            </button>
           </div>
         </div>
       </div>
     </transition>
-
   </div>
 </template>
 
@@ -582,13 +701,25 @@ onMounted(fetchShifts);
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .form-page-animation {
@@ -603,7 +734,9 @@ onMounted(fetchShifts);
   box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 }
 
 .card-section:hover {
@@ -664,11 +797,25 @@ onMounted(fetchShifts);
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
 
-.btn-secondary { background: #e5e7eb; color: #374151; }
-.btn-secondary:hover { background: #d1d5db; }
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+.btn-secondary:hover {
+  background: #d1d5db;
+}
 
-.btn-outline { background: white; border: 1px solid #ccc; color: #484848; border-radius: 10px; }
-.btn-outline:hover { border-color: #63391F; color: #63391F; background: #fdf8f6; }
+.btn-outline {
+  background: white;
+  border: 1px solid #ccc;
+  color: #484848;
+  border-radius: 10px;
+}
+.btn-outline:hover {
+  border-color: #63391f;
+  color: #63391f;
+  background: #fdf8f6;
+}
 
 /* Add button style - matching EmployeeManager */
 .btn-add {
@@ -701,7 +848,12 @@ onMounted(fetchShifts);
   gap: 16px;
 }
 
-.left-filters { display: flex; gap: 15px; align-items: flex-end; flex: 1; }
+.left-filters {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex: 1;
+}
 
 .input-wrapper {
   display: flex;
@@ -732,12 +884,19 @@ onMounted(fetchShifts);
 }
 
 .time-range-box {
-  display: flex; align-items: center; gap: 8px;
-  background: white; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
   min-width: 200px;
 }
-.time-range-box input { 
-  border: none; padding: 4px; background: transparent; 
+.time-range-box input {
+  border: none;
+  padding: 4px;
+  background: transparent;
   font-size: 14px;
 }
 
@@ -779,14 +938,48 @@ onMounted(fetchShifts);
   text-align: center !important;
 }
 
-.code-text {  color: #000000; font-size: 13px; }
-.font-bold { font-weight: 600; }
-.text-gray-500 { color: #000000; }
-.name-badge { font-weight: 0; color: #000000; font-size: 14px; }
-.time-text { font-family: monospace; font-weight: 500; color: #000000; background: #F3F4F6; padding: 4px 8px; border-radius: 4px; font-size: 13px; }
-.status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; min-width: 100px; }
-.active { background: #e8f5e9; color: #166534; border: 1px solid #c8e6c9; }
-.inactive { background: #fef3c7; color: #92400E; border: 1px solid #fde68a; }
+.code-text {
+  color: #000000;
+  font-size: 13px;
+}
+.font-bold {
+  font-weight: 600;
+}
+.text-gray-500 {
+  color: #000000;
+}
+.name-badge {
+  font-weight: 0;
+  color: #000000;
+  font-size: 14px;
+}
+.time-text {
+  font-family: monospace;
+  font-weight: 500;
+  color: #000000;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 100px;
+}
+.active {
+  background: #e8f5e9;
+  color: #166534;
+  border: 1px solid #c8e6c9;
+}
+.inactive {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
 
 /* === ACTION GROUP === */
 .action-group.center-actions {
@@ -813,9 +1006,9 @@ onMounted(fetchShifts);
   display: block;
 }
 
-.action-btn:hover { 
-  border-color: #63391F; 
-  color: #63391F; 
+.action-btn:hover {
+  border-color: #63391f;
+  color: #63391f;
   background: #fff8f5;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(99, 57, 31, 0.15);
@@ -852,7 +1045,9 @@ onMounted(fetchShifts);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
   z-index: 100;
 }
 
@@ -866,7 +1061,9 @@ onMounted(fetchShifts);
   border-top-color: #333;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .tooltip-wrapper:hover::after,
@@ -894,101 +1091,257 @@ onMounted(fetchShifts);
 }
 
 /* === PAGINATION === */
-.pagination-footer { 
-  display: flex; 
-  justify-content: center; 
-  gap: 8px; 
-  padding: 20px 0; 
+.pagination-footer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0;
 }
-.p-btn { 
-  min-width: 38px; 
-  height: 38px; 
-  background: #FFF; 
-  border: 1px solid #E5E7EB; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  color: #374151; 
-  font-weight: 600; 
-  transition: 0.2s; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
+.p-btn {
+  min-width: 38px;
+  height: 38px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 600;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.p-btn.active { 
-  background: linear-gradient(135deg, #6b3f23, #c89b6d); 
-  border-color: #6b3f23; 
-  color: #FFF; 
-  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2); 
+.p-btn.active {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  border-color: #6b3f23;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
 }
-.p-btn:hover:not(.active):not(:disabled) { border-color: #63391F; color: #63391F; }
-.p-btn:disabled { background: #F9F9F9; color: #CCC; border-color: #EEE; cursor: not-allowed; }
-.dots { color: #999; padding: 0 5px; font-weight: bold; }
+.p-btn:hover:not(.active):not(:disabled) {
+  border-color: #63391f;
+  color: #63391f;
+}
+.p-btn:disabled {
+  background: #f9f9f9;
+  color: #ccc;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+.dots {
+  color: #999;
+  padding: 0 5px;
+  font-weight: bold;
+}
 
 /* === MODAL STYLES === */
 .modal-backdrop {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
   z-index: 9999;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .modal-box {
-  background: white; width: 500px; border-radius: 12px;
+  background: white;
+  width: 500px;
+  border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
-@keyframes modalSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.modal-header { background: #63391F; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-.modal-header h3 { color: white; margin: 0; font-size: 16px; font-weight: 700; }
-.close-btn { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; opacity: 0.8; }
-.close-btn:hover { opacity: 1; }
-.modal-body { padding: 24px; }
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 14px; }
-.required { color: #dc2626; margin-left: 2px; }
-.form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
-.form-control:focus { border-color: #63391F; box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15); outline: none; }
-.form-row { display: flex; gap: 20px; }
-.col { flex: 1; }
-.modal-footer { padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; }
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.modal-header {
+  background: #63391f;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.close-btn:hover {
+  opacity: 1;
+}
+.modal-body {
+  padding: 24px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+.required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+.form-control:focus {
+  border-color: #63391f;
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15);
+  outline: none;
+}
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+.col {
+  flex: 1;
+}
+.modal-footer {
+  padding: 16px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
 
 /* TOAST */
-.toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-.toast { pointer-events: auto; min-width: 250px; max-width: 350px; padding: 12px 16px; border-radius: 4px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); background: #fff; animation: slideInRight 0.3s forwards; }
-.toast.success { background-color: #f0f9eb; border-left: 5px solid #67c23a; color: #67c23a; }
-.toast.error { background-color: #fef0f0; border-left: 5px solid #f56c6c; color: #f56c6c; }
-.toast.warning { background-color: #fdf6ec; border-left: 5px solid #e6a23c; color: #e6a23c; }
-.toast-msg { color: #333; }
-@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  animation: slideInRight 0.3s forwards;
+}
+.toast.success {
+  background-color: #f0f9eb;
+  border-left: 5px solid #67c23a;
+  color: #67c23a;
+}
+.toast.error {
+  background-color: #fef0f0;
+  border-left: 5px solid #f56c6c;
+  color: #f56c6c;
+}
+.toast.warning {
+  background-color: #fdf6ec;
+  border-left: 5px solid #e6a23c;
+  color: #e6a23c;
+}
+.toast-msg {
+  color: #333;
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 /* === SWITCH STYLING === */
 .switch {
   position: relative;
   display: inline-block;
-  width: 46px;  
+  width: 46px;
   height: 24px;
   margin: 0;
   cursor: pointer;
 }
-.switch input { opacity: 0; width: 0; height: 0; }
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
 .slider {
-  position: absolute; cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #d9534f; transition: 0.4s; border-radius: 24px;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d9534f;
+  transition: 0.4s;
+  border-radius: 24px;
 }
 .slider:before {
-  position: absolute; content: "";
-  height: 18px; width: 18px;
-  left: 3px; bottom: 3px;
-  background-color: white; transition: 0.4s;
-  border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
-input:checked + .slider { background: linear-gradient(135deg, #6b3f23, #c89b6d) !important; }
-input:checked + .slider:before { transform: translateX(22px); }
+input:checked + .slider {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d) !important;
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
 
 /* Tooltip */
-.tooltip-wrapper[data-tooltip] { position: relative; }
-@keyframes fadeIn { to { opacity: 1; } }
+.tooltip-wrapper[data-tooltip] {
+  position: relative;
+}
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
 
 /* --- VALIDATION STYLES --- */
 .red-border {
@@ -1010,8 +1363,14 @@ input:checked + .slider:before { transform: translateX(22px); }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* === CONFIRM DIALOG STYLES === */
@@ -1031,15 +1390,17 @@ input:checked + .slider:before { transform: translateX(22px); }
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #fff4e5;
-  color: #ff9800;
+  background-color: #e8f5e9;
+  color: #22c55e;
   margin: 0 auto 15px auto;
   display: flex;
   align-items: center;
@@ -1104,7 +1465,13 @@ input:checked + .slider:before { transform: translateX(22px); }
   opacity: 0;
 }
 @keyframes zoomIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

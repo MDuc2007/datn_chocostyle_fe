@@ -110,7 +110,7 @@
               style="width: 30px; height: 30px"
             />
             <div>
-              Khuyến mại
+              Quản lý giảm giá
               <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
             </div>
           </div>
@@ -152,15 +152,14 @@
           </div>
         </div>
         <div class="menu-group">
-          <div class="menu-item has-children" @click="toggleSchedule">
+          <div
+            class="menu-item has-children"
+            :class="{ active: isScheduleOpen }"
+            @click="toggleSchedule"
+          >
             <img
               src="/src/assets/icon/calendar.svg"
-              alt=""
               style="width: 30px; height: 30px"
-              onerror="
-                this.src =
-                  'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'
-              "
             />
             <div>
               Quản lý lịch làm việc
@@ -210,9 +209,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
+const route = useRoute();
 
 const isDiscountOpen = ref(false);
 const isAccountOpen = ref(false);
@@ -247,9 +247,15 @@ const viewProfile = () => {
 };
 
 const logout = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   localStorage.removeItem("user");
-  // alert("Đã xóa token! Hãy thử bấm Đăng nhập lại.");
-  window.location.reload();
+
+  if (user.role === "ROLE_ADMIN" || user.role === "ROLE_STAFF") {
+    router.replace("/admin/login");
+  } else {
+    router.replace("/login");
+  }
 };
 </script>
 
@@ -349,7 +355,6 @@ const logout = () => {
   margin-left: 20px;
   border-left: 2px solid #ddd;
 }
-
 
 .submenu-item {
   display: block;

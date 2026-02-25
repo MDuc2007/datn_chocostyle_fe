@@ -433,7 +433,6 @@ onMounted(() => {
   border-collapse: separate;
   border-spacing: 0;
   min-width: 1000px;
-  table-layout: fixed;
 }
 
 .custom-table th {
@@ -455,10 +454,6 @@ onMounted(() => {
   vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
   transition: background-color 0.2s;
-}
-
-.custom-table tbody tr:hover td {
-  background-color: var(--primary-light);
 }
 
 .text-center {

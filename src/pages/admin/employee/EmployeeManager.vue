@@ -165,7 +165,16 @@
 
                 <td class="text-center">
                   <div class="actions-group">
-                    <div class="tooltip-wrapper" :data-tooltip="e.status === 1 ? 'Khóa nhân viên' : e.status === 2 ? 'Mở khóa' : 'Kích hoạt lại'">
+                    <div
+                      class="tooltip-wrapper"
+                      :data-tooltip="
+                        e.status === 1
+                          ? 'Khóa nhân viên'
+                          : e.status === 2
+                            ? 'Mở khóa'
+                            : 'Kích hoạt lại'
+                      "
+                    >
                       <label class="switch">
                         <input
                           type="checkbox"
@@ -178,7 +187,10 @@
 
                     <div class="tooltip-wrapper" data-tooltip="Chi tiết">
                       <span class="icon edit" @click="openEditModal(e)">
-                        <img src="/src/assets/icon/edit.svg" style="width: 20px; height: 20px" />
+                        <img
+                          src="/src/assets/icon/edit.svg"
+                          style="width: 20px; height: 20px"
+                        />
                       </span>
                     </div>
                   </div>
@@ -1011,16 +1023,18 @@ const showNotification = (message, type = "success") => {
 .btn {
   padding: 0 16px;
   font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  height: 42px;
+  height: 42px; /* 👈 bằng input */
+  padding: 0 16px;
+  border: 1px solid #ccc;
   border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
   font-size: 14px;
-  box-sizing: border-box;
+  font-weight: 600;
+  color: #484848;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-primary {
@@ -1471,7 +1485,9 @@ input:checked + .slider::before {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
   z-index: 100;
 }
 
@@ -1485,7 +1501,9 @@ input:checked + .slider::before {
   border-top-color: #333;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .tooltip-wrapper:hover::after,
@@ -1776,7 +1794,6 @@ input:checked + .slider::before {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: default;
-  /* display: inline-block; */
   word-break: break-word;
   overflow-wrap: break-word;
   vertical-align: middle;
