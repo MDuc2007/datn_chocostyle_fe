@@ -8,6 +8,8 @@ const API_URL = "http://localhost:8080/api/khach-hang";
 // Thay đổi dòng này thành địa chỉ server BE chứa thư mục uploads của bạn
 const BASE_IMAGE_URL = "http://localhost:8080"; 
 const PROVINCE_API = "https://provinces.open-api.vn/api";
+// Thêm đường dẫn API cho địa chỉ
+const ADDRESS_API_URL = "http://localhost:8080/api/dia-chi"; 
 
 export const customerService = {
   
@@ -139,6 +141,17 @@ export const customerService = {
   // Bổ sung API này vì file Vue EditEmployee.vue của bạn có gọi
   async checkUnique(params: { email?: string | null; sdt?: string | null }) {
     return axios.get(`${API_URL}/check-unique`, { params });
+  },
+
+  // ==========================================
+  // 5. QUẢN LÝ SỔ ĐỊA CHỈ (ĐÃ THÊM MỚI Ở ĐÂY)
+  // ==========================================
+  async getAddressesByCustomer(customerId: number) {
+    return axios.get(`${ADDRESS_API_URL}/khach-hang/${customerId}`);
+  },
+
+  async addAddress(payload: any) {
+    return axios.post(ADDRESS_API_URL, payload);
   },
 
   // ==========================================
