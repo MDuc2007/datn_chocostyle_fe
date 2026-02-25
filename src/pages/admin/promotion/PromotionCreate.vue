@@ -772,7 +772,7 @@ const back = () => router.push("/admin/promotion");
 }
 
 .panel {
-  height: 510px;
+  height: 480px;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 20px;
@@ -877,39 +877,35 @@ const back = () => router.push("/admin/promotion");
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  flex: 1;
+}
+
+.table thead {
+  display: table;
+  width: 100%;
+  table-layout: auto;
 }
 
 .table tbody {
   display: block;
-  overflow-y: auto;
   max-height: 300px;
+  overflow-y: auto;
 }
 
-.table thead,
 .table tbody tr {
   display: table;
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
 }
-
-.table thead {
+.table thead th {
   position: sticky;
   top: 0;
-  z-index: 10;
-}
-.table-wrapper {
-  position: relative;
-  flex: 1;
-  margin-top: 10px;
-
-  border-radius: 16px;
-  border: 1px solid #ddd;
   background: #fff;
-
-  overflow: hidden; /* 🔥 QUAN TRỌNG: giữ bo góc */
-  display: flex;
-  flex-direction: column;
+  z-index: 5;
+}
+.table td:nth-child(4) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .btn-clear {
   height: 40px;
@@ -967,10 +963,11 @@ td {
   padding: 12px 8px;
   text-align: center;
   vertical-align: middle;
-  word-wrap: break-word;
   border-bottom: 1px solid #eee;
 }
-
+.table thead th {
+  white-space: nowrap;
+}
 .btn-icon {
   margin: 0 auto;
   display: flex;
