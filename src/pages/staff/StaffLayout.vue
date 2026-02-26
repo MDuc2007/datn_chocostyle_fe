@@ -82,6 +82,10 @@
     <div class="main">
       <header class="topbar">
         <div class="top-icons">
+          <div class="user-welcome">
+            <span class="user-name-bold">{{ currentUserName }}</span>
+          </div>
+
           <img src="/src/assets/icon/notification.svg" class="icon" />
           <div class="user-icon-wrapper" @click="toggleUserMenu">
             <img src="/src/assets/icon/user.svg" class="icon" />
@@ -105,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue"; // Thêm onMounted
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -113,6 +117,23 @@ const router = useRouter();
 // ===== Dropdown =====
 const isScheduleOpen = ref(false);
 const isUserMenuOpen = ref(false);
+
+// ===== Biến lưu tên nhân viên =====
+const currentUserName = ref("Nhân viên");
+
+// ===== Lấy tên từ LocalStorage khi load trang =====
+onMounted(() => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      const userData = JSON.parse(userStr);
+      // Ưu tiên lấy tenNhanVien, nếu không có thì lấy hoTen hoặc name
+      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || "Nhân viên";
+    } catch (e) {
+      console.error("Lỗi đọc dữ liệu user:", e);
+    }
+  }
+});
 
 // ===== Toggle Lịch làm việc =====
 const toggleSchedule = () => {
@@ -132,9 +153,10 @@ const viewProfile = () => {
 // ===== Logout =====
 const logout = () => {
   localStorage.removeItem("user");
-  router.push("/login"); // nên dùng router thay vì reload
+  window.location.reload(); // Reload để clear state sạch sẽ
 };
 </script>
+
 <style scoped>
 .admin-layout {
   display: flex;
@@ -302,7 +324,23 @@ const logout = () => {
   margin-left: auto;
   font-size: 20px;
   display: flex;
-  gap: 15px;
+  gap: 20px; /* Tăng khoảng cách để tên không dính vào icon */
+  align-items: center;
+}
+
+/* CSS hiển thị tên user */
+.user-welcome {
+  font-size: 14px;
+  color: #555;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-name-bold {
+  font-weight: 700;
+  color: #63391f; /* Màu nâu chủ đạo */
 }
 
 .content {

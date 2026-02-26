@@ -5,11 +5,10 @@ import type {
 } from "./../types/customer";
 
 const API_URL = "http://localhost:8080/api/khach-hang";
-// Thay đổi dòng này thành địa chỉ server BE chứa thư mục uploads của bạn
-const BASE_IMAGE_URL = "http://localhost:8080"; 
-const PROVINCE_API = "https://provinces.open-api.vn/api";
-// Thêm đường dẫn API cho địa chỉ
 const ADDRESS_API_URL = "http://localhost:8080/api/dia-chi"; 
+const PROVINCE_API = "https://provinces.open-api.vn/api";
+
+// KHÔNG CẦN BIẾN BASE_IMAGE_URL VÌ ĐANG DÙNG BASE64
 
 export const customerService = {
   
@@ -43,8 +42,7 @@ export const customerService = {
     const formData = new FormData();
     const payload = this.preparePayload(data);
 
-    // Loại bỏ các trường liên quan đến avatar cũ khỏi JSON Payload
-    // Vì nếu có ảnh mới, BE sẽ tự update dựa vào file gửi lên
+    // Xóa các trường avatar cũ để tránh gửi dữ liệu thừa
     if (payload.avatar) delete payload.avatar;
     if (payload.avatarFullUrl) delete payload.avatarFullUrl;
 
@@ -76,14 +74,13 @@ export const customerService = {
     const customer = res.data;
     const allProvinces = pRes.data;
 
-    // 👉 ĐÃ SỬA: Lắp ghép URL hoàn chỉnh để Vue có thể hiển thị ảnh
+    // 👉 ĐÃ SỬA: Lấy trực tiếp chuỗi Base64 từ DB làm URL hiển thị
+    // Không cần nối thêm http://localhost:8080 nữa
     if (customer.avatar) {
-      // Ví dụ customer.avatar = "/uploads/avatar.png" (từ Java Service trả về)
-      // Kết quả: "http://localhost:8080/uploads/avatar.png"
-      customer.avatarFullUrl = `${BASE_IMAGE_URL}${customer.avatar}`;
+      customer.avatarFullUrl = customer.avatar; 
     }
 
-    // Mapping địa chỉ sang ID Select
+    // Mapping địa chỉ sang ID Select (Giữ nguyên logic của bạn)
     customer.listDiaChi = await Promise.all(
       customer.listDiaChi.map(async (addr: any) => {
         const item: any = {
@@ -138,13 +135,12 @@ export const customerService = {
   // ==========================================
   // 4. API CHECK UNIQUE
   // ==========================================
-  // Bổ sung API này vì file Vue EditEmployee.vue của bạn có gọi
   async checkUnique(params: { email?: string | null; sdt?: string | null }) {
     return axios.get(`${API_URL}/check-unique`, { params });
   },
 
   // ==========================================
-  // 5. QUẢN LÝ SỔ ĐỊA CHỈ (ĐÃ THÊM MỚI Ở ĐÂY)
+  // 5. QUẢN LÝ SỔ ĐỊA CHỈ
   // ==========================================
   async getAddressesByCustomer(customerId: number) {
     return axios.get(`${ADDRESS_API_URL}/khach-hang/${customerId}`);
@@ -152,6 +148,13 @@ export const customerService = {
 
   async addAddress(payload: any) {
     return axios.post(ADDRESS_API_URL, payload);
+  },
+
+  // 👉 HÀM MỚI THÊM: Đặt địa chỉ mặc định
+  async setDefaultAddress(addressId: number, customerId: number) {
+    return axios.put(`${ADDRESS_API_URL}/${addressId}/mac-dinh`, null, {
+      params: { khachHangId: customerId }
+    });
   },
 
   // ==========================================

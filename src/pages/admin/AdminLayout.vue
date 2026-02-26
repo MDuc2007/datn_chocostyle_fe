@@ -10,7 +10,6 @@
       </div>
 
       <nav class="menu">
-        <!-- ===== NHÓM CHÍNH ===== -->
         <div class="menu-group">
           <router-link to="/admin/dashboard" class="menu-item">
             <div class="invoice">
@@ -51,7 +50,6 @@
             </div>
           </router-link>
 
-          <!-- Quản lý sản phẩm -->
           <div
             class="menu-item has-children"
             :class="{ active: isProductOpen }"
@@ -98,7 +96,6 @@
           </div>
         </div>
 
-        <!-- ===== KHUYẾN MẠI ===== -->
         <div class="menu-group">
           <div
             class="menu-item has-children"
@@ -125,7 +122,6 @@
           </div>
         </div>
 
-        <!-- ===== TÀI KHOẢN ===== -->
         <div class="menu-group">
           <div
             class="menu-item has-children"
@@ -183,7 +179,12 @@
     <div class="main">
       <header class="topbar">
         <div class="top-icons">
+          <div class="user-welcome">
+            <span class="user-name-bold">{{ currentUserName }}</span>
+          </div>
+
           <img src="/src/assets/icon/notification.svg" class="icon" />
+          
           <div class="user-icon-wrapper" @click="toggleUserMenu">
             <img src="/src/assets/icon/user.svg" class="icon" />
             <transition name="fade">
@@ -206,24 +207,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue"; // Thêm onMounted
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 
+// Các biến state cho menu
 const isDiscountOpen = ref(false);
 const isAccountOpen = ref(false);
 const isProductOpen = ref(false);
 const isUserMenuOpen = ref(false);
 const isScheduleOpen = ref(false);
+
+// Biến lưu tên người dùng
+const currentUserName = ref("Admin");
+
+// Hàm chạy khi load trang để lấy tên từ LocalStorage
+onMounted(() => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      const userData = JSON.parse(userStr);
+      // LƯU Ý: Bạn cần kiểm tra xem object 'user' trong localStorage có trường nào lưu tên.
+      // Ví dụ: tenNhanVien, hoTen, fullName, hoặc name.
+      // Ở đây mình ưu tiên lấy 'tenNhanVien', nếu không có thì lấy 'hoTen', mặc định là 'Admin'
+      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || "Admin";
+    } catch (e) {
+      console.error("Lỗi khi đọc dữ liệu user:", e);
+    }
+  }
+});
+
 const toggleSchedule = () => {
   isScheduleOpen.value = !isScheduleOpen.value;
 };
 
 const goToProduct = () => {
   isProductOpen.value = !isProductOpen.value;
-
-  // chuyển sang màn quản lý sản phẩm
   router.push("/admin/product");
 };
 
@@ -245,7 +265,6 @@ const viewProfile = () => {
 
 const logout = () => {
   localStorage.removeItem("user");
-  // alert("Đã xóa token! Hãy thử bấm Đăng nhập lại.");
   window.location.reload();
 };
 </script>
@@ -255,16 +274,7 @@ const logout = () => {
   display: flex;
   min-height: 100vh;
   background: #f6f6f6;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 /* ================= SIDEBAR ================= */
@@ -417,7 +427,23 @@ const logout = () => {
   margin-left: auto;
   font-size: 20px;
   display: flex;
-  gap: 15px;
+  gap: 20px; /* Tăng gap để tên và icon không dính nhau */
+  align-items: center;
+}
+
+/* CSS CHO TÊN NGƯỜI DÙNG */
+.user-welcome {
+  font-size: 14px;
+  color: #555;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-name-bold {
+  font-weight: 700;
+  color: #63391f; /* Màu nâu chủ đạo */
 }
 
 .content {
