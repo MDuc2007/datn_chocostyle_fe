@@ -808,8 +808,9 @@ onMounted(async () => {
     form.giaTriToiDa = null;
   }
 
-  if (trangThai === 0) voucherMeta.trangThai = "CHUA_DIEN_RA";
+  if (trangThai === 0) voucherMeta.trangThai = "NGUNG";
   else if (trangThai === 1) voucherMeta.trangThai = "DANG_DIEN_RA";
+  else if (trangThai === 2) voucherMeta.trangThai = "CHUA_DIEN_RA";
   else voucherMeta.trangThai = "DA_KET_THUC";
 
   voucherMeta.soLuongDaSuDung = soLuongDaDung || 0;
