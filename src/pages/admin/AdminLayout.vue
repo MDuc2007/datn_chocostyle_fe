@@ -10,7 +10,6 @@
       </div>
 
       <nav class="menu">
-        <!-- ===== NHÓM CHÍNH ===== -->
         <div class="menu-group">
           <router-link to="/admin/dashboard" class="menu-item">
             <div class="invoice">
@@ -51,7 +50,6 @@
             </div>
           </router-link>
 
-          <!-- Quản lý sản phẩm -->
           <div
             class="menu-item has-children"
             :class="{ active: isProductOpen }"
@@ -98,7 +96,6 @@
           </div>
         </div>
 
-        <!-- ===== KHUYẾN MẠI ===== -->
         <div class="menu-group">
           <div
             class="menu-item has-children"
@@ -110,7 +107,7 @@
               style="width: 30px; height: 30px"
             />
             <div>
-              Quản lý giảm giá
+              Khuyến mại
               <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
             </div>
           </div>
@@ -125,7 +122,6 @@
           </div>
         </div>
 
-        <!-- ===== TÀI KHOẢN ===== -->
         <div class="menu-group">
           <div
             class="menu-item has-children"
@@ -152,14 +148,15 @@
           </div>
         </div>
         <div class="menu-group">
-          <div
-            class="menu-item has-children"
-            :class="{ active: isScheduleOpen }"
-            @click="toggleSchedule"
-          >
+          <div class="menu-item has-children" @click="toggleSchedule">
             <img
               src="/src/assets/icon/calendar.svg"
+              alt=""
               style="width: 30px; height: 30px"
+              onerror="
+                this.src =
+                  'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'
+              "
             />
             <div>
               Quản lý lịch làm việc
@@ -174,9 +171,6 @@
             <router-link to="/admin/schedule" class="submenu-item">
               Lịch làm việc
             </router-link>
-            <router-link to="/admin/giao-ca" class="submenu-item">
-              Giao ca
-            </router-link>
           </div>
         </div>
       </nav>
@@ -185,7 +179,12 @@
     <div class="main">
       <header class="topbar">
         <div class="top-icons">
+          <div class="user-welcome">
+            <span class="user-name-bold">{{ currentUserName }}</span>
+          </div>
+
           <img src="/src/assets/icon/notification.svg" class="icon" />
+          
           <div class="user-icon-wrapper" @click="toggleUserMenu">
             <img src="/src/assets/icon/user.svg" class="icon" />
             <transition name="fade">
@@ -208,25 +207,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { ref, onMounted } from "vue"; // Thêm onMounted
+import { useRouter } from "vue-router";
 
 const router = useRouter();
-const route = useRoute();
 
+// Các biến state cho menu
 const isDiscountOpen = ref(false);
 const isAccountOpen = ref(false);
 const isProductOpen = ref(false);
 const isUserMenuOpen = ref(false);
 const isScheduleOpen = ref(false);
+
+// Biến lưu tên người dùng
+const currentUserName = ref("Admin");
+
+// Hàm chạy khi load trang để lấy tên từ LocalStorage
+onMounted(() => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      const userData = JSON.parse(userStr);
+      // LƯU Ý: Bạn cần kiểm tra xem object 'user' trong localStorage có trường nào lưu tên.
+      // Ví dụ: tenNhanVien, hoTen, fullName, hoặc name.
+      // Ở đây mình ưu tiên lấy 'tenNhanVien', nếu không có thì lấy 'hoTen', mặc định là 'Admin'
+      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || "Admin";
+    } catch (e) {
+      console.error("Lỗi khi đọc dữ liệu user:", e);
+    }
+  }
+});
+
 const toggleSchedule = () => {
   isScheduleOpen.value = !isScheduleOpen.value;
 };
 
 const goToProduct = () => {
   isProductOpen.value = !isProductOpen.value;
-
-  // chuyển sang màn quản lý sản phẩm
   router.push("/admin/product");
 };
 
@@ -247,15 +264,8 @@ const viewProfile = () => {
 };
 
 const logout = () => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
   localStorage.removeItem("user");
-
-  if (user.role === "ROLE_ADMIN" || user.role === "ROLE_STAFF") {
-    router.replace("/admin/login");
-  } else {
-    router.replace("/login");
-  }
+  window.location.reload();
 };
 </script>
 
@@ -264,21 +274,11 @@ const logout = () => {
   display: flex;
   min-height: 100vh;
   background: #f6f6f6;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 /* ================= SIDEBAR ================= */
 .sidebar {
-  width: 270px;
   width: 270px;
   background: #fff;
   border-right: 1px solid #ddd;
@@ -293,12 +293,11 @@ const logout = () => {
 }
 
 .logo-wrapper {
-  padding-bottom: 5px;
+  padding: 20px;
   text-align: center;
 }
 
 .logo {
-  width: 200px;
   width: 200px;
 }
 
@@ -329,15 +328,6 @@ const logout = () => {
   background: linear-gradient(90deg, #c89b6d 0%, #6b3f23 100%);
   position: relative;
   color: #fff;
-}
-
-.menu-item:hover::after,
-.router-link-active::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 6px;
 }
 
 .menu-item:hover::after,
@@ -413,7 +403,6 @@ const logout = () => {
 /* ================= MAIN ================= */
 .main {
   margin-left: 270px;
-  margin-left: 270px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -424,7 +413,6 @@ const logout = () => {
 .topbar {
   position: fixed;
   top: 0;
-  left: 270px;
   left: 270px;
   right: 0;
   background: #fff;
@@ -439,11 +427,26 @@ const logout = () => {
   margin-left: auto;
   font-size: 20px;
   display: flex;
-  gap: 15px;
+  gap: 20px; /* Tăng gap để tên và icon không dính nhau */
+  align-items: center;
+}
+
+/* CSS CHO TÊN NGƯỜI DÙNG */
+.user-welcome {
+  font-size: 14px;
+  color: #555;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-name-bold {
+  font-weight: 700;
+  color: #63391f; /* Màu nâu chủ đạo */
 }
 
 .content {
-  margin-top: 65px;
   margin-top: 65px;
   padding: 20px;
   height: calc(100vh - 80px);
