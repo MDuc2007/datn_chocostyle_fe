@@ -20,13 +20,24 @@
 
       <template v-else>
         <section class="section" v-if="bestSellers.length > 0">
-          <h2 class="section-title styled-title">ÁO KHOÁC NHIỀU LƯỢT MUA NHẤT</h2>
+          <h2 class="section-title styled-title">
+            ÁO KHOÁC NHIỀU LƯỢT MUA NHẤT
+          </h2>
 
           <div class="best-seller-row">
             <button class="arrow left" @click="scrollLeft">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
-            
+
             <div class="best-seller-container" ref="bestSellerRef">
               <div
                 v-for="sp in bestSellers"
@@ -35,7 +46,11 @@
                 @click="goDetail(sp.id)"
               >
                 <div class="image-box">
-                  <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
+                  <img
+                    :src="sp.hinhAnh"
+                    :alt="sp.tenSp"
+                    @error="handleImageError"
+                  />
                   <span class="badge badge-hot">HOT</span>
                 </div>
 
@@ -46,15 +61,25 @@
                       {{ formatPrice(sp.giaMin) }}
                     </span>
                     <span v-else class="price-value">
-                      {{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}
+                      {{ formatPrice(sp.giaMin) }} ~
+                      {{ formatPrice(sp.giaMax) }}
                     </span>
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <button class="arrow right" @click="scrollRight">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         </section>
@@ -72,24 +97,43 @@
                   @click="goDetail(sp.id)"
                 >
                   <div class="image-box">
-                    <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
+                    <img
+                      :src="sp.hinhAnh"
+                      :alt="sp.tenSp"
+                      @error="handleImageError"
+                    />
                   </div>
 
                   <div class="product-info">
-                    <h3 class="product-name" :title="sp.tenSp">{{ sp.tenSp }}</h3>
+                    <h3 class="product-name" :title="sp.tenSp">
+                      {{ sp.tenSp }}
+                    </h3>
                     <p class="price">
                       <span v-if="sp.giaMin === sp.giaMax" class="price-value">
                         {{ formatPrice(sp.giaMin) }}
                       </span>
                       <span v-else class="price-value">
-                        {{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}
+                        {{ formatPrice(sp.giaMin) }} ~
+                        {{ formatPrice(sp.giaMax) }}
                       </span>
                     </p>
-                    
-                    <button class="btn-quick-add" @click.stop="quickAddToCart(sp)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
-                        <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+
+                    <button
+                      class="btn-quick-add"
+                      @click.stop="quickAddToCart(sp)"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="cart-icon"
+                      >
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path
+                          d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
+                        ></path>
                       </svg>
                       Thêm vào giỏ
                     </button>
@@ -104,7 +148,7 @@
               </button>
             </div>
           </div>
-          
+
           <div v-else class="empty-state">
             <div class="empty-icon">🧥</div>
             <p>Hiện chưa có sản phẩm nào được cập nhật.</p>
@@ -114,7 +158,20 @@
     </main>
 
     <Footer></Footer>
-    
+    <div class="chat-wrapper">
+      <button class="chat-toggle-btn" @click="toggleChat">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/134/134914.png"
+          alt="Chat Icon"
+        />
+        <span class="chat-badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
+      </button>
+
+      <div v-if="isChatOpen" class="chat-popup">
+        <Chat />
+      </div>
+    </div>
+
     <transition name="toast-slide">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <div class="toast-icon">
@@ -134,6 +191,15 @@ import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import Chat from "../../views/Chat.vue";
+
+const isChatOpen = ref(false);
+const unreadCount = ref(0); // Số tin nhắn chưa đọc (nếu muốn làm thêm)
+
+const toggleChat = () => {
+  isChatOpen.value = !isChatOpen.value;
+  if (isChatOpen.value) unreadCount.value = 0;
+};
 
 const router = useRouter();
 
@@ -182,7 +248,10 @@ const goDetail = (id) => {
 
 // Xử lý Thêm nhanh vào giỏ
 const quickAddToCart = (sp) => {
-  showToast("Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!", "warning");
+  showToast(
+    "Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!",
+    "warning",
+  );
   setTimeout(() => {
     goDetail(sp.id);
   }, 1000);
@@ -196,7 +265,7 @@ const formatPrice = (v) => {
 
 // Xử lý ảnh lỗi
 const handleImageError = (event) => {
-  event.target.src = "/src/assets/logo/no-image-placeholder.png"; 
+  event.target.src = "/src/assets/logo/no-image-placeholder.png";
 };
 
 // Nút Scroll Best Seller
@@ -221,13 +290,13 @@ const fetchData = async () => {
       axios.get("http://localhost:8080/api/san-pham/best-seller"),
       axios.get("http://localhost:8080/api/san-pham/home"),
     ]);
-    
+
     bestSellers.value = bs.data || [];
     products.value = all.data.content || all.data || [];
-    
   } catch (error) {
     console.error("Lỗi khi gọi API trang chủ:", error);
-    errorMsg.value = "Hệ thống đang bảo trì. Không thể tải danh sách sản phẩm lúc này.";
+    errorMsg.value =
+      "Hệ thống đang bảo trì. Không thể tải danh sách sản phẩm lúc này.";
   } finally {
     isLoading.value = false;
   }
@@ -257,7 +326,7 @@ onMounted(() => {
 /* ================= SECTION ================= */
 .section {
   padding: 60px 4%;
-  max-width: 1400px; 
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
@@ -273,7 +342,7 @@ onMounted(() => {
   text-align: center;
   padding-bottom: 10px;
   margin-bottom: 40px;
-  width: fit-content; 
+  width: fit-content;
   margin-left: auto;
   margin-right: auto;
 }
@@ -291,12 +360,14 @@ onMounted(() => {
   gap: 25px;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding: 15px 5px 25px 5px; 
+  padding: 15px 5px 25px 5px;
   flex-grow: 1;
   -ms-overflow-style: none;
-  scrollbar-width: none; 
+  scrollbar-width: none;
 }
-.best-seller-container::-webkit-scrollbar { display: none; }
+.best-seller-container::-webkit-scrollbar {
+  display: none;
+}
 
 /* Arrow Slider */
 .arrow {
@@ -311,10 +382,13 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   color: #555;
 }
-.arrow svg { width: 24px; height: 24px; }
+.arrow svg {
+  width: 24px;
+  height: 24px;
+}
 .arrow:hover {
   background: #6b3f1e;
   border-color: #6b3f1e;
@@ -335,7 +409,10 @@ onMounted(() => {
   z-index: 2;
   letter-spacing: 1px;
 }
-.badge-hot { background-color: #ef4444; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3); }
+.badge-hot {
+  background-color: #ef4444;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
 
 /* ================= PRODUCT GRID ================= */
 .product-grid {
@@ -352,7 +429,7 @@ onMounted(() => {
   background: #fff;
   cursor: pointer;
   transition: all 0.3s ease;
-  flex-shrink: 0; 
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -361,7 +438,7 @@ onMounted(() => {
 
 .product-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(107, 63, 30, 0.15); 
+  box-shadow: 0 12px 24px rgba(107, 63, 30, 0.15);
   border-color: #6b3f1e;
 }
 
@@ -380,11 +457,13 @@ onMounted(() => {
 .image-box img {
   width: 100%;
   height: 100%;
-  object-fit: contain; 
+  object-fit: contain;
   transition: transform 0.5s ease;
 }
 
-.product-card:hover .image-box img { transform: scale(1.05); }
+.product-card:hover .image-box img {
+  transform: scale(1.05);
+}
 
 /* Thông tin sản phẩm */
 .product-info {
@@ -407,14 +486,16 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
-  height: 42px; 
+  height: 42px;
   transition: color 0.2s;
 }
-.product-card:hover .product-name { color: #6b3f1e; }
+.product-card:hover .product-name {
+  color: #6b3f1e;
+}
 
 .price {
   font-weight: 700;
-  color: #d32f2f; 
+  color: #d32f2f;
   font-size: 16px;
   margin-bottom: 5px;
 }
@@ -438,7 +519,10 @@ onMounted(() => {
   gap: 8px;
   margin-top: 10px;
 }
-.cart-icon { width: 16px; height: 16px; }
+.cart-icon {
+  width: 16px;
+  height: 16px;
+}
 .product-card:hover .btn-quick-add {
   opacity: 1;
   transform: translateY(0);
@@ -449,8 +533,15 @@ onMounted(() => {
 }
 
 /* Animation list */
-.list-enter-active, .list-leave-active { transition: all 0.5s ease; }
-.list-enter-from, .list-leave-to { opacity: 0; transform: translateY(30px); }
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
 
 /* ================= NÚT XEM THÊM ================= */
 .load-more-container {
@@ -476,7 +567,9 @@ onMounted(() => {
 }
 
 /* ================= STATES ================= */
-.loading-state, .error-state, .empty-state {
+.loading-state,
+.error-state,
+.empty-state {
   text-align: center;
   padding: 80px 0;
   color: #666;
@@ -491,7 +584,12 @@ onMounted(() => {
   animation: spin 1s linear infinite;
   margin: 0 auto 15px;
 }
-.error-icon, .empty-icon { font-size: 48px; margin-bottom: 15px; opacity: 0.5; }
+.error-icon,
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
 .btn-retry {
   margin-top: 15px;
   padding: 10px 24px;
@@ -502,7 +600,14 @@ onMounted(() => {
   cursor: pointer;
   font-weight: bold;
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 /* ================= TOAST CSS ================= */
 .toast-notification {
@@ -515,12 +620,16 @@ onMounted(() => {
   border-radius: 8px;
   display: flex;
   align-items: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  background: #fff; 
-  border-left: 6px solid #22C55E;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-left: 6px solid #22c55e;
 }
-.toast-notification.error { border-left-color: #ef4444; }
-.toast-notification.warning { border-left-color: #f59e0b; }
+.toast-notification.error {
+  border-left-color: #ef4444;
+}
+.toast-notification.warning {
+  border-left-color: #f59e0b;
+}
 .toast-icon {
   width: 24px;
   height: 24px;
@@ -532,26 +641,117 @@ onMounted(() => {
   font-weight: bold;
   font-size: 12px;
 }
-.success .toast-icon { background: #22C55E; }
-.error .toast-icon { background: #ef4444; }
-.warning .toast-icon { background: #f59e0b; }
-.toast-content { margin-left: 12px; font-weight: 500; color: #333; font-size: 15px;}
-.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
-
+.success .toast-icon {
+  background: #22c55e;
+}
+.error .toast-icon {
+  background: #ef4444;
+}
+.warning .toast-icon {
+  background: #f59e0b;
+}
+.toast-content {
+  margin-left: 12px;
+  font-weight: 500;
+  color: #333;
+  font-size: 15px;
+}
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {
-  .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 @media (max-width: 768px) {
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
-  .product-card { width: 100%; max-width: 300px; margin: 0 auto; }
-  .image-box { height: 250px; }
-  .banner img { height: 320px; }
-  .best-seller-container { padding-bottom: 10px; }
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .product-card {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  .image-box {
+    height: 250px;
+  }
+  .banner img {
+    height: 320px;
+  }
+  .best-seller-container {
+    padding-bottom: 10px;
+  }
 }
 @media (max-width: 480px) {
-  .product-grid { grid-template-columns: repeat(1, 1fr); justify-items: center; }
+  .product-grid {
+    grid-template-columns: repeat(1, 1fr);
+    justify-items: center;
+  }
+}
+/* ================= CHAT ICON & POPUP ================= */
+.chat-wrapper {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
+}
+
+.chat-toggle-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #6b3f1e; /* Màu nâu ChocoStyle */
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.chat-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.chat-toggle-btn img {
+  width: 30px;
+  height: 30px;
+  filter: invert(1); /* Chuyển icon sang màu trắng cho nổi bật */
+}
+
+.chat-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 2px solid white;
+}
+
+.chat-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 350px;
+  height: 500px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>
