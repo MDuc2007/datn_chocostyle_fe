@@ -22,16 +22,16 @@
         <div class="stepper-wrapper">
           <div
             class="stepper-item"
-            v-for="(step, index) in fixedSteps"
+            v-for="(step, index) in computedSteps"
             :key="index"
             :class="{
               active: isStepActive(step.status),
               cancelled:
-                invoice.trangThai === 5 && index === fixedSteps.length - 1,
+                invoice.trangThai === 5 && index === computedSteps.length - 1,
             }"
           >
             <div class="step-icon-circle">
-              <span>{{ step.icon }}</span>
+              <img :src="step.icon" class="step-icon-img" />
             </div>
             <div class="step-bar"></div>
             <div class="step-content">
@@ -78,10 +78,22 @@
               class="btn-orange"
               @click="handlePrint"
             >
-              <i class="icon-print">🖨️</i> In hóa đơn
+              <i class="icon-print"
+                ><img
+                  src="/src/assets/icon/print-svgrepo-com.svg"
+                  style="width: 24px; height: 24px"
+                  alt=""
+              /></i>
+              In hóa đơn
             </button>
             <button class="btn-orange" @click="openHistoryModal">
-              <i class="icon-history">📜</i> Lịch sử hóa đơn
+              <i class="icon-history"
+                ><img
+                  src="/src/assets/icon/file-clock-svgrepo-com.svg"
+                  style="width: 24px; height: 24px"
+                  alt=""
+              /></i>
+              Lịch sử hóa đơn
             </button>
           </div>
         </div>
@@ -90,7 +102,7 @@
       <div class="dashboard-stats-grid no-print">
         <div class="stat-card">
           <div class="stat-icon" :class="getStatusIconClass(invoice.trangThai)">
-            <span>{{ getStatusIconChar(invoice.trangThai) }}</span>
+            <img :src="getStatusIcon(invoice.trangThai)" alt="status icon" />
           </div>
           <div class="stat-info">
             <div class="stat-label">Trạng thái hiện tại</div>
@@ -102,7 +114,12 @@
 
         <div class="stat-card">
           <div class="stat-icon icon-green">
-            <span>💵</span>
+            <span
+              ><img
+                src="/src/assets/icon/money-dollar-svgrepo-com.svg"
+                style="width: 24px; height: 24px"
+                alt=""
+            /></span>
           </div>
           <div class="stat-info">
             <div class="stat-label">Tổng tiền</div>
@@ -114,7 +131,12 @@
 
         <div class="stat-card">
           <div class="stat-icon icon-purple">
-            <span>📦</span>
+            <span
+              ><img
+                src="/src/assets/icon/shipping-box-svgrepo-com.svg"
+                style="width: 24px; height: 24px"
+                alt=""
+            /></span>
           </div>
           <div class="stat-info">
             <div class="stat-label">Số lượng sản phẩm</div>
@@ -126,7 +148,13 @@
       <div class="dashboard-info-grid no-print">
         <div class="detail-card">
           <div class="card-header-clean">
-            <div class="header-icon">👤</div>
+            <div class="header-icon">
+              <img
+                src="/src/assets/icon/user.svg"
+                style="width: 24px; height: 24px"
+                alt=""
+              />
+            </div>
             <h3>Thông tin khách hàng</h3>
           </div>
           <div class="card-body-clean">
@@ -147,7 +175,13 @@
 
         <div class="detail-card">
           <div class="card-header-clean">
-            <div class="header-icon">🧾</div>
+            <div class="header-icon">
+              <img
+                src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
+                style="width: 24px; height: 24px"
+                alt=""
+              />
+            </div>
             <h3>Tóm tắt đơn hàng</h3>
           </div>
           <div class="card-body-clean summary-body">
@@ -176,7 +210,13 @@
 
         <div class="detail-card">
           <div class="card-header-clean">
-            <div class="header-icon">💳</div>
+            <div class="header-icon">
+              <img
+                src="/src/assets/icon/credit-card-svgrepo-com.svg"
+                style="width: 24px; height: 24px"
+                alt=""
+              />
+            </div>
             <h3>Thông tin thanh toán</h3>
           </div>
           <div class="card-body-clean">
@@ -277,7 +317,14 @@
       </div>
 
       <div class="card product-card no-print">
-        <h3 class="card-title">🛒 Danh sách sản phẩm</h3>
+        <h3 class="card-title">
+          <img
+            src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
+            style="width: 24px; height: 24px"
+            alt=""
+          />
+          Danh sách sản phẩm
+        </h3>
         <div class="table-responsive">
           <table class="modern-table text-center-table">
             <thead>
@@ -454,6 +501,8 @@ import { ref, onMounted, computed, reactive } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import InvoicePrintTemplate from "./InvoicePrintTemplate.vue";
+import checkIcon from "../../../assets/icon/check.svg";
+import cancelIcon from "../../../assets/icon/cancel-svgrepo-com.svg";
 
 // --- INTERFACES ---
 interface InvoiceProduct {
@@ -488,7 +537,7 @@ interface InvoiceDetail {
   diaChi: string;
   tenNhanVien: string;
   trangThai: number;
-  loaiDon: number;
+  loaiDon: number; // 0: Online, 1: Tại quầy
   ngayTao: string;
   ghiChu: string;
   tongTienHang: number;
@@ -503,14 +552,45 @@ interface InvoiceDetail {
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
-// --- TIMELINE STEPS ---
-const fixedSteps = [
-  { status: 0, label: "Chờ xác nhận", icon: "📝" },
-  { status: 1, label: "Đã xác nhận", icon: "✅" },
-  { status: 2, label: "Chờ vận chuyển", icon: "📦" },
-  { status: 3, label: "Đang vận chuyển", icon: "🚚" },
-  { status: 4, label: "Hoàn thành", icon: "🎉" },
-];
+// ===============================================
+// [MỚI] Timeline linh hoạt (Tại quầy chỉ còn Chờ xác nhận và Hoàn thành)
+// ===============================================
+const computedSteps = computed(() => {
+  const baseSteps = [
+    {
+      status: 0,
+      label: "Chờ xác nhận",
+      icon: "/src/assets/icon/contract-pending-line-svgrepo-com.svg",
+    },
+    {
+      status: 1,
+      label: "Đã xác nhận",
+      icon: "/src/assets/icon/check-svgrepo-com.svg",
+    },
+    {
+      status: 2,
+      label: "Chờ vận chuyển",
+      icon: "/src/assets/icon/shipping-box-svgrepo-com.svg",
+    },
+    {
+      status: 3,
+      label: "Đang vận chuyển",
+      icon: "/src/assets/icon/shipping-truck-svgrepo-com.svg",
+    },
+    {
+      status: 4,
+      label: "Hoàn thành",
+      icon: "/src/assets/icon/party-horn-svgrepo-com.svg",
+    },
+  ];
+
+  // Nếu là đơn Tại Quầy (loaiDon === 1), chỉ giữ lại trạng thái 0 và 4
+  if (invoice.value?.loaiDon === 1) {
+    return baseSteps.filter((s) => s.status === 0 || s.status === 4);
+  }
+
+  return baseSteps;
+});
 
 const modal = reactive({
   show: false,
@@ -533,16 +613,15 @@ const totalProductQuantity = computed(() => {
   return invoice.value.sanPhamList.reduce((sum, item) => sum + item.soLuong, 0);
 });
 
-// [LOGIC MỚI] Tính tổng tiền ĐÃ TỪNG THU (Chưa trừ hoàn tiền)
+// Tính tổng tiền ĐÃ TỪNG THU (Chưa trừ hoàn tiền)
 const tongTienDaThu = computed(() => {
   if (!invoice.value?.thanhToanList) return 0;
   return invoice.value.thanhToanList
-    .filter((item) => item.loaiGiaoDich !== 2) // Chỉ cộng các giao dịch thanh toán
+    .filter((item) => item.loaiGiaoDich !== 2)
     .reduce((sum, item) => sum + item.soTien, 0);
 });
 
 // Tính tổng tiền ĐÃ THANH TOÁN THỰC TẾ (Thu - Hoàn)
-// Biến này dùng để biết Shop đang giữ bao nhiêu tiền của khách
 const daThanhToan = computed(() => {
   if (!invoice.value?.thanhToanList) return 0;
   return invoice.value.thanhToanList.reduce((sum, item) => {
@@ -550,7 +629,7 @@ const daThanhToan = computed(() => {
   }, 0);
 });
 
-// Kiểm tra xem đơn đã thanh toán đủ chưa (đối với đơn thường)
+// Kiểm tra xem đơn đã thanh toán đủ chưa
 const isPaid = computed(() => {
   if (!invoice.value) return false;
   return daThanhToan.value >= invoice.value.tongThanhToan;
@@ -558,49 +637,41 @@ const isPaid = computed(() => {
 
 // --- HELPER FUNCTIONS ---
 
-// [LOGIC MỚI] Hiển thị Badge Text trạng thái thanh toán
 const getPaymentStatusLabel = () => {
   if (!invoice.value) return "";
 
-  // Nếu đơn hàng ĐÃ HỦY
   if (invoice.value.trangThai === 5) {
-    // Nếu tiền shop đang giữ = 0 NHƯNG khách đã từng đóng tiền > 0
-    // => Nghĩa là ĐÃ HOÀN TIỀN
     if (daThanhToan.value === 0 && tongTienDaThu.value > 0) {
       return "Đã hoàn tiền";
     }
-    // Nếu tiền shop đang giữ > 0 => Chưa hoàn tiền
     if (daThanhToan.value > 0) {
       return "Chờ hoàn tiền";
     }
-    // Chưa từng đóng tiền
     return "Hủy bỏ";
   }
 
-  // Các trạng thái đơn hàng khác
   return isPaid.value ? "Đã thanh toán" : "Chưa thanh toán";
 };
 
-// [LOGIC MỚI] Hiển thị Badge Color
 const getPaymentBadgeClass = () => {
   if (!invoice.value) return "";
 
   if (invoice.value.trangThai === 5) {
     if (daThanhToan.value === 0 && tongTienDaThu.value > 0) {
-      return "badge-refunded"; // Màu tím
+      return "badge-refunded";
     }
     if (daThanhToan.value > 0) {
-      return "badge-warning"; // Màu vàng
+      return "badge-warning";
     }
-    return "badge-cancelled"; // Màu xám
+    return "badge-cancelled";
   }
 
   return isPaid.value ? "badge-paid" : "badge-unpaid";
 };
 
-const getStatusIconChar = (status: number) => {
-  if (status === 5) return "✕";
-  return "✓";
+const getStatusIcon = (status: number) => {
+  if (status === 5) return cancelIcon;
+  return checkIcon;
 };
 const getStatusIconClass = (status: number) => {
   if (status === 5) return "icon-red";
@@ -608,20 +679,29 @@ const getStatusIconClass = (status: number) => {
   return "icon-blue";
 };
 
+// ===============================================
+// [MỚI] Tên nút Action theo loại đơn
+// ===============================================
 const getNextActionName = (currentStatus: number) => {
-  switch (currentStatus) {
-    case 0:
-      return "Xác nhận đơn hàng";
-    case 1:
-      return "Chuyển vận chuyển";
-    case 2:
-      return "Xác nhận đang giao";
-    case 3:
-      return "Xác nhận hoàn thành";
-    default:
-      return "Cập nhật trạng thái";
+  if (invoice.value?.loaiDon === 1) {
+    // Logic nút bấm cho Đơn Tại Quầy (Nhảy thẳng từ 0 lên 4)
+    if (currentStatus === 0) return "Xác nhận hoàn thành";
+  } else {
+    // Logic nút bấm cho Đơn Online
+    switch (currentStatus) {
+      case 0:
+        return "Xác nhận đơn hàng";
+      case 1:
+        return "Chuyển vận chuyển";
+      case 2:
+        return "Xác nhận đang giao";
+      case 3:
+        return "Xác nhận hoàn thành";
+    }
   }
+  return "Cập nhật trạng thái";
 };
+
 const getStatusName = (status: number) => {
   const map: Record<number, string> = {
     0: "Chờ xác nhận",
@@ -671,7 +751,6 @@ const getPaymentMethodName = () => {
   return invoice.value?.loaiDon === 1 ? "Tiền mặt" : "Thanh toán khi nhận hàng";
 };
 
-// [NEW HELPER FUNCTIONS FOR MODAL]
 const getModalTypeClass = (type: string) => {
   if (type === "cancel" || type === "refund") return "icon-danger";
   if (type === "prev") return "icon-warning";
@@ -696,18 +775,36 @@ const fetchDetail = async () => {
   }
 };
 
+// ===============================================
+// [MỚI] Logic xác định status nhảy cóc cho đơn Tại quầy
+// ===============================================
 const confirmAction = (actionType: "next" | "prev" | "cancel") => {
   if (!invoice.value) return;
   modal.type = actionType;
   modal.note = "";
   modal.show = true;
+
   if (actionType === "cancel") {
     modal.title = "Xác nhận hủy đơn hàng";
     modal.message = "Bạn có chắc chắn muốn hủy đơn hàng này không?";
     modal.targetStatus = 5;
   } else {
-    const step = actionType === "next" ? 1 : -1;
-    const nextStatus = invoice.value.trangThai + step;
+    // Chỉ lấy các trạng thái được phép dựa vào loại đơn (1: Tại quầy, khác: Online)
+    const validStatuses =
+      invoice.value.loaiDon === 1 ? [0, 4] : [0, 1, 2, 3, 4];
+    const currentIndex = validStatuses.indexOf(invoice.value.trangThai);
+
+    let nextStatus = invoice.value.trangThai;
+
+    // Tiến lên
+    if (actionType === "next" && currentIndex < validStatuses.length - 1) {
+      nextStatus = validStatuses[currentIndex + 1];
+    }
+    // Lùi lại
+    else if (actionType === "prev" && currentIndex > 0) {
+      nextStatus = validStatuses[currentIndex - 1];
+    }
+
     modal.targetStatus = nextStatus;
     const actionText = actionType === "next" ? "Chuyển sang" : "Quay lại";
     modal.title = `Xác nhận ${actionText.toLowerCase()} trạng thái`;
@@ -768,7 +865,8 @@ const executeUpdate = async (status: number, note: string) => {
     );
     showToast("Cập nhật thành công!");
     await fetchDetail();
-    if (status === 1) {
+    if (status === 1 || status === 4) {
+      // Có thể in ngay khi hoàn thành tại quầy
       setTimeout(() => {
         handlePrint();
       }, 500);
@@ -896,6 +994,10 @@ onMounted(() => {
   font-size: 20px;
   margin-right: 16px;
   flex-shrink: 0;
+}
+.stat-icon img {
+  width: 24px;
+  height: 24px;
 }
 .icon-blue {
   background: #e0f2fe;
@@ -1132,7 +1234,7 @@ onMounted(() => {
   gap: 15px;
 }
 .btn-orange {
-  background-color: #f57224;
+  background: linear-gradient(90deg, #c79a63, #8b5e34);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -1143,10 +1245,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 4px rgba(245, 114, 36, 0.2);
-}
-.btn-orange:hover {
-  background-color: #d65b13;
 }
 
 /* RED OUTLINE BUTTON FOR REFUND */
@@ -1169,8 +1267,8 @@ onMounted(() => {
 
 .btn-outline-orange {
   background-color: white;
-  color: #f57224;
-  border: 1px solid #f57224;
+  color: #63391f;
+  border: 1px solid #63391f;
   padding: 10px 20px;
   border-radius: 6px;
   font-weight: 600;
@@ -1208,7 +1306,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  min-width: 800px;
+  min-width: 600px;
 }
 .stepper-item {
   position: relative;
@@ -1232,6 +1330,11 @@ onMounted(() => {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   margin-bottom: -20px;
 }
+.step-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
 .step-bar {
   width: 100%;
   height: 36px;
@@ -1254,20 +1357,22 @@ onMounted(() => {
   color: #adb5bd;
   margin-top: 2px;
 }
+
+/* Nền trắng, viền gradient, chữ màu nâu cam */
 .stepper-item.active .step-icon-circle {
-  background-color: #0d6efd;
-  color: #fff;
-  border-color: #fff;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, #c79a63, #8b5e34) border-box;
+  border: 3px solid transparent;
+  color: #c79a63;
 }
 .stepper-item.active .step-bar {
-  background-color: #0d6efd;
+  background: linear-gradient(90deg, #c79a63, #8b5e34);
 }
 .stepper-item.active .step-label {
-  color: #0d6efd;
   font-weight: 700;
 }
 .stepper-item.active .step-time {
-  color: #0d6efd;
 }
 .stepper-item:first-child .step-bar {
   clip-path: polygon(0% 0%, 95% 0%, 100% 50%, 95% 100%, 0% 100%);
@@ -1276,7 +1381,7 @@ onMounted(() => {
   clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 5% 50%);
 }
 .stepper-item:last-child.active .step-bar {
-  background-color: #0d6efd;
+  background: linear-gradient(90deg, #c79a63, #8b5e34);
 }
 
 /* Payment Table */
@@ -1728,7 +1833,7 @@ onMounted(() => {
 }
 /* ================= NEW HISTORY MODAL STYLES ================= */
 .modal-large {
-  max-width: 850px; /* Mở rộng form cho bảng hiển thị đẹp hơn */
+  max-width: 850px;
   padding: 24px;
 }
 
@@ -1767,10 +1872,9 @@ onMounted(() => {
   max-height: 55vh;
   overflow-y: auto;
   margin-bottom: 20px;
-  padding-right: 8px; /* Tránh text chạm vào thanh cuộn */
+  padding-right: 8px;
 }
 
-/* Custom Thanh cuộn (Scrollbar) cho đẹp */
 .modal-body-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -1793,7 +1897,6 @@ onMounted(() => {
   padding-top: 16px;
 }
 
-/* Ép bảng căn trái thay vì căn giữa như mặc định */
 .text-left-table th,
 .text-left-table td {
   text-align: left !important;
@@ -1812,7 +1915,6 @@ onMounted(() => {
   padding-bottom: 20px !important;
 }
 
-/* Badge Trạng thái hiện đại */
 .badge-status-modern {
   background: #f8fafc;
   color: #475569;
@@ -1824,7 +1926,6 @@ onMounted(() => {
   display: inline-block;
 }
 
-/* Badge Tên người dùng */
 .user-badge {
   display: inline-flex;
   align-items: center;

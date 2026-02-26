@@ -13,9 +13,9 @@
       <div class="slider-container">
         <button class="nav-btn prev">‹</button>
         <div class="image-grid">
-          <div class="img-wrapper"><img src="" alt="Vest 1" /></div>
-          <div class="img-wrapper"><img src="" alt="Vest 2" /></div>
-          <div class="img-wrapper"><img src="" alt="Vest 3" /></div>
+          <div class="img-wrapper"><img src="#" alt="" /></div>
+          <div class="img-wrapper"><img src="" alt="" /></div>
+          <div class="img-wrapper"><img src="" alt="" /></div>
         </div>
         <button class="nav-btn next">›</button>
       </div>
@@ -102,17 +102,30 @@ const headers = {
 };
 
 onMounted(async () => {
+  const idNv = localStorage.getItem("idNv");
+  if (!idNv) return; // Tránh lỗi gọi API với null
+
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`,
-      { headers }
-    );
-
-    ca.value = res.data;
-    showModal.value = true;
-
+    const res = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
+    
+    // Do Backend trả về 200 OK. Nên ta check xem res.data có tồn tại không.
+    if (res.data && res.data.caLamViec) {
+       // CÓ CA BÌNH THƯỜNG
+       ca.value = res.data;
+       showModal.value = true;
+       window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
+    } else {
+       // HTTP 200 NHƯNG KHÔNG CÓ DATA => KHÔNG CÓ CA
+       ca.value = null;
+       showModal.value = true;
+       window.dispatchEvent(new CustomEvent('set-view-only', { detail: true })); // Phím Layout khóa màn!
+    }
   } catch (err) {
-    console.log("Không tìm thấy ca làm việc hoặc có lỗi:", err);
+    // Nếu API sập hẳn
+    console.log("Lỗi check ca:", err);
+    ca.value = null;
+    showModal.value = true;
+    window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
   }
 });
 </script>

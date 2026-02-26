@@ -14,17 +14,26 @@
           :class="{ active: index === activeOrderIndex }"
           @click="activeOrderIndex = index"
         >
-          <span>Đơn {{ index + 1 }}</span>
+          <span>
+            Đơn {{ index + 1 }}
+            <span class="order-code">- {{ o.maHoaDon }}</span>
+          </span>
           <span class="tab-close" @click.stop="removeOrder(index)">✕</span>
         </div>
       </div>
 
-      <div v-if="currentOrder" class="main-layout">
+      <div
+        v-if="currentOrder"
+        class="main-layout"
+        :class="{ 'full-product': !currentOrder.cart.length }"
+      >
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
             <div class="actions">
-              <button class="btn-outline">🔍 Quét QR</button>
+              <button class="btn-outline" @click="openQrScanner">
+                Quét QR
+              </button>
               <button class="btn-primary" @click="openProductPopup">
                 + Chọn sản phẩm
               </button>
@@ -82,7 +91,7 @@
                   −
                 </button>
                 <input type="text" readonly :value="item.quantity" />
-                <button @click="item.quantity++">+</button>
+                <button @click="increaseQty(item)">+</button>
               </div>
 
               <div class="total text-right">
@@ -102,13 +111,27 @@
           </div>
         </div>
 
-        <div class="right-panel">
+        <div v-if="currentOrder.cart.length" class="right-panel">
           <div class="info-box">
-            <div class="section-header">
-              <span class="section-title">THÔNG TIN KHÁCH HÀNG</span>
-              <button class="btn-outline" @click="openCustomerPopup">
-                🔍 Tìm khách
-              </button>
+            <div class="section-header column">
+              <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
+
+              <div
+                class="customer-actions-row"
+                :class="{ 'single-btn': !currentOrder.customer.id }"
+              >
+                <button class="btn-outline" @click="openCustomerPopup">
+                  Chọn khách hàng
+                </button>
+
+                <button
+                  v-if="currentOrder.customer.id"
+                  class="btn-outline"
+                  @click="resetToGuest"
+                >
+                  Khách lẻ
+                </button>
+              </div>
             </div>
 
             <div class="customer-form">
@@ -233,9 +256,26 @@
                 placeholder="Mã giảm giá..."
               />
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
+              <div v-if="bestVoucherSuggestion" class="voucher-suggestion">
+                Voucher tốt nhất:
+                <strong>{{ bestVoucherSuggestion.maPgg }}</strong>
+                - Giảm
+                <span class="text-red">
+                  {{ formatPrice(bestVoucherSuggestion.discountValue) }}
+                </span>
+              </div>
             </div>
-            <div v-if="voucherSuccess" class="voucher-success">
-              {{ voucherSuccess }}
+            <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
+              <span v-if="voucherMode === 'AUTO'">
+                Áp dụng phiếu giảm giá thành công
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
+              <span v-else>
+                Đã áp dụng phiếu giảm giá
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
             </div>
             <div v-if="voucherError" class="voucher-errors">
               {{ voucherError }}
@@ -360,7 +400,7 @@
             <div class="filter-row">
               <input
                 v-model="searchText"
-                placeholder="🔍 Tìm mã, tên sản phẩm..."
+                placeholder=" Tìm mã, tên sản phẩm..."
               />
               <select v-model="filterColor">
                 <option value="">Tất cả màu</option>
@@ -524,27 +564,37 @@
     <Teleport to="body">
       <InvoicePrintTemplate v-if="invoiceToPrint" :invoice="invoiceToPrint" />
     </Teleport>
+    <div class="modal-overlay" v-if="showQrPopup">
+      <div class="modal small">
+        <div class="modal-header">
+          <h4>QUÉT MÃ QR SẢN PHẨM</h4>
+          <button class="btn-close" @click="closeQrScanner">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="qr-reader" style="width: 100%"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-// Thêm nextTick vào phần import
 import { ref, computed, watch, onMounted, watchEffect, nextTick } from "vue";
 import axios from "axios";
-
-// Import component in hóa đơn
 import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
+import { Html5Qrcode } from "html5-qrcode";
 
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
-const MAX_ORDER = 5;
+const MAX_ORDER = 10;
 
-// Biến lưu trữ dữ liệu in
 const invoiceToPrint = ref(null);
 
 const customers = ref([]);
+const showQrPopup = ref(false);
+let qrScanner = null;
 
 const fetchCustomers = async () => {
   const res = await axios.get("http://localhost:8080/api/khach-hang");
@@ -560,32 +610,29 @@ const products = ref([]);
 const promotions = ref([]);
 
 const fetchProducts = async () => {
-  const res = await axios.get("http://localhost:8080/api/pos/san-pham");
+  try {
+    const res = await axios.get(
+      "http://localhost:8080/api/chi-tiet-san-pham?page=0&size=1000",
+    );
 
-  const discountMap = {};
-  promotions.value.forEach((pr) => {
-    pr.chiTietSanPhamIds.forEach((id) => {
-      discountMap[id] = Math.max(discountMap[id] || 0, pr.giaTriGiam);
-    });
-  });
+    const rawData = res.data?.content || [];
 
-  products.value = res.data.map((p) => {
-    const percent = discountMap[p.id] || 0;
-    const oldPrice = p.giaBan;
-    const newPrice = (oldPrice * (100 - percent)) / 100;
-    return {
+    products.value = rawData.map((p) => ({
       id: p.id,
-      code: p.maSp,
-      name: p.tenSp,
-      image: p.hinhAnh,
+      code: `${p.maSanPham}-${p.maChiTietSanPham}`,
+      maCtsp: p.maChiTietSanPham,
+      name: p.tenSanPham,
+      image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
       stock: p.soLuongTon,
-      color: p.mauSac,
-      size: p.kichCo,
-      oldPrice,
-      price: newPrice,
-      discountPercent: percent,
-    };
-  });
+      color: p.tenMauSac,
+      size: p.tenKichCo,
+      oldPrice: p.giaBan,
+      price: p.giaBan,
+    }));
+  } catch (err) {
+    console.error("Lỗi fetchProducts:", err);
+    products.value = [];
+  }
 };
 
 const openProductPopup = async () => {
@@ -598,29 +645,52 @@ const currentOrder = computed(
   () => orders.value[activeOrderIndex.value] || null,
 );
 
-const decreaseQty = (item) => {
+const decreaseQty = async (item) => {
   if (item.quantity > 1) {
-    item.quantity--;
+    try {
+      await axios.put(
+        "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+        null,
+        {
+          params: {
+            idSpct: item.id,
+            soLuongThayDoi: 1,
+          },
+        },
+      );
+
+      item.quantity--;
+    } catch (err) {
+      showToast("Lỗi cập nhật tồn kho", "error");
+    }
   }
 };
 
-const addToCart = (product) => {
+const addToCart = async (product) => {
   const cart = currentOrder.value.cart;
   const exist = cart.find((i) => i.id === product.id);
 
-  if (exist) {
-    if (exist.quantity + 1 > product.stock) {
-      showToast("Số lượng vượt quá tồn kho", "error");
-      return;
+  try {
+    await axios.put(
+      "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+      null,
+      {
+        params: {
+          idSpct: product.id,
+          soLuongThayDoi: -1,
+        },
+      },
+    );
+
+    if (exist) {
+      exist.quantity++;
+    } else {
+      cart.push({ ...product, quantity: 1 });
     }
-    exist.quantity++;
-  } else {
-    if (product.stock <= 0) {
-      showToast("Sản phẩm đã hết hàng", "error");
-      return;
-    }
-    cart.push({ ...product, quantity: 1 });
+  } catch (err) {
+    showToast(err.response?.data || "Không đủ tồn kho", "error");
   }
+
   showProductPopup.value = false;
 };
 
@@ -755,17 +825,27 @@ const confirmSubmitOrder = () => {
   openPaymentPopup();
 };
 
-watch(
-  () => currentOrder.value?.voucherCode,
-  () => {
-    voucherError.value = "";
-    voucherSuccess.value = "";
-  },
-);
+const removeItem = async (index) => {
+  const item = currentOrder.value.cart[index];
 
-const removeItem = (index) => {
-  currentOrder.value.cart.splice(index, 1);
+  try {
+    await axios.put(
+      "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+      null,
+      {
+        params: {
+          idSpct: item.id,
+          soLuongThayDoi: item.quantity,
+        },
+      },
+    );
+
+    currentOrder.value.cart.splice(index, 1);
+  } catch (err) {
+    showToast("Không thể xóa sản phẩm", "error");
+  }
 };
+
 const fetchPromotions = async () => {
   const res = await axios.get("http://localhost:8080/api/promotions");
   promotions.value = res.data.filter((p) => p.trangThai === 1);
@@ -844,6 +924,31 @@ const selectCustomer = async (c) => {
   showCustomerPopup.value = false;
 };
 
+const resetToGuest = async () => {
+  if (!currentOrder.value) return;
+
+  currentOrder.value.customer = {
+    id: null,
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    ward: "",
+    district: "",
+    province: "",
+  };
+
+  currentOrder.value.appliedVoucher = null;
+  currentOrder.value.voucherCode = "";
+  currentOrder.value.shippingFee = 0;
+
+  voucherMode.value = "AUTO";
+
+  await fetchVouchers();
+
+  showToast("Đã chuyển về khách lẻ");
+};
+
 const showPaymentPopup = ref(false);
 const paymentMethod = ref("CASH");
 const cashInput = ref(0);
@@ -854,6 +959,7 @@ const openPaymentPopup = () => {
   showPaymentPopup.value = true;
 };
 
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
@@ -876,6 +982,64 @@ const confirmPayment = async () => {
       await submitOrder();
     },
   );
+};
+
+const openQrScanner = async () => {
+  showQrPopup.value = true;
+
+  await nextTick();
+
+  qrScanner = new Html5Qrcode("qr-reader");
+
+  await qrScanner.start(
+    { facingMode: "environment" },
+    {
+      fps: 25,
+      qrbox: { width: 300, height: 300 },
+      aspectRatio: 1.777,
+      disableFlip: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
+    },
+    async (decodedText) => {
+      await handleQrResult(decodedText);
+
+      await qrScanner.stop();
+      await qrScanner.clear();
+      showQrPopup.value = false;
+    },
+    () => {},
+  );
+};
+
+const closeQrScanner = async () => {
+  if (qrScanner) {
+    await qrScanner.stop();
+    await qrScanner.clear();
+  }
+  showQrPopup.value = false;
+};
+const handleQrResult = async (decodedText) => {
+  let productCode = decodedText.trim();
+
+  // đảm bảo đã load sản phẩm
+  if (!products.value.length) {
+    await fetchProducts();
+  }
+
+  const product = products.value.find(
+    (p) => p.maCtsp?.toLowerCase() === productCode.toLowerCase(),
+  );
+
+  if (!product) {
+    showToast("Không tìm thấy sản phẩm", "error");
+    return;
+  }
+
+  addToCart(product);
+  showToast(`Đã thêm ${product.name}`);
+  closeQrScanner();
 };
 
 const changeMoney = computed(() => {
@@ -925,6 +1089,101 @@ const subTotal = computed(() =>
     ? currentOrder.value.cart.reduce((s, i) => s + i.price * i.quantity, 0)
     : 0,
 );
+
+const vouchers = ref([]);
+
+const bestVoucherSuggestion = computed(() => {
+  if (!currentOrder.value) return null;
+
+  const valid = vouchers.value.filter((v) => {
+    if (v.trangThai !== 1) return false;
+
+    if (v.dieuKienDonHang && subTotal.value < v.dieuKienDonHang) return false;
+
+    if (v.kieuApDung === "PERSONAL") {
+      if (!currentOrder.value.customer?.id) return false;
+    }
+
+    return true;
+  });
+
+  if (!valid.length) return null;
+
+  let best = null;
+  let maxDiscount = 0;
+
+  valid.forEach((v) => {
+    let discountValue = 0;
+
+    const isPercent =
+      v.loaiGiam === "PERCENT" ||
+      v.loaiGiam === "PHAN_TRAM" ||
+      v.loaiGiam === 0;
+
+    if (isPercent) {
+      discountValue = (subTotal.value * v.giaTri) / 100;
+    } else {
+      discountValue = v.giaTri;
+    }
+
+    discountValue = Math.min(discountValue, subTotal.value);
+
+    if (discountValue > maxDiscount) {
+      maxDiscount = discountValue;
+      best = { ...v, discountValue };
+    }
+  });
+
+  return best;
+});
+
+watch(
+  [
+    () => subTotal.value,
+    () => currentOrder.value?.customer?.id,
+    () => activeOrderIndex.value,
+    () => vouchers.value,
+  ],
+  () => {
+    if (!currentOrder.value) return;
+
+    if (voucherMode.value === "MANUAL") return;
+
+    const best = bestVoucherSuggestion.value;
+
+    if (!best) {
+      currentOrder.value.appliedVoucher = null;
+      currentOrder.value.voucherCode = "";
+      voucherSuccess.value = "";
+      voucherError.value = "";
+      return;
+    }
+
+    currentOrder.value.voucherCode = best.maPgg;
+
+    const isPercent =
+      best.loaiGiam === "PERCENT" ||
+      best.loaiGiam === "PHAN_TRAM" ||
+      best.loaiGiam === 0;
+
+    currentOrder.value.appliedVoucher = {
+      code: best.maPgg,
+      percent: isPercent ? Number(best.giaTri) : 0,
+      amount: !isPercent ? Number(best.giaTri) : 0,
+      maxValue: best.giaTriToiDa,
+      message: best.tenPgg,
+    };
+  },
+  { immediate: true },
+);
+
+watch(
+  () => activeOrderIndex.value,
+  () => {
+    voucherMode.value = "AUTO";
+  },
+);
+
 const formatPrice = (v) => {
   if (v === null || v === undefined) return "0 ₫";
   return Number(v).toLocaleString("vi-VN") + " ₫";
@@ -932,7 +1191,7 @@ const formatPrice = (v) => {
 
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
-    showToast("Vui lòng chỉ thêm tối đa 5 đơn hàng", "error");
+    showToast("Vui lòng chỉ thêm tối đa 10 đơn hàng", "error");
     return;
   }
 
@@ -985,9 +1244,31 @@ const createOrder = async () => {
   }
 };
 
-// ==========================================
-// CẬP NHẬT: Tích hợp logic gọi in hóa đơn sau thanh toán
-// ==========================================
+const increaseQty = async (item) => {
+  if (item.quantity >= item.stock) {
+    showToast("Đã đạt số lượng tồn kho tối đa", "error");
+    return;
+  }
+
+  try {
+    await axios.put(
+      "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+      null,
+      {
+        params: {
+          idSpct: item.id,
+          soLuongThayDoi: -1,
+        },
+      },
+    );
+
+    item.quantity++;
+  } catch (err) {
+    showToast("Không đủ tồn kho", "error");
+  }
+};
+
+// ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thay vì gọi removeOrder, đóng tab trực tiếp sau khi chốt đơn thành công
 const submitOrder = async () => {
   if (!currentOrder.value) return;
   if (subTotal.value <= 0) {
@@ -1014,7 +1295,6 @@ const submitOrder = async () => {
         order.paymentMethod === "CASH" ? "Thanh toán tiền mặt" : "Chuyển khoản",
       maVoucher: order.voucherCode || null,
       idKhachHang: order.customer.id || null,
-      idNhanVien: null, // Bỏ idNhanVien để Backend lấy từ Token
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
@@ -1050,24 +1330,17 @@ const submitOrder = async () => {
       );
 
       invoiceToPrint.value = resInvoice.data;
-
-      // Đợi DOM cập nhật và gọi window.print()
       await nextTick();
       setTimeout(() => {
         window.print();
-        // Xóa data in sau khi mở cửa sổ in
         invoiceToPrint.value = null;
-      }, 500); // Trì hoãn một chút để CSS in kịp load
+      }, 500);
     } catch (printError) {
       console.error("Lỗi lấy dữ liệu in hóa đơn:", printError);
       showToast("Thanh toán xong nhưng có lỗi khi in hóa đơn!", "error");
     }
-
-    // 3. ĐÓNG TAB NGAY LẬP TỨC
     const currentIndex = activeOrderIndex.value;
     orders.value.splice(currentIndex, 1);
-
-    // Tính toán lại để focus vào tab bên cạnh (nếu còn)
     if (!orders.value.length) {
       activeOrderIndex.value = -1;
     } else {
@@ -1079,13 +1352,6 @@ const submitOrder = async () => {
   }
 };
 
-watch(subTotal, () => {
-  if (currentOrder.value?.appliedVoucher) {
-    currentOrder.value.appliedVoucher = null;
-    currentOrder.value.voucherCode = "";
-  }
-});
-
 const removeOrder = (index) => {
   const targetOrder = orders.value[index];
 
@@ -1095,9 +1361,18 @@ const removeOrder = (index) => {
     async () => {
       try {
         if (targetOrder.idHoaDon) {
-          await axios.delete(
-            `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
-          );
+          for (const item of targetOrder.cart) {
+            await axios.put(
+              "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+              null,
+              {
+                params: {
+                  idSpct: item.id,
+                  soLuongThayDoi: item.quantity,
+                },
+              },
+            );
+          }
         }
 
         orders.value.splice(index, 1);
@@ -1113,6 +1388,7 @@ const removeOrder = (index) => {
         } else if (index < activeOrderIndex.value) {
           activeOrderIndex.value--;
         }
+        voucherMode.value = "AUTO";
       } catch (error) {
         console.error("Lỗi xóa hóa đơn:", error);
         showToast(
@@ -1169,7 +1445,7 @@ onMounted(async () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     const data = JSON.parse(saved);
-    orders.value = data.orders || [];
+    orders.value = data.orders;
     activeOrderIndex.value = data.activeOrderIndex ?? -1;
   }
   await fetchProvinces();
@@ -1205,11 +1481,37 @@ watchEffect(() => {
   );
 });
 
-const vouchers = ref([]);
 const fetchVouchers = async () => {
-  const res = await axios.get("http://localhost:8080/admin/voucher");
+  const idKhach = currentOrder.value?.customer?.id ?? null;
+
+  const res = await axios.get("http://localhost:8080/admin/voucher/pos", {
+    params: { idKhachHang: idKhach },
+  });
+
   vouchers.value = res.data;
 };
+
+watch(
+  () => activeOrderIndex.value,
+  async () => {
+    if (!currentOrder.value) return;
+    await fetchVouchers();
+  },
+);
+
+watch(
+  () => currentOrder.value?.customer?.id,
+  async () => {
+    if (!currentOrder.value) return;
+
+    currentOrder.value.appliedVoucher = null;
+    currentOrder.value.voucherCode = "";
+    currentOrder.value.shippingFee = 0;
+    voucherMode.value = "AUTO";
+
+    await fetchVouchers();
+  },
+);
 
 const bankQR = computed(() => {
   if (!currentOrder.value) return "";
@@ -1219,10 +1521,14 @@ const bankQR = computed(() => {
   return `https://img.vietqr.io/image/${bank}-${account}-compact.png?amount=${amount}&addInfo=POS`;
 });
 
+const voucherMode = ref("AUTO");
+
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Xử lý VOUCHER
 const applyVoucher = () => {
   if (!currentOrder.value) return;
   voucherError.value = "";
   voucherSuccess.value = "";
+  voucherMode.value = "MANUAL";
   const code = currentOrder.value.voucherCode?.trim();
   if (!code) {
     voucherError.value = "Vui lòng nhập mã giảm giá";
@@ -1236,13 +1542,33 @@ const applyVoucher = () => {
     currentOrder.value.appliedVoucher = null;
     return;
   }
-  if (found.trangThai !== 1) {
-    voucherError.value = "Mã giảm giá đã ngừng hoạt động";
+  if (found.soLuong !== undefined && found.soLuong <= 0) {
+    voucherError.value = "Mã giảm giá đã hết lượt sử dụng";
     return;
   }
-  if (found.donToiThieu && subTotal.value < found.donToiThieu) {
+  if (found.trangThai === 0) {
+    voucherError.value = "Mã giảm giá đã bị ngừng";
+    return;
+  }
+
+  if (found.trangThai === 2) {
+    voucherError.value = "Mã giảm giá chưa đến thời gian sử dụng";
+    return;
+  }
+
+  if (found.trangThai === 3) {
+    voucherError.value = "Mã giảm giá đã hết hạn";
+    return;
+  }
+  if (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang) {
     voucherError.value = "Đơn hàng chưa đạt giá trị tối thiểu";
     return;
+  }
+  if (found.kieuApDung === "PERSONAL") {
+    if (!currentOrder.value.customer?.id) {
+      voucherError.value = "Voucher này chỉ áp dụng cho khách hàng cụ thể";
+      return;
+    }
   }
 
   let percent = 0;
@@ -1262,6 +1588,7 @@ const applyVoucher = () => {
     code: found.maPgg,
     percent,
     amount,
+    maxValue: found.giaTriToiDa,
     message: found.tenPgg,
   };
 
@@ -1276,12 +1603,19 @@ const applyVoucher = () => {
   }
 };
 
+// ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: TÍNH TIỀN GIẢM GIÁ
 const discount = computed(() => {
   const v = currentOrder.value?.appliedVoucher;
   if (!v) return 0;
 
   if (v.percent > 0) {
-    return Math.min((subTotal.value * v.percent) / 100, subTotal.value);
+    let discountValue = (subTotal.value * v.percent) / 100;
+
+    if (v.maxValue) {
+      discountValue = Math.min(discountValue, v.maxValue);
+    }
+
+    return Math.min(discountValue, subTotal.value);
   }
 
   if (v.amount > 0) {
@@ -1324,6 +1658,16 @@ const toggleDelivery = async (e) => {
   }
 };
 
+watch(
+  () => currentOrder.value?.customer?.district,
+  async () => {
+    if (!currentOrder.value) return;
+    if (currentOrder.value.deliveryType === "DELIVERY") {
+      await calculateShipping();
+    }
+  },
+);
+
 const modal = ref({ show: false, title: "", message: "", onConfirm: null });
 const openConfirmModal = (title, message, cb) => {
   modal.value = { show: true, title, message, onConfirm: cb };
@@ -1360,27 +1704,35 @@ const showToast = (msg, type = "success") => {
 .text-center {
   text-align: center;
 }
+
 .text-right {
   text-align: right;
 }
+
 .text-muted {
   color: #666;
 }
+
 .text-red {
   color: #d32f2f;
 }
+
 .fw-600 {
   font-weight: 600;
 }
+
 .mt-2 {
   margin-top: 8px;
 }
+
 .mt-3 {
   margin-top: 16px;
 }
+
 .mt-4 {
   margin-top: 24px;
 }
+
 .m-0 {
   margin: 0;
 }
@@ -1396,6 +1748,7 @@ const showToast = (msg, type = "success") => {
   padding: 14px 18px;
   border: 1px solid #e5e5e5;
 }
+
 .page-title {
   font-size: 18px;
   font-weight: 600;
@@ -1415,6 +1768,7 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   transition: opacity 0.2s;
 }
+
 .btn-create:hover {
   opacity: 0.9;
 }
@@ -1429,9 +1783,11 @@ const showToast = (msg, type = "success") => {
   font-size: 13px;
   font-weight: 600;
 }
+
 .btn-primary:hover {
   opacity: 0.9;
 }
+
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1448,6 +1804,7 @@ const showToast = (msg, type = "success") => {
   font-weight: 600;
   transition: 0.2s;
 }
+
 .btn-outline:hover {
   background: #c89b6d;
   color: #fff;
@@ -1462,6 +1819,7 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   font-size: 14px;
 }
+
 .btn-danger:hover {
   background: #c0392b;
 }
@@ -1479,10 +1837,12 @@ const showToast = (msg, type = "success") => {
   transition: 0.2s;
   box-shadow: 0 4px 6px -1px rgba(107, 63, 35, 0.3);
 }
+
 .btn-submit.big:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
 }
+
 .btn-submit.big:disabled {
   background: #d8c6b5;
   cursor: not-allowed;
@@ -1495,10 +1855,19 @@ const showToast = (msg, type = "success") => {
   gap: 12px;
 }
 
+/* Đảm bảo 2 nút Quét QR và Chọn SP cách nhau */
+
 /* ================= TABS ================= */
 .pos-card {
   background: transparent;
 }
+
+.order-code {
+  font-size: 12px;
+  color: #888;
+  margin-left: 4px;
+}
+
 .order-tabs {
   display: flex;
   gap: 6px;
@@ -1508,6 +1877,7 @@ const showToast = (msg, type = "success") => {
   padding: 0 12px;
   overflow: hidden;
 }
+
 .order-tab {
   background: #ececec;
   color: #333;
@@ -1520,9 +1890,11 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
   transition: 0.2s;
 }
+
 .order-tab:hover {
   background: #ddd;
 }
+
 .order-tab.active {
   background: #fff;
   border: 1px solid #e5e5e5;
@@ -1531,11 +1903,13 @@ const showToast = (msg, type = "success") => {
   margin-bottom: -1px;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
 }
+
 .tab-close {
   opacity: 0.5;
   cursor: pointer;
   font-size: 12px;
 }
+
 .tab-close:hover {
   opacity: 1;
 }
@@ -1548,6 +1922,14 @@ const showToast = (msg, type = "success") => {
   padding: 16px;
   background: #fff;
   border-radius: 10px;
+}
+
+.main-layout.full-product {
+  grid-template-columns: 1fr;
+}
+
+.main-layout.full-product .product-section {
+  grid-column: 1 / -1;
 }
 
 /* BOX CHUNG */
@@ -1578,6 +1960,7 @@ const showToast = (msg, type = "success") => {
   padding-bottom: 12px;
   border-bottom: 1px dashed #eee;
 }
+
 .section-title {
   font-size: 15px;
   font-weight: 600;
@@ -1590,11 +1973,13 @@ const showToast = (msg, type = "success") => {
   text-align: center;
   color: #666;
 }
+
 .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
+
 .empty-state-global {
   text-align: center;
   padding: 60px;
@@ -1636,10 +2021,12 @@ const showToast = (msg, type = "success") => {
   gap: 12px;
   align-items: center;
 }
+
 .img-wrap {
   position: relative;
   flex-shrink: 0;
 }
+
 .product-img {
   width: 60px;
   height: 60px;
@@ -1647,6 +2034,7 @@ const showToast = (msg, type = "success") => {
   border-radius: 8px;
   border: 1px solid #eee;
 }
+
 .sale-badge {
   position: absolute;
   top: -6px;
@@ -1681,6 +2069,7 @@ const showToast = (msg, type = "success") => {
   font-size: 12px;
   color: #999;
 }
+
 .price .sale {
   font-weight: 600;
   color: red;
@@ -1696,6 +2085,7 @@ const showToast = (msg, type = "success") => {
   margin: 0 auto;
   gap: 4px;
 }
+
 .qty button {
   background: #fff;
   border: 1px solid #c49a6c;
@@ -1709,14 +2099,17 @@ const showToast = (msg, type = "success") => {
   align-items: center;
   justify-content: center;
 }
+
 .qty button:hover {
   background: #f7f2ee;
 }
+
 .qty button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   border-color: #ddd;
 }
+
 .qty input {
   width: 45px;
   text-align: center;
@@ -1731,16 +2124,20 @@ const showToast = (msg, type = "success") => {
   font-weight: 600;
   color: red;
   white-space: nowrap;
+  /* Thêm dòng này để ép chữ không bao giờ xuống dòng */
 }
+
 /* ================= CỘT PHẢI: KHÁCH & THANH TOÁN ================= */
 .customer-form .form-item {
   margin-bottom: 12px;
   width: 100%;
 }
+
 .customer-form .form-row {
   display: flex;
   gap: 12px;
 }
+
 .customer-form .form-row .form-item {
   flex: 1;
 }
@@ -1758,12 +2155,14 @@ select {
   box-sizing: border-box;
   transition: all 0.2s;
 }
+
 input:focus,
 select:focus {
   border-color: #c89b6d;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
 }
+
 .field-error {
   color: #d32f2f;
   font-size: 12px;
@@ -1779,24 +2178,29 @@ select:focus {
   padding: 10px 14px;
   border-radius: 10px;
 }
+
 .toggle-label {
   font-size: 14px;
   font-weight: 500;
   color: #666;
   transition: 0.2s;
 }
+
 .toggle-label.active-brown {
   font-weight: 600;
   color: #6b3f23;
 }
+
 .switch {
   position: relative;
   width: 44px;
   height: 24px;
 }
+
 .switch input {
   display: none;
 }
+
 .slider {
   position: absolute;
   inset: 0;
@@ -1805,6 +2209,7 @@ select:focus {
   cursor: pointer;
   transition: 0.3s;
 }
+
 .slider::before {
   content: "";
   position: absolute;
@@ -1817,9 +2222,11 @@ select:focus {
   transition: 0.3s;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
+
 .switch input:checked + .slider {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
 }
+
 .switch input:checked + .slider::before {
   transform: translateX(20px);
 }
@@ -1829,11 +2236,15 @@ select:focus {
   background: linear-gradient(180deg, #ffffff, #fdf9f6);
   border: 1px solid #eee;
 }
+
 .voucher-row {
   display: flex;
+  flex-wrap: wrap;
+  /* 👈 THÊM DÒNG NÀY */
   gap: 8px;
   margin-bottom: 16px;
 }
+
 .voucher-row input {
   flex: 1;
 }
@@ -1846,6 +2257,7 @@ select:focus {
   font-size: 13px;
   margin-bottom: 16px;
 }
+
 .voucher-errors {
   background: #ffc3c3;
   color: #d32f2f;
@@ -1860,12 +2272,14 @@ select:focus {
   border-bottom: 1px dashed #ddd;
   margin-bottom: 12px;
 }
+
 .payment-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
   font-size: 14px;
 }
+
 .payment-row:last-child {
   margin-bottom: 0;
 }
@@ -1875,11 +2289,13 @@ select:focus {
   border-bottom: 1px solid #eee;
   margin-bottom: 16px;
 }
+
 .payment-row.total {
   font-size: 16px;
   font-weight: 600;
   align-items: center;
 }
+
 .total-amount {
   font-size: 20px;
   color: #d32f2f;
@@ -1892,11 +2308,13 @@ select:focus {
   align-items: center;
   font-size: 14px;
 }
+
 .pay-action-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .btn-pay-icon {
   width: 34px;
   height: 30px;
@@ -1910,6 +2328,7 @@ select:focus {
   justify-content: center;
   align-items: center;
 }
+
 .btn-pay-icon:hover {
   background: #c89b6d;
   color: #fff;
@@ -1927,11 +2346,13 @@ select:focus {
   overflow: hidden;
 }
 
+/* Tìm đoạn này và sửa lại */
 .modal {
   background: #fff;
   border-radius: 12px;
   width: 95vw;
   max-width: 1200px;
+  /* height: 85vh;  <--- XÓA DÒNG NÀY ĐI */
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -1943,11 +2364,13 @@ select:focus {
   width: 95vw;
   max-width: 1400px;
   height: 85vh;
+  /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
 }
 
 .modal.small {
   width: 90vw;
   max-width: 500px;
+  /* Form thanh toán dùng modal.small sẽ tự động co ngắn lại ôm vừa nội dung */
 }
 
 .modal-header {
@@ -1959,12 +2382,14 @@ select:focus {
   background: #faf6f3;
   border-radius: 12px 12px 0 0;
 }
+
 .modal-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #7b4a2f;
 }
+
 .btn-close {
   background: #c8a27a;
   border: none;
@@ -1975,6 +2400,7 @@ select:focus {
   border-radius: 6px;
   transition: 0.2s;
 }
+
 .btn-close:hover {
   background: #b08b63;
 }
@@ -1992,14 +2418,17 @@ select:focus {
   gap: 12px;
   margin-bottom: 16px;
 }
+
 .table-responsive {
   overflow-x: auto;
 }
+
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
+
 .table th {
   padding: 12px;
   background: #faf6f3;
@@ -2008,6 +2437,7 @@ select:focus {
   border-bottom: 1px solid #e3d5c8;
   white-space: nowrap;
 }
+
 .table td {
   padding: 12px;
   border-bottom: 1px solid #eee;
@@ -2023,6 +2453,7 @@ select:focus {
 .table tr:hover {
   background: #fff7f1;
 }
+
 .badge-stock {
   padding: 2px 8px;
   border-radius: 12px;
@@ -2031,20 +2462,23 @@ select:focus {
   font-size: 12px;
   font-weight: 600;
 }
+
 .badge-stock.out-of-stock {
   background: #ffc3c3;
   color: #d32f2f;
 }
 
-/* ================= MODAL THANH TOÁN ================= */
+/* ================= MODAL THANH TOÁN (LÀM LẠI HOÀN TOÀN) ================= */
 .custom-payment-modal {
   padding-bottom: 10px;
 }
+
 .pay-type-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
+
 .pay-type-tabs button {
   flex: 1;
   padding: 12px;
@@ -2056,6 +2490,7 @@ select:focus {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .pay-type-tabs button.active {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
   color: white;
@@ -2070,11 +2505,13 @@ select:focus {
   display: block;
   margin-bottom: 8px;
 }
+
 .money-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
+
 .input-money-lg {
   height: 50px;
   font-size: 20px;
@@ -2085,10 +2522,12 @@ select:focus {
   border: 2px solid #e0d6cc;
   color: #333;
 }
+
 .input-money-lg:focus {
   border-color: #c89b6d;
   box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
 }
+
 .currency-unit {
   position: absolute;
   right: 15px;
@@ -2109,6 +2548,7 @@ select:focus {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-quick-money:hover {
   background: #e5d6c8;
 }
@@ -2116,6 +2556,7 @@ select:focus {
 .bank-box {
   text-align: center;
 }
+
 .qr-img {
   width: 220px;
   height: 220px;
@@ -2126,10 +2567,12 @@ select:focus {
   padding: 10px;
   background: #fff;
 }
+
 .bank-info {
   text-align: center;
   margin-top: 15px;
 }
+
 .bank-money {
   font-size: 22px;
   font-weight: 700;
@@ -2147,6 +2590,7 @@ select:focus {
   z-index: 1000;
   background: rgba(0, 0, 0, 0.5);
 }
+
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -2155,6 +2599,7 @@ select:focus {
   text-align: center;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
@@ -2168,21 +2613,25 @@ select:focus {
   margin: 0 auto 15px;
   line-height: 1;
 }
+
 .confirm-title {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 10px;
   color: #63391f;
 }
+
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
 }
+
 .confirm-actions {
   display: flex;
   gap: 20px;
 }
+
 .btn-cancel,
 .btn-confirm {
   flex: 1;
@@ -2193,17 +2642,21 @@ select:focus {
   border: none;
   transition: 0.2s;
 }
+
 .btn-cancel {
   background: #f3f4f6;
   color: #374151;
 }
+
 .btn-cancel:hover {
   background: #e5e7eb;
 }
+
 .btn-confirm {
   background: #63391f;
   color: white;
 }
+
 .btn-confirm:hover {
   background: #4e2c17;
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
@@ -2218,6 +2671,7 @@ select:focus {
   flex-direction: column;
   gap: 10px;
 }
+
 .toast {
   min-width: 300px;
   padding: 16px 24px;
@@ -2229,6 +2683,7 @@ select:focus {
   border-left: 6px solid #22c55e;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
 .toast.error {
   background: #fee2e2;
   color: #991b1b;
@@ -2239,13 +2694,33 @@ select:focus {
 .toast-slide-leave-active {
   transition: all 0.3s ease;
 }
+
 .toast-slide-enter-from {
   opacity: 0;
   transform: translateX(30px);
 }
+
 .toast-slide-leave-to {
   opacity: 0;
   transform: translateY(-30px);
+}
+
+.voucher-suggestion {
+  flex: 0 0 100%;
+  margin-top: 8px;
+  font-size: 13px;
+  background: #fdf6ec;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px dashed #e6a23c;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #409eff;
+  cursor: pointer;
+  margin-left: 8px;
 }
 
 .img-wrap.small {
@@ -2262,6 +2737,7 @@ select:focus {
   border: 1px solid #eee;
 }
 
+/* ĐÃ MERGE FIX TỪ BẠN GỬI MỚI NHẤT: Cập nhật CSS height */
 .product-scroll {
   max-height: 60vh;
   overflow-y: auto;
@@ -2283,5 +2759,42 @@ select:focus {
   color: #e53935;
   font-weight: 600;
   font-size: 14px;
+}
+
+.section-header.column {
+  display: flex;
+  flex-direction: column !important;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.section-title.center {
+  text-align: center;
+  width: 100%;
+  font-weight: 600;
+}
+
+.customer-actions-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.customer-actions-row button {
+  flex: 1;
+  height: 40px;
+}
+
+.customer-actions-row.single-btn {
+  justify-content: center;
+}
+
+.customer-actions-row.single-btn button {
+  flex: none;
+  width: 100%;
+}
+
+.info-box {
+  max-width: 100%;
 }
 </style>
