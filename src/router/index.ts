@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-
 // Import Layout Admin
 import AdminLayout from "../pages/admin/AdminLayout.vue";
 
@@ -16,16 +15,17 @@ const routes: Array<RouteRecordRaw> = [
     path: "/home/product/:id",
     name: "ProductDetailHome",
     component: () => import("../pages/views/DetailProductHome.vue"),
-  },{
-      path: "/moi-ve",
-      name: "NewArrivals",
-      component: () => import("../pages/views/NewArrivalsPage.vue"),
-    },
-    {
-      path: "/uu-dai",
-      name: "Promotions",
-      component: () => import("../pages/views/PromotionsPage.vue"),
-    },
+  },
+  {
+    path: "/moi-ve",
+    name: "NewArrivals",
+    component: () => import("../pages/views/NewArrivalsPage.vue"),
+  },
+  {
+    path: "/uu-dai",
+    name: "Promotions",
+    component: () => import("../pages/views/PromotionsPage.vue"),
+  },
   {
     path: "/payment",
     name: "PaymentPage",
@@ -37,15 +37,15 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/Cart.vue"),
   },
   {
-      path: "/ao-khoac",
-      name: "JacketPage",
-      component: () => import("../pages/views/JacketPage.vue"),
-    },
-    {
-      path: "/thong-tin",
-      name: "Information",
-      component: () => import("../pages/views/InformationPage.vue"),
-    },
+    path: "/ao-khoac",
+    name: "JacketPage",
+    component: () => import("../pages/views/JacketPage.vue"),
+  },
+  {
+    path: "/thong-tin",
+    name: "Information",
+    component: () => import("../pages/views/InformationPage.vue"),
+  },
 
   // LOGIN KHÁCH HÀNG
   {
@@ -80,7 +80,25 @@ const routes: Array<RouteRecordRaw> = [
     path: "/oauth2/redirect",
     component: () => import("../views/OAuth2Redirect.vue"),
   },
-
+  {
+    path: "/register",
+    name: "Register",
+    component: () => import("../views/RegisterView.vue"),
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: () => import("../views/ForgotPasswordView.vue"),
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("../views/ResetPasswordView.vue"),
+  },
+  {
+    path: "/oauth2/redirect",
+    component: () => import("../views/OAuth2Redirect.vue"),
+  },
   // =================================================================
   // 2. ADMIN ROUTES (Sử dụng Layout chung & Phân quyền)
   // =================================================================
@@ -128,8 +146,9 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "chi-tiet-san-pham/:productId/edit/:id",
         name: "EditDetailsProduct",
-        component: () => import("../pages/admin/product/EditDetailsProduct.vue"),
-      }, 
+        component: () =>
+          import("../pages/admin/product/EditDetailsProduct.vue"),
+      },
       // Thuộc tính sản phẩm
       {
         path: "color",
@@ -172,7 +191,25 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
       },
+      // 2.2. Quản lý hoá đơn
+      {
+        path: "invoice",
+        name: "InvoiceList",
+        component: () => import("../pages/admin/invoice/InvoiceList.vue"),
+      },
+      {
+        path: "invoice/:id",
+        name: "InvoiceDetail",
+        component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
+        props: true,
+      },
 
+      // 2.3. Bán hàng tại quầy
+      {
+        path: "sales",
+        name: "CounterSales",
+        component: () => import("../pages/admin/sales/CounterSales.vue"),
+      },
       // 2.3. Bán hàng tại quầy
       {
         path: "sales",
@@ -195,7 +232,8 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "promotion",
-        component: () => import("../pages/admin/promotion/PromotionManager.vue"),
+        component: () =>
+          import("../pages/admin/promotion/PromotionManager.vue"),
       },
       {
         path: "promotion/create",
@@ -234,7 +272,8 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "employee-schedule",
         name: "MySchedule",
-        component: () => import("../pages/staff/calendar/EmployeeScheduleView.vue"),
+        component: () =>
+          import("../pages/staff/calendar/EmployeeScheduleView.vue"),
       },
 
       // 2.6. Quản lý khách hàng
@@ -256,13 +295,13 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "giao-ca",
         name: "GiaoCa",
-        component: () => import("../pages/admin/Calendar/ShiftHandover.vue"), 
+        component: () => import("../pages/admin/Calendar/ShiftHandover.vue"),
       },
     ],
   },
 
   // =================================================================
-  // 3. STAFF ROUTES 
+  // 3. STAFF ROUTES
   // =================================================================
   {
     path: "/staff",
@@ -307,12 +346,18 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "my-schedule",
         name: "StaffMySchedule",
-        component: () => import("../pages/staff/calendar/EmployeeScheduleView.vue"),
+        component: () =>
+          import("../pages/staff/calendar/EmployeeScheduleView.vue"),
       },
       {
         path: "shift-report",
         name: "ShiftReport",
         component: () => import("../pages/staff/calendar/ShiftReport.vue"),
+      },
+      {
+        path: "chat",
+        name: "StaffChat",
+        component: () => import("../pages/staff/StaffChat.vue"),
       },
     ],
   },
@@ -330,7 +375,6 @@ const router = createRouter({
 // 4. NAVIGATION GUARD (BẢO VỆ HỆ THỐNG)
 // =================================================================
 router.beforeEach((to, from, next) => {
-  // Thêm đường dẫn /cart vào mảng publicPages để ai cũng vào được giỏ hàng
   const publicPages = [
     "/",
     "/cart",
@@ -347,22 +391,24 @@ router.beforeEach((to, from, next) => {
 
   const isPublic =
     publicPages.includes(to.path) || to.path.startsWith("/home/product/");
+
   const authRequired = !isPublic;
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
 
-  // 1. Chưa đăng nhập mà vào trang bảo mật
+  // 1. Chưa đăng nhập
   if (authRequired && !user) {
     if (to.path.startsWith("/admin") || to.path.startsWith("/staff")) {
       return next("/admin/login");
     }
-    return next("/login"); 
+    return next("/login");
   }
 
+  // 2. Kiểm tra phân quyền
   const authorizedRoles = to.matched
-    .filter(record => record.meta.authorize)
-    .flatMap(record => record.meta.authorize as string[]);
+    .filter((record) => record.meta.authorize)
+    .flatMap((record) => record.meta.authorize as string[]);
 
   if (authorizedRoles.length > 0) {
     const userRole = user?.role;
@@ -372,24 +418,14 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  if (
-    user &&
-    (to.path === "/login" ||
-      to.path === "/register" ||
-      to.path === "/admin/login" ||
-      to.path === "/") 
-  ) {
-    const role = user?.role;
-
-    switch (role) {
+  // 3. Đã login mà vào login lại
+  if (user && ["/login", "/register", "/admin/login"].includes(to.path)) {
+    switch (user.role) {
       case "ROLE_ADMIN":
         return next("/admin/dashboard");
       case "ROLE_STAFF":
         return next("/staff/dashboard");
       default:
-        if (to.path === "/") {
-          return next();
-        }
         return next("/");
     }
   }
