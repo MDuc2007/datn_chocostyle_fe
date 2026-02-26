@@ -85,45 +85,18 @@
         </div>
 
         <div class="action-buttons">
-          <button @click="resetFilter" class="btn btn-secondary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M23 4v6h-6"></path>
-              <path d="M1 20v-6h6"></path>
-              <path
-                d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
-              ></path>
-            </svg>
-            Đặt lại bộ lọc
-          </button>
-          <button @click="showExportModal = true" class="btn btn-primary">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Xuất báo cáo
-          </button>
-        </div>
+    <button @click="resetFilter" class="btn btn-secondary">Đặt lại bộ lọc</button>
+    
+    <button @click="handleTestSendEmail" class="btn" style="background-color: #10b981; color: white;">
+        🧪 Gửi Thử Mail
+    </button>
+
+    <button @click="openSettingsModal" class="btn btn-secondary" style="background-color: #4b5563;">
+        ⚙️ Cài đặt tự động
+    </button>
+    
+    <button @click="showExportModal = true" class="btn btn-primary">Xuất báo cáo</button>
+</div>
       </div>
     </div>
 
@@ -343,20 +316,15 @@
       <div class="right-panel">
         <div class="card donut-card">
           <div class="card-header flex-between">
-            <h3>Phân Bố Trạng Thái</h3>
-            <div class="mini-toggles">
-              <span class="active">Năm</span>
-            </div>
+            <h3>Phân Bố Trạng Thái Đơn Hàng</h3>
           </div>
           <div class="donut-container">
             <Doughnut
               v-if="statusChartData"
               :data="statusChartData"
               :options="statusDoughnutOptions as any"
+              :plugins="[donutOutlabelPlugin]"
             />
-            <div class="center-text">
-              <div class="number">{{ totalStatusCount }}</div>
-            </div>
           </div>
         </div>
 
@@ -369,10 +337,8 @@
               v-if="channelChartData"
               :data="channelChartData"
               :options="channelDoughnutOptions as any"
+              :plugins="[donutOutlabelPlugin]"
             />
-            <div class="center-text">
-              <div class="number">{{ totalChannelCount }}</div>
-            </div>
           </div>
         </div>
 
@@ -476,11 +442,16 @@
       </div>
     </div>
   </div>
+  <EmailSettingsModal 
+      v-if="showSettingsModal" 
+      @close="showSettingsModal = false" 
+    />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import axios from "axios";
+import EmailSettingsModal from "./EmailSettingsModal.vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -495,7 +466,49 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Doughnut } from "vue-chartjs";
+const showSettingsModal = ref(false);
+const openSettingsModal = () => {
+  showSettingsModal.value = true;
+};
+// --- [MỚI] PLUGIN VẼ SỐ TRỰC TIẾP LÊN ĐỈNH BIỂU ĐỒ LINE NHƯ ẢNH ---
+const customDataLabelsPlugin = {
+  id: "customDataLabels",
+  afterDatasetsDraw(chart: any) {
+    const { ctx } = chart;
+    chart.data.datasets.forEach((dataset: any, i: number) => {
+      const meta = chart.getDatasetMeta(i);
+      if (!meta.hidden && chart.config.type === "line") {
+        meta.data.forEach((element: any, index: number) => {
+          const dataValue = dataset.data[index];
+          if (dataValue !== undefined && dataValue !== null) {
+            let text =
+              dataValue === 0
+                ? "0"
+                : new Intl.NumberFormat("vi-VN").format(dataValue);
+            ctx.fillStyle = "#9ca3af";
+            ctx.font = "11px Inter, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            const position = element.tooltipPosition();
+            ctx.fillText(text, position.x, position.y - 8);
+          }
+        });
+      }
+    });
+  },
+};
+const handleTestSendEmail = async () => {
+  // Hiển thị trạng thái đang gửi cho chuyên nghiệp
+  const confirmTest = confirm("Hệ thống sẽ gửi 1 bản báo cáo demo tới email bạn đã cài đặt. Bạn có muốn tiếp tục?");
+  if (!confirmTest) return;
 
+  try {
+    const res = await axios.post(`${API_URL}/test-email`);
+    alert(res.data); // Hiện thông báo: Đã gửi email test thành công...
+  } catch (error: any) {
+    alert("❌ Lỗi: " + (error.response?.data || "Không thể kết nối đến máy chủ gửi mail"));
+  }
+};
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -507,7 +520,71 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
+  customDataLabelsPlugin // Đăng ký plugin hiển thị số tiền
 );
+
+// --- PLUGIN VẼ DÂY VÀ CHỮ RA NGOÀI GIỐNG ẢNH CHO DONUT ---
+const donutOutlabelPlugin = {
+  id: "donutOutlabelPlugin",
+  afterDraw(chart: any) {
+    const ctx = chart.ctx;
+    const width = chart.chartArea.right - chart.chartArea.left;
+    const height = chart.chartArea.bottom - chart.chartArea.top;
+    const centerX = chart.chartArea.left + width / 2;
+    const centerY = chart.chartArea.top + height / 2;
+
+    chart.data.datasets.forEach((dataset: any, i: number) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.hidden) return;
+
+      meta.data.forEach((element: any, index: number) => {
+        if (chart.getDataVisibility(index) === false) return;
+        if (!dataset.data[index]) return;
+
+        const labelObj = chart.data.labels[index] || "";
+        const lines = labelObj.split("\n");
+
+        const midAngle =
+          element.startAngle + (element.endAngle - element.startAngle) / 2;
+        const outerRadius = element.outerRadius;
+
+        const cos = Math.cos(midAngle);
+        const sin = Math.sin(midAngle);
+
+        const startX = centerX + cos * outerRadius;
+        const startY = centerY + sin * outerRadius;
+
+        const breakX = centerX + cos * (outerRadius + 15);
+        const breakY = centerY + sin * (outerRadius + 15);
+
+        const isRight = cos > 0;
+        const endX = isRight ? breakX + 20 : breakX - 20;
+        const endY = breakY;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(breakX, breakY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = dataset.backgroundColor[index] || "#999";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.font = "11px Inter, sans-serif";
+        ctx.textBaseline = "middle";
+        ctx.textAlign = isRight ? "left" : "right";
+        const textX = isRight ? endX + 5 : endX - 5;
+
+        lines.forEach((line: string, idx: number) => {
+          ctx.fillStyle = idx === 0 ? "#6b7280" : "#9ca3af";
+          const textY = endY - (lines.length * 14) / 2 + idx * 14 + 7;
+          ctx.fillText(line, textX, textY);
+        });
+        ctx.restore();
+      });
+    });
+  },
+};
 
 // --- Interface ---
 interface SummaryResponse {
@@ -548,10 +625,14 @@ const channelRawData = ref<ChannelResponse[]>([]);
 const lowStockProducts = ref<any[]>([]);
 
 const chartType = ref<"line" | "bar">("line");
-// Lấy ngày hôm nay theo định dạng YYYY-MM-DD
 const today = new Date().toISOString().slice(0, 10);
 
-const filter = ref({ startDate: today, endDate: today });
+// Khởi tạo lấy từ mùng 1 đến cuối tháng cho dễ nhìn y chang biểu đồ
+const firstDayOfMonth = new Date();
+firstDayOfMonth.setDate(1);
+const firstDayStr = firstDayOfMonth.toISOString().slice(0, 10);
+
+const filter = ref({ startDate: firstDayStr, endDate: today });
 
 const API_URL = "http://localhost:8080/api/thong-ke";
 
@@ -562,9 +643,6 @@ const exportForm = ref({
   endDate: new Date().toISOString().slice(0, 10),
 });
 
-// ============================================
-// KHAI BÁO BIẾN THEO DÕI ẨN/HIỆN CHART
-// ============================================
 const hiddenStatusIndices = ref<number[]>([]);
 const hiddenChannelIndices = ref<number[]>([]);
 
@@ -576,13 +654,13 @@ const fetchData = async () => {
     topProducts.value = resTop.data;
     const resStatus = await axios.get(`${API_URL}/trang-thai`);
     statusRawData.value = resStatus.data;
+
     const resChannel = await axios.get(`${API_URL}/loai-don`);
     channelRawData.value = resChannel.data;
 
     const resLowStock = await axios.get(`${API_URL}/sap-het`);
     lowStockProducts.value = resLowStock.data;
 
-    // Đặt lại các chỉ mục bị ẩn khi load dữ liệu mới
     hiddenStatusIndices.value = [];
     hiddenChannelIndices.value = [];
 
@@ -609,10 +687,10 @@ watch(
   () => [filter.value.startDate, filter.value.endDate],
   () => {
     if (filter.value.startDate && filter.value.endDate) fetchChartData();
-  },
+  }
 );
 const resetFilter = () => {
-  filter.value.startDate = today;
+  filter.value.startDate = firstDayStr;
   filter.value.endDate = today;
 };
 
@@ -637,7 +715,7 @@ const handleExportExcel = async () => {
     link.href = url;
     link.setAttribute(
       "download",
-      `BaoCaoDoanhThu_${exportForm.value.startDate}_${exportForm.value.endDate}.xlsx`,
+      `BaoCaoDoanhThu_${exportForm.value.startDate}_${exportForm.value.endDate}.xlsx`
     );
     document.body.appendChild(link);
     link.click();
@@ -652,28 +730,50 @@ const handleExportExcel = async () => {
   }
 };
 
-// --- CONFIG CHART DOANH THU ---
+// --- [SỬA] CONFIG CHART DOANH THU ĐỂ FILL 0 NHƯ HÌNH ---
 const chartData = computed(() => {
-  const labels = chartRawData.value.map((item) => item.thoiGian);
-  const dataValues = chartRawData.value.map((item) => item.doanhThu);
+  if (!filter.value.startDate || !filter.value.endDate) return null;
+
+  const start = new Date(filter.value.startDate);
+  const end = new Date(filter.value.endDate);
+
+  const labels: string[] = [];
+  const dataValues: number[] = [];
+
+  // Tạo map tra cứu dữ liệu từ API
+  const dataMap: Record<string, number> = {};
+  chartRawData.value.forEach((item) => {
+    dataMap[item.thoiGian] = item.doanhThu;
+  });
+
+  let currentDate = new Date(start);
+  while (currentDate <= end) {
+    const dateString = currentDate.toISOString().slice(0, 10);
+    const day = currentDate.getDate();
+
+    labels.push(day.toString()); // Hiển thị ngày 1, 2, 3... thay vì full ngày
+    dataValues.push(dataMap[dateString] || 0); // Ngày không có đơn thì là 0
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
   return {
     labels: labels,
     datasets: [
       {
         label: "Doanh thu",
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, "rgba(20, 184, 166, 0.5)");
-          gradient.addColorStop(1, "rgba(20, 184, 166, 0.0)");
-          return gradient;
-        },
-        borderColor: "#14b8a6",
+        // [SỬA Ở ĐÂY] Kiểm tra nếu là Bar thì tô màu xanh, nếu Line thì trong suốt
+        backgroundColor: chartType.value === 'bar' ? 'rgba(66, 184, 163, 0.8)' : 'transparent',
+        borderColor: "#42b8a3", // Màu xanh ngọc theo ảnh
+        borderWidth: chartType.value === 'bar' ? 0 : 2, // Bar thì không cần viền, Line thì viền 2px
         pointBackgroundColor: "#fff",
-        pointBorderColor: "#14b8a6",
+        pointBorderColor: "#42b8a3",
+        pointBorderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
         data: dataValues,
-        fill: true,
-        tension: 0.4,
+        fill: false,
+        tension: 0.4, // Bo lượn sóng
       },
     ],
   };
@@ -682,6 +782,9 @@ const chartData = computed(() => {
 const chartOptions: any = {
   responsive: true,
   maintainAspectRatio: false,
+  layout: {
+    padding: { top: 30 }, // Cách trên để không bị cắt label
+  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -691,8 +794,7 @@ const chartOptions: any = {
       callbacks: {
         label: function (context: any) {
           return (
-            (context.dataset.label || "") +
-            ": " +
+            "Doanh thu: " +
             new Intl.NumberFormat("vi-VN", {
               style: "currency",
               currency: "VND",
@@ -705,26 +807,28 @@ const chartOptions: any = {
   scales: {
     y: {
       beginAtZero: true,
+      min: 0,
       ticks: {
+        stepSize: 500000000, // Nhảy bậc 500M
         callback: function (value: any) {
+          if (value === 0) return "0";
           if (value >= 1000000) return value / 1000000 + "M";
-          if (value >= 1000) return value / 1000 + "k";
           return value;
         },
         color: "#9ca3af",
       },
-      grid: { color: "#f3f4f6" },
-      border: { display: false },
+      grid: { display: false }, // Ẩn hoàn toàn lưới ngang
+      border: { display: false }, // Ẩn trục Y
     },
     x: {
-      grid: { display: false },
+      grid: { display: false }, // Ẩn lưới dọc
       ticks: { color: "#9ca3af" },
-      border: { display: false },
+      border: { display: true, color: "#d1d5db" }, // Hiện đường gạch nền dưới cùng
     },
   },
 };
 
-// --- CONFIG DONUT CHARTS ---
+// --- CONFIG DONUT CHARTS (GIỮ NGUYÊN) ---
 const statusChartData = computed(() => {
   const statusMap: Record<number, string> = {
     0: "Chờ xác nhận",
@@ -734,92 +838,127 @@ const statusChartData = computed(() => {
     4: "Hoàn thành",
     5: "Đã hủy",
   };
+
   const colors = [
-    "#f59e0b",
-    "#3b82f6",
+    "#38bdf8",
+    "#fcd34d",
     "#8b5cf6",
     "#06b6d4",
-    "#10b981",
-    "#ef4444",
+    "#14b8a6",
+    "#fb7185",
   ];
 
-  const labels = statusRawData.value.map(
-    (i) => statusMap[i.trangThai] || `Trạng thái ${i.trangThai}`,
+  const total = statusRawData.value.reduce(
+    (sum, item) => sum + item.soLuong,
+    0
   );
-  const dataValues = statusRawData.value.map((i) => i.soLuong);
-  const backgroundColors = statusRawData.value.map(
-    (i) => colors[i.trangThai] || "#cbd5e1",
-  );
+
+  const labels = statusRawData.value.map((i) => {
+    const name = statusMap[i.trangThai] || `Trạng thái ${i.trangThai}`;
+    const percent = total > 0 ? ((i.soLuong / total) * 100).toFixed(2) : "0.00";
+    return `${name}\n${i.soLuong} đơn (${percent}%)`;
+  });
 
   return {
     labels: labels,
     datasets: [
       {
-        data: dataValues,
-        backgroundColor: backgroundColors,
-        borderWidth: 0,
-        hoverOffset: 4,
+        data: statusRawData.value.map((i) => i.soLuong),
+        backgroundColor: statusRawData.value.map(
+          (i) => colors[i.trangThai] || "#cbd5e1"
+        ),
+        borderWidth: 2,
+        borderColor: "#ffffff",
       },
     ],
   };
 });
 
-// ============================================
-// TÍNH LẠI TỔNG DỰA TRÊN CÁC MỤC KHÔNG BỊ ẨN
-// ============================================
-const totalStatusCount = computed(() => {
-  return statusRawData.value.reduce((sum, item, index) => {
-    // Bỏ qua mục nếu index của mục đó nằm trong danh sách đang bị ẩn
-    if (hiddenStatusIndices.value.includes(index)) return sum;
-    return sum + item.soLuong;
-  }, 0);
-});
-
 const channelChartData = computed(() => {
-  const colors = ["#f472b6", "#3b82f6", "#fb7185"];
+  const colors = ["#14b8a6", "#fb7185", "#38bdf8"];
+  const total = channelRawData.value.reduce(
+    (sum, item) => sum + item.soLuong,
+    0
+  );
+
+  const labels = channelRawData.value.map((i) => {
+    const percent = total > 0 ? ((i.soLuong / total) * 100).toFixed(2) : "0.00";
+    return `${i.loai}\n${i.soLuong} đơn (${percent}%)`;
+  });
+
   return {
-    labels: channelRawData.value.map((i) => i.loai),
+    labels: labels,
     datasets: [
       {
         data: channelRawData.value.map((i) => i.soLuong),
         backgroundColor: colors,
-        borderWidth: 0,
-        hoverOffset: 4,
+        borderWidth: 2,
+        borderColor: "#ffffff",
       },
     ],
   };
 });
 
-const totalChannelCount = computed(() => {
-  return channelRawData.value.reduce((sum, item, index) => {
-    if (hiddenChannelIndices.value.includes(index)) return sum;
-    return sum + item.soLuong;
-  }, 0);
-});
-
-// ============================================
-// OPTIONS BẮT SỰ KIỆN CLICK CHO TỪNG BIỂU ĐỒ
-// ============================================
-const statusDoughnutOptions = computed(() => ({
+const donutOptionsBase = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: "70%",
+  cutout: "60%",
+  layout: {
+    padding: { left: 40, right: 20, top: 20, bottom: 20 }
+  },
   plugins: {
     legend: {
       position: "bottom",
-      labels: { usePointStyle: true, padding: 10, font: { size: 10 } },
+      align: "center",
+      labels: {
+        usePointStyle: true,
+        boxWidth: 8,
+        padding: 15,
+        font: { size: 12, family: "'Inter', sans-serif" },
+        color: "#6b7280",
+        generateLabels: (chart: any) => {
+          const datasets = chart.data.datasets;
+          return chart.data.labels.map((label: string, i: number) => {
+            const isHidden = chart.getDataVisibility(i) === false;
+            return {
+              text: label.split("\n")[0],
+              fillStyle: datasets[0].backgroundColor[i],
+              hidden: isHidden,
+              index: i,
+              strokeStyle: datasets[0].backgroundColor[i],
+              lineWidth: 0,
+            };
+          });
+        },
+      },
+    },
+    tooltip: {
+      callbacks: {
+        title: function (context: any) {
+          return context[0].label.split("\n")[0];
+        },
+        label: function (context: any) {
+          return ` Số lượng: ${context.raw} đơn`;
+        },
+      },
+    },
+  },
+};
+
+const statusDoughnutOptions = computed(() => ({
+  ...donutOptionsBase,
+  plugins: {
+    ...donutOptionsBase.plugins,
+    legend: {
+      ...donutOptionsBase.plugins.legend,
       onClick: (e: any, legendItem: any, legend: any) => {
         const index = legendItem.index;
         const chart = legend.chart;
-
-        // Điều khiển ẩn hiện phần biểu đồ
         chart.toggleDataVisibility(index);
         chart.update();
-
-        // Cập nhật mảng lưu trữ index bị ẩn để tính lại Vue Computed
         if (hiddenStatusIndices.value.includes(index)) {
           hiddenStatusIndices.value = hiddenStatusIndices.value.filter(
-            (i) => i !== index,
+            (i) => i !== index
           );
         } else {
           hiddenStatusIndices.value = [...hiddenStatusIndices.value, index];
@@ -830,23 +969,26 @@ const statusDoughnutOptions = computed(() => ({
 }));
 
 const channelDoughnutOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: "70%",
+  ...donutOptionsBase,
+  layout: {
+    padding: { left: 80, right: 80, top: 30, bottom: 30 },
+  },
   plugins: {
+    ...donutOptionsBase.plugins,
     legend: {
-      position: "bottom",
-      labels: { usePointStyle: true, padding: 10, font: { size: 10 } },
+      ...donutOptionsBase.plugins.legend,
+      labels: {
+        ...donutOptionsBase.plugins.legend.labels,
+        padding: 30,
+      },
       onClick: (e: any, legendItem: any, legend: any) => {
         const index = legendItem.index;
         const chart = legend.chart;
-
         chart.toggleDataVisibility(index);
         chart.update();
-
         if (hiddenChannelIndices.value.includes(index)) {
           hiddenChannelIndices.value = hiddenChannelIndices.value.filter(
-            (i) => i !== index,
+            (i) => i !== index
           );
         } else {
           hiddenChannelIndices.value = [...hiddenChannelIndices.value, index];
@@ -855,18 +997,17 @@ const channelDoughnutOptions = computed(() => ({
     },
   },
 }));
-// ============================================
 
 const totalRevenueInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0),
+  chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0)
 );
 const totalOrdersInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + item.soLuongDon, 0),
+  chartRawData.value.reduce((sum, item) => sum + item.soLuongDon, 0)
 );
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    value,
+    value
   );
 const getRankClass = (rank: number) => {
   if (rank === 1) return "rank-1";
@@ -965,7 +1106,7 @@ onMounted(() => {
   gap: 5px;
 }
 .btn-group button.active {
-  background: #63391f;
+  background: linear-gradient(90deg, #c79a63, #8b5e34); 
   color: white;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -987,10 +1128,12 @@ onMounted(() => {
   background-color: #4b5563;
 }
 .btn-primary {
-  background-color: #63391f;
+  background: linear-gradient(90deg, #c79a63, #8b5e34); 
+  color: white;
+  border: none;
 }
 .btn-primary:hover {
-  background-color: #63391f;
+  background: linear-gradient(90deg, #b88d57, #7a502c); 
 }
 .stats-grid {
   display: grid;
@@ -1187,7 +1330,6 @@ onMounted(() => {
   object-fit: cover;
 }
 
-/* CSS PANEL & DONUT */
 .right-panel {
   display: flex;
   flex-direction: column;
@@ -1208,44 +1350,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 180px;
-  max-height: 180px;
+  height: 360px;
   margin-top: 10px;
 }
-.center-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
-  text-align: center;
-  pointer-events: none;
-}
-.center-text .number {
-  font-size: 18px;
-  font-weight: 700;
-  color: #374151;
-}
-.mini-toggles {
-  display: flex;
-  gap: 4px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 2px;
-}
-.mini-toggles span {
-  font-size: 10px;
-  padding: 2px 6px;
-  cursor: pointer;
-  color: #6b7280;
-}
-.mini-toggles span.active {
-  background-color: #2563eb;
-  color: white;
-  border-radius: 3px;
-  font-weight: 500;
-}
 
-/* --- CSS MỚI CHO BẢNG SẮP HẾT HÀNG --- */
 .left-panel {
   display: flex;
   flex-direction: column;
