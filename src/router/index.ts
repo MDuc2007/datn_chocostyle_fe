@@ -293,7 +293,7 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/admin/customer/CustomerEdit.vue"),
       },
       {
-        path: "giao-ca",
+        path: "shift-handover",
         name: "GiaoCa",
         component: () => import("../pages/admin/Calendar/ShiftHandover.vue"),
       },

@@ -1,9 +1,148 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from "vue";
-import axios from "axios";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import { ref, computed, onMounted, reactive, watch } from 'vue';
+import axios from 'axios';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
+// --- IMPORT EXCEL LOGIC ---
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const triggerFileInput = () => {
+  if (fileInput.value) {
+    fileInput.value.value = ''; // Reset để chọn lại cùng 1 file vẫn trigger
+    fileInput.value.click();
+  }
+};
+
+const handleImportExcel = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  loading.value = true;
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await file.arrayBuffer());
+    const worksheet = workbook.worksheets[0]; // Lấy sheet đầu tiên
+    const formatDateToYYYYMMDD = (dateValue: any): string | null => {
+      if (!dateValue) return null;
+      
+      // Nếu dữ liệu đã là chuỗi YYYY-MM-DD (do người dùng gõ text trong Excel)
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue.trim())) {
+        return dateValue.trim();
+      }
+
+      // Nếu dữ liệu là Object Date hoặc chuỗi dài như "Sun Mar 01..."
+      const d = new Date(dateValue);
+      if (isNaN(d.getTime())) return null; // Bỏ qua nếu không phải ngày hợp lệ
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`; // Trả về chuẩn YYYY-MM-DD
+    };
+    const payloads: any[] = [];
+    let errorRows: number[] = [];
+
+    // Giả định Format Excel cột như sau:
+    // Cột B (2): Ngày (YYYY-MM-DD), Cột C (3): Mã NV, Cột E (5): Tên Ca, Cột H (8): Ghi chú
+    // Bỏ qua 2 dòng đầu (Tiêu đề và Header), bắt đầu đọc từ dòng 3
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber <= 2) return; 
+
+      // SỬA Ở ĐÂY: Dùng row.getCell(2).value thay vì .text để lấy chính xác object Date hoặc String
+      const rawDate = row.getCell(2).value; 
+      const ngayLamViec = formatDateToYYYYMMDD(rawDate); // Gọi hàm chuẩn hóa
+
+      const maNv = row.getCell(3).text?.trim();
+      const tenCa = row.getCell(5).text?.trim();
+      const ghiChu = row.getCell(8).text?.trim() || '';
+
+      if (!ngayLamViec && !maNv && !tenCa) return; // Bỏ qua dòng trống
+
+      const emp = employees.value.find(e => e.maNv === maNv);
+      const shift = shifts.value.find(s => s.tenCa === tenCa);
+
+      if (emp && shift && ngayLamViec) {
+        payloads.push({
+          ngayLamViec: ngayLamViec, // Bây giờ nó chắc chắn là "2026-03-01"
+          idNhanVien: emp.id,
+          idCa: shift.idCa,
+          ghiChu: ghiChu,
+          trangThai: 2 
+        });
+      } else {
+        errorRows.push(rowNumber);
+      }
+    });
+
+    if (payloads.length === 0) {
+      showToast('Không tìm thấy dữ liệu hợp lệ để import. Vui lòng kiểm tra lại file.', 'warning');
+      return;
+    }
+
+    if (errorRows.length > 0) {
+      const confirmMsg = `Tìm thấy ${payloads.length} dòng hợp lệ. Có ${errorRows.length} dòng lỗi (Sai mã NV, sai tên Ca...). Bạn có muốn tiếp tục lưu phần hợp lệ không?`;
+      if (!await showConfirmDialog(confirmMsg)) return;
+    }
+
+    // Gọi API Batch để lưu
+    await axios.post(`${API_URL}/batch`, payloads);
+    showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
+    refreshData();
+
+  } catch (error: any) {
+    showToast(error.response?.data?.message || 'Lỗi khi đọc file hoặc import dữ liệu', 'error');
+  } finally {
+    loading.value = false;
+  }
+};
+const downloadTemplate = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Template_PhanCa');
+
+  // Dòng 1: Tiêu đề
+  worksheet.mergeCells('A1:H1');
+  worksheet.getCell('A1').value = 'MẪU NHẬP LỊCH LÀM VIỆC (Không sửa 2 dòng đầu)';
+  worksheet.getCell('A1').font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  worksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } };
+  worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // Dòng 2: Header (Cột B, C, E, H là quan trọng nhất theo code Import)
+  const headerRow = worksheet.getRow(2);
+  headerRow.values = [
+    'STT', 
+    'Ngày (YYYY-MM-DD)', 
+    'Mã NV', 
+    'Tên Nhân Viên', 
+    'Tên Ca', 
+    'Giờ BĐ', 
+    'Giờ KT', 
+    'Ghi chú'
+  ];
+  headerRow.font = { bold: true };
+  headerRow.alignment = { horizontal: 'center' };
+
+  // Dòng 3: Data mẫu (để người dùng dễ hình dung)
+  worksheet.getRow(3).values = [1, '2026-03-01', 'NV001', 'Nguyễn Văn A', 'Ca Sáng', '08:00', '12:00', 'Test import'];
+
+  // Căn chỉnh độ rộng cột cho đẹp
+  worksheet.columns = [
+    { width: 8 },  // A: STT
+    { width: 20 }, // B: Ngày
+    { width: 15 }, // C: Mã NV
+    { width: 25 }, // D: Tên NV
+    { width: 15 }, // E: Tên Ca
+    { width: 12 }, // F: Giờ BĐ
+    { width: 12 }, // G: Giờ KT
+    { width: 30 }  // H: Ghi chú
+  ];
+
+  // Xuất file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), 'Template_NhapLichLamViec.xlsx');
+};
 // --- 1. INTERFACES ---
 interface Employee {
   id: number;
@@ -85,7 +224,7 @@ const showModal = ref(false);
 const isEditing = ref(false);
 
 // VIEW MODE: 'table' hoặc 'calendar'
-const viewMode = ref<"table" | "calendar">("table");
+const viewMode = ref<'table' | 'calendar'>('calendar');
 
 // Calendar State
 const currentMonth = ref(new Date().getMonth());
@@ -1049,16 +1188,21 @@ onMounted(fetchInitialData);
         </div>
 
         <div class="right-controls">
-          <button class="btn btn-outline hover-effect" @click="resetFilters">
-            Đặt lại
+          <button class="btn btn-outline hover-effect" @click="resetFilters">Đặt lại</button>
+          
+          <input type="file" ref="fileInput" accept=".xlsx, .xls" style="display: none" @change="handleImportExcel" />
+          <button class="btn btn-outline hover-effect" @click="triggerFileInput">
+            <img src="/src/assets/icon/dowload.svg" alt="" style="width: 16px; height: 16px; margin-right: 8px;">
+            Nhập Excel
           </button>
+
           <button class="btn btn-outline hover-effect" @click="exportExcel">
-            <img
-              src="/src/assets/icon/dowload.svg"
-              alt=""
-              style="width: 16px; height: 16px; margin-right: 8px"
-            />
+            <img src="/src/assets/icon/upload.svg" alt="" style="width: 16px; height: 16px; margin-right: 8px;">
             Xuất Excel
+          </button>
+
+          <button class="btn btn-outline hover-effect" @click="downloadTemplate">
+            Tải file mẫu
           </button>
           <button class="btn btn-outline hover-effect" @click="openAddModal">
             + Phân lịch

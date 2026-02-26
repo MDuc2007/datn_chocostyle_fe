@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
   <div v-if="show && isReady" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
@@ -12,9 +13,18 @@
         </div>
 
         <div v-if="!ca || !ca.caLamViec" class="alert-box error">
-          <span class="alert-icon">⚠️</span>
-          <p>Hôm nay bạn không có lịch phân công ca làm việc.</p>
-        </div>
+            <span class="alert-icon">⚠️</span>
+            <p>Hôm nay bạn không có lịch phân công ca làm việc. Bạn chỉ có thể xem hệ thống.</p>
+            
+            <div class="custom-swal-actions" style="margin-top: 20px;">
+              <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
+                Đăng xuất
+              </button>
+              <button @click="closeModal" class="custom-swal-confirm-btn" style="background-color: #718096 !important;">
+                Chỉ xem
+              </button>
+            </div>
+          </div>
 
         <div v-else>
           <div class="form-group">
@@ -75,7 +85,16 @@
 
           <div v-else class="alert-box disabled-box">
             <span class="alert-icon">🔒</span>
-            <p>Ca làm việc hôm nay của bạn đã hoàn thành.</p>
+            <p>Ca làm việc hôm nay của bạn đã hoàn thành. Bạn hiện đang ở chế độ chỉ xem.</p>
+            
+            <div class="custom-swal-actions" style="margin-top: 20px;">
+              <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
+                Đăng xuất
+              </button>
+              <button @click="closeModal" class="custom-swal-confirm-btn" style="background-color: #718096 !important;">
+                Chỉ xem
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -84,9 +103,6 @@
         <template
           v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)"
         >
-          <button class="btn btn-outline" style="width: 100%" @click="close">
-            Đóng lại
-          </button>
         </template>
 
         <template v-else-if="ca && ca.caLamViec && !chamCong">
@@ -120,6 +136,7 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -138,7 +155,18 @@ const form = ref({
   tienMat: 0,
   tienTaiKhoan: 0,
 });
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("idNv");
+  // Chuyển hướng về login (nhớ import router nếu chưa có)
+  window.location.href = "/login"; 
+};
 
+const closeModal = () => {
+  show.value = false;
+  emit('update:show', false);
+};
 const chamCong = ref(null);
 const currentDateObj = ref(new Date());
 const currentTime = ref("");
@@ -239,7 +267,7 @@ const checkOut = async () => {
       {},
       { headers },
     );
-
+    window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
     await Swal.fire({
       ...customSwalConfig,
       title: "Thành công!",

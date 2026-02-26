@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-layout">
+  <div class="admin-layout" :class="{ 'view-only-mode': isViewOnly }">
     <aside class="sidebar">
       <div class="logo-wrapper">
         <img
@@ -118,9 +118,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"; // Thêm onMounted
+import { ref, onMounted, onUnmounted } from "vue"; // Thêm onMounted
 import { useRouter } from "vue-router";
-
+import axios from "axios"; // Nhớ import axios
+const isViewOnly = ref(false);
 const router = useRouter();
 
 // ===== Dropdown =====
@@ -129,19 +130,51 @@ const isUserMenuOpen = ref(false);
 
 // ===== Biến lưu tên nhân viên =====
 const currentUserName = ref("Nhân viên");
-
+// Thêm lại hàm lắng nghe sự kiện để khóa ngay lập tức khi bấm nút ở Bước 2
+const handleViewOnlyEvent = (e: Event) => {
+  const customEvent = e as CustomEvent;
+  isViewOnly.value = customEvent.detail; 
+};
 // ===== Lấy tên từ LocalStorage khi load trang =====
-onMounted(() => {
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
+onMounted(async () => {
+  // Lắng nghe tín hiệu khóa từ các component con
+  window.addEventListener('set-view-only', handleViewOnlyEvent);
+
+  // ... (Đoạn lấy currentUserName giữ nguyên)
+
+  const idNv = localStorage.getItem("idNv");
+  if (idNv) {
     try {
-      const userData = JSON.parse(userStr);
-      // Ưu tiên lấy tenNhanVien, nếu không có thì lấy hoTen hoặc name
-      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || "Nhân viên";
-    } catch (e) {
-      console.error("Lỗi đọc dữ liệu user:", e);
+      const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      
+      // 1. Kiểm tra xem hôm nay CÓ CA không
+      const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
+      
+      if (resCa.data && resCa.data.caLamViec) {
+        // 2. Nếu có ca -> Kiểm tra xem ĐÃ CHECK-OUT chưa
+        // (Sử dụng API lấy chấm công hôm nay của bạn)
+        const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
+        
+        // Nếu API trả về dữ liệu và có trường gioCheckOut (nghĩa là đã kết thúc ca)
+        if (resChamCong.data && resChamCong.data.gioCheckOut) {
+           isViewOnly.value = true;  // KHÓA MÀN HÌNH
+        } else {
+           isViewOnly.value = false; // MỞ KHÓA (Đang trong ca làm việc)
+        }
+      } else {
+        isViewOnly.value = true;  // Không có ca -> KHÓA
+      }
+    } catch (error) {
+      console.log("Lỗi hoặc không có ca:", error);
+      isViewOnly.value = true; // Lỗi cũng KHÓA luôn cho an toàn
     }
+  } else {
+    router.push("/login");
   }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('set-view-only', handleViewOnlyEvent);
 });
 
 // ===== Toggle Lịch làm việc =====
@@ -182,7 +215,29 @@ const logout = () => {
     Arial,
     sans-serif;
 }
+/* ================= VIEW ONLY MODE (CHỈ XEM) CẢI TIẾN ================= */
 
+/* 1. Mở khóa Menu bên trái: Chỉ làm mờ nhẹ để báo hiệu, không dùng pointer-events: none nữa */
+.view-only-mode .sidebar {
+  opacity: 0.9;
+}
+
+/* 2. KHÔNG khóa toàn bộ vùng content (để nhân viên còn cuộn scrollbar được) */
+.view-only-mode .content {
+  /* Giữ nguyên, không thêm pointer-events ở đây */
+}
+
+/* 3. KHÓA MÕM TẤT CẢ TƯƠNG TÁC (Nút, Ô nhập, Dropdown, Link) bên trong vùng content */
+.view-only-mode .content :deep(button),
+.view-only-mode .content :deep(input),
+.view-only-mode .content :deep(select),
+.view-only-mode .content :deep(textarea),
+/* Khóa các link, nhưng chừa lại phân trang hoặc menu nếu cần */
+.view-only-mode .content :deep(a) {
+  pointer-events: none !important; /* Chặn click/gõ */
+  opacity: 0.5 !important;         /* Làm mờ */
+  user-select: none !important;    /* Không cho bôi đen text */
+}
 /* ================= SIDEBAR ================= */
 .sidebar {
   width: 270px;

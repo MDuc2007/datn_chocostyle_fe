@@ -171,6 +171,9 @@
             <router-link to="/admin/schedule" class="submenu-item">
               Lịch làm việc
             </router-link>
+            <router-link to="/admin/shift-handover" class="submenu-item">
+              Lịch sử ca
+            </router-link>
           </div>
         </div>
       </nav>
