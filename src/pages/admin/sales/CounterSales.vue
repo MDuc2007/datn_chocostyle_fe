@@ -18,10 +18,6 @@
             Đơn {{ index + 1 }}
             <span class="order-code">- {{ o.maHoaDon }}</span>
           </span>
-          <span>
-            Đơn {{ index + 1 }}
-            <span class="order-code">- {{ o.maHoaDon }}</span>
-          </span>
           <span class="tab-close" @click.stop="removeOrder(index)">✕</span>
         </div>
       </div>
@@ -31,18 +27,10 @@
         class="main-layout"
         :class="{ 'full-product': !currentOrder.cart.length }"
       >
-      <div
-        v-if="currentOrder"
-        class="main-layout"
-        :class="{ 'full-product': !currentOrder.cart.length }"
-      >
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
             <div class="actions">
-              <button class="btn-outline" @click="openQrScanner">
-                Quét QR
-              </button>
               <button class="btn-outline" @click="openQrScanner">
                 Quét QR
               </button>
@@ -124,13 +112,26 @@
         </div>
 
         <div v-if="currentOrder.cart.length" class="right-panel">
-        <div v-if="currentOrder.cart.length" class="right-panel">
           <div class="info-box">
-            <div class="section-header">
-              <span class="section-title">THÔNG TIN KHÁCH HÀNG</span>
-              <button class="btn-outline" @click="openCustomerPopup">
-                Chọn khách hàng
-              </button>
+            <div class="section-header column">
+              <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
+
+              <div
+                class="customer-actions-row"
+                :class="{ 'single-btn': !currentOrder.customer.id }"
+              >
+                <button class="btn-outline" @click="openCustomerPopup">
+                  Chọn khách hàng
+                </button>
+
+                <button
+                  v-if="currentOrder.customer.id"
+                  class="btn-outline"
+                  @click="resetToGuest"
+                >
+                  Khách lẻ
+                </button>
+              </div>
             </div>
 
             <div class="customer-form">
@@ -255,29 +256,26 @@
                 placeholder="Mã giảm giá..."
               />
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
-              <div
-                v-if="bestVoucherSuggestion && !currentOrder.appliedVoucher"
-                class="voucher-suggestion"
-              >
-                Gợi ý:
+              <div v-if="bestVoucherSuggestion" class="voucher-suggestion">
+                Voucher tốt nhất:
                 <strong>{{ bestVoucherSuggestion.maPgg }}</strong>
                 - Giảm
                 <span class="text-red">
                   {{ formatPrice(bestVoucherSuggestion.discountValue) }}
                 </span>
-                <button
-                  class="btn-link"
-                  @click="
-                    currentOrder.voucherCode = bestVoucherSuggestion.maPgg;
-                    applyVoucher();
-                  "
-                >
-                  Áp dụng ngay
-                </button>
               </div>
             </div>
-            <div v-if="voucherSuccess" class="voucher-success">
-              {{ voucherSuccess }}
+            <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
+              <span v-if="voucherMode === 'AUTO'">
+                Áp dụng phiếu giảm giá thành công
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
+              <span v-else>
+                Đã áp dụng phiếu giảm giá
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
             </div>
             <div v-if="voucherError" class="voucher-errors">
               {{ voucherError }}
@@ -402,7 +400,6 @@
             <div class="filter-row">
               <input
                 v-model="searchText"
-                placeholder=" Tìm mã, tên sản phẩm..."
                 placeholder=" Tìm mã, tên sản phẩm..."
               />
               <select v-model="filterColor">
@@ -578,30 +575,12 @@
         </div>
       </div>
     </div>
-
-    <Teleport to="body">
-      <InvoicePrintTemplate v-if="invoiceToPrint" :invoice="invoiceToPrint" />
-    </Teleport>
-    <div class="modal-overlay" v-if="showQrPopup">
-      <div class="modal small">
-        <div class="modal-header">
-          <h4>QUÉT MÃ QR SẢN PHẨM</h4>
-          <button class="btn-close" @click="closeQrScanner">✕</button>
-        </div>
-        <div class="modal-body">
-          <div id="qr-reader" style="width: 100%"></div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, watchEffect, nextTick } from "vue";
-import { ref, computed, watch, onMounted, watchEffect, nextTick } from "vue";
 import axios from "axios";
-import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
-import { Html5Qrcode } from "html5-qrcode";
 import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -609,13 +588,11 @@ const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
-const MAX_ORDER = 5;
+const MAX_ORDER = 10;
 
 const invoiceToPrint = ref(null);
 
 const customers = ref([]);
-const showQrPopup = ref(false);
-let qrScanner = null;
 const showQrPopup = ref(false);
 let qrScanner = null;
 
@@ -641,33 +618,12 @@ const fetchProducts = async () => {
     const rawData = res.data?.content || [];
 
     products.value = rawData.map((p) => ({
-  try {
-    const res = await axios.get(
-      "http://localhost:8080/api/chi-tiet-san-pham?page=0&size=1000",
-    );
-
-    const rawData = res.data?.content || [];
-
-    products.value = rawData.map((p) => ({
       id: p.id,
       code: `${p.maSanPham}-${p.maChiTietSanPham}`,
       maCtsp: p.maChiTietSanPham,
       name: p.tenSanPham,
       image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
-      code: `${p.maSanPham}-${p.maChiTietSanPham}`,
-      maCtsp: p.maChiTietSanPham,
-      name: p.tenSanPham,
-      image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
       stock: p.soLuongTon,
-      color: p.tenMauSac,
-      size: p.tenKichCo,
-      oldPrice: p.giaBan,
-      price: p.giaBan,
-    }));
-  } catch (err) {
-    console.error("Lỗi fetchProducts:", err);
-    products.value = [];
-  }
       color: p.tenMauSac,
       size: p.tenKichCo,
       oldPrice: p.giaBan,
@@ -1027,6 +983,7 @@ const confirmPayment = async () => {
     },
   );
 };
+
 const openQrScanner = async () => {
   showQrPopup.value = true;
 
@@ -1034,16 +991,25 @@ const openQrScanner = async () => {
 
   qrScanner = new Html5Qrcode("qr-reader");
 
-  qrScanner.start(
+  await qrScanner.start(
     { facingMode: "environment" },
     {
-      fps: 10,
-      qrbox: 250,
+      fps: 25,
+      qrbox: { width: 300, height: 300 },
+      aspectRatio: 1.777,
+      disableFlip: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
     },
-    (decodedText) => {
-      handleQrResult(decodedText);
+    async (decodedText) => {
+      await handleQrResult(decodedText);
+
+      await qrScanner.stop();
+      await qrScanner.clear();
+      showQrPopup.value = false;
     },
-    (error) => {},
+    () => {},
   );
 };
 
@@ -1117,50 +1083,7 @@ watch(
     wards.value = res.data.wards;
   },
 );
-const bestVoucherSuggestion = computed(() => {
-  if (!currentOrder.value) return null;
 
-  const valid = vouchers.value.filter((v) => {
-    if (v.trangThai !== 1) return false;
-
-    if (v.dieuKienDonHang && subTotal.value < v.dieuKienDonHang) return false;
-
-    if (v.kieuApDung === "PERSONAL") {
-      if (!currentOrder.value.customer?.id) return false;
-    }
-
-    return true;
-  });
-
-  if (!valid.length) return null;
-
-  let best = null;
-  let maxDiscount = 0;
-
-  valid.forEach((v) => {
-    let discountValue = 0;
-
-    const isPercent =
-      v.loaiGiam === "PERCENT" ||
-      v.loaiGiam === "PHAN_TRAM" ||
-      v.loaiGiam === 0;
-
-    if (isPercent) {
-      discountValue = (subTotal.value * v.giaTri) / 100;
-    } else {
-      discountValue = v.giaTri;
-    }
-
-    discountValue = Math.min(discountValue, subTotal.value);
-
-    if (discountValue > maxDiscount) {
-      maxDiscount = discountValue;
-      best = { ...v, discountValue };
-    }
-  });
-
-  return best;
-});
 const subTotal = computed(() =>
   currentOrder.value
     ? currentOrder.value.cart.reduce((s, i) => s + i.price * i.quantity, 0)
@@ -1268,25 +1191,14 @@ const formatPrice = (v) => {
 
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
-    showToast("Vui lòng chỉ thêm tối đa 5 đơn hàng", "error");
+    showToast("Vui lòng chỉ thêm tối đa 10 đơn hàng", "error");
     return;
   }
 
   try {
     const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
-
     const res = await axios.post(
-      "http://localhost:8080/api/hoa-don/tai-quay/tao-moi",
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-
       "http://localhost:8080/api/hoa-don/tai-quay/tao-moi",
       {},
       {
@@ -1331,6 +1243,31 @@ const createOrder = async () => {
     showToast(error.response?.data || "Lỗi tạo tab", "error");
   }
 };
+
+const increaseQty = async (item) => {
+  if (item.quantity >= item.stock) {
+    showToast("Đã đạt số lượng tồn kho tối đa", "error");
+    return;
+  }
+
+  try {
+    await axios.put(
+      "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+      null,
+      {
+        params: {
+          idSpct: item.id,
+          soLuongThayDoi: -1,
+        },
+      },
+    );
+
+    item.quantity++;
+  } catch (err) {
+    showToast("Không đủ tồn kho", "error");
+  }
+};
+
 // ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thay vì gọi removeOrder, đóng tab trực tiếp sau khi chốt đơn thành công
 const submitOrder = async () => {
   if (!currentOrder.value) return;
@@ -1368,17 +1305,9 @@ const submitOrder = async () => {
     const token = localStorage.getItem("token");
 
     // 1. Gửi request thanh toán
-    const token = localStorage.getItem("token");
-
-    // 1. Gửi request thanh toán
     await axios.put(
       `http://localhost:8080/api/hoa-don/tai-quay/xac-nhan/${order.idHoaDon}`,
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1388,28 +1317,6 @@ const submitOrder = async () => {
 
     showToast(`Thanh toán thành công ${order.maHoaDon}!`);
 
-    // 2. Tự động hiển thị cửa sổ in hóa đơn
-    try {
-      // Lấy chi tiết hóa đơn hoàn chỉnh từ server
-      const resInvoice = await axios.get(
-        `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      invoiceToPrint.value = resInvoice.data;
-      await nextTick();
-      setTimeout(() => {
-        window.print();
-        invoiceToPrint.value = null;
-      }, 500);
-    } catch (printError) {
-      console.error("Lỗi lấy dữ liệu in hóa đơn:", printError);
-      showToast("Thanh toán xong nhưng có lỗi khi in hóa đơn!", "error");
-    }
     // 2. Tự động hiển thị cửa sổ in hóa đơn
     try {
       // Lấy chi tiết hóa đơn hoàn chỉnh từ server
@@ -1574,15 +1481,7 @@ watchEffect(() => {
   );
 });
 
-const vouchers = ref([]);
-
 const fetchVouchers = async () => {
-  const idKhach = currentOrder.value?.customer?.id ?? null;
-
-  const res = await axios.get("http://localhost:8080/admin/voucher/pos", {
-    params: { idKhachHang: idKhach },
-  });
-
   const idKhach = currentOrder.value?.customer?.id ?? null;
 
   const res = await axios.get("http://localhost:8080/admin/voucher/pos", {
@@ -1593,8 +1492,23 @@ const fetchVouchers = async () => {
 };
 
 watch(
+  () => activeOrderIndex.value,
+  async () => {
+    if (!currentOrder.value) return;
+    await fetchVouchers();
+  },
+);
+
+watch(
   () => currentOrder.value?.customer?.id,
   async () => {
+    if (!currentOrder.value) return;
+
+    currentOrder.value.appliedVoucher = null;
+    currentOrder.value.voucherCode = "";
+    currentOrder.value.shippingFee = 0;
+    voucherMode.value = "AUTO";
+
     await fetchVouchers();
   },
 );
@@ -1628,18 +1542,8 @@ const applyVoucher = () => {
     currentOrder.value.appliedVoucher = null;
     return;
   }
-  if (found.trangThai === 0) {
-    voucherError.value = "Mã giảm giá đã bị ngừng";
-    return;
-  }
-
-  if (found.trangThai === 2) {
-    voucherError.value = "Mã giảm giá chưa đến thời gian sử dụng";
-    return;
-  }
-
-  if (found.trangThai === 3) {
-    voucherError.value = "Mã giảm giá đã hết hạn";
+  if (found.soLuong !== undefined && found.soLuong <= 0) {
+    voucherError.value = "Mã giảm giá đã hết lượt sử dụng";
     return;
   }
   if (found.trangThai === 0) {
@@ -1666,12 +1570,6 @@ const applyVoucher = () => {
       return;
     }
   }
-  if (found.kieuApDung === "PERSONAL") {
-    if (!currentOrder.value.customer?.id) {
-      voucherError.value = "Voucher này chỉ áp dụng cho khách hàng cụ thể";
-      return;
-    }
-  }
 
   let percent = 0;
   let amount = 0;
@@ -1690,7 +1588,6 @@ const applyVoucher = () => {
     code: found.maPgg,
     percent,
     amount,
-    maxValue: found.giaTriToiDa,
     maxValue: found.giaTriToiDa,
     message: found.tenPgg,
   };
@@ -1712,13 +1609,6 @@ const discount = computed(() => {
   if (!v) return 0;
 
   if (v.percent > 0) {
-    let discountValue = (subTotal.value * v.percent) / 100;
-
-    if (v.maxValue) {
-      discountValue = Math.min(discountValue, v.maxValue);
-    }
-
-    return Math.min(discountValue, subTotal.value);
     let discountValue = (subTotal.value * v.percent) / 100;
 
     if (v.maxValue) {
@@ -1815,41 +1705,33 @@ const showToast = (msg, type = "success") => {
   text-align: center;
 }
 
-
 .text-right {
   text-align: right;
 }
-
 
 .text-muted {
   color: #666;
 }
 
-
 .text-red {
   color: #d32f2f;
 }
-
 
 .fw-600 {
   font-weight: 600;
 }
 
-
 .mt-2 {
   margin-top: 8px;
 }
-
 
 .mt-3 {
   margin-top: 16px;
 }
 
-
 .mt-4 {
   margin-top: 24px;
 }
-
 
 .m-0 {
   margin: 0;
@@ -1866,7 +1748,6 @@ const showToast = (msg, type = "success") => {
   padding: 14px 18px;
   border: 1px solid #e5e5e5;
 }
-
 
 .page-title {
   font-size: 18px;
@@ -1888,7 +1769,6 @@ const showToast = (msg, type = "success") => {
   transition: opacity 0.2s;
 }
 
-
 .btn-create:hover {
   opacity: 0.9;
 }
@@ -1904,11 +1784,9 @@ const showToast = (msg, type = "success") => {
   font-weight: 600;
 }
 
-
 .btn-primary:hover {
   opacity: 0.9;
 }
-
 
 .btn-primary:disabled {
   opacity: 0.6;
@@ -1927,7 +1805,6 @@ const showToast = (msg, type = "success") => {
   transition: 0.2s;
 }
 
-
 .btn-outline:hover {
   background: #c89b6d;
   color: #fff;
@@ -1942,7 +1819,6 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   font-size: 14px;
 }
-
 
 .btn-danger:hover {
   background: #c0392b;
@@ -1962,12 +1838,10 @@ const showToast = (msg, type = "success") => {
   box-shadow: 0 4px 6px -1px rgba(107, 63, 35, 0.3);
 }
 
-
 .btn-submit.big:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
 }
-
 
 .btn-submit.big:disabled {
   background: #d8c6b5;
@@ -1982,21 +1856,11 @@ const showToast = (msg, type = "success") => {
 }
 
 /* Đảm bảo 2 nút Quét QR và Chọn SP cách nhau */
-}
-
-/* Đảm bảo 2 nút Quét QR và Chọn SP cách nhau */
 
 /* ================= TABS ================= */
 .pos-card {
   background: transparent;
 }
-
-.order-code {
-  font-size: 12px;
-  color: #888;
-  margin-left: 4px;
-}
-
 
 .order-code {
   font-size: 12px;
@@ -2014,7 +1878,6 @@ const showToast = (msg, type = "success") => {
   overflow: hidden;
 }
 
-
 .order-tab {
   background: #ececec;
   color: #333;
@@ -2028,11 +1891,9 @@ const showToast = (msg, type = "success") => {
   transition: 0.2s;
 }
 
-
 .order-tab:hover {
   background: #ddd;
 }
-
 
 .order-tab.active {
   background: #fff;
@@ -2043,13 +1904,11 @@ const showToast = (msg, type = "success") => {
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
 }
 
-
 .tab-close {
   opacity: 0.5;
   cursor: pointer;
   font-size: 12px;
 }
-
 
 .tab-close:hover {
   opacity: 1;
@@ -2063,14 +1922,6 @@ const showToast = (msg, type = "success") => {
   padding: 16px;
   background: #fff;
   border-radius: 10px;
-}
-
-.main-layout.full-product {
-  grid-template-columns: 1fr;
-}
-
-.main-layout.full-product .product-section {
-  grid-column: 1 / -1;
 }
 
 .main-layout.full-product {
@@ -2110,7 +1961,6 @@ const showToast = (msg, type = "success") => {
   border-bottom: 1px dashed #eee;
 }
 
-
 .section-title {
   font-size: 15px;
   font-weight: 600;
@@ -2124,13 +1974,11 @@ const showToast = (msg, type = "success") => {
   color: #666;
 }
 
-
 .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
-
 
 .empty-state-global {
   text-align: center;
@@ -2174,12 +2022,10 @@ const showToast = (msg, type = "success") => {
   align-items: center;
 }
 
-
 .img-wrap {
   position: relative;
   flex-shrink: 0;
 }
-
 
 .product-img {
   width: 60px;
@@ -2188,7 +2034,6 @@ const showToast = (msg, type = "success") => {
   border-radius: 8px;
   border: 1px solid #eee;
 }
-
 
 .sale-badge {
   position: absolute;
@@ -2225,7 +2070,6 @@ const showToast = (msg, type = "success") => {
   color: #999;
 }
 
-
 .price .sale {
   font-weight: 600;
   color: red;
@@ -2242,7 +2086,6 @@ const showToast = (msg, type = "success") => {
   gap: 4px;
 }
 
-
 .qty button {
   background: #fff;
   border: 1px solid #c49a6c;
@@ -2257,18 +2100,15 @@ const showToast = (msg, type = "success") => {
   justify-content: center;
 }
 
-
 .qty button:hover {
   background: #f7f2ee;
 }
-
 
 .qty button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   border-color: #ddd;
 }
-
 
 .qty input {
   width: 45px;
@@ -2285,10 +2125,7 @@ const showToast = (msg, type = "success") => {
   color: red;
   white-space: nowrap;
   /* Thêm dòng này để ép chữ không bao giờ xuống dòng */
-  white-space: nowrap;
-  /* Thêm dòng này để ép chữ không bao giờ xuống dòng */
 }
-
 
 /* ================= CỘT PHẢI: KHÁCH & THANH TOÁN ================= */
 .customer-form .form-item {
@@ -2296,12 +2133,10 @@ const showToast = (msg, type = "success") => {
   width: 100%;
 }
 
-
 .customer-form .form-row {
   display: flex;
   gap: 12px;
 }
-
 
 .customer-form .form-row .form-item {
   flex: 1;
@@ -2321,14 +2156,12 @@ select {
   transition: all 0.2s;
 }
 
-
 input:focus,
 select:focus {
   border-color: #c89b6d;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
 }
-
 
 .field-error {
   color: #d32f2f;
@@ -2346,7 +2179,6 @@ select:focus {
   border-radius: 10px;
 }
 
-
 .toggle-label {
   font-size: 14px;
   font-weight: 500;
@@ -2354,12 +2186,10 @@ select:focus {
   transition: 0.2s;
 }
 
-
 .toggle-label.active-brown {
   font-weight: 600;
   color: #6b3f23;
 }
-
 
 .switch {
   position: relative;
@@ -2367,11 +2197,9 @@ select:focus {
   height: 24px;
 }
 
-
 .switch input {
   display: none;
 }
-
 
 .slider {
   position: absolute;
@@ -2381,7 +2209,6 @@ select:focus {
   cursor: pointer;
   transition: 0.3s;
 }
-
 
 .slider::before {
   content: "";
@@ -2396,11 +2223,9 @@ select:focus {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-
 .switch input:checked + .slider {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
 }
-
 
 .switch input:checked + .slider::before {
   transform: translateX(20px);
@@ -2412,17 +2237,13 @@ select:focus {
   border: 1px solid #eee;
 }
 
-
 .voucher-row {
   display: flex;
-  flex-wrap: wrap;
-  /* 👈 THÊM DÒNG NÀY */
   flex-wrap: wrap;
   /* 👈 THÊM DÒNG NÀY */
   gap: 8px;
   margin-bottom: 16px;
 }
-
 
 .voucher-row input {
   flex: 1;
@@ -2436,7 +2257,6 @@ select:focus {
   font-size: 13px;
   margin-bottom: 16px;
 }
-
 
 .voucher-errors {
   background: #ffc3c3;
@@ -2453,14 +2273,12 @@ select:focus {
   margin-bottom: 12px;
 }
 
-
 .payment-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
   font-size: 14px;
 }
-
 
 .payment-row:last-child {
   margin-bottom: 0;
@@ -2472,13 +2290,11 @@ select:focus {
   margin-bottom: 16px;
 }
 
-
 .payment-row.total {
   font-size: 16px;
   font-weight: 600;
   align-items: center;
 }
-
 
 .total-amount {
   font-size: 20px;
@@ -2493,13 +2309,11 @@ select:focus {
   font-size: 14px;
 }
 
-
 .pay-action-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 
 .btn-pay-icon {
   width: 34px;
@@ -2514,7 +2328,6 @@ select:focus {
   justify-content: center;
   align-items: center;
 }
-
 
 .btn-pay-icon:hover {
   background: #c89b6d;
@@ -2552,8 +2365,6 @@ select:focus {
   max-width: 1400px;
   height: 85vh;
   /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
-  height: 85vh;
-  /* <--- THÊM DÒNG NÀY VÀO ĐÂY (Để form Chọn SP vẫn to) */
 }
 
 .modal.small {
@@ -2572,14 +2383,12 @@ select:focus {
   border-radius: 12px 12px 0 0;
 }
 
-
 .modal-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #7b4a2f;
 }
-
 
 .btn-close {
   background: #c8a27a;
@@ -2591,7 +2400,6 @@ select:focus {
   border-radius: 6px;
   transition: 0.2s;
 }
-
 
 .btn-close:hover {
   background: #b08b63;
@@ -2611,18 +2419,15 @@ select:focus {
   margin-bottom: 16px;
 }
 
-
 .table-responsive {
   overflow-x: auto;
 }
-
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
-
 
 .table th {
   padding: 12px;
@@ -2632,7 +2437,6 @@ select:focus {
   border-bottom: 1px solid #e3d5c8;
   white-space: nowrap;
 }
-
 
 .table td {
   padding: 12px;
@@ -2650,7 +2454,6 @@ select:focus {
   background: #fff7f1;
 }
 
-
 .badge-stock {
   padding: 2px 8px;
   border-radius: 12px;
@@ -2659,7 +2462,6 @@ select:focus {
   font-size: 12px;
   font-weight: 600;
 }
-
 
 .badge-stock.out-of-stock {
   background: #ffc3c3;
@@ -2671,13 +2473,11 @@ select:focus {
   padding-bottom: 10px;
 }
 
-
 .pay-type-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
-
 
 .pay-type-tabs button {
   flex: 1;
@@ -2690,7 +2490,6 @@ select:focus {
   cursor: pointer;
   transition: 0.2s;
 }
-
 
 .pay-type-tabs button.active {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
@@ -2707,13 +2506,11 @@ select:focus {
   margin-bottom: 8px;
 }
 
-
 .money-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
-
 
 .input-money-lg {
   height: 50px;
@@ -2726,12 +2523,10 @@ select:focus {
   color: #333;
 }
 
-
 .input-money-lg:focus {
   border-color: #c89b6d;
   box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
 }
-
 
 .currency-unit {
   position: absolute;
@@ -2754,7 +2549,6 @@ select:focus {
   transition: 0.2s;
 }
 
-
 .btn-quick-money:hover {
   background: #e5d6c8;
 }
@@ -2762,7 +2556,6 @@ select:focus {
 .bank-box {
   text-align: center;
 }
-
 
 .qr-img {
   width: 220px;
@@ -2775,12 +2568,10 @@ select:focus {
   background: #fff;
 }
 
-
 .bank-info {
   text-align: center;
   margin-top: 15px;
 }
-
 
 .bank-money {
   font-size: 22px;
@@ -2800,7 +2591,6 @@ select:focus {
   background: rgba(0, 0, 0, 0.5);
 }
 
-
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -2809,7 +2599,6 @@ select:focus {
   text-align: center;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
-
 
 .confirm-icon-wrapper {
   width: 80px;
@@ -2825,7 +2614,6 @@ select:focus {
   line-height: 1;
 }
 
-
 .confirm-title {
   font-size: 20px;
   font-weight: 600;
@@ -2833,19 +2621,16 @@ select:focus {
   color: #63391f;
 }
 
-
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
 }
 
-
 .confirm-actions {
   display: flex;
   gap: 20px;
 }
-
 
 .btn-cancel,
 .btn-confirm {
@@ -2858,23 +2643,19 @@ select:focus {
   transition: 0.2s;
 }
 
-
 .btn-cancel {
   background: #f3f4f6;
   color: #374151;
 }
 
-
 .btn-cancel:hover {
   background: #e5e7eb;
 }
-
 
 .btn-confirm {
   background: #63391f;
   color: white;
 }
-
 
 .btn-confirm:hover {
   background: #4e2c17;
@@ -2891,7 +2672,6 @@ select:focus {
   gap: 10px;
 }
 
-
 .toast {
   min-width: 300px;
   padding: 16px 24px;
@@ -2904,7 +2684,6 @@ select:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-
 .toast.error {
   background: #fee2e2;
   color: #991b1b;
@@ -2916,34 +2695,14 @@ select:focus {
   transition: all 0.3s ease;
 }
 
-
 .toast-slide-enter-from {
   opacity: 0;
   transform: translateX(30px);
 }
 
-
 .toast-slide-leave-to {
   opacity: 0;
   transform: translateY(-30px);
-}
-
-.voucher-suggestion {
-  flex: 0 0 100%;
-  margin-top: 8px;
-  font-size: 13px;
-  background: #fdf6ec;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px dashed #e6a23c;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  color: #409eff;
-  cursor: pointer;
-  margin-left: 8px;
 }
 
 .voucher-suggestion {
@@ -3039,4 +2798,3 @@ select:focus {
   max-width: 100%;
 }
 </style>
-
