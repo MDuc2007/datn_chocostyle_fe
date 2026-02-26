@@ -92,6 +92,7 @@
                   </button>
                 </th>
                 <th>Ảnh</th>
+                <th>Ảnh</th>
                 <th>Mã SP</th>
                 <th>Tên sản phẩm</th>
               </tr>
@@ -942,6 +943,7 @@ const getDiscountPrice = (ct: any) => {
   border: 1px solid #ddd;
   background: #fff;
   overflow: hidden;
+  overflow: hidden;
 }
 
 
@@ -949,21 +951,28 @@ const getDiscountPrice = (ct: any) => {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
 
+/* cố định header */
+.table thead {
 /* cố định header */
 .table thead {
   display: table;
   width: 100%;
   table-layout: fixed;
   background: #fff;
+  background: #fff;
 }
 
 
 /* chỉ body cuộn */
+/* chỉ body cuộn */
 .table tbody {
   display: block;
+  max-height: 320px;
   max-height: 320px;
   overflow-y: auto;
 }
@@ -981,6 +990,7 @@ const getDiscountPrice = (ct: any) => {
 .table th,
 .table td {
   padding: 14px 8px;
+  padding: 14px 8px;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
@@ -992,6 +1002,10 @@ const getDiscountPrice = (ct: any) => {
 }
 
 
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 200px;
+  white-space: nowrap;
 .table th:nth-child(4),
 .table td:nth-child(4) {
   width: 200px;
