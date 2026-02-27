@@ -83,7 +83,13 @@
             <p class="status-note">Hãy bấm kết thúc ca khi bạn làm xong nhé!</p>
           </div>
 
-          <div v-if="chamCong" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
+          <div v-else class="alert-box disabled-box" style="text-align: left;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; justify-content: center;">
+               <span class="alert-icon" style="font-size: 24px;">🔒</span>
+               <h4 style="margin: 0; color: #2F855A;">Ca làm việc đã kết thúc</h4>
+            </div>
+            
+            <div v-if="chamCong" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
                
                <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
                  <p style="margin: 5px 0; font-size: 16px;"><strong>Tổng doanh thu: </strong> 
@@ -122,6 +128,18 @@
                   (Ghi chú: {{ chamCong.ghiChu || 'Không có' }})
                </p>
             </div>
+
+            <p style="text-align: center; margin-top: 15px; font-size: 13px;">Bạn hiện đang ở chế độ chỉ xem.</p>
+            
+            <div class="custom-swal-actions" style="margin-top: 20px;">
+              <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
+                Đăng xuất
+              </button>
+              <button @click="closeModal" class="custom-swal-confirm-btn" style="background-color: #718096 !important;">
+                Chỉ xem
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
