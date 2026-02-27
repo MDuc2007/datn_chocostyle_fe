@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-layout" :class="{ 'view-only-mode': isViewOnly }">
+  <div class="admin-layout">
     <aside class="sidebar">
       <div class="logo-wrapper">
         <img
@@ -10,65 +10,145 @@
       </div>
 
       <nav class="menu">
-        <router-link to="/staff/dashboard" class="menu-item">
-          <div class="invoice">
-            <img src="/src/assets/icon/home.svg" class="menu-icon" />
-            <div>Trang chủ</div>
-          </div>
-        </router-link>
+        <div class="menu-group">
+          <router-link to="/admin/dashboard" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/home.svg" class="menu-icon" />
+              <div>Trang chủ</div>
+            </div>
+          </router-link>
 
-        <router-link to="/staff/sales" class="menu-item">
-          <div class="invoice">
-            <img src="/src/assets/icon/cashier.svg" class="menu-icon" />
-            <div>Bán hàng</div>
-          </div>
-        </router-link>
+          <router-link to="/admin/statistic" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/report.svg" class="menu-icon" />
+              <div>Thống kê</div>
+            </div>
+          </router-link>
 
-        <router-link to="/staff/invoice" class="menu-item">
-          <div class="invoice">
-            <img src="/src/assets/icon/invoice.svg" class="menu-icon" />
-            <div>Hóa đơn</div>
-          </div>
-        </router-link>
+          <router-link to="/admin/sales" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/cashier.svg" class="menu-icon" />
+              <div>Bán hàng tại quầy</div>
+            </div>
+          </router-link>
 
-        <router-link to="/staff/customer" class="menu-item">
-          <div class="invoice">
-            <img src="/src/assets/icon/user.svg" class="menu-icon" />
-            <div>Khách hàng</div>
+          <router-link to="/admin/invoice" class="menu-item">
+            <div class="invoice">
+              <img src="/src/assets/icon/invoice.svg" class="menu-icon" />
+              <div>Quản lý hóa đơn</div>
+            </div>
+          </router-link>
+
+          <div
+            class="menu-item has-children"
+            :class="{ active: isProductOpen }"
+            @click="goToProduct"
+          >
+            <img src="/src/assets/icon/box.svg" class="menu-icon" />
+            <div>
+              Quản lý sản phẩm
+              <span class="arrow" :class="{ open: isProductOpen }">▾</span>
+            </div>
           </div>
-        </router-link>
+          <div class="submenu" v-show="isProductOpen">
+            <router-link to="/admin/product" class="submenu-item"
+              >Sản phẩm</router-link
+            >
+            <router-link to="/admin/product/details" class="submenu-item"
+              >Biến thể sản phẩm</router-link
+            >
+            <router-link to="/admin/origin" class="submenu-item"
+              >Xuất xứ</router-link
+            >
+            <router-link to="/admin/material" class="submenu-item"
+              >Chất liệu</router-link
+            >
+            <router-link to="/admin/color" class="submenu-item"
+              >Màu sắc</router-link
+            >
+            <router-link to="/admin/size" class="submenu-item"
+              >Kích cỡ</router-link
+            >
+            <router-link to="/admin/style" class="submenu-item"
+              >Phong cách mặc</router-link
+            >
+            <router-link to="/admin/type" class="submenu-item"
+              >Loại áo</router-link
+            >
+            <router-link to="/admin/shapetype" class="submenu-item"
+              >Kiểu dáng</router-link
+            >
+          </div>
+        </div>
 
         <div class="menu-group">
           <div
             class="menu-item has-children"
-            :class="{ active: isScheduleOpen }"
-            @click="toggleSchedule"
+            :class="{ active: isDiscountOpen }"
+            @click="toggleDiscount"
           >
-            <img src="/src/assets/icon/calendar.svg" class="menu-icon" />
-            <div class="menu-text-wrap">
-              <span>Lịch làm việc</span>
+            <img src="/src/assets/icon/pgg.svg" class="menu-icon" />
+            <div>
+              Khuyến mại
+              <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
+            </div>
+          </div>
+          <div class="submenu" v-show="isDiscountOpen">
+            <router-link to="/admin/voucher" class="submenu-item"
+              >Phiếu giảm giá</router-link
+            >
+            <router-link to="/admin/promotion" class="submenu-item"
+              >Đợt giảm giá</router-link
+            >
+          </div>
+        </div>
+
+        <div class="menu-group">
+          <div
+            class="menu-item has-children"
+            :class="{ active: isAccountOpen }"
+            @click="toggleAccount"
+          >
+            <img src="/src/assets/icon/user.svg" class="menu-icon" />
+            <div>
+              Tài khoản
+              <span class="arrow" :class="{ open: isAccountOpen }">▾</span>
+            </div>
+          </div>
+          <div class="submenu" v-show="isAccountOpen">
+            <router-link to="/admin/employee" class="submenu-item"
+              >Nhân viên</router-link
+            >
+            <router-link to="/admin/customer" class="submenu-item"
+              >Khách hàng</router-link
+            >
+          </div>
+        </div>
+
+        <div class="menu-group">
+          <div class="menu-item has-children" @click="toggleSchedule">
+            <img
+              src="/src/assets/icon/calendar.svg"
+              class="menu-icon"
+              onerror="
+                this.src =
+                  'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'
+              "
+            />
+            <div>
+              Quản lý lịch làm việc
               <span class="arrow" :class="{ open: isScheduleOpen }">▾</span>
             </div>
           </div>
-
           <div class="submenu" v-show="isScheduleOpen">
-            <router-link to="/staff/my-schedule" class="submenu-item">
-              Lịch của tôi
-            </router-link>
-            <router-link to="/staff/shift-report" class="submenu-item">
-              Giao ca và kế toán
-            </router-link>
+            <router-link to="/admin/shift" class="submenu-item"
+              >Ca làm việc</router-link
+            >
+            <router-link to="/admin/schedule" class="submenu-item"
+              >Lịch làm việc</router-link
+            >
           </div>
         </div>
-        <router-link to="/staff/chat" class="menu-item">
-          <div class="invoice">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/134/134914.png"
-              style="width: 30px; height: 30px"
-            />
-            <div>Tin nhắn hỗ trợ</div>
-          </div>
-        </router-link>
       </nav>
     </aside>
 
@@ -80,13 +160,17 @@
           </div>
 
           <img src="/src/assets/icon/notification.svg" class="icon" />
-          
-          <div class="user-icon-wrapper" @click.stop="toggleUserMenu" ref="userMenuRef">
-            <img 
-              v-if="currentUserAvatar" 
-              :src="currentUserAvatar" 
+
+          <div
+            class="user-icon-wrapper"
+            @click.stop="toggleUserMenu"
+            ref="userMenuRef"
+          >
+            <img
+              v-if="currentUserAvatar"
+              :src="currentUserAvatar"
               alt="Avatar"
-class="user-avatar" 
+              class="user-avatar"
               @error="handleAvatarError"
             />
             <div v-else class="user-initial">
@@ -95,9 +179,13 @@ class="user-avatar"
 
             <transition name="fade">
               <div v-if="isUserMenuOpen" class="user-dropdown">
-                <button @click.stop="viewProfile" class="dropdown-item">Xem thông tin</button>
+                <button @click.stop="viewProfile" class="dropdown-item">
+                  Xem thông tin
+                </button>
                 <div class="dropdown-divider"></div>
-                <button @click.stop="logout" class="dropdown-item text-danger">Đăng xuất</button>
+                <button @click.stop="logout" class="dropdown-item text-danger">
+                  Đăng xuất
+                </button>
               </div>
             </transition>
           </div>
@@ -112,149 +200,126 @@ class="user-avatar"
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import axios from "axios"; // 👉 Thêm import axios
 
 const router = useRouter();
 
-const isViewOnly = ref(false);
-
-// ===== Dropdown State =====
-const isScheduleOpen = ref(false);
+// Các biến state cho menu
+const isDiscountOpen = ref(false);
+const isAccountOpen = ref(false);
+const isProductOpen = ref(false);
 const isUserMenuOpen = ref(false);
+const isScheduleOpen = ref(false);
 const userMenuRef = ref<HTMLElement | null>(null);
 
-// ===== Thông tin User =====
-const currentUserName = ref("Nhân viên");
+// Thông tin user
+const currentUserName = ref("Admin");
 const currentUserAvatar = ref<string | null>(null);
 
-// Lắng nghe sự kiện để khóa ngay lập tức khi bấm nút (Từ nhánh HEAD)
-const handleViewOnlyEvent = (e: Event) => {
-  const customEvent = e as CustomEvent;
-  isViewOnly.value = customEvent.detail; 
+// Hàm chạy khi load trang để lấy thông tin từ LocalStorage
+onMounted(async () => {
+  // 👉 Thêm async vào đây
+  const userStr = localStorage.getItem("user");
+  const token = localStorage.getItem("token"); // Lấy token để gọi API
+
+  if (userStr) {
+    try {
+      const userData = JSON.parse(userStr);
+      // Ưu tiên lấy tên nhân viên -> họ tên -> name
+      currentUserName.value =
+        userData.tenNhanVien ||
+        userData.hoTen ||
+        userData.name ||
+        userData.username ||
+        "Admin";
+
+      // 👉 GỌI API LẤY ẢNH BASE64 TỪ BACKEND
+      if (userData.id && token) {
+        try {
+          const res = await axios.get(
+            `http://localhost:8080/api/nhan-vien/${userData.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          // Gán ảnh Base64 từ API vào biến hiển thị
+          if (res.data && res.data.avatar) {
+            currentUserAvatar.value = res.data.avatar;
+          }
+        } catch (apiError) {
+          console.error("Lỗi không thể lấy ảnh nhân viên từ API:", apiError);
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi khi đọc dữ liệu user:", e);
+    }
+  }
+
+  // Lắng nghe sự kiện click ra ngoài để đóng menu user
+  document.addEventListener("click", handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
+
+// Hàm lấy chữ cái đầu tiên
+const getUserInitial = (name: string) => {
+  if (!name || name === "Admin") return "A";
+  const words = name.trim().split(" ");
+  const lastName = words[words.length - 1];
+  return lastName.charAt(0).toUpperCase();
 };
 
-// Đóng menu khi click ra ngoài (Từ nhánh HungDepZai)
+// Xử lý khi ảnh bị lỗi (link hỏng)
+const handleAvatarError = () => {
+  currentUserAvatar.value = null; // Chuyển về chế độ hiện chữ cái đầu
+};
+
+// Đóng menu khi click ra ngoài
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
     isUserMenuOpen.value = false;
   }
 };
 
-// ===== Lấy dữ liệu khi load trang =====
-onMounted(async () => {
-  // Lắng nghe sự kiện
-  window.addEventListener('set-view-only', handleViewOnlyEvent);
-  document.addEventListener("click", handleClickOutside);
-
-  const userStr = localStorage.getItem("user");
-  const token = localStorage.getItem("token");
-  let idNv = localStorage.getItem("idNv");
-
-  // 1. Lấy thông tin & Avatar User
-  if (userStr) {
-    try {
-      const userData = JSON.parse(userStr);
-      // Ưu tiên lấy tenNhanVien, nếu không có lấy hoTen hoặc name
-      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || userData.username || "Nhân viên";
-      
-      // Fallback lấy idNv từ user object nếu localStorage chưa lưu idNv rời
-      if (!idNv && userData.id) idNv = userData.id;
-
-      // GỌI API LẤY ẢNH TRỰC TIẾP TỪ BACKEND
-      if (userData.id && token) {
-        try {
-          const res = await axios.get(`http://localhost:8080/api/nhan-vien/${userData.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (res.data && res.data.avatar) {
-            currentUserAvatar.value = res.data.avatar;
-          }
-        } catch (apiError) {
-console.error("Lỗi không thể lấy ảnh nhân viên từ API:", apiError);
-        }
-      }
-    } catch (e) {
-      console.error("Lỗi đọc dữ liệu user:", e);
-    }
-  } else {
-    router.push("/login");
-    return;
-  }
-
-  // 2. Kiểm tra ca làm việc để xét View-Only
-  if (idNv && token) {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      // Kiểm tra xem hôm nay CÓ CA không
-      const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
-      
-      if (resCa.data && resCa.data.caLamViec) {
-        // Nếu có ca -> Kiểm tra xem ĐÃ CHECK-OUT chưa
-        const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
-        
-        // Nếu API trả về dữ liệu và có trường gioCheckOut (nghĩa là đã kết thúc ca)
-        if (resChamCong.data && resChamCong.data.gioCheckOut) {
-           isViewOnly.value = true;  // KHÓA MÀN HÌNH
-        } else {
-           isViewOnly.value = false; // MỞ KHÓA (Đang trong ca làm việc)
-        }
-      } else {
-        isViewOnly.value = true;  // Không có ca -> KHÓA
-      }
-    } catch (error) {
-      console.log("Lỗi hoặc không có ca:", error);
-      isViewOnly.value = true; // Lỗi cũng KHÓA luôn cho an toàn
-    }
-  } else {
-    isViewOnly.value = true;
-  }
-});
-
-// Gỡ bỏ Event Listener khi component bị hủy
-onUnmounted(() => {
-  window.removeEventListener('set-view-only', handleViewOnlyEvent);
-  document.removeEventListener("click", handleClickOutside);
-});
-
-// Hàm lấy chữ cái đầu
-const getUserInitial = (name: string) => {
-  if (!name || name === "Nhân viên") return "N";
-  const words = name.trim().split(' ');
-  const lastName = words[words.length - 1];
-  return lastName.charAt(0).toUpperCase();
-};
-
-// Handle lỗi ảnh avatar
-const handleAvatarError = () => {
-  currentUserAvatar.value = null; // Chuyển về chế độ hiện chữ cái đầu
-};
-
-// ===== Toggle Lịch làm việc =====
 const toggleSchedule = () => {
   isScheduleOpen.value = !isScheduleOpen.value;
 };
 
-// ===== Toggle User menu =====
+const goToProduct = () => {
+  isProductOpen.value = !isProductOpen.value;
+  if (isProductOpen.value) {
+    router.push("/admin/product");
+  }
+};
+
+const toggleDiscount = () => {
+  isDiscountOpen.value = !isDiscountOpen.value;
+};
+
+const toggleAccount = () => {
+  isAccountOpen.value = !isAccountOpen.value;
+};
+
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value;
 };
 
-// ===== Xem profile =====
 const viewProfile = () => {
   isUserMenuOpen.value = false;
-  alert("Chức năng xem thông tin đang phát triển.");
+  alert("Chức năng xem thông tin người dùng đang được phát triển.");
 };
 
-// ===== Logout =====
 const logout = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("token");
-  localStorage.removeItem("idNv");
-  window.location.reload(); 
+  window.location.reload();
 };
 </script>
 
@@ -267,36 +332,9 @@ const logout = () => {
     "Inter",
     system-ui,
     -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
     sans-serif;
 }
-/* ================= VIEW ONLY MODE (CHỈ XEM) CẢI TIẾN ================= */
 
-/* 1. Mở khóa Menu bên trái: Chỉ làm mờ nhẹ để báo hiệu, không dùng pointer-events: none nữa */
-.view-only-mode .sidebar {
-  opacity: 0.9;
-}
-
-/* 2. KHÔNG khóa toàn bộ vùng content (để nhân viên còn cuộn scrollbar được) */
-.view-only-mode .content {
-  /* Giữ nguyên, không thêm pointer-events ở đây */
-}
-
-/* 3. KHÓA MÕM TẤT CẢ TƯƠNG TÁC (Nút, Ô nhập, Dropdown, Link) bên trong vùng content */
-.view-only-mode .content :deep(button),
-.view-only-mode .content :deep(input),
-.view-only-mode .content :deep(select),
-.view-only-mode .content :deep(textarea),
-/* Khóa các link, nhưng chừa lại phân trang hoặc menu nếu cần */
-.view-only-mode .content :deep(a) {
-  pointer-events: none !important; /* Chặn click/gõ */
-  opacity: 0.5 !important;        /* Làm mờ */
-  user-select: none !important;    /* Không cho bôi đen text */
-}
 /* ================= SIDEBAR ================= */
 .sidebar {
   width: 270px;
@@ -337,9 +375,8 @@ const logout = () => {
   border-radius: 6px;
   color: #333;
   text-decoration: none;
-  margin-bottom: 6px;
-  cursor: pointer;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .invoice {
@@ -404,7 +441,7 @@ const logout = () => {
   color: #6b3f23;
   font-weight: 700;
   border-left: 3px solid #6b3f23;
-  padding-left: 17px;
+  padding-left: 17px; /* Cân bằng lại padding khi có border */
 }
 
 /* ================= HAS CHILD ================= */
@@ -412,9 +449,10 @@ const logout = () => {
   display: flex;
   align-items: center;
   gap: 15px;
+  justify-content: space-between; /* Đẩy mũi tên sang phải */
 }
 
-.menu-text-wrap {
+.has-children > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -425,14 +463,13 @@ const logout = () => {
   transition: transform 0.2s ease;
   font-size: 12px;
 }
-
 .arrow.open {
   transform: rotate(180deg);
 }
 
 /* ================= MAIN ================= */
 .main {
-margin-left: 270px;
+  margin-left: 270px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -467,7 +504,6 @@ margin-left: 270px;
   cursor: pointer;
 }
 
-/* TÊN NGƯỜI DÙNG */
 .user-welcome {
   font-size: 14px;
   color: #555;
@@ -493,7 +529,7 @@ margin-left: 270px;
   object-fit: cover;
   border: 2px solid #eee;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .user-initial {
@@ -511,10 +547,10 @@ margin-left: 270px;
   box-shadow: 0 2px 4px rgba(99, 57, 31, 0.2);
 }
 
-/* ================= DROP DOWN MENU ================= */
+/* ================= FIX LỖI USER DROPDOWN MENU ================= */
 .user-dropdown {
   position: absolute;
-  top: calc(100% + 10px); 
+  top: calc(100% + 10px); /* Nằm ngay dưới avatar + 10px khoảng cách */
   right: 0;
   background: white;
   border: 1px solid #ebebeb;
@@ -523,12 +559,13 @@ margin-left: 270px;
   padding: 5px 0;
   min-width: 160px;
   z-index: 1000;
-  overflow: hidden; 
+  /* Đảm bảo text không bị tràn */
+  overflow: hidden;
 }
 
 /* Mũi tên chỉ lên */
 .user-dropdown::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -6px;
   right: 12px;
@@ -551,7 +588,7 @@ margin-left: 270px;
   color: #333;
   cursor: pointer;
   transition: background-color 0.2s;
-  box-sizing: border-box; 
+  box-sizing: border-box; /* Rất quan trọng để padding không cộng dồn vào width */
 }
 
 .dropdown-item:hover {
@@ -577,12 +614,14 @@ margin-left: 270px;
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-10px); /* Trượt từ trên xuống */
 }
 
 /* ================= CONTENT ================= */

@@ -226,7 +226,7 @@
                     <select v-model="currentOrder.customer.district">
                       <option value="">Quận/Huyện *</option>
                       <option
-                        v-for="d in districts"
+                        v-for="d in currentOrder.districts"
                         :key="d.code"
                         :value="d.code"
                       >
@@ -242,7 +242,11 @@
                   <div class="form-item">
                     <select v-model="currentOrder.customer.ward">
                       <option value="">Xã/Phường *</option>
-                      <option v-for="w in wards" :key="w.code" :value="w.code">
+                      <option
+                        v-for="w in currentOrder.wards"
+                        :key="w.code"
+                        :value="w.code"
+                      >
                         {{ w.name }}
                       </option>
                     </select>
