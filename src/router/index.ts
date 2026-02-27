@@ -37,15 +37,21 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/Cart.vue"),
   },
   {
-    path: "/ao-khoac",
-    name: "JacketPage",
-    component: () => import("../pages/views/JacketPage.vue"),
-  },
-  {
-    path: "/thong-tin",
-    name: "Information",
-    component: () => import("../pages/views/InformationPage.vue"),
-  },
+      path: "/ao-khoac",
+      name: "JacketPage",
+      component: () => import("../pages/views/JacketPage.vue"),
+    },
+    {
+      path: "/thong-tin",
+      name: "Information",
+      component: () => import("../pages/views/InformationPage.vue"),
+    },
+    {
+      path: "/tra-cuu",
+      name: "OrderTracking",
+      component: () => import("../pages/views/OrderTrackingPage.vue"),
+    },
+
 
   // LOGIN KHÁCH HÀNG
   {
