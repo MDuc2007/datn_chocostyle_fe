@@ -85,8 +85,8 @@
             <img 
               v-if="currentUserAvatar" 
               :src="currentUserAvatar" 
-              alt="Avatar" 
-              class="user-avatar" 
+              alt="Avatar"
+class="user-avatar" 
               @error="handleAvatarError"
             />
             <div v-else class="user-initial">
@@ -173,7 +173,7 @@ onMounted(async () => {
             currentUserAvatar.value = res.data.avatar;
           }
         } catch (apiError) {
-          console.error("Lỗi không thể lấy ảnh nhân viên từ API:", apiError);
+console.error("Lỗi không thể lấy ảnh nhân viên từ API:", apiError);
         }
       }
     } catch (e) {
@@ -432,7 +432,7 @@ const logout = () => {
 
 /* ================= MAIN ================= */
 .main {
-  margin-left: 270px;
+margin-left: 270px;
   flex: 1;
   display: flex;
   flex-direction: column;
