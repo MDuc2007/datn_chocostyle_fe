@@ -17,7 +17,48 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title styled-title">HÀNG MỚI LÊN KỆ</h2>
+        <div class="toolbar">
+          <div class="search-group">
+            <div class="search-input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input 
+                type="text" 
+                v-model="searchKeyword" 
+                @input="applyFilters" 
+                placeholder="Tìm hàng mới..." 
+                class="search-input"
+              />
+              <button v-if="searchKeyword" @click="clearSearch" class="clear-search-btn">✕</button>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <div class="filter-group">
+              <span class="toolbar-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Lọc giá:
+              </span>
+              <select v-model="selectedPriceFilter" @change="applyFilters" class="toolbar-select">
+                <option value="all">Tất cả</option>
+                <option value="under500">Dưới 500.000 đ</option>
+                <option value="500to1000">500.000 đ - 1.000.000 đ</option>
+                <option value="over1000">Trên 1.000.000 đ</option>
+              </select>
+            </div>
+
+            <div class="sort-group">
+              <span class="toolbar-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                Sắp xếp:
+              </span>
+              <select v-model="selectedSort" @change="applyFilters" class="toolbar-select">
+                <option value="newest">Mới nhất (Mặc định)</option>
+                <option value="priceAsc">Giá: Thấp đến Cao</option>
+                <option value="priceDesc">Giá: Cao đến Thấp</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <div v-if="isLoading" class="loading-state">
           <div class="spinner"></div>
@@ -25,28 +66,29 @@
         </div>
 
         <div v-else-if="errorMsg" class="error-state">
-          <div class="error-icon">⚠️</div>
+          <div class="error-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
           <p>{{ errorMsg }}</p>
           <button @click="fetchData" class="btn-retry">Thử lại</button>
         </div>
 
         <div v-else>
-          <div v-if="products.length > 0">
+          <div v-if="filteredProducts.length > 0">
             <div class="product-grid">
               <transition-group name="list">
                 <div
                   v-for="sp in displayedProducts"
                   :key="sp.id"
                   class="product-card"
-                  @click="goDetail(sp.id)"
                 >
-                  <div class="image-box">
+                  <div class="image-box" @click="goDetail(sp.id)">
                     <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
                     <span class="badge badge-new">NEW</span>
                   </div>
 
                   <div class="product-info">
-                    <h3 class="product-name" :title="sp.tenSp">{{ sp.tenSp }}</h3>
+                    <h3 class="product-name" :title="sp.tenSp" @click="goDetail(sp.id)">{{ sp.tenSp }}</h3>
                     <p class="price">
                       <span v-if="sp.giaMin === sp.giaMax" class="price-value">
                         {{ formatPrice(sp.giaMin) }}
@@ -55,6 +97,13 @@
                         {{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}
                       </span>
                     </p>
+                    
+                    <button class="btn-quick-add" @click.stop="quickAddToCart(sp)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-cart-icon">
+                        <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                      Thêm vào giỏ
+                    </button>
                   </div>
                 </div>
               </transition-group>
@@ -62,20 +111,34 @@
 
             <div v-if="hasMore" class="load-more-container">
               <button class="btn-load-more" @click="loadMoreProducts">
-                Xem thêm sản phẩm mới
+                Xem thêm (Còn {{ remainingCount }} sản phẩm)
               </button>
             </div>
           </div>
 
           <div v-else class="empty-state">
-            <div class="empty-icon">✨</div>
-            <p>Hiện chưa có sản phẩm mới nào được cập nhật.</p>
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15H9"></line></svg>
+            </div>
+            <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
+            <button @click="resetFilters" class="btn-retry">Xóa bộ lọc</button>
           </div>
         </div>
       </section>
     </main>
 
     <Footer></Footer>
+
+    <transition name="toast-slide">
+      <div v-if="toast.show" :class="['toast-notification', toast.type]">
+        <div class="toast-icon-wrapper">
+          <span v-if="toast.type === 'success'">✓</span>
+          <span v-else-if="toast.type === 'error'">✕</span>
+          <span v-else>!</span>
+        </div>
+        <div class="toast-content">{{ toast.message }}</div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -88,33 +151,54 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const products = ref([]);
+// Trạng thái dữ liệu
+const allProducts = ref([]);
+const filteredProducts = ref([]);
 const isLoading = ref(true);
 const errorMsg = ref("");
+
+// Trạng thái bộ lọc
+const searchKeyword = ref("");
+const selectedPriceFilter = ref("all");
+const selectedSort = ref("newest");
 
 // Phân trang nội bộ
 const itemsPerPage = 12;
 const visibleCount = ref(itemsPerPage);
 
+// Toast System
+const toast = ref({ show: false, message: "", type: "success" });
+
+const showToast = (msg, type = "success") => {
+  toast.value = { show: true, message: msg, type };
+  setTimeout(() => (toast.value.show = false), 3000);
+};
+
+// Computed
 const displayedProducts = computed(() => {
-  return products.value.slice(0, visibleCount.value);
+  return filteredProducts.value.slice(0, visibleCount.value);
 });
 
 const hasMore = computed(() => {
-  return visibleCount.value < products.value.length;
+  return visibleCount.value < filteredProducts.value.length;
 });
 
+const remainingCount = computed(() => {
+  return filteredProducts.value.length - visibleCount.value;
+});
+
+// Load More
 const loadMoreProducts = () => {
   visibleCount.value += itemsPerPage;
 };
 
-// Format tiền
+// Hàm định dạng tiền
 const formatPrice = (v) => {
   if (v == null) return "0 đ";
   return new Intl.NumberFormat("vi-VN").format(v) + " đ";
 };
 
-// Xử lý lỗi ảnh
+// Xử lý ảnh lỗi
 const handleImageError = (event) => {
   event.target.src = "/src/assets/logo/no-image-placeholder.png"; 
 };
@@ -124,24 +208,82 @@ const goDetail = (id) => {
   router.push(`/home/product/${id}`);
 };
 
-// Call API
+const quickAddToCart = (sp) => {
+  showToast("Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!", "warning");
+  setTimeout(() => {
+    goDetail(sp.id);
+  }, 1200);
+};
+
+// Bỏ dấu tiếng Việt
+const removeAccents = (str) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+const clearSearch = () => {
+  searchKeyword.value = "";
+  applyFilters();
+};
+
+// Lọc & Sắp xếp
+const applyFilters = () => {
+  let result = [...allProducts.value];
+
+  // 1. Tìm kiếm chữ
+  if (searchKeyword.value.trim() !== "") {
+    const keyword = removeAccents(searchKeyword.value);
+    result = result.filter(sp => {
+      const name = removeAccents(sp.tenSp || "");
+      return name.includes(keyword);
+    });
+  }
+
+  // 2. Lọc giá
+  if (selectedPriceFilter.value !== "all") {
+    result = result.filter(sp => {
+      const price = sp.giaMin;
+      if (selectedPriceFilter.value === "under500") return price < 500000;
+      if (selectedPriceFilter.value === "500to1000") return price >= 500000 && price <= 1000000;
+      if (selectedPriceFilter.value === "over1000") return price > 1000000;
+      return true;
+    });
+  }
+
+  // 3. Sắp xếp
+  result.sort((a, b) => {
+    if (selectedSort.value === "priceAsc") return a.giaMin - b.giaMin;
+    if (selectedSort.value === "priceDesc") return b.giaMin - a.giaMin;
+    // newest: Mặc định trang New Arrivals sắp xếp theo ID giảm dần (mới nhất thêm vào)
+    return b.id - a.id; 
+  });
+
+  filteredProducts.value = result;
+  visibleCount.value = itemsPerPage; 
+};
+
+const resetFilters = () => {
+  searchKeyword.value = "";
+  selectedPriceFilter.value = "all";
+  selectedSort.value = "newest";
+  applyFilters();
+};
+
+// Gọi API
 const fetchData = async () => {
   isLoading.value = true;
   errorMsg.value = "";
   try {
     const res = await axios.get("http://localhost:8080/api/san-pham/home");
     
-    // Ép mảng sản phẩm
     let rawData = res.data.content || res.data || [];
     
-    // 👉 ĐIỂM KHÁC BIỆT Ở ĐÂY:
-    // Sắp xếp cưỡng bức theo ID giảm dần (Sản phẩm mới thêm vào ID sẽ lớn nhất)
-    // Hoặc nếu Backend có trường `ngayTao`, bạn có thể sort theo `ngayTao`
+    // Ép kiểu sắp xếp MỚI NHẤT cho danh sách gốc (Dựa vào ID hoặc ngày tạo)
     rawData.sort((a, b) => b.id - a.id);
 
-    // Chỉ lấy ví dụ 24 sản phẩm mới nhất thôi
-    products.value = rawData.slice(0, 24);
+    // Tạm lấy 24 sản phẩm mới nhất
+    allProducts.value = rawData.slice(0, 24);
 
+    applyFilters();
   } catch (error) {
     console.error("Lỗi:", error);
     errorMsg.value = "Hệ thống đang bảo trì. Không thể tải danh sách sản phẩm lúc này.";
@@ -180,10 +322,10 @@ onMounted(() => {
 .breadcrumb .separator { margin: 0 10px; cursor: default; }
 .breadcrumb .current { font-weight: 600; color: #6b3f1e; cursor: default; }
 
-/* Sub Banner (Riêng cho Mới về) */
+/* Sub Banner (Mới về) */
 .sub-banner {
   background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/src/assets/logo/banner 1.png') center/cover;
-  background-color: #2c3e50; /* Fallback color */
+  background-color: #2c3e50; 
   height: 250px;
   display: flex;
   align-items: center;
@@ -202,21 +344,51 @@ onMounted(() => {
   width: 100%;
 }
 
-.styled-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #6b3f1e;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  border-bottom: 2px solid #6b3f1e;
-  display: block;
-  text-align: center;
-  padding-bottom: 10px;
-  margin-bottom: 40px;
-  width: fit-content; 
-  margin-left: auto;
-  margin-right: auto;
+/* ================= TOOLBAR TÌM KIẾM & BỘ LỌC ================= */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
 }
+
+.search-group { flex: 1; min-width: 250px; max-width: 400px; }
+.search-input-wrapper { position: relative; display: flex; align-items: center; }
+.search-icon { position: absolute; left: 12px; width: 18px; height: 18px; color: #888; }
+.search-input {
+  width: 100%;
+  padding: 10px 35px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.search-input:focus { border-color: #6b3f1e; box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1); }
+.clear-search-btn { position: absolute; right: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; padding: 5px; border-radius: 50%; }
+.clear-search-btn:hover { background: #eee; color: #333; }
+
+.filter-actions { display: flex; gap: 20px; flex-wrap: wrap; }
+.filter-group, .sort-group { display: flex; align-items: center; gap: 12px; }
+.toolbar-label { font-weight: 600; color: #555; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.toolbar-icon { width: 16px; height: 16px; }
+.toolbar-select {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+  color: #333;
+}
+.toolbar-select:hover, .toolbar-select:focus { border-color: #6b3f1e; box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1); }
 
 /* ================= PRODUCT GRID ================= */
 .product-grid {
@@ -235,7 +407,6 @@ onMounted(() => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  cursor: pointer;
 }
 
 .product-card:hover {
@@ -254,6 +425,7 @@ onMounted(() => {
   border-bottom: 1px solid #f5f5f5;
   overflow: hidden;
   position: relative;
+  cursor: pointer;
 }
 
 .image-box img {
@@ -263,9 +435,7 @@ onMounted(() => {
   transition: transform 0.5s ease;
 }
 
-.product-card:hover .image-box img {
-  transform: scale(1.05);
-}
+.product-card:hover .image-box img { transform: scale(1.05); }
 
 .badge {
   position: absolute;
@@ -279,10 +449,10 @@ onMounted(() => {
   z-index: 2;
   letter-spacing: 1px;
 }
-.badge-new { background-color: #d0021b; } /* Màu đỏ nổi bật cho chữ NEW */
+.badge-new { background-color: #d0021b; } 
 
 .product-info {
-  padding: 16px;
+  padding: 20px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -302,35 +472,48 @@ onMounted(() => {
   text-overflow: ellipsis;
   line-height: 1.4;
   height: 42px; 
+  cursor: pointer;
   transition: color 0.2s;
 }
-.product-card:hover .product-name { color: #6b3f1e; }
+.product-name:hover { color: #6b3f1e; }
 
 .price {
   font-weight: 700;
   color: #d32f2f; 
   font-size: 16px;
+  margin-bottom: 15px;
 }
+
+.btn-quick-add {
+  background: transparent;
+  border: 1px solid #6b3f1e;
+  color: #6b3f1e;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-cart-icon { width: 16px; height: 16px; }
+.product-card:hover .btn-quick-add { opacity: 1; transform: translateY(0); }
+.btn-quick-add:hover { background: #6b3f1e; color: #fff; }
 
 /* Animation list */
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.5s ease;
-}
-.list-enter-from,
-.list-leave-to {
-  opacity: 0;
-  transform: translateY(30px);
-}
+.list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+.list-enter-from, .list-leave-to { opacity: 0; transform: translateY(20px); }
+.list-leave-active { position: absolute; }
 
 /* Load More */
-.load-more-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 50px;
-}
+.load-more-container { display: flex; justify-content: center; margin-top: 50px; }
 .btn-load-more {
-  padding: 12px 40px;
+  padding: 14px 40px;
   background-color: transparent;
   color: #6b3f1e;
   border: 2px solid #6b3f1e;
@@ -340,21 +523,64 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
 }
-.btn-load-more:hover {
-  background-color: #6b3f1e;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(107, 63, 30, 0.2);
-}
+.btn-load-more:hover { background-color: #6b3f1e; color: #fff; box-shadow: 0 4px 15px rgba(107, 63, 30, 0.2); transform: translateY(-2px); }
 
 /* Loading & Error */
 .loading-state, .error-state, .empty-state { text-align: center; padding: 80px 0; color: #666; font-size: 16px; }
-.spinner { border: 4px solid #f3f3f3; border-top: 4px solid #6b3f1e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-.error-icon, .empty-icon { font-size: 48px; margin-bottom: 15px; opacity: 0.5;}
-.btn-retry { margin-top: 15px; padding: 10px 24px; background-color: #6b3f1e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.spinner { border: 4px solid #f3f3f3; border-top: 4px solid #6b3f1e; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+.error-icon, .empty-icon { width: 60px; height: 60px; margin: 0 auto 15px; color: #ccc;}
+.btn-retry { margin-top: 20px; padding: 12px 30px; background-color: #6b3f1e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+.btn-retry:hover { background-color: #4a2a17; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Toast */
+.toast-notification {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  z-index: 10000;
+  min-width: 280px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  background: #fff; 
+  border-left: 6px solid #22C55E;
+}
+.toast-notification.error { border-left-color: #ef4444; }
+.toast-notification.warning { border-left-color: #f59e0b; }
+.toast-icon-wrapper {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+.success .toast-icon-wrapper { background: #22C55E; }
+.error .toast-icon-wrapper { background: #ef4444; }
+.warning .toast-icon-wrapper { background: #f59e0b; }
+.toast-content { margin-left: 12px; font-weight: 500; font-size: 14px; color: #333;}
+.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
 
 /* Responsive */
 @media (max-width: 1024px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 768px) { .product-grid { grid-template-columns: repeat(2, 1fr); } .image-box { height: 220px; } }
-@media (max-width: 480px) { .product-grid { grid-template-columns: repeat(1, 1fr); } }
+@media (max-width: 768px) { 
+  .product-grid { grid-template-columns: repeat(2, 1fr); } 
+  .image-box { height: 220px; } 
+  .toolbar { flex-direction: column; align-items: stretch; gap: 15px;}
+  .search-group { max-width: 100%; }
+  .filter-actions { justify-content: space-between; width: 100%;}
+  .sub-banner h1 { font-size: 26px; }
+}
+@media (max-width: 480px) { 
+  .product-grid { grid-template-columns: repeat(1, 1fr); } 
+  .filter-actions { flex-direction: column; align-items: stretch; }
+  .filter-group, .sort-group { justify-content: space-between;}
+}
 </style>

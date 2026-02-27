@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const AUTH_URL = "/auth/";
+const AUTH_URL = "/auth/"; // Nhớ cấu hình baseURL trong axios ở chỗ khác nhé, hoặc ghi full "http://localhost:8080/api/auth/"
 
 class AuthService {
   // ==========================
-  // 1. LOGIN KHÁCH HÀNG
+  // 1. LOGIN KHÁCH HÀNG (SỬA Ở ĐÂY)
   // ==========================
   async loginCustomer(user) {
     const response = await axios.post(AUTH_URL + "login/customer", {
@@ -13,6 +13,8 @@ class AuthService {
     });
 
     if (response.data.accessToken) {
+      // ĐÃ THÊM: Lưu token rời để Header.vue có thể lấy gọi API ảnh
+      localStorage.setItem("token", response.data.accessToken);
       localStorage.setItem("user", JSON.stringify(response.data));
     }
 
@@ -20,9 +22,17 @@ class AuthService {
   }
 
   // ==========================
-  // 2. LOGIN NHÂN VIÊN
+  // 1.1 LƯU DỮ LIỆU TỪ GOOGLE/FACEBOOK (HÀM MỚI)
   // ==========================
-// ==========================
+  // Khi bạn nhận được Token và thông tin từ Google/FB trả về, hãy gọi hàm này
+  saveSocialLogin(data) {
+    if (data.accessToken) {
+      localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data));
+    }
+  }
+
+  // ==========================
   // 2. LOGIN NHÂN VIÊN
   // ==========================
   async loginStaff(user) {
@@ -32,13 +42,10 @@ class AuthService {
     });
 
     if (response.data.accessToken) {
-      // 1. Vẫn lưu cục "user" cũ để không ảnh hưởng các chức năng khác
       localStorage.setItem("user", JSON.stringify(response.data));
-      
-      // 2. 👉 LƯU THÊM CÁC BIẾN RỜI ĐỂ DÙNG CHO DASHBOARD & CHẤM CÔNG
       localStorage.setItem("token", response.data.accessToken);
       localStorage.setItem("idNv", response.data.id); 
-      localStorage.setItem("tenNv", response.data.tenNhanVien); // Lấy tên nhân viên từ Backend
+      localStorage.setItem("tenNv", response.data.tenNhanVien); 
     }
 
     return response.data;
@@ -61,29 +68,23 @@ class AuthService {
   // ==========================
   logout() {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("idNv");
+    localStorage.removeItem("tenNv");
   }
 
   // ==========================
-  // 5. FORGOT PASSWORD
+  // CÁC HÀM QUÊN MẬT KHẨU GIỮ NGUYÊN...
   // ==========================
   forgotPassword(email, type) {
     return axios.post(AUTH_URL + "forgot-password", null, {
-      params: {
-        email: email,
-        type: type, // "KHACH_HANG" | "NHAN_VIEN"
-      },
+      params: { email: email, type: type },
     });
   }
 
-  // ==========================
-  // 6. RESET PASSWORD
-  // ==========================
   resetPassword(email, otp, newPassword, type) {
     return axios.post(AUTH_URL + "reset-password", {
-      email: email,
-      otp: otp,
-      newPassword: newPassword,
-      type: type, // "KHACH_HANG" | "NHAN_VIEN"
+      email: email, otp: otp, newPassword: newPassword, type: type,
     });
   }
 }

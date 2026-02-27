@@ -18,29 +18,45 @@
 
       <section class="section">
         <div class="toolbar">
-          <div class="filter-group">
-            <span class="toolbar-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              Lọc giá:
-            </span>
-            <select v-model="selectedPriceFilter" @change="applyFilters" class="toolbar-select">
-              <option value="all">Tất cả mức giá</option>
-              <option value="under500">Dưới 500.000 đ</option>
-              <option value="500to1000">500.000 đ - 1.000.000 đ</option>
-              <option value="over1000">Trên 1.000.000 đ</option>
-            </select>
+          <div class="search-group">
+            <div class="search-input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input 
+                type="text" 
+                v-model="searchKeyword" 
+                @input="applyFilters" 
+                placeholder="Tìm kiếm áo khoác..." 
+                class="search-input"
+              />
+              <button v-if="searchKeyword" @click="clearSearch" class="clear-search-btn">✕</button>
+            </div>
           </div>
 
-          <div class="sort-group">
-            <span class="toolbar-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-              Sắp xếp:
-            </span>
-            <select v-model="selectedSort" @change="applyFilters" class="toolbar-select">
-              <option value="newest">Mới nhất</option>
-              <option value="priceAsc">Giá: Thấp đến Cao</option>
-              <option value="priceDesc">Giá: Cao đến Thấp</option>
-            </select>
+          <div class="filter-actions">
+            <div class="filter-group">
+              <span class="toolbar-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Lọc giá:
+              </span>
+              <select v-model="selectedPriceFilter" @change="applyFilters" class="toolbar-select">
+                <option value="all">Tất cả mức giá</option>
+                <option value="under500">Dưới 500.000 đ</option>
+                <option value="500to1000">500.000 đ - 1.000.000 đ</option>
+                <option value="over1000">Trên 1.000.000 đ</option>
+              </select>
+            </div>
+
+            <div class="sort-group">
+              <span class="toolbar-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toolbar-icon"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                Sắp xếp:
+              </span>
+              <select v-model="selectedSort" @change="applyFilters" class="toolbar-select">
+                <option value="newest">Mới nhất</option>
+                <option value="priceAsc">Giá: Thấp đến Cao</option>
+                <option value="priceDesc">Giá: Cao đến Thấp</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -103,7 +119,7 @@
             <div class="empty-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15H9"></line></svg>
             </div>
-            <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
+            <p>Không tìm thấy sản phẩm nào phù hợp với điều kiện tìm kiếm.</p>
             <button @click="resetFilters" class="btn-retry">Xóa bộ lọc</button>
           </div>
         </div>
@@ -141,6 +157,7 @@ const isLoading = ref(true);
 const errorMsg = ref("");
 
 // Trạng thái bộ lọc
+const searchKeyword = ref(""); // TỪ KHÓA TÌM KIẾM
 const selectedPriceFilter = ref("all");
 const selectedSort = ref("newest");
 
@@ -190,11 +207,31 @@ const goDetail = (id) => {
   router.push(`/home/product/${id}`);
 };
 
+// Loại bỏ dấu tiếng Việt để tìm kiếm chính xác hơn
+const removeAccents = (str) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+// Xóa tìm kiếm
+const clearSearch = () => {
+  searchKeyword.value = "";
+  applyFilters();
+};
+
 // Apply Filters & Sorting
 const applyFilters = () => {
   let result = [...allProducts.value];
 
-  // Lọc theo giá
+  // 1. Tìm kiếm bằng chữ
+  if (searchKeyword.value.trim() !== "") {
+    const keyword = removeAccents(searchKeyword.value);
+    result = result.filter(sp => {
+      const name = removeAccents(sp.tenSp || "");
+      return name.includes(keyword);
+    });
+  }
+
+  // 2. Lọc theo giá
   if (selectedPriceFilter.value !== "all") {
     result = result.filter(sp => {
       const price = sp.giaMin;
@@ -205,7 +242,7 @@ const applyFilters = () => {
     });
   }
 
-  // Sắp xếp
+  // 3. Sắp xếp
   result.sort((a, b) => {
     if (selectedSort.value === "priceAsc") return a.giaMin - b.giaMin;
     if (selectedSort.value === "priceDesc") return b.giaMin - a.giaMin;
@@ -217,6 +254,7 @@ const applyFilters = () => {
 };
 
 const resetFilters = () => {
+  searchKeyword.value = "";
   selectedPriceFilter.value = "all";
   selectedSort.value = "newest";
   applyFilters();
@@ -302,14 +340,70 @@ onMounted(() => {
   width: 100%;
 }
 
-/* Toolbar */
+/* ================= TOOLBAR TÌM KIẾM & BỘ LỌC ================= */
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 25px;
   margin-bottom: 30px;
   padding-bottom: 20px;
   border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+}
+
+/* Khung tìm kiếm */
+.search-group {
+  flex: 1;
+  min-width: 250px;
+  max-width: 400px;
+}
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: #888;
+}
+.search-input {
+  width: 100%;
+  padding: 10px 35px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.search-input:focus {
+  border-color: #6b3f1e;
+  box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1);
+}
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+}
+.clear-search-btn:hover {
+  background: #eee;
+  color: #333;
+}
+
+/* Cụm Filter & Sort */
+.filter-actions {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 .filter-group, .sort-group {
   display: flex;
@@ -583,10 +677,13 @@ onMounted(() => {
   .product-grid { grid-template-columns: repeat(2, 1fr); } 
   .image-box { height: 220px; } 
   .toolbar { flex-direction: column; align-items: stretch; gap: 15px;}
-  .filter-group, .sort-group { justify-content: space-between; width: 100%;}
+  .search-group { max-width: 100%; }
+  .filter-actions { justify-content: space-between; width: 100%;}
   .sub-banner h1 { font-size: 26px; }
 }
 @media (max-width: 480px) { 
   .product-grid { grid-template-columns: repeat(1, 1fr); } 
+  .filter-actions { flex-direction: column; align-items: stretch; }
+  .filter-group, .sort-group { justify-content: space-between;}
 }
 </style>

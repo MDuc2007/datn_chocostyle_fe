@@ -2,8 +2,36 @@
   <div class="app-container">
     <Header></Header>
 
-    <section class="banner">
-      <img src="/src/assets/logo/banner 1.png" alt="Banner Trang Chủ" />
+    <section 
+      class="banner-slider" 
+      @mouseenter="pauseSlide" 
+      @mouseleave="startSlide"
+    >
+      <div 
+        class="slides-wrapper" 
+        :style="{ transform: `translateX(-${currentBanner * 100}%)` }"
+      >
+        <div class="slide" v-for="(img, index) in banners" :key="index">
+          <img :src="img" :alt="'Banner ' + (index + 1)" />
+        </div>
+      </div>
+
+      <button class="slider-arrow prev" @click="prevBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <button class="slider-arrow next" @click="nextBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+
+      <div class="slider-dots">
+        <span 
+          v-for="(_, index) in banners" 
+          :key="index"
+          class="dot" 
+          :class="{ active: currentBanner === index }"
+          @click="goToBanner(index)"
+        ></span>
+      </div>
     </section>
 
     <main class="main-content">
@@ -186,7 +214,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 import axios from "axios";
@@ -203,85 +231,88 @@ const toggleChat = () => {
 
 const router = useRouter();
 
-// State quản lý dữ liệu
+// ================= LOGIC SLIDER BANNER =================
+const banners = ref([
+  "/src/assets/logo/banner 1.png",
+  // Thêm link ảnh thật của bạn vào 2 dòng dưới này (hoặc xóa đi nếu chỉ dùng 1 ảnh):
+  "https://file.hstatic.net/1000360022/file/banner_web_2_9e3d09a06cc54ffab917ccf95e2cd0d4_master.jpg",
+  "https://file.hstatic.net/1000360022/file/banner_web_1_8f1dbb16ba6f4523ad0328ed4a29a39f_master.jpg"
+]);
+const currentBanner = ref(0);
+let slideInterval = null;
+
+const nextBanner = () => {
+  currentBanner.value = (currentBanner.value + 1) % banners.value.length;
+};
+
+const prevBanner = () => {
+  currentBanner.value = (currentBanner.value - 1 + banners.value.length) % banners.value.length;
+};
+
+const goToBanner = (index) => {
+  currentBanner.value = index;
+};
+
+const startSlide = () => {
+  slideInterval = setInterval(nextBanner, 4000); // 4 giây tự động lướt 1 lần
+};
+
+const pauseSlide = () => {
+  clearInterval(slideInterval);
+};
+
+// ================= LOGIC SẢN PHẨM =================
 const bestSellers = ref([]);
 const products = ref([]);
 const isLoading = ref(true);
 const errorMsg = ref("");
 const bestSellerRef = ref(null);
 
-// LOGIC XEM THÊM (Load More)
-const itemsPerPage = 8; // Khởi tạo hiển thị 8 sản phẩm
+const itemsPerPage = 8;
 const visibleCount = ref(itemsPerPage);
 
-// Toast System
 const toast = ref({ show: false, message: "", type: "success" });
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type };
   setTimeout(() => (toast.value.show = false), 3000);
 };
 
-// Computed: Sản phẩm hiển thị
-const displayedProducts = computed(() => {
-  return products.value.slice(0, visibleCount.value);
-});
+const displayedProducts = computed(() => products.value.slice(0, visibleCount.value));
+const hasMore = computed(() => visibleCount.value < products.value.length);
+const remainingCount = computed(() => products.value.length - visibleCount.value);
 
-// Computed: Kiểm tra còn sản phẩm
-const hasMore = computed(() => {
-  return visibleCount.value < products.value.length;
-});
-
-// Computed: Số lượng còn lại
-const remainingCount = computed(() => {
-  return products.value.length - visibleCount.value;
-});
-
-// Hàm Tải Thêm
 const loadMoreProducts = () => {
   visibleCount.value += itemsPerPage;
 };
 
-// Điều hướng chi tiết
 const goDetail = (id) => {
   router.push(`/home/product/${id}`);
 };
 
-// Xử lý Thêm nhanh vào giỏ
 const quickAddToCart = (sp) => {
-  showToast(
-    "Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!",
-    "warning",
-  );
-  setTimeout(() => {
-    goDetail(sp.id);
-  }, 1000);
+
+  showToast("Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!", "warning");
+  setTimeout(() => goDetail(sp.id), 1000);
+
 };
 
-// Xử lý giá tiền
 const formatPrice = (v) => {
   if (v == null) return "0 đ";
   return new Intl.NumberFormat("vi-VN").format(v) + " đ";
 };
 
-// Xử lý ảnh lỗi
 const handleImageError = (event) => {
   event.target.src = "/src/assets/logo/no-image-placeholder.png";
 };
 
-// Nút Scroll Best Seller
 const scrollLeft = () => {
-  if (bestSellerRef.value) {
-    bestSellerRef.value.scrollBy({ left: -320, behavior: "smooth" });
-  }
+  if (bestSellerRef.value) bestSellerRef.value.scrollBy({ left: -320, behavior: "smooth" });
 };
 
 const scrollRight = () => {
-  if (bestSellerRef.value) {
-    bestSellerRef.value.scrollBy({ left: 320, behavior: "smooth" });
-  }
+  if (bestSellerRef.value) bestSellerRef.value.scrollBy({ left: 320, behavior: "smooth" });
 };
 
-// Hàm tải dữ liệu
 const fetchData = async () => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -304,6 +335,11 @@ const fetchData = async () => {
 
 onMounted(() => {
   fetchData();
+  startSlide(); // Khởi động slider
+});
+
+onBeforeUnmount(() => {
+  pauseSlide(); // Xóa bộ nhớ dọn dẹp khi rời trang
 });
 </script>
 
@@ -315,15 +351,93 @@ onMounted(() => {
   background-color: #fafafa;
 }
 
-/* ================= BANNER ================= */
-.banner img {
+/* ================= SLIDER BANNER CSS (MỚI) ================= */
+.banner-slider {
+  position: relative;
   width: 100%;
   height: 500px;
-  display: block;
-  object-fit: cover;
+  overflow: hidden;
 }
 
-/* ================= SECTION ================= */
+.slides-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide {
+  min-width: 100%;
+  height: 100%;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s;
+  color: #333;
+  opacity: 0; /* Ẩn mặc định, hiện khi hover vào banner */
+}
+
+.slider-arrow svg { width: 28px; height: 28px; }
+
+.banner-slider:hover .slider-arrow { opacity: 1; }
+
+.slider-arrow:hover {
+  background: #6b3f1e;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.slider-arrow.prev { left: 20px; }
+.slider-arrow.next { right: 20px; }
+
+.slider-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.dot:hover { background: rgba(255, 255, 255, 0.8); }
+
+.dot.active {
+  background: #6b3f1e;
+  width: 30px;
+  border-radius: 10px;
+}
+
+/* ================= SECTION & TITLE ================= */
 .section {
   padding: 60px 4%;
   max-width: 1400px;
@@ -369,7 +483,6 @@ onMounted(() => {
   display: none;
 }
 
-/* Arrow Slider */
 .arrow {
   background: #fff;
   border: 1px solid #ddd;
@@ -396,7 +509,6 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
-/* Badge Hot */
 .badge {
   position: absolute;
   top: 15px;
@@ -566,105 +678,25 @@ onMounted(() => {
   box-shadow: 0 4px 10px rgba(107, 63, 30, 0.2);
 }
 
-/* ================= STATES ================= */
-.loading-state,
-.error-state,
-.empty-state {
-  text-align: center;
-  padding: 80px 0;
-  color: #666;
-  font-size: 16px;
-}
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #6b3f1e;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
-}
-.error-icon,
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-  opacity: 0.5;
-}
-.btn-retry {
-  margin-top: 15px;
-  padding: 10px 24px;
-  background-color: #6b3f1e;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
 
-/* ================= TOAST CSS ================= */
-.toast-notification {
-  position: fixed;
-  top: 25px;
-  right: 25px;
-  z-index: 10001;
-  min-width: 280px;
-  padding: 16px 20px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  background: #fff;
-  border-left: 6px solid #22c55e;
-}
-.toast-notification.error {
-  border-left-color: #ef4444;
-}
-.toast-notification.warning {
-  border-left-color: #f59e0b;
-}
-.toast-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 12px;
-}
-.success .toast-icon {
-  background: #22c55e;
-}
-.error .toast-icon {
-  background: #ef4444;
-}
-.warning .toast-icon {
-  background: #f59e0b;
-}
-.toast-content {
-  margin-left: 12px;
-  font-weight: 500;
-  color: #333;
-  font-size: 15px;
-}
-.toast-slide-enter-active,
-.toast-slide-leave-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.toast-slide-enter-from,
-.toast-slide-leave-to {
-  transform: translateX(120%);
-  opacity: 0;
-}
+/* ================= STATES & TOAST ================= */
+.loading-state, .error-state, .empty-state { text-align: center; padding: 80px 0; color: #666; font-size: 16px; }
+.spinner { border: 4px solid #f3f3f3; border-top: 4px solid #6b3f1e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+.error-icon, .empty-icon { font-size: 48px; margin-bottom: 15px; opacity: 0.5; }
+.btn-retry { margin-top: 15px; padding: 10px 24px; background-color: #6b3f1e; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.toast-notification { position: fixed; top: 25px; right: 25px; z-index: 10001; min-width: 280px; padding: 16px 20px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: #fff; border-left: 6px solid #22C55E; }
+.toast-notification.error { border-left-color: #ef4444; }
+.toast-notification.warning { border-left-color: #f59e0b; }
+.toast-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; }
+.success .toast-icon { background: #22C55E; }
+.error .toast-icon { background: #ef4444; }
+.warning .toast-icon { background: #f59e0b; }
+.toast-content { margin-left: 12px; font-weight: 500; color: #333; font-size: 15px;}
+.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
+
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {
@@ -673,29 +705,17 @@ onMounted(() => {
   }
 }
 @media (max-width: 768px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .product-card {
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-  }
-  .image-box {
-    height: 250px;
-  }
-  .banner img {
-    height: 320px;
-  }
-  .best-seller-container {
-    padding-bottom: 10px;
-  }
+
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .product-card { width: 100%; max-width: 300px; margin: 0 auto; }
+  .image-box { height: 250px; }
+  .banner-slider { height: 320px; }
+  .best-seller-container { padding-bottom: 10px; }
 }
 @media (max-width: 480px) {
-  .product-grid {
-    grid-template-columns: repeat(1, 1fr);
-    justify-items: center;
-  }
+  .product-grid { grid-template-columns: repeat(1, 1fr); justify-items: center; }
+  .banner-slider { height: 200px; }
+
 }
 /* ================= CHAT ICON & POPUP ================= */
 .chat-wrapper {
