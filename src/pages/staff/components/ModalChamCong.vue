@@ -83,9 +83,53 @@
             <p class="status-note">Hãy bấm kết thúc ca khi bạn làm xong nhé!</p>
           </div>
 
-          <div v-else class="alert-box disabled-box">
-            <span class="alert-icon">🔒</span>
-            <p>Ca làm việc hôm nay của bạn đã hoàn thành. Bạn hiện đang ở chế độ chỉ xem.</p>
+          <div v-else class="alert-box disabled-box" style="text-align: left;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; justify-content: center;">
+               <span class="alert-icon" style="font-size: 24px;">🔒</span>
+               <h4 style="margin: 0; color: #2F855A;">Ca làm việc đã kết thúc</h4>
+            </div>
+            
+            <div v-if="chamCong" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
+               
+               <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
+                 <p style="margin: 5px 0; font-size: 16px;"><strong>Tổng doanh thu: </strong> 
+                    <span style="color: #2b6cb0;">{{ chamCong.tongDoanhThu?.toLocaleString() || 0 }} VNĐ</span>
+                 </p>
+                 <p style="margin: 5px 0;"><strong>Tổng chênh lệch: </strong> 
+                    <span :style="{ color: chamCong.tienChenhLech < 0 ? '#c53030' : (chamCong.tienChenhLech > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
+                       {{ chamCong.tienChenhLech > 0 ? '+' : '' }}{{ chamCong.tienChenhLech?.toLocaleString() || 0 }} VNĐ
+                    </span>
+                 </p>
+               </div>
+
+               <div style="display: flex; gap: 15px;">
+                 <div style="flex: 1; background: #f8fafc; padding: 10px; border-radius: 6px;">
+                   <p style="margin: 0 0 5px 0; font-weight: bold; color: #475569;">💵 Tiền Mặt</p>
+                   <p style="margin: 3px 0; font-size: 13px;">Bán được: {{ chamCong.doanhThuTienMat?.toLocaleString() || 0 }} đ</p>
+                   <p style="margin: 3px 0; font-size: 13px;">Chênh lệch: 
+                     <span :style="{ color: chamCong.chenhLechTienMat < 0 ? '#c53030' : (chamCong.chenhLechTienMat > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
+                        {{ chamCong.chenhLechTienMat > 0 ? '+' : '' }}{{ chamCong.chenhLechTienMat?.toLocaleString() || 0 }} đ
+                     </span>
+                   </p>
+                 </div>
+
+                 <div style="flex: 1; background: #f8fafc; padding: 10px; border-radius: 6px;">
+                   <p style="margin: 0 0 5px 0; font-weight: bold; color: #475569;">💳 Chuyển Khoản</p>
+                   <p style="margin: 3px 0; font-size: 13px;">Bán được: {{ chamCong.doanhThuCk?.toLocaleString() || 0 }} đ</p>
+                   <p style="margin: 3px 0; font-size: 13px;">Chênh lệch: 
+                     <span :style="{ color: chamCong.chenhLechCk < 0 ? '#c53030' : (chamCong.chenhLechCk > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
+                        {{ chamCong.chenhLechCk > 0 ? '+' : '' }}{{ chamCong.chenhLechCk?.toLocaleString() || 0 }} đ
+                     </span>
+                   </p>
+                 </div>
+               </div>
+
+               <p style="margin: 10px 0 0 0; font-style: italic; color: #718096; font-size: 13px; text-align: center;">
+                  (Ghi chú: {{ chamCong.ghiChu || 'Không có' }})
+               </p>
+            </div>
+
+            <p style="text-align: center; margin-top: 15px; font-size: 13px;">Bạn hiện đang ở chế độ chỉ xem.</p>
             
             <div class="custom-swal-actions" style="margin-top: 20px;">
               <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
