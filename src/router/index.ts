@@ -46,6 +46,11 @@ const routes: Array<RouteRecordRaw> = [
       name: "Information",
       component: () => import("../pages/views/InformationPage.vue"),
     },
+    {
+      path: "/tra-cuu",
+      name: "OrderTracking",
+      component: () => import("../pages/views/OrderTrackingPage.vue"),
+    },
 
   // LOGIN KHÁCH HÀNG
   {
