@@ -479,7 +479,7 @@
             class="btn-modern btn-secondary"
             @click="showHistoryLog = false"
           >
-            Đóng cửa sổ
+            Đóng
           </button>
         </div>
       </div>
@@ -552,6 +552,7 @@ interface InvoiceDetail {
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
+  
 // ===============================================
 // [MỚI] Timeline linh hoạt (Tại quầy chỉ còn Chờ xác nhận và Hoàn thành)
 // ===============================================
@@ -1670,8 +1671,8 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: #323335;
+  color: #d5d8db;
 }
 .btn-secondary:hover {
   background: #e5e7eb;
