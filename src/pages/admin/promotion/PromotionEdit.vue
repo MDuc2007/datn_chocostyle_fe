@@ -941,14 +941,13 @@ const getDiscountPrice = (ct: any) => {
 
 /* cố định header */
 .table thead {
-  /* cố định header */
-  .table thead {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-    background: #fff;
-    background: #fff;
-  }
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  background: #fff;
+  background: #fff;
+}
+
 
   /* chỉ body cuộn */
   /* chỉ body cuộn */
@@ -966,29 +965,25 @@ const getDiscountPrice = (ct: any) => {
     table-layout: fixed;
   }
 
-  /* cell */
-  .table th,
-  .table td {
-    padding: 14px 8px;
-    padding: 14px 8px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-  }
+/* cell */
+.table th,
+.table td {
+  padding: 14px 8px;
+  padding: 14px 8px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
 
-  /* header không xuống dòng */
-  .table thead th {
-    white-space: nowrap;
-  }
 
-  .table th:nth-child(4),
-  .table td:nth-child(4) {
-    width: 200px;
-    white-space: nowrap;
-    .table th:nth-child(4),
-    .table td:nth-child(4) {
-      width: 200px;
-      white-space: nowrap;
-    }
+/* header không xuống dòng */
+.table thead th {
+  white-space: nowrap;
+}
+
+.table td:nth-child(4) {
+  width: 200px;
+  white-space: nowrap;
+}
 
     img {
       width: 50px;
@@ -1335,8 +1330,7 @@ const getDiscountPrice = (ct: any) => {
       padding: 4px 6px;
       border-radius: 8px;
 
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    }
-  }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
+
 </style>

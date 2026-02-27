@@ -132,6 +132,25 @@
                   Khách lẻ
                 </button>
               </div>
+            <div class="section-header column">
+              <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
+
+              <div
+                class="customer-actions-row"
+                :class="{ 'single-btn': !currentOrder.customer.id }"
+              >
+                <button class="btn-outline" @click="openCustomerPopup">
+                  Chọn khách hàng
+                </button>
+
+                <button
+                  v-if="currentOrder.customer.id"
+                  class="btn-outline"
+                  @click="resetToGuest"
+                >
+                  Khách lẻ
+                </button>
+              </div>
             </div>
 
             <div class="customer-form">
@@ -258,6 +277,8 @@
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
               <div v-if="bestVoucherSuggestion" class="voucher-suggestion">
                 Voucher tốt nhất:
+              <div v-if="bestVoucherSuggestion" class="voucher-suggestion">
+                Voucher tốt nhất:
                 <strong>{{ bestVoucherSuggestion.maPgg }}</strong>
                 - Giảm
                 <span class="text-red">
@@ -265,6 +286,17 @@
                 </span>
               </div>
             </div>
+            <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
+              <span v-if="voucherMode === 'AUTO'">
+                Áp dụng phiếu giảm giá thành công
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
+              <span v-else>
+                Đã áp dụng phiếu giảm giá
+                {{ currentOrder.appliedVoucher.code }} - Giảm
+                {{ formatPrice(discount) }}
+              </span>
             <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
               <span v-if="voucherMode === 'AUTO'">
                 Áp dụng phiếu giảm giá thành công
@@ -288,10 +320,14 @@
               </div>
 
               <div
-                class="payment-row"
+                class="payment-row shipping-row"
                 v-if="currentOrder.deliveryType === 'DELIVERY'"
               >
-                <span class="text-muted">Phí vận chuyển</span>
+                <span class="text-muted shipping-label">
+                  Phí vận chuyển
+                  <img :src="ghnLogo" class="ghn-icon" />
+                </span>
+
                 <span class="fw-600">{{ formatPrice(shippingFee) }}</span>
               </div>
 
@@ -589,6 +625,7 @@ const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
 const MAX_ORDER = 10;
+const MAX_ORDER = 10;
 
 const invoiceToPrint = ref(null);
 
@@ -693,10 +730,10 @@ const addToCart = async (product) => {
 
   showProductPopup.value = false;
 };
-
 const validateCustomer = () => {
   const order = currentOrder.value;
   const c = order.customer;
+
   customerErrors.value = {
     name: "",
     email: "",
@@ -706,25 +743,43 @@ const validateCustomer = () => {
     district: "",
     ward: "",
   };
+
   let isValid = true;
 
   c.name = c.name?.trim() || "";
   c.email = c.email?.trim() || "";
   c.phone = c.phone?.trim() || "";
   c.address = c.address?.trim() || "";
+
   const name = c.name;
   const email = c.email;
   const phone = c.phone;
   const address = c.address;
 
-  if (!name) {
-    customerErrors.value.name = "Vui lòng nhập tên khách hàng";
-    isValid = false;
-  } else if (name.length < 2) {
-    customerErrors.value.name = "Tên phải có ít nhất 2 ký tự";
-    isValid = false;
+  const isGuest = !c.id && order.deliveryType === "COUNTER";
+
+  // ❌ Nếu là khách lẻ tại quầy → không validate name + phone
+  if (!isGuest) {
+    if (!name) {
+      customerErrors.value.name = "Vui lòng nhập tên khách hàng";
+      isValid = false;
+    } else if (name.length < 2) {
+      customerErrors.value.name = "Tên phải có ít nhất 2 ký tự";
+      isValid = false;
+    }
+
+    if (phone) {
+      if (!/^[0-9]+$/.test(phone)) {
+        customerErrors.value.phone = "Số điện thoại chỉ được chứa số";
+        isValid = false;
+      } else if (!/^0[0-9]{8,10}$/.test(phone)) {
+        customerErrors.value.phone = "Số điện thoại không hợp lệ";
+        isValid = false;
+      }
+    }
   }
 
+  // Validate email nếu có nhập
   if (email) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
@@ -733,16 +788,7 @@ const validateCustomer = () => {
     }
   }
 
-  if (phone) {
-    if (!/^[0-9]+$/.test(phone)) {
-      customerErrors.value.phone = "Số điện thoại chỉ được chứa số";
-      isValid = false;
-    } else if (!/^0[0-9]{8,10}$/.test(phone)) {
-      customerErrors.value.phone = "Số điện thoại không hợp lệ";
-      isValid = false;
-    }
-  }
-
+  // Nếu giao hàng → bắt buộc đầy đủ
   if (order.deliveryType === "DELIVERY") {
     if (!phone) {
       customerErrors.value.phone = "Giao hàng bắt buộc nhập số điện thoại";
@@ -765,9 +811,9 @@ const validateCustomer = () => {
       isValid = false;
     }
   }
+
   return isValid;
 };
-
 const validateDelivery = () => {
   const order = currentOrder.value;
   const c = order.customer;
@@ -984,6 +1030,7 @@ const confirmPayment = async () => {
   );
 };
 
+
 const openQrScanner = async () => {
   showQrPopup.value = true;
 
@@ -992,8 +1039,25 @@ const openQrScanner = async () => {
   qrScanner = new Html5Qrcode("qr-reader");
 
   await qrScanner.start(
+  await qrScanner.start(
     { facingMode: "environment" },
     {
+      fps: 25,
+      qrbox: { width: 300, height: 300 },
+      aspectRatio: 1.777,
+      disableFlip: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
+    },
+    async (decodedText) => {
+      await handleQrResult(decodedText);
+
+      await qrScanner.stop();
+      await qrScanner.clear();
+      showQrPopup.value = false;
+    },
+    () => {},
       fps: 25,
       qrbox: { width: 300, height: 300 },
       aspectRatio: 1.777,
@@ -1083,6 +1147,7 @@ watch(
     wards.value = res.data.wards;
   },
 );
+
 
 const subTotal = computed(() =>
   currentOrder.value
@@ -1192,6 +1257,7 @@ const formatPrice = (v) => {
 const createOrder = async () => {
   if (orders.value.length >= MAX_ORDER) {
     showToast("Vui lòng chỉ thêm tối đa 10 đơn hàng", "error");
+    showToast("Vui lòng chỉ thêm tối đa 10 đơn hàng", "error");
     return;
   }
 
@@ -1243,6 +1309,31 @@ const createOrder = async () => {
     showToast(error.response?.data || "Lỗi tạo tab", "error");
   }
 };
+
+const increaseQty = async (item) => {
+  if (item.quantity >= item.stock) {
+    showToast("Đã đạt số lượng tồn kho tối đa", "error");
+    return;
+  }
+
+  try {
+    await axios.put(
+      "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+      null,
+      {
+        params: {
+          idSpct: item.id,
+          soLuongThayDoi: -1,
+        },
+      },
+    );
+
+    item.quantity++;
+  } catch (err) {
+    showToast("Không đủ tồn kho", "error");
+  }
+};
+
 
 const increaseQty = async (item) => {
   if (item.quantity >= item.stock) {
@@ -1360,6 +1451,7 @@ const removeOrder = (index) => {
     `Bạn có chắc chắn muốn tắt và hủy đơn ${targetOrder.maHoaDon} không?`,
     async () => {
       try {
+        // 1. Hoàn tồn kho
         if (targetOrder.idHoaDon) {
           for (const item of targetOrder.cart) {
             await axios.put(
@@ -1373,35 +1465,23 @@ const removeOrder = (index) => {
               },
             );
           }
+
+          // 2. Gọi API xóa BE
+          await axios.delete(
+            `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
+          );
         }
 
+        // 3. Xóa UI
         orders.value.splice(index, 1);
         showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
-
-        if (!orders.value.length) {
-          activeOrderIndex.value = -1;
-          return;
-        }
-
-        if (activeOrderIndex.value === index) {
-          activeOrderIndex.value = Math.max(0, index - 1);
-        } else if (index < activeOrderIndex.value) {
-          activeOrderIndex.value--;
-        }
-        voucherMode.value = "AUTO";
       } catch (error) {
-        console.error("Lỗi xóa hóa đơn:", error);
-        showToast(
-          error.response?.data?.error ||
-            error.response?.data ||
-            "Lỗi hệ thống khi xóa hóa đơn!",
-          "error",
-        );
+        console.error("Lỗi khi xóa đơn:", error);
+        showToast("Xóa đơn thất bại!");
       }
     },
-  );
+  ); // 👈 THIẾU CÁI NÀY
 };
-
 const searchText = ref("");
 const filterColor = ref("");
 const filterSize = ref("");
@@ -1468,6 +1548,21 @@ onMounted(async () => {
   await fetchVouchers();
   isSettingAddress.value = false;
   isReady.value = true;
+  for (const order of orders.value) {
+    if (order.deliveryType === "DELIVERY" && order.customer?.district) {
+      const districtObj = districts.value.find(
+        (d) => d.code === order.customer.district,
+      );
+
+      if (districtObj) {
+        const res = await axios.get("http://localhost:8080/api/shipping", {
+          params: { district: districtObj.name },
+        });
+
+        order.shippingFee = res.data;
+      }
+    }
+  }
 });
 
 watchEffect(() => {
@@ -1500,8 +1595,23 @@ watch(
 );
 
 watch(
+  () => activeOrderIndex.value,
+  async () => {
+    if (!currentOrder.value) return;
+    await fetchVouchers();
+  },
+);
+
+watch(
   () => currentOrder.value?.customer?.id,
   async () => {
+    if (!currentOrder.value) return;
+
+    currentOrder.value.appliedVoucher = null;
+    currentOrder.value.voucherCode = "";
+    currentOrder.value.shippingFee = 0;
+    voucherMode.value = "AUTO";
+
     if (!currentOrder.value) return;
 
     currentOrder.value.appliedVoucher = null;
@@ -1542,6 +1652,8 @@ const applyVoucher = () => {
     currentOrder.value.appliedVoucher = null;
     return;
   }
+  if (found.soLuong !== undefined && found.soLuong <= 0) {
+    voucherError.value = "Mã giảm giá đã hết lượt sử dụng";
   if (found.soLuong !== undefined && found.soLuong <= 0) {
     voucherError.value = "Mã giảm giá đã hết lượt sử dụng";
     return;
@@ -2003,15 +2115,13 @@ const showToast = (msg, type = "success") => {
 }
 
 .product-row {
-  text-align: center;
-  display: flex;
+  display: grid; /* ✅ đổi flex thành grid */
   grid-template-columns: 2fr 120px 150px 140px 50px;
   gap: 12px;
   align-items: center;
   padding: 16px 0;
   border-bottom: 1px solid #f1f1f1;
 }
-
 .product-row:last-child {
   border-bottom: none;
 }
@@ -2796,5 +2906,18 @@ select:focus {
 
 .info-box {
   max-width: 100%;
+}
+
+.shipping-label {
+  position: relative;
+  padding-right: 70px;
+}
+
+.ghn-icon {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
 }
 </style>
