@@ -85,7 +85,7 @@
         </div>
 
         <div class="action-buttons">
-    <button @click="resetFilter" class="btn btn-secondary">Đặt lại bộ lọc</button>
+    <button @click="resetFilter" class="btn btn-secondary"><img src="/src/assets/icon/refresh-white.svg" alt="">Đặt lại bộ lọc</button>
     
     <button @click="handleTestSendEmail" class="btn" style="background-color: #10b981; color: white;">
         🧪 Gửi Thử Mail
@@ -95,7 +95,7 @@
         ⚙️ Cài đặt tự động
     </button>
     
-    <button @click="showExportModal = true" class="btn btn-primary">Xuất báo cáo</button>
+    <button @click="showExportModal = true" class="btn btn-primary"><img src="/src/assets/icon/dowload-white.svg" alt="">Xuất báo cáo</button>
 </div>
       </div>
     </div>
