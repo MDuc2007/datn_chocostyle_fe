@@ -660,6 +660,7 @@ const fetchProducts = async () => {
 
       return {
         id: p.id,
+        maCtsp: p.maChiTietSanPham,
         code: `${p.maSanPham}-${p.maChiTietSanPham}`,
         name: p.tenSanPham,
         image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
@@ -1122,7 +1123,7 @@ const openQrScanner = async () => {
   await qrScanner.start(
     { facingMode: "environment" },
     {
-      fps: 25,
+      fps: 10,
       qrbox: { width: 300, height: 300 },
     },
     async (decodedText) => {

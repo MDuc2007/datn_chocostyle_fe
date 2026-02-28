@@ -1,185 +1,324 @@
 <template>
   <Teleport to="body">
-  <div v-if="show && isReady" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>MỞ CA LÀM VIỆC</h3>
-        <p>Hệ thống quản lý bán hàng ChocoStyle Shop</p>
-      </div>
-
-      <div class="modal-body">
-        <div class="staff-info">
-          <p class="staff-code">Nhân viên : {{ tenNv }} • {{ currentTime }}</p>
+    <div v-if="show && isReady" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>MỞ CA LÀM VIỆC</h3>
+          <p>Hệ thống quản lý bán hàng ChocoStyle Shop</p>
         </div>
 
-        <div v-if="!ca || !ca.caLamViec" class="alert-box error">
+        <div class="modal-body">
+          <div class="staff-info">
+            <p class="staff-code">
+              Nhân viên : buiminhd73@gmail.com • {{ currentTime }}
+            </p>
+          </div>
+
+          <div v-if="!ca || !ca.caLamViec" class="alert-box error">
             <span class="alert-icon">⚠️</span>
-            <p>Hôm nay bạn không có lịch phân công ca làm việc. Bạn chỉ có thể xem hệ thống.</p>
-            
-            <div class="custom-swal-actions" style="margin-top: 20px;">
-              <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
+            <p>
+              Hôm nay bạn không có lịch phân công ca làm việc. Bạn chỉ có thể
+              xem hệ thống.
+            </p>
+
+            <div class="custom-swal-actions" style="margin-top: 20px">
+              <button
+                @click="handleLogout"
+                class="custom-swal-confirm-btn"
+                style="background-color: #c53030 !important"
+              >
                 Đăng xuất
               </button>
-              <button @click="closeModal" class="custom-swal-confirm-btn" style="background-color: #718096 !important;">
+              <button
+                @click="closeModal"
+                class="custom-swal-confirm-btn"
+                style="background-color: #718096 !important"
+              >
                 Chỉ xem
               </button>
             </div>
           </div>
 
-        <div v-else>
-          <div class="form-group">
-            <label>Ca làm việc được phân công</label>
-            <input
-              type="text"
-              class="form-control disabled-input"
-              disabled
-              :value="`${ca.caLamViec.tenCa} (${ca.caLamViec.gioBatDau} - ${ca.caLamViec.gioKetThuc})`"
-            />
-          </div>
-
-          <div v-if="!chamCong">
+          <div v-else>
             <div class="form-group">
-              <label>Tiền mặt đầu ca</label>
-              <div class="input-wrapper">
-                <input
-                  type="number"
-                  v-model="form.tienMat"
-                  class="form-control"
-                  placeholder="0"
-                />
-                <span class="currency-unit">VNĐ</span>
+              <label>Ca làm việc được phân công</label>
+              <input
+                type="text"
+                class="form-control disabled-input"
+                disabled
+                :value="`${ca.caLamViec.tenCa} (${ca.caLamViec.gioBatDau} - ${ca.caLamViec.gioKetThuc})`"
+              />
+            </div>
+
+            <div v-if="!chamCong">
+              <div class="form-group">
+                <label>Tiền mặt đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    v-model="form.tienMat"
+                    class="form-control"
+                    placeholder="0"
+                  />
+                  <span class="currency-unit">VNĐ</span>
+                </div>
               </div>
-            </div>
 
-            <div class="form-group">
-              <label>Tiền tài khoản đầu ca</label>
-              <div class="input-wrapper">
-                <input
-                  type="number"
-                  v-model="form.tienTaiKhoan"
-                  class="form-control"
-                  placeholder="0"
-                />
-                <span class="currency-unit">VNĐ</span>
+              <div class="form-group">
+                <label>Tiền tài khoản đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    v-model="form.tienTaiKhoan"
+                    class="form-control"
+                    placeholder="0"
+                  />
+                  <span class="currency-unit">VNĐ</span>
+                </div>
               </div>
+
+              <p class="previous-balance">
+                Số dự kiến từ ca trước: <strong>0 VNĐ</strong>
+              </p>
             </div>
 
-            <p class="previous-balance">
-              Số dự kiến từ ca trước: <strong>0 VNĐ</strong>
-            </p>
-          </div>
-
-          <div
-            v-else-if="chamCong && !chamCong.gioCheckOut"
-            class="alert-box success"
-          >
-            <div class="status-header">
-              <span class="alert-icon">✅</span>
-              <p class="status-title">Đang trong ca làm việc</p>
+            <div
+              v-else-if="chamCong && !chamCong.gioCheckOut"
+              class="alert-box success"
+            >
+              <div class="status-header">
+                <span class="alert-icon">✅</span>
+                <p class="status-title">Đang trong ca làm việc</p>
+              </div>
+              <p class="status-time">
+                Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
+              </p>
+              <p class="status-note">
+                Hãy bấm kết thúc ca khi bạn làm xong nhé!
+              </p>
             </div>
-            <p class="status-time">
-              Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
-            </p>
-            <p class="status-note">Hãy bấm kết thúc ca khi bạn làm xong nhé!</p>
-          </div>
 
-          <div v-else class="alert-box disabled-box" style="text-align: left;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; justify-content: center;">
-               <span class="alert-icon" style="font-size: 24px;">🔒</span>
-               <h4 style="margin: 0; color: #2F855A;">Ca làm việc đã kết thúc</h4>
-            </div>
-            
-            <div v-if="chamCong" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
-               
-               <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
-                 <p style="margin: 5px 0; font-size: 16px;"><strong>Tổng doanh thu: </strong> 
-                    <span style="color: #2b6cb0;">{{ chamCong.tongDoanhThu?.toLocaleString() || 0 }} VNĐ</span>
-                 </p>
-                 <p style="margin: 5px 0;"><strong>Tổng chênh lệch: </strong> 
-                    <span :style="{ color: chamCong.tienChenhLech < 0 ? '#c53030' : (chamCong.tienChenhLech > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
-                       {{ chamCong.tienChenhLech > 0 ? '+' : '' }}{{ chamCong.tienChenhLech?.toLocaleString() || 0 }} VNĐ
+            <div v-else class="alert-box disabled-box" style="text-align: left">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  margin-bottom: 15px;
+                  justify-content: center;
+                "
+              >
+                <span class="alert-icon" style="font-size: 24px">🔒</span>
+                <h4 style="margin: 0; color: #2f855a">
+                  Ca làm việc đã kết thúc
+                </h4>
+              </div>
+
+              <div
+                v-if="chamCong"
+                style="
+                  background: #fff;
+                  padding: 15px;
+                  border-radius: 8px;
+                  border: 1px solid #e2e8f0;
+                  font-size: 14px;
+                  text-align: left;
+                "
+              >
+                <div
+                  style="
+                    border-bottom: 1px dashed #cbd5e1;
+                    padding-bottom: 10px;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <p style="margin: 5px 0; font-size: 16px">
+                    <strong>Tổng doanh thu: </strong>
+                    <span style="color: #2b6cb0"
+                      >{{
+                        chamCong.tongDoanhThu?.toLocaleString() || 0
+                      }}
+                      VNĐ</span
+                    >
+                  </p>
+                  <p style="margin: 5px 0">
+                    <strong>Tổng chênh lệch: </strong>
+                    <span
+                      :style="{
+                        color:
+                          chamCong.tienChenhLech < 0
+                            ? '#c53030'
+                            : chamCong.tienChenhLech > 0
+                              ? '#d69e2e'
+                              : '#2F855A',
+                        fontWeight: 'bold',
+                      }"
+                    >
+                      {{ chamCong.tienChenhLech > 0 ? "+" : ""
+                      }}{{ chamCong.tienChenhLech?.toLocaleString() || 0 }} VNĐ
                     </span>
-                 </p>
-               </div>
+                  </p>
+                </div>
 
-               <div style="display: flex; gap: 15px;">
-                 <div style="flex: 1; background: #f8fafc; padding: 10px; border-radius: 6px;">
-                   <p style="margin: 0 0 5px 0; font-weight: bold; color: #475569;">💵 Tiền Mặt</p>
-                   <p style="margin: 3px 0; font-size: 13px;">Bán được: {{ chamCong.doanhThuTienMat?.toLocaleString() || 0 }} đ</p>
-                   <p style="margin: 3px 0; font-size: 13px;">Chênh lệch: 
-                     <span :style="{ color: chamCong.chenhLechTienMat < 0 ? '#c53030' : (chamCong.chenhLechTienMat > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
-                        {{ chamCong.chenhLechTienMat > 0 ? '+' : '' }}{{ chamCong.chenhLechTienMat?.toLocaleString() || 0 }} đ
-                     </span>
-                   </p>
-                 </div>
+                <div style="display: flex; gap: 15px">
+                  <div
+                    style="
+                      flex: 1;
+                      background: #f8fafc;
+                      padding: 10px;
+                      border-radius: 6px;
+                    "
+                  >
+                    <p
+                      style="
+                        margin: 0 0 5px 0;
+                        font-weight: bold;
+                        color: #475569;
+                      "
+                    >
+                      💵 Tiền Mặt
+                    </p>
+                    <p style="margin: 3px 0; font-size: 13px">
+                      Bán được:
+                      {{ chamCong.doanhThuTienMat?.toLocaleString() || 0 }} đ
+                    </p>
+                    <p style="margin: 3px 0; font-size: 13px">
+                      Chênh lệch:
+                      <span
+                        :style="{
+                          color:
+                            chamCong.chenhLechTienMat < 0
+                              ? '#c53030'
+                              : chamCong.chenhLechTienMat > 0
+                                ? '#d69e2e'
+                                : '#2F855A',
+                          fontWeight: 'bold',
+                        }"
+                      >
+                        {{ chamCong.chenhLechTienMat > 0 ? "+" : ""
+                        }}{{
+                          chamCong.chenhLechTienMat?.toLocaleString() || 0
+                        }}
+                        đ
+                      </span>
+                    </p>
+                  </div>
 
-                 <div style="flex: 1; background: #f8fafc; padding: 10px; border-radius: 6px;">
-                   <p style="margin: 0 0 5px 0; font-weight: bold; color: #475569;">💳 Chuyển Khoản</p>
-                   <p style="margin: 3px 0; font-size: 13px;">Bán được: {{ chamCong.doanhThuCk?.toLocaleString() || 0 }} đ</p>
-                   <p style="margin: 3px 0; font-size: 13px;">Chênh lệch: 
-                     <span :style="{ color: chamCong.chenhLechCk < 0 ? '#c53030' : (chamCong.chenhLechCk > 0 ? '#d69e2e' : '#2F855A'), fontWeight: 'bold' }">
-                        {{ chamCong.chenhLechCk > 0 ? '+' : '' }}{{ chamCong.chenhLechCk?.toLocaleString() || 0 }} đ
-                     </span>
-                   </p>
-                 </div>
-               </div>
+                  <div
+                    style="
+                      flex: 1;
+                      background: #f8fafc;
+                      padding: 10px;
+                      border-radius: 6px;
+                    "
+                  >
+                    <p
+                      style="
+                        margin: 0 0 5px 0;
+                        font-weight: bold;
+                        color: #475569;
+                      "
+                    >
+                      💳 Chuyển Khoản
+                    </p>
+                    <p style="margin: 3px 0; font-size: 13px">
+                      Bán được:
+                      {{ chamCong.doanhThuCk?.toLocaleString() || 0 }} đ
+                    </p>
+                    <p style="margin: 3px 0; font-size: 13px">
+                      Chênh lệch:
+                      <span
+                        :style="{
+                          color:
+                            chamCong.chenhLechCk < 0
+                              ? '#c53030'
+                              : chamCong.chenhLechCk > 0
+                                ? '#d69e2e'
+                                : '#2F855A',
+                          fontWeight: 'bold',
+                        }"
+                      >
+                        {{ chamCong.chenhLechCk > 0 ? "+" : ""
+                        }}{{ chamCong.chenhLechCk?.toLocaleString() || 0 }} đ
+                      </span>
+                    </p>
+                  </div>
+                </div>
 
-               <p style="margin: 10px 0 0 0; font-style: italic; color: #718096; font-size: 13px; text-align: center;">
-                  (Ghi chú: {{ chamCong.ghiChu || 'Không có' }})
-               </p>
-            </div>
+                <p
+                  style="
+                    margin: 10px 0 0 0;
+                    font-style: italic;
+                    color: #718096;
+                    font-size: 13px;
+                    text-align: center;
+                  "
+                >
+                  (Ghi chú: {{ chamCong.ghiChu || "Không có" }})
+                </p>
+              </div>
 
-            <p style="text-align: center; margin-top: 15px; font-size: 13px;">Bạn hiện đang ở chế độ chỉ xem.</p>
-            
-            <div class="custom-swal-actions" style="margin-top: 20px;">
-              <button @click="handleLogout" class="custom-swal-confirm-btn" style="background-color: #c53030 !important;">
-                Đăng xuất
-              </button>
-              <button @click="closeModal" class="custom-swal-confirm-btn" style="background-color: #718096 !important;">
-                Chỉ xem
-              </button>
+              <p style="text-align: center; margin-top: 15px; font-size: 13px">
+                Bạn hiện đang ở chế độ chỉ xem.
+              </p>
+
+              <div class="custom-swal-actions" style="margin-top: 20px">
+                <button
+                  @click="handleLogout"
+                  class="custom-swal-confirm-btn"
+                  style="background-color: #c53030 !important"
+                >
+                  Đăng xuất
+                </button>
+                <button
+                  @click="closeModal"
+                  class="custom-swal-confirm-btn"
+                  style="background-color: #718096 !important"
+                >
+                  Chỉ xem
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <template
-          v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)"
-        >
-        </template>
-
-        <template v-else-if="ca && ca.caLamViec && !chamCong">
-          <button class="btn btn-outline" @click="close">Hủy bỏ</button>
-          <button
-            class="btn btn-primary"
-            @click="checkIn"
-            :disabled="isLoading"
+        <div class="modal-footer">
+          <template
+            v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)"
           >
-            {{ isLoading ? "Đang xử lý..." : "Xác nhận vào ca" }}
-          </button>
-        </template>
+          </template>
 
-        <template v-else-if="chamCong && !chamCong.gioCheckOut">
-          <button class="btn btn-outline" @click="close">Vào ca</button>
+          <template v-else-if="ca && ca.caLamViec && !chamCong">
+            <button class="btn btn-outline" @click="close">Hủy bỏ</button>
+            <button
+              class="btn btn-primary"
+              @click="checkIn"
+              :disabled="isLoading"
+            >
+              {{ isLoading ? "Đang xử lý..." : "Xác nhận vào ca" }}
+            </button>
+          </template>
 
-          <button
-            class="btn btn-primary btn-danger-custom"
-            @click="checkOut"
-            :disabled="isLoading || isChuaHetCa"
-          >
-            {{
-              isLoading
-                ? "Đang xử lý..."
-                : isChuaHetCa
-                  ? "Chưa tới giờ nghỉ"
-                  : "Kết thúc ca"
-            }}
-          </button>
-        </template>
+          <template v-else-if="chamCong && !chamCong.gioCheckOut">
+            <button class="btn btn-outline" @click="close">Vào ca</button>
+
+            <button
+              class="btn btn-primary btn-danger-custom"
+              @click="checkOut"
+              :disabled="isLoading || isChuaHetCa"
+            >
+              {{
+                isLoading
+                  ? "Đang xử lý..."
+                  : isChuaHetCa
+                    ? "Chưa tới giờ nghỉ"
+                    : "Kết thúc ca"
+              }}
+            </button>
+          </template>
+        </div>
       </div>
     </div>
-  </div>
   </Teleport>
 </template>
 
@@ -204,12 +343,12 @@ const handleLogout = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("idNv");
   // Chuyển hướng về login (nhớ import router nếu chưa có)
-  window.location.href = "/login"; 
+  window.location.href = "/login";
 };
 
 const closeModal = () => {
   show.value = false;
-  emit('update:show', false);
+  emit("update:show", false);
 };
 const chamCong = ref(null);
 const currentDateObj = ref(new Date());
@@ -311,7 +450,7 @@ const checkOut = async () => {
       {},
       { headers },
     );
-    window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
+    window.dispatchEvent(new CustomEvent("set-view-only", { detail: true }));
     await Swal.fire({
       ...customSwalConfig,
       title: "Thành công!",
