@@ -1,8 +1,11 @@
 <template>
   <header class="header">
     <div class="header-container">
-      <div class="logo" @click="$router.push('/')" style="cursor: pointer;">
-        <img src="/src/assets/logo/choco-removebg-preview.png" alt="Choco Style" />
+      <div class="logo" @click="$router.push('/')" style="cursor: pointer">
+        <img
+          src="/src/assets/logo/choco-removebg-preview.png"
+          alt="Choco Style"
+        />
       </div>
 
       <nav class="nav">
@@ -10,18 +13,13 @@
         <router-link to="/ao-khoac" active-class="active">Áo khoác</router-link>
         <router-link to="/uu-dai" active-class="active">Ưu đãi</router-link>
         <router-link to="/moi-ve" active-class="active">Mới về</router-link>
-        <router-link to="/thong-tin" active-class="active">Thông tin</router-link>
+        <router-link to="/tra-cuu" active-class="active">Tra cứu</router-link>
+        <router-link to="/thong-tin" active-class="active"
+          >Thông tin</router-link
+        >
       </nav>
 
       <div class="actions">
-        <img
-          src="/src/assets/icon/box.svg"
-          alt="Tra cứu"
-          class="action-icon"
-          title="Tra cứu đơn hàng"
-          @click="$router.push('/tra-cuu')"
-        />
-
         <img
           src="/src/assets/icon/heart.svg"
           alt="Wishlist"
@@ -37,16 +35,24 @@
           <span v-if="cartTotal > 0" class="cart-badge">{{ cartTotal }}</span>
         </div>
 
-        <div class="user-icon-wrapper" @click.stop="toggleUserMenu" ref="userMenuRef">
-          
-          <img v-if="!currentUser" src="/src/assets/icon/user.svg" alt="User" class="action-icon" />
+        <div
+          class="user-icon-wrapper"
+          @click.stop="toggleUserMenu"
+          ref="userMenuRef"
+        >
+          <img
+            v-if="!currentUser"
+            src="/src/assets/icon/user.svg"
+            alt="User"
+            class="action-icon"
+          />
 
           <template v-else>
-            <img 
-              v-if="currentUser.avatar" 
-              :src="getFullImageUrl(currentUser.avatar)" 
-              alt="Avatar" 
-              class="user-avatar" 
+            <img
+              v-if="currentUser.avatar"
+              :src="getFullImageUrl(currentUser.avatar)"
+              alt="Avatar"
+              class="user-avatar"
               @error="handleAvatarError"
             />
             <div v-else class="user-initial">
@@ -57,7 +63,9 @@
           <transition name="fade">
             <div v-if="isUserMenuOpen" class="user-menu" @click.stop>
               <template v-if="!currentUser">
-                <button @click="goToLogin" class="menu-item login-btn">Đăng nhập</button>
+                <button @click="goToLogin" class="menu-item login-btn">
+                  Đăng nhập
+                </button>
                 <button @click="goToRegister" class="menu-item">Đăng ký</button>
               </template>
 
@@ -69,9 +77,15 @@
                   </p>
                 </div>
                 <div class="menu-divider"></div>
-                <button @click="viewProfile" class="menu-item"><i class="fa fa-user-circle"></i> Tài khoản của tôi</button>
-                <button @click="$router.push('/don-hang')" class="menu-item"><i class="fa fa-shopping-bag"></i> Đơn mua</button>
-                <button @click="logout" class="menu-item logout"><i class="fa fa-sign-out-alt"></i> Đăng xuất</button>
+                <button @click="viewProfile" class="menu-item">
+                  <i class="fa fa-user-circle"></i> Tài khoản của tôi
+                </button>
+                <button @click="$router.push('/don-hang')" class="menu-item">
+                  <i class="fa fa-shopping-bag"></i> Đơn mua
+                </button>
+                <button @click="logout" class="menu-item logout">
+                  <i class="fa fa-sign-out-alt"></i> Đăng xuất
+                </button>
               </template>
             </div>
           </transition>
@@ -123,14 +137,22 @@ const checkLoginStatus = async () => {
     const userData = JSON.parse(userStr);
     const actualToken = localStorage.getItem("token") || userData.accessToken;
 
-    const displayName = userData.tenKhachHang || userData.tenNhanVien || userData.hoTen || userData.name || userData.username || userData.email || "Khách hàng";
-    const displayAvatar = userData.avatar || userData.picture || userData.hinhAnh || null;
+    const displayName =
+      userData.tenKhachHang ||
+      userData.tenNhanVien ||
+      userData.hoTen ||
+      userData.name ||
+      userData.username ||
+      userData.email ||
+      "Khách hàng";
+    const displayAvatar =
+      userData.avatar || userData.picture || userData.hinhAnh || null;
 
     currentUser.value = {
       id: userData.id || null,
       email: userData.email || userData.username,
       tenKhachHang: displayName,
-      avatar: displayAvatar
+      avatar: displayAvatar,
     };
 
     // NẾU CÓ TOKEN, GỌI API ĐỂ LẤY THÔNG TIN MỚI NHẤT TỪ DB
@@ -139,32 +161,42 @@ const checkLoginStatus = async () => {
 
       if (currentUser.value.id) {
         try {
-          const res = await axios.get(`http://localhost:8080/api/khach-hang/${currentUser.value.id}`, { headers });
+          const res = await axios.get(
+            `http://localhost:8080/api/khach-hang/${currentUser.value.id}`,
+            { headers },
+          );
           if (res.data) {
-            currentUser.value.tenKhachHang = res.data.tenKhachHang || currentUser.value.tenKhachHang;
+            currentUser.value.tenKhachHang =
+              res.data.tenKhachHang || currentUser.value.tenKhachHang;
             // Gán lại avatar nếu API trả về ảnh mới
             if (res.data.avatar || res.data.hinhAnh) {
-               currentUser.value.avatar = res.data.avatar || res.data.hinhAnh;
+              currentUser.value.avatar = res.data.avatar || res.data.hinhAnh;
             }
           }
         } catch (err) {
           if (currentUser.value.email) {
             try {
-              const resEmail = await axios.get(`http://localhost:8080/api/khach-hang/email/${currentUser.value.email}`, { headers });
+              const resEmail = await axios.get(
+                `http://localhost:8080/api/khach-hang/email/${currentUser.value.email}`,
+                { headers },
+              );
               if (resEmail.data) {
-                currentUser.value.tenKhachHang = resEmail.data.tenKhachHang || currentUser.value.tenKhachHang;
+                currentUser.value.tenKhachHang =
+                  resEmail.data.tenKhachHang || currentUser.value.tenKhachHang;
                 if (resEmail.data.avatar || resEmail.data.hinhAnh) {
-                   currentUser.value.avatar = resEmail.data.avatar || resEmail.data.hinhAnh;
+                  currentUser.value.avatar =
+                    resEmail.data.avatar || resEmail.data.hinhAnh;
                 }
               }
             } catch (err2) {
-              console.log("Hoàn tất dùng dữ liệu LocalStorage (Không kéo được ảnh từ API).");
+              console.log(
+                "Hoàn tất dùng dữ liệu LocalStorage (Không kéo được ảnh từ API).",
+              );
             }
           }
         }
       }
     }
-
   } catch (e) {
     console.error("Lỗi parse user data", e);
     currentUser.value = null;
@@ -172,15 +204,15 @@ const checkLoginStatus = async () => {
 };
 
 const getUserInitial = (name) => {
-  if (!name) return "U"; 
-  const words = String(name).trim().split(' ');
+  if (!name) return "U";
+  const words = String(name).trim().split(" ");
   const lastName = words[words.length - 1];
   return lastName.charAt(0).toUpperCase();
 };
 
 const handleAvatarError = () => {
   if (currentUser.value) {
-    currentUser.value.avatar = null; 
+    currentUser.value.avatar = null;
   }
 };
 
@@ -197,34 +229,35 @@ const handleClickOutside = (event) => {
 
 const goToLogin = () => {
   isUserMenuOpen.value = false;
-  router.push('/login');
+  router.push("/login");
 };
 
 const goToRegister = () => {
   isUserMenuOpen.value = false;
-  router.push('/register');
+  router.push("/register");
 };
 
 const viewProfile = () => {
   isUserMenuOpen.value = false;
-  alert("Chức năng xem thông tin người dùng đang được phát triển.");
+  // Thay alert bằng lệnh chuyển hướng
+  router.push("/profile");
 };
 
 const logout = () => {
   localStorage.removeItem("user");
-  localStorage.removeItem("token"); 
-  localStorage.removeItem("idNv"); 
-  localStorage.removeItem("tenNv"); 
+  localStorage.removeItem("token");
+  localStorage.removeItem("idNv");
+  localStorage.removeItem("tenNv");
   currentUser.value = null;
   isUserMenuOpen.value = false;
-  router.push('/login');
+  router.push("/login");
 };
 
 // ================= LIFECYCLE =================
 onMounted(() => {
   updateCartTotal();
   checkLoginStatus();
-  
+
   window.addEventListener("cartUpdated", updateCartTotal);
   window.addEventListener("userLoggedIn", checkLoginStatus);
   document.addEventListener("click", handleClickOutside);
@@ -244,7 +277,7 @@ onBeforeUnmount(() => {
   background: #fff;
   border-bottom: 1px solid #eee;
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
 }
 
 .header-container {
@@ -257,7 +290,7 @@ onBeforeUnmount(() => {
 }
 
 .logo img {
-  height: 70px; 
+  height: 70px;
 }
 
 /* ================= MENU ================= */
@@ -273,7 +306,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   text-decoration: none;
   padding: 8px 20px;
-  border-radius: 20px; 
+  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
@@ -283,8 +316,8 @@ onBeforeUnmount(() => {
 }
 
 .nav a.active {
-  background-color: #63391f; 
-  color: #fff; 
+  background-color: #63391f;
+  color: #fff;
   box-shadow: 0 4px 10px rgba(99, 57, 31, 0.2);
 }
 
@@ -301,7 +334,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: transform 0.2s;
 }
-.action-icon:hover { transform: scale(1.1); }
+.action-icon:hover {
+  transform: scale(1.1);
+}
 
 /* Giỏ hàng */
 .cart-wrapper {
@@ -343,7 +378,7 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #eee;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .user-initial {
@@ -375,7 +410,7 @@ onBeforeUnmount(() => {
 }
 
 .user-menu::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -6px;
   right: 20px;
@@ -390,8 +425,20 @@ onBeforeUnmount(() => {
 .user-welcome {
   padding: 10px 16px;
 }
-.welcome-text { margin: 0; font-size: 12px; color: #888; }
-.user-name { margin: 2px 0 0 0; font-size: 14px; font-weight: 700; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.welcome-text {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+.user-name {
+  margin: 2px 0 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .menu-divider {
   height: 1px;
@@ -416,7 +463,11 @@ onBeforeUnmount(() => {
   box-sizing: border-box; /* Sửa lỗi tràn nền */
 }
 
-.menu-item i { width: 16px; text-align: center; color: #6b3f1e;}
+.menu-item i {
+  width: 16px;
+  text-align: center;
+  color: #6b3f1e;
+}
 
 .menu-item:hover {
   background: #fdf8f6;
@@ -424,13 +475,32 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.login-btn { color: #6b3f1e; font-weight: 600; }
+.login-btn {
+  color: #6b3f1e;
+  font-weight: 600;
+}
 
-.logout { color: #ef4444; }
-.logout i { color: #ef4444; }
-.logout:hover { background: #fef2f2; color: #dc2626; }
+.logout {
+  color: #ef4444;
+}
+.logout i {
+  color: #ef4444;
+}
+.logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
 
 /* Animations */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(10px); }
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
 </style>

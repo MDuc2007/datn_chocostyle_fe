@@ -252,7 +252,8 @@
                 @click="selectVoucher(v)"
               >
                 <div class="v-tag-side">
-                  {{ v.loaiGiam === "PERCENT" ? "%" : "VNĐ" }}
+                  <div class="brand-logo">CHOCO</div>
+                  <div class="ticket-name">Mã giảm giá</div>
                 </div>
                 <div class="v-content-main">
                   <div class="v-header">
@@ -483,6 +484,32 @@ const fetchVouchers = async (khId) => {
     availableVouchers.value = res.data;
   } catch (err) {
     console.error("Lỗi lấy danh sách voucher:", err);
+  }
+};
+
+// Trong script setup của PaymentPage.vue
+
+const loadVouchersForPayment = async () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    const currentUser = userStr ? JSON.parse(userStr) : null;
+    const userId = currentUser ? currentUser.id : null;
+
+    // Gọi API Backend đã lọc sẵn
+    const res = await axios.get(
+      `http://localhost:8080/admin/voucher/public/my-vouchers`,
+      {
+        params: { khachHangId: userId },
+      },
+    );
+
+    // Backend đã lọc ngày, số lượng, loại phiếu -> Chỉ cần lấy về dùng
+    voucherList.value = res.data;
+
+    // Nếu muốn lọc thêm điều kiện đơn hàng tối thiểu (Frontend làm thêm bước này cho mượt)
+    // voucherList.value = res.data.filter(v => totalAmount.value >= v.dieuKienDonHang);
+  } catch (error) {
+    console.error("Lỗi tải voucher:", error);
   }
 };
 
@@ -1595,18 +1622,27 @@ const closeModal = () => (modal.show = false);
 }
 
 .v-tag-side {
-  background: #b97a3a;
+  background: linear-gradient(135deg, #6b3f1e 0%, #8b5a2b 100%);
   color: white;
-  width: 50px;
+  width: 100px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  writing-mode: vertical-lr;
-  transform: rotate(180deg);
-  font-size: 14px;
+  border-right: 2px dashed #fff;
+  position: relative;
+  flex-shrink: 0;
 }
-
+.brand-logo {
+  font-weight: 900;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+.ticket-name {
+  font-size: 11px;
+  opacity: 0.9;
+  text-align: center;
+}
 .v-content-main {
   padding: 12px;
   flex-grow: 1;
