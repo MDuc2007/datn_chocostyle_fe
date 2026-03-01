@@ -50,37 +50,47 @@
               />
             </div>
 
-            <div v-if="!chamCong">
-              <div class="form-group">
-                <label>Tiền mặt đầu ca</label>
-                <div class="input-wrapper">
-                  <input
-                    type="number"
-                    v-model="form.tienMat"
-                    class="form-control"
-                    placeholder="0"
-                  />
-                  <span class="currency-unit">VNĐ</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Tiền tài khoản đầu ca</label>
-                <div class="input-wrapper">
-                  <input
-                    type="number"
-                    v-model="form.tienTaiKhoan"
-                    class="form-control"
-                    placeholder="0"
-                  />
-                  <span class="currency-unit">VNĐ</span>
-                </div>
-              </div>
-
-              <p class="previous-balance">
-                Số dự kiến từ ca trước: <strong>0 VNĐ</strong>
-              </p>
+          <div v-if="!chamCong">
+            
+            <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
+               <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
+               <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                 <span>💵 Tiền mặt tại két:</span> 
+                 <strong>{{ soDuCaTruoc.tienMat?.toLocaleString() || 0 }} VNĐ</strong>
+               </p>
+               <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                 <span>💳 Số dư chuyển khoản:</span> 
+                 <strong>{{ soDuCaTruoc.tienCk?.toLocaleString() || 0 }} VNĐ</strong>
+               </p>
             </div>
+
+            <div class="form-group">
+              <label>Xác nhận Tiền mặt đầu ca</label>
+              <div class="input-wrapper">
+                <input
+                  type="number"
+                  v-model="form.tienMat"
+                  class="form-control"
+                  placeholder="0"
+                />
+                <span class="currency-unit">VNĐ</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Xác nhận Tiền tài khoản đầu ca</label>
+              <div class="input-wrapper">
+                <input
+                  type="number"
+                  v-model="form.tienTaiKhoan"
+                  class="form-control"
+                  placeholder="0"
+                />
+                <span class="currency-unit">VNĐ</span>
+              </div>
+            </div>
+
+          </div>
 
             <div
               v-else-if="chamCong && !chamCong.gioCheckOut"
@@ -333,7 +343,16 @@ const emit = defineEmits(["close"]);
 const show = ref(true);
 const isReady = ref(false);
 const isLoading = ref(false);
+const soDuCaTruoc = ref({ tienMat: 0, tienCk: 0 });
 
+const fetchSoDuCaTruoc = async () => {
+  try {
+    const res = await axios.get('http://localhost:8080/api/cham-cong/so-du-ca-truoc', { headers });
+    soDuCaTruoc.value = res.data;
+  } catch (e) {
+    console.log("Lỗi lấy số dư:", e);
+  }
+};
 const form = ref({
   tienMat: 0,
   tienTaiKhoan: 0,
@@ -476,6 +495,7 @@ const checkOut = async () => {
 
 onMounted(async () => {
   updateTime();
+  fetchSoDuCaTruoc();
   timer = setInterval(updateTime, 1000);
 
   if (props.ca && props.ca.caLamViec) {
