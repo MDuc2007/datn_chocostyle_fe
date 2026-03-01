@@ -1,10 +1,11 @@
 <template>
   <header class="header">
     <div class="header-container">
-      <div class="logo" @click="$router.push('/')" style="cursor: pointer">
+      
+      <div class="logo" @click="$router.push('/')">
         <img
           src="/src/assets/logo/choco-removebg-preview.png"
-          alt="Choco Style"
+          alt="ChocoStyle Logo"
         />
       </div>
 
@@ -14,38 +15,28 @@
         <router-link to="/uu-dai" active-class="active">Ưu đãi</router-link>
         <router-link to="/moi-ve" active-class="active">Mới về</router-link>
         <router-link to="/tra-cuu" active-class="active">Tra cứu</router-link>
-        <router-link to="/thong-tin" active-class="active"
-          >Thông tin</router-link
-        >
+        <router-link to="/thong-tin" active-class="active">Về chúng tôi</router-link>
       </nav>
 
       <div class="actions">
-        <img
-          src="/src/assets/icon/heart.svg"
-          alt="Wishlist"
-          class="action-icon"
-        />
+        <div class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
 
-        <div class="cart-wrapper" @click="$router.push('/cart')">
-          <img
-            src="/src/assets/icon/shoppingCart.svg"
-            alt="Cart"
-            class="action-icon"
-          />
+        <div class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </div>
+
+        <div class="action-btn cart-wrapper" @click="$router.push('/cart')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
           <span v-if="cartTotal > 0" class="cart-badge">{{ cartTotal }}</span>
         </div>
 
-        <div
-          class="user-icon-wrapper"
-          @click.stop="toggleUserMenu"
-          ref="userMenuRef"
-        >
-          <img
-            v-if="!currentUser"
-            src="/src/assets/icon/user.svg"
-            alt="User"
-            class="action-icon"
-          />
+        <div class="action-btn user-icon-wrapper" @click.stop="toggleUserMenu" ref="userMenuRef">
+          
+          <template v-if="!currentUser">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </template>
 
           <template v-else>
             <img
@@ -60,42 +51,43 @@
             </div>
           </template>
 
-          <transition name="fade">
+          <transition name="dropdown-fade">
             <div v-if="isUserMenuOpen" class="user-menu" @click.stop>
               <template v-if="!currentUser">
-                <button @click="goToLogin" class="menu-item login-btn">
-                  Đăng nhập
-                </button>
+                <button @click="goToLogin" class="menu-item login-btn">Đăng nhập</button>
                 <button @click="goToRegister" class="menu-item">Đăng ký</button>
               </template>
 
               <template v-else>
                 <div class="user-welcome">
                   <p class="welcome-text">Xin chào,</p>
-                  <p class="user-name">
-                    {{ currentUser.tenKhachHang }}
-                  </p>
+                  <p class="user-name">{{ currentUser.tenKhachHang }}</p>
                 </div>
                 <div class="menu-divider"></div>
                 <button @click="viewProfile" class="menu-item">
-                  <i class="fa fa-user-circle"></i> Tài khoản của tôi
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  Tài khoản của tôi
                 </button>
                 <button @click="$router.push('/don-hang')" class="menu-item">
-                  <i class="fa fa-shopping-bag"></i> Đơn mua
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  Đơn mua
                 </button>
                 <button @click="logout" class="menu-item logout">
-                  <i class="fa fa-sign-out-alt"></i> Đăng xuất
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                  Đăng xuất
                 </button>
               </template>
             </div>
           </transition>
         </div>
       </div>
+
     </div>
   </header>
 </template>
 
 <script setup>
+// Giữ nguyên 100% logic script của bạn
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
@@ -106,25 +98,19 @@ const cartTotal = ref(0);
 const currentUser = ref(null);
 const userMenuRef = ref(null);
 
-// ================= LOGIC GIỎ HÀNG =================
 const updateCartTotal = () => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   cartTotal.value = cart.reduce((sum, item) => sum + item.soLuong, 0);
 };
 
-// 👉 ĐÃ THÊM: Hàm xử lý đường dẫn ảnh từ Backend
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  // Nếu ảnh là link Google/Facebook/Imgur thì giữ nguyên
   if (imagePath.startsWith("http")) {
     return imagePath;
   }
-  // Nếu chỉ là tên file (VD: avatar.jpg), nối thêm domain Backend
-  // LƯU Ý: Sửa port 8080 thành port thật của bạn nếu cần
   return `http://localhost:8080/images/${imagePath}`;
 };
 
-// ================= LOGIC USER & ẢNH ĐẠI DIỆN =================
 const checkLoginStatus = async () => {
   const userStr = localStorage.getItem("user");
 
@@ -137,16 +123,8 @@ const checkLoginStatus = async () => {
     const userData = JSON.parse(userStr);
     const actualToken = localStorage.getItem("token") || userData.accessToken;
 
-    const displayName =
-      userData.tenKhachHang ||
-      userData.tenNhanVien ||
-      userData.hoTen ||
-      userData.name ||
-      userData.username ||
-      userData.email ||
-      "Khách hàng";
-    const displayAvatar =
-      userData.avatar || userData.picture || userData.hinhAnh || null;
+    const displayName = userData.tenKhachHang || userData.tenNhanVien || userData.hoTen || userData.name || userData.username || userData.email || "Khách hàng";
+    const displayAvatar = userData.avatar || userData.picture || userData.hinhAnh || null;
 
     currentUser.value = {
       id: userData.id || null,
@@ -155,20 +133,14 @@ const checkLoginStatus = async () => {
       avatar: displayAvatar,
     };
 
-    // NẾU CÓ TOKEN, GỌI API ĐỂ LẤY THÔNG TIN MỚI NHẤT TỪ DB
     if (actualToken) {
       const headers = { Authorization: `Bearer ${actualToken}` };
 
       if (currentUser.value.id) {
         try {
-          const res = await axios.get(
-            `http://localhost:8080/api/khach-hang/${currentUser.value.id}`,
-            { headers },
-          );
+          const res = await axios.get(`http://localhost:8080/api/khach-hang/${currentUser.value.id}`, { headers });
           if (res.data) {
-            currentUser.value.tenKhachHang =
-              res.data.tenKhachHang || currentUser.value.tenKhachHang;
-            // Gán lại avatar nếu API trả về ảnh mới
+            currentUser.value.tenKhachHang = res.data.tenKhachHang || currentUser.value.tenKhachHang;
             if (res.data.avatar || res.data.hinhAnh) {
               currentUser.value.avatar = res.data.avatar || res.data.hinhAnh;
             }
@@ -176,22 +148,15 @@ const checkLoginStatus = async () => {
         } catch (err) {
           if (currentUser.value.email) {
             try {
-              const resEmail = await axios.get(
-                `http://localhost:8080/api/khach-hang/email/${currentUser.value.email}`,
-                { headers },
-              );
+              const resEmail = await axios.get(`http://localhost:8080/api/khach-hang/email/${currentUser.value.email}`, { headers });
               if (resEmail.data) {
-                currentUser.value.tenKhachHang =
-                  resEmail.data.tenKhachHang || currentUser.value.tenKhachHang;
+                currentUser.value.tenKhachHang = resEmail.data.tenKhachHang || currentUser.value.tenKhachHang;
                 if (resEmail.data.avatar || resEmail.data.hinhAnh) {
-                  currentUser.value.avatar =
-                    resEmail.data.avatar || resEmail.data.hinhAnh;
+                  currentUser.value.avatar = resEmail.data.avatar || resEmail.data.hinhAnh;
                 }
               }
             } catch (err2) {
-              console.log(
-                "Hoàn tất dùng dữ liệu LocalStorage (Không kéo được ảnh từ API).",
-              );
+              console.log("Hoàn tất dùng dữ liệu LocalStorage.");
             }
           }
         }
@@ -216,7 +181,6 @@ const handleAvatarError = () => {
   }
 };
 
-// ================= MENU ACTIONS =================
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value;
 };
@@ -239,7 +203,6 @@ const goToRegister = () => {
 
 const viewProfile = () => {
   isUserMenuOpen.value = false;
-  // Thay alert bằng lệnh chuyển hướng
   router.push("/profile");
 };
 
@@ -253,7 +216,6 @@ const logout = () => {
   router.push("/login");
 };
 
-// ================= LIFECYCLE =================
 onMounted(() => {
   updateCartTotal();
   checkLoginStatus();
@@ -271,170 +233,186 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ================= THIẾT LẬP CHUNG ================= */
 .header {
   position: sticky;
   top: 0;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: #ffffff;
+  border-bottom: 1px solid #f3f4f6;
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', sans-serif;
 }
 
 .header-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: auto;
-  padding: 10px 30px;
+  padding: 0 20px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.logo img {
-  height: 70px;
+/* ================= LOGO ================= */
+.logo {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-/* ================= MENU ================= */
+.logo img {
+  height: 60px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover img {
+  transform: scale(1.05);
+}
+
+/* ================= NAV MENU ================= */
 .nav {
   display: flex;
-  gap: 15px;
+  gap: 35px; /* Giãn khoảng cách các menu ra */
 }
 
 .nav a {
   font-size: 15px;
-  font-weight: 600;
-  color: #333;
-  cursor: pointer;
+  font-weight: 500;
+  color: #4b5563;
   text-decoration: none;
-  padding: 8px 20px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  padding: 8px 0;
+  transition: color 0.3s ease;
 }
 
 .nav a:hover {
-  color: #6b3f1e;
-  background-color: #fdf8f6;
+  color: #111827;
+}
+
+/* Hiệu ứng gạch chân thanh lịch thay cho cục nền màu nâu */
+.nav a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #6b3f1e;
+  transition: width 0.3s ease;
 }
 
 .nav a.active {
-  background-color: #63391f;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(99, 57, 31, 0.2);
+  color: #111827;
+  font-weight: 600;
 }
 
-/* ================= ACTIONS ================= */
+.nav a.active::after {
+  width: 100%;
+}
+
+/* ================= ACTIONS (ICONS) ================= */
 .actions {
   display: flex;
-  gap: 22px;
+  gap: 20px;
   align-items: center;
 }
 
-.action-icon {
-  width: 26px;
-  height: 26px;
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s;
+  color: #374151;
+  transition: all 0.2s ease;
+  position: relative;
 }
-.action-icon:hover {
-  transform: scale(1.1);
+
+.action-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.action-btn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
 }
 
 /* Giỏ hàng */
-.cart-wrapper {
-  position: relative;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
 .cart-badge {
   position: absolute;
-  top: -6px;
-  right: -8px;
-  background-color: #d0021b;
+  top: 2px;
+  right: 2px;
+  background-color: #ef4444; /* Đỏ thông báo chuẩn */
   color: #fff;
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 10px;
+  font-weight: 700;
   width: 18px;
   height: 18px;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(208, 2, 27, 0.3);
+  box-shadow: 0 0 0 2px #fff; /* Viền trắng tách biệt với icon */
 }
 
-/* ================= USER AVATAR / INITIAL ================= */
-.user-icon-wrapper {
-  position: relative;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
+/* ================= USER AVATAR ================= */
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
 }
 
 .user-initial {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background-color: #6b3f1e;
-  color: #fff;
+  background-color: #fdf6f0;
+  color: #6b3f1e;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  box-shadow: 0 2px 5px rgba(107, 63, 30, 0.2);
+  font-weight: 700;
+  font-size: 14px;
 }
 
-/* ================= USER DROPDOWN MENU ================= */
+/* ================= DROPDOWN MENU ================= */
 .user-menu {
   position: absolute;
-  top: 45px;
-  right: -10px;
+  top: 50px;
+  right: 0;
   background: white;
-  border: 1px solid #eee;
+  border: 1px solid #f3f4f6;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  padding: 8px 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 8px;
   z-index: 1000;
-  min-width: 180px;
-}
-
-.user-menu::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  right: 20px;
-  width: 12px;
-  height: 12px;
-  background: white;
-  transform: rotate(45deg);
-  border-left: 1px solid #eee;
-  border-top: 1px solid #eee;
+  min-width: 220px;
 }
 
 .user-welcome {
-  padding: 10px 16px;
+  padding: 12px 12px 8px;
 }
+
 .welcome-text {
   margin: 0;
   font-size: 12px;
-  color: #888;
+  color: #9ca3af;
 }
+
 .user-name {
   margin: 2px 0 0 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #333;
+  color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -442,65 +420,81 @@ onBeforeUnmount(() => {
 
 .menu-divider {
   height: 1px;
-  background-color: #f0f0f0;
-  margin: 5px 0;
+  background-color: #f3f4f6;
+  margin: 8px 0;
 }
 
 .menu-item {
   margin: 0;
-  padding: 12px 16px;
+  padding: 10px 12px;
   text-align: left;
   background: none;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: #444;
+  font-weight: 500;
+  color: #4b5563;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: background-color 0.2s;
-  box-sizing: border-box; /* Sửa lỗi tràn nền */
+  gap: 12px;
+  transition: all 0.2s ease;
 }
 
-.menu-item i {
-  width: 16px;
-  text-align: center;
-  color: #6b3f1e;
+.menu-item svg {
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+  transition: color 0.2s;
 }
 
 .menu-item:hover {
-  background: #fdf8f6;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.menu-item:hover svg {
   color: #6b3f1e;
-  font-weight: 600;
 }
 
 .login-btn {
-  color: #6b3f1e;
+  color: #111827;
   font-weight: 600;
 }
 
 .logout {
   color: #ef4444;
 }
-.logout i {
-  color: #ef4444;
+.logout svg {
+  color: #fca5a5;
 }
 .logout:hover {
-  background: #fef2f2;
+  background-color: #fef2f2;
   color: #dc2626;
+}
+.logout:hover svg {
+  color: #ef4444;
 }
 
 /* Animations */
-.fade-enter-active,
-.fade-leave-active {
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.fade-enter-from,
-.fade-leave-to {
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(10px) scale(0.95);
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1024px) {
+  .nav { gap: 20px; }
+  .nav a { font-size: 13px; }
+}
+
+@media (max-width: 768px) {
+  .nav { display: none; /* Nên có Hamburger menu riêng cho Mobile */ }
 }
 </style>
