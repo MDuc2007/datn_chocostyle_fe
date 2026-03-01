@@ -4,7 +4,9 @@
 
     <div class="breadcrumb">
       <span @click="$router.push('/')">Trang chủ</span>
-      <span class="separator">/</span>
+      <span class="separator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </span>
       <span class="current">Sổ địa chỉ</span>
     </div>
 
@@ -14,16 +16,24 @@
       <div class="content-section">
         <div class="card">
           <div class="card-header-flex">
-            <h3>Địa chỉ của tôi</h3>
+            <h3 class="page-title">Địa chỉ của tôi</h3>
             <button class="btn-add" @click="openModal">
-              + Thêm địa chỉ mới
+              <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Thêm địa chỉ mới
             </button>
           </div>
 
           <div class="card-body">
-            <div v-if="loading" class="text-center">Đang tải...</div>
+            <div v-if="loading" class="loading-state">
+              <div class="spinner"></div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
 
             <div v-else-if="addresses.length === 0" class="empty-state">
+              <div class="empty-icon">📍</div>
               <p>Bạn chưa lưu địa chỉ nào.</p>
             </div>
 
@@ -32,40 +42,42 @@
                 v-for="addr in addresses"
                 :key="addr.id"
                 class="address-item"
+                :class="{ 'is-default': addr.macDinh }"
               >
                 <div class="addr-info">
-                  <div class="addr-row">
-                    <span class="addr-name">{{
-                      currentUser?.tenKhachHang
-                    }}</span>
+                  <div class="addr-header">
+                    <span class="addr-name">{{ currentUser?.tenKhachHang || 'Khách hàng' }}</span>
                     <span class="divider">|</span>
-                    <span class="addr-phone">{{
-                      currentUser?.soDienThoai
-                    }}</span>
+                    <span class="addr-phone">{{ currentUser?.soDienThoai || 'Chưa cập nhật SĐT' }}</span>
                   </div>
-                  <div class="addr-detail">
-                    {{ addr.diaChiCuThe }}
+                  
+                  <div class="addr-body">
+                    <p class="addr-detail">{{ addr.diaChiCuThe }}</p>
+                    <p class="addr-sub">{{ addr.phuong }}, {{ addr.quan }}, {{ addr.thanhPho }}</p>
                   </div>
-                  <div class="addr-sub">
-                    {{ addr.phuong }}, {{ addr.quan }}, {{ addr.thanhPho }}
+
+                  <div class="addr-badges" v-if="addr.macDinh">
+                    <span class="badge default-badge">Mặc định</span>
                   </div>
-                  <div v-if="addr.macDinh" class="default-badge">Mặc định</div>
                 </div>
 
                 <div class="addr-actions">
-                  <button class="btn-text">Cập nhật</button>
+                  <div class="action-links">
+                    <button class="btn-text text-primary">Cập nhật</button>
+                    <button
+                      v-if="!addr.macDinh"
+                      class="btn-text text-danger"
+                      @click="deleteAddress(addr.id)"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                  
                   <button
-                    v-if="!addr.macDinh"
-                    class="btn-text"
-                    @click="deleteAddress(addr.id)"
-                  >
-                    Xóa
-                  </button>
-
-                  <button
-                    v-if="!addr.macDinh"
-                    class="btn-set-default"
-                    @click="setDefault(addr.id)"
+                    class="btn-outline"
+                    :class="{ 'btn-disabled': addr.macDinh }"
+                    :disabled="addr.macDinh"
+                    @click="!addr.macDinh && setDefault(addr.id)"
                   >
                     Thiết lập mặc định
                   </button>
@@ -77,61 +89,68 @@
       </div>
     </div>
 
-    <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-      <div class="modal-card">
-        <h3 class="modal-title">Địa chỉ mới</h3>
-
-        <form @submit.prevent="saveAddress">
-          <div class="form-group">
-            <label>Tỉnh/Thành phố</label>
-            <input
-              v-model="form.thanhPho"
-              type="text"
-              placeholder="Nhập Tỉnh/Thành phố"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Quận/Huyện</label>
-            <input
-              v-model="form.quan"
-              type="text"
-              placeholder="Nhập Quận/Huyện"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Phường/Xã</label>
-            <input
-              v-model="form.phuong"
-              type="text"
-              placeholder="Nhập Phường/Xã"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label>Địa chỉ cụ thể</label>
-            <textarea
-              v-model="form.diaChiCuThe"
-              placeholder="Số nhà, tên đường..."
-              rows="2"
-              required
-            ></textarea>
+    <Transition name="modal-fade">
+      <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">Địa chỉ mới</h3>
+            <button class="btn-close" @click="showModal = false">×</button>
           </div>
 
-          <div class="modal-actions">
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="showModal = false"
-            >
-              Trở lại
-            </button>
-            <button type="submit" class="btn-primary">Hoàn thành</button>
-          </div>
-        </form>
+          <form @submit.prevent="saveAddress" class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tỉnh/Thành phố</label>
+                <input
+                  v-model="form.thanhPho"
+                  type="text"
+                  class="form-input"
+                  placeholder="VD: Hà Nội"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label>Quận/Huyện</label>
+                <input
+                  v-model="form.quan"
+                  type="text"
+                  class="form-input"
+                  placeholder="VD: Ba Đình"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Phường/Xã</label>
+              <input
+                v-model="form.phuong"
+                type="text"
+                class="form-input"
+                placeholder="VD: Phường Quán Thánh"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Địa chỉ cụ thể</label>
+              <textarea
+                v-model="form.diaChiCuThe"
+                class="form-input form-textarea"
+                placeholder="Số nhà, ngõ, tên đường..."
+                rows="3"
+                required
+              ></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="showModal = false">Trở lại</button>
+              <button type="submit" class="btn-primary">Hoàn thành</button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <Footer></Footer>
   </div>
@@ -214,7 +233,6 @@ const setDefault = async (idDiaChi) => {
 const deleteAddress = async (id) => {
   if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
   // Cần thêm API xóa trong Controller nếu chưa có
-  // await axios.delete(...)
   alert("Chức năng xóa cần bổ sung API backend");
 };
 
@@ -237,217 +255,438 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* CSS Layout giống các trang trước */
+/* ================== LAYOUT CHUNG ================== */
 .app-container {
-  background: #f7f9fa;
+  background: #f4f6f8;
   min-height: 100vh;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
+  color: #333;
 }
+
 .breadcrumb {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 20px auto;
-  padding: 0 4%;
+  padding: 0 20px;
   font-size: 14px;
-  color: #666;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
 .breadcrumb span {
   cursor: pointer;
+  transition: color 0.2s;
 }
+
 .breadcrumb span:hover {
   color: #6b3f1e;
 }
-.breadcrumb .separator {
-  margin: 0 10px;
-  cursor: default;
+
+.breadcrumb .separator svg {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
 }
+
 .breadcrumb .current {
-  font-weight: 600;
-  color: #6b3f1e;
+  font-weight: 500;
+  color: #111827;
 }
 
 .main-layout {
-  max-width: 1400px;
-  margin: 0 auto 40px auto;
-  padding: 0 4%;
+  max-width: 1280px;
+  margin: 0 auto 50px auto;
+  padding: 0 20px;
   display: flex;
-  gap: 20px;
+  gap: 24px;
   align-items: flex-start;
 }
+
 .content-section {
   flex: 1;
   min-width: 0;
 }
+
 .card {
   background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
-/* Riêng cho trang Address */
+/* ================== HEADER CARD ================== */
 .card-header-flex {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  border-bottom: 1px solid #efefef;
+  padding: 24px 30px;
+  border-bottom: 1px solid #f3f4f6;
 }
-.card-header-flex h3 {
+
+.page-title {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
 }
+
 .btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #6b3f1e;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-}
-.btn-add:hover {
-  background: #5a3218;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(107, 63, 30, 0.2);
 }
 
-.card-body {
-  padding: 0 30px 30px 30px;
+.btn-add:hover {
+  background: #5a3218;
+  transform: translateY(-1px);
 }
+
+.icon-plus {
+  width: 16px;
+  height: 16px;
+}
+
+/* ================== BODY CARD & DANH SÁCH ĐỊA CHỈ ================== */
+.card-body {
+  padding: 10px 30px 30px 30px;
+}
+
 .address-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  padding: 24px 0;
+  border-bottom: 1px solid #e5e7eb;
 }
+
 .address-item:last-child {
   border-bottom: none;
 }
 
-.addr-row {
+/* Phần thông tin bên trái */
+.addr-info {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.addr-header {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
+
 .addr-name {
   font-weight: 700;
-  color: #333;
+  color: #111827;
+  font-size: 16px;
+}
+
+.divider {
+  margin: 0 12px;
+  color: #d1d5db;
+}
+
+.addr-phone {
+  color: #6b7280;
   font-size: 15px;
 }
-.divider {
-  margin: 0 8px;
-  color: #ddd;
-}
-.addr-phone {
-  color: #666;
+
+.addr-body p {
+  margin: 0 0 4px 0;
+  color: #4b5563;
+  line-height: 1.5;
   font-size: 14px;
 }
-.addr-detail {
-  margin-bottom: 4px;
-  color: #444;
-}
-.addr-sub {
-  color: #666;
-  font-size: 13px;
+
+.addr-badges {
+  margin-top: 10px;
 }
 
 .default-badge {
-  display: inline-block;
-  margin-top: 8px;
-  border: 1px solid #6b3f1e;
-  color: #6b3f1e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e59866;
+  color: #e59866;
+  background: #fff8f5;
   font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 2px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
 }
 
+/* Phần hành động bên phải */
 .addr-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 12px;
+  min-width: 150px;
 }
+
+.action-links {
+  display: flex;
+  gap: 16px;
+}
+
 .btn-text {
   background: none;
   border: none;
-  color: #0984e3;
   cursor: pointer;
-  font-size: 13px;
-}
-.btn-text:hover {
-  text-decoration: underline;
-}
-.btn-set-default {
-  background: #fff;
-  border: 1px solid #ddd;
-  color: #333;
-  padding: 5px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  border-radius: 2px;
-}
-.btn-set-default:hover {
-  border-color: #999;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0;
+  transition: opacity 0.2s;
 }
 
-/* MODAL FORM */
+.btn-text:hover {
+  opacity: 0.7;
+}
+
+.text-primary {
+  color: #0284c7;
+}
+
+.text-danger {
+  color: #dc2626;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover:not(.btn-disabled) {
+  border-color: #6b3f1e;
+  color: #6b3f1e;
+}
+
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+/* ================== MODAL THÊM ĐỊA CHỈ ================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-card {
+  background: #fff;
+  width: 100%;
+  max-width: 550px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
 .modal-title {
-  margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #333;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
 }
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.btn-close:hover {
+  color: #111827;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
+
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   font-size: 14px;
-  color: #555;
+  font-weight: 500;
+  color: #374151;
 }
-.form-group input,
-.form-group textarea {
+
+.form-input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  transition: all 0.2s;
+  font-family: inherit;
   box-sizing: border-box;
 }
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #e59866;
+  box-shadow: 0 0 0 3px rgba(229, 152, 102, 0.15);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 10px;
 }
+
 .btn-secondary {
-  background: #eee;
-  color: #333;
+  background: #f3f4f6;
+  color: #374151;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.2s;
 }
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
 .btn-primary {
   background: #6b3f1e;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* RESPONSIVE */
+.btn-primary:hover {
+  background: #5a3218;
+}
+
+/* Animation cho Modal */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+}
+
+/* ================== TRẠNG THÁI ================== */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: #6b7280;
+}
+
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #6b3f1e;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ================== RESPONSIVE ================== */
 @media (max-width: 768px) {
   .main-layout {
     flex-direction: column;
   }
+  
   .address-item {
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
   }
+  
   .addr-actions {
     align-items: flex-start;
-    flex-direction: row;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 </style>

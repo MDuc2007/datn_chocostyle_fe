@@ -1,125 +1,382 @@
 <template>
   <footer class="footer">
     <div class="footer-container">
-      <!-- LEFT -->
-      <div class="footer-left">
-        <h4>Góp ý</h4>
-        <input placeholder="Nhập email..." />
-        <input placeholder="Nhập góp ý..." />
-      </div>
-
-      <!-- CENTER -->
-      <div class="footer-center">
-        <div class="logo-wrap">
-          <img
-            src="/src/assets/logo/choco-removebg-preview.png"
-            class="footer-logo"
-          />
+      
+      <div class="footer-col brand-col">
+        <div class="logo-text-wrapper">
+          <div class="logo-wrap">
+            <img
+              src="/src/assets/logo/choco-removebg-preview.png"
+              alt="ChocoStyle Logo"
+              class="footer-logo"
+            />
+          </div>
+          <div class="brand-info">
+            <h3 class="brand-name">ChocoStyle</h3>
+            <p class="brand-tagline">Nâng tầm phong cách phái mạnh.</p>
+          </div>
         </div>
-
-        <p class="desc">
-          Chúng tôi luôn quý trọng và tiếp thu mọi ý kiến đóng góp từ khách
-          hàng, nâng cao trải nghiệm dịch vụ cũng như chất lượng sản phẩm.
+        
+        <p class="brand-desc">
+          Chúng tôi luôn trân trọng và tiếp thu mọi ý kiến đóng góp từ khách hàng để không ngừng cải thiện chất lượng sản phẩm và dịch vụ.
         </p>
+        
+        <div class="social-links">
+          <a href="#" class="social-icon" title="Facebook">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+          <a href="#" class="social-icon" title="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          <a href="#" class="social-icon" title="TikTok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+          </a>
+        </div>
       </div>
 
-      <!-- RIGHT -->
-      <div class="footer-right">
-        <h4>Hotline</h4>
-        <p>📞 0363 636 36</p>
-        <p>✉️ ChocoStyle@gmail.com</p>
-
-        <h4 style="margin-top: 16px">Địa chỉ</h4>
-        <p>36 Phố Huế, Hai Bà Trưng, Hà Nội</p>
+      <div class="footer-col contact-col">
+        <h4 class="footer-heading">Thông tin liên hệ</h4>
+        <ul class="contact-list">
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>36 Phố Huế, Hai Bà Trưng, Hà Nội</span>
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>0363 636 366</span>
+          </li>
+          <li>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>chocostyle@gmail.com</span>
+          </li>
+        </ul>
       </div>
+
+      <div class="footer-col feedback-col">
+        <h4 class="footer-heading">Gửi góp ý cho chúng tôi</h4>
+        <p class="feedback-desc">Ý kiến của bạn giúp chúng tôi phục vụ tốt hơn.</p>
+        
+        <form class="feedback-form" @submit.prevent="handleSubmit">
+          <input 
+            type="email" 
+            class="form-input" 
+            placeholder="Email của bạn..." 
+            required 
+          />
+          <textarea 
+            class="form-input form-textarea" 
+            placeholder="Nhập nội dung góp ý..." 
+            rows="2" 
+            required
+          ></textarea>
+          <button type="submit" class="btn-submit">
+            Gửi góp ý <span class="arrow">→</span>
+          </button>
+        </form>
+      </div>
+
     </div>
 
-    <div class="footer-bottom">© 2026 CHOCOSTYLE. All rights reserved.</div>
+    <div class="footer-bottom">
+      <p>© 2026 CHOCOSTYLE. All rights reserved.</p>
+    </div>
   </footer>
 </template>
 
+<script setup lang="ts">
+const handleSubmit = () => {
+  alert('Cảm ơn bạn đã góp ý. Chúng tôi sẽ ghi nhận thông tin này!');
+};
+</script>
+
 <style scoped>
+/* Biến màu sắc và Typography cho sang trọng */
+:root {
+  --footer-bg: #5a3825; /* Nâu trầm */
+  --footer-bottom: #42281a;
+  --text-white: #ffffff; 
+  --text-muted: rgba(255, 255, 255, 0.7); 
+  --accent-color: #e28743; /* Chỉnh màu cam nhấn cho tươi hơn một chút để nổi trên nền tối */
+  --input-bg: rgba(255, 255, 255, 0.08);
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 .footer {
-  background: #6b3f1e;
-  color: #fff;
+  /* Thay dòng gradient cũ bằng dòng này */
+  background: linear-gradient(135deg, #4b2c1f, #2e1810);
+  color: var(--text-white, #fff);
+  font-family: var(--font-family);
+  border-top: 1px solid rgba(255, 255, 255, 0.08); /* Viền mờ cho tinh tế */
 }
 
 .footer-container {
-  max-width: 1400px;
-  margin: auto;
-  padding: 50px 30px;
-
+  max-width: 1200px; /* Thu hẹp max-width một chút */
+  margin: 0 auto;
+  padding: 40px 20px; /* GIẢM padding từ 70px xuống 40px */
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
-  gap: 100px;
-  align-items: center;
+  grid-template-columns: 1.2fr 1fr 1fr; 
+  gap: 30px; /* GIẢM gap từ 50px xuống 30px */
 }
 
-/* ===== LEFT ===== */
-.footer-left {
+/* ===== TIÊU ĐỀ CHUNG ===== */
+.footer-heading {
+  font-size: 16px; /* Giảm size chữ */
+  font-weight: 600;
+  margin-bottom: 16px; /* Giảm khoảng cách */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  padding-bottom: 8px;
+  color: var(--text-white); 
+}
+
+.footer-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 2px;
+  background-color: var(--accent-color, #e59866);
+  border-radius: 2px;
+}
+
+/* ===== CỘT 1: THƯƠNG HIỆU & GIỚI THIỆU ===== */
+.logo-text-wrapper {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
-}
-
-.footer-left input {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-}
-
-/* ===== CENTER ===== */
-.footer-center {
-  text-align: center;
+  margin-bottom: 15px;
 }
 
 .logo-wrap {
-  width: 120px;
-  height: 120px;
-  background: white;
+  width: 65px; /* GIẢM size logo từ 90px xuống 65px */
+  height: 65px;
+  background: #fff;
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  margin: 0 auto 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; 
 }
 
 .footer-logo {
-  width: 160%;
+  width: 85%;
+  height: auto;
+  object-fit: contain;
 }
 
-.desc {
-  font-size: 14px;
-  opacity: 0.9;
-  line-height: 1.6;
+.brand-name {
+  font-size: 18px; /* Giảm size tên thương hiệu */
+  font-weight: 700;
+  color: var(--text-white);
+  margin: 0 0 2px 0;
 }
 
-/* ===== RIGHT ===== */
-.footer-right h4 {
-  margin-bottom: 8px;
+.brand-tagline {
+  font-size: 12px;
+  color: var(--accent-color);
+  margin: 0;
+  font-weight: 500;
 }
 
-.footer-right p {
-  margin: 4px 0;
+.brand-desc {
+  font-size: 13px; /* Giảm size mô tả */
+  color: var(--text-white); 
+  line-height: 1.5;
+  margin-bottom: 15px;
+  max-width: 95%;
 }
 
-/* ===== MOBILE ===== */
-@media (max-width: 768px) {
+.social-links {
+  display: flex;
+  gap: 10px;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; /* Tinh chỉnh lại size một chút cho SVG */
+  height: 34px;
+  border-radius: 50%;
+  background: var(--input-bg);
+  color: var(--text-white); /* Đổi màu SVG thành trắng */
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Kích thước SVG cho Social */
+.social-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.social-icon:hover {
+  background: var(--accent-color, #e59866);
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+/* ===== CỘT 2: LIÊN HỆ ===== */
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.contact-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px; /* Giảm khoảng cách giữa các dòng */
+  font-size: 13px; /* Thu nhỏ chữ liên hệ */
+  color: var(--text-white); 
+  line-height: 1.5;
+}
+
+/* CSS CHUẨN CHO SVG ICON LIÊN HỆ */
+.contact-list .icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--accent-color, #e28743); /* Cho icon màu cam nổi bật */
+}
+
+/* ===== CỘT 3: GÓP Ý ===== */
+.feedback-desc {
+  font-size: 13px;
+  color: var(--text-white); 
+  margin-bottom: 12px;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Thu hẹp form */
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 6px;
+  /* ĐỔI VIỀN THÀNH MÀU TRẮNG Ở ĐÂY */
+  border: 1px solid #ffffff; 
+  /* Để nền trong suốt giúp hiệu ứng gradient ăn luôn vào ô input */
+  background: transparent; 
+  color: #fff; /* GIỮ NGUYÊN MÀU CHỮ LÀ TRẮNG */
+  font-size: 13px;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+/* Chỉnh lại phần chữ mờ (placeholder) cho dễ nhìn hơn trên viền trắng */
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.form-input:focus {
+  /* Khi click vào ô sẽ sáng hơn một chút */
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+.form-textarea {
+  resize: none;
+}
+
+.btn-submit {
+  background: var(--accent-color, #e59866);
+  color: #fff;
+  border: none;
+  padding: 10px 20px; /* Thu nhỏ nút gửi */
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin-top: 2px;
+}
+
+.btn-submit:hover {
+  background: #d37e4c;
+  transform: translateY(-1px);
+}
+
+.btn-submit .arrow {
+  transition: transform 0.3s ease;
+}
+
+.btn-submit:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* ===== BOTTOM BAR ===== */
+.footer-bottom {
+  background: #2e1810; /* Màu đồng nhất với phần đuôi của gradient ở trên */
+  text-align: center;
+  padding: 15px 20px;
+  font-size: 12px;
+  color: var(--text-muted); 
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-bottom p {
+  margin: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
   .footer-container {
-    grid-template-columns: 1fr;
-    text-align: center;
+    grid-template-columns: 1fr 1fr; 
+    gap: 30px;
+  }
+  .brand-col {
+    grid-column: span 2; 
+    margin-bottom: 10px;
   }
 }
-.footer-bottom {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 
-  background: #553018;
-  padding: 16px;
-  font-size: 13px;
+@media (max-width: 768px) {
+  .footer-container {
+    grid-template-columns: 1fr; 
+    padding: 30px 20px;
+    gap: 25px;
+  }
+  
+  .brand-col {
+    grid-column: span 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .logo-text-wrapper {
+    flex-direction: column; 
+    text-align: center;
+  }
+
+  .footer-heading::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .contact-list li {
+    justify-content: center;
+  }
+  
+  .brand-desc {
+    max-width: 100%;
+  }
 }
 </style>
