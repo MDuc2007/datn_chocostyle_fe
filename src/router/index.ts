@@ -37,21 +37,53 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/Cart.vue"),
   },
   {
-      path: "/ao-khoac",
-      name: "JacketPage",
-      component: () => import("../pages/views/JacketPage.vue"),
-    },
-    {
-      path: "/thong-tin",
-      name: "Information",
-      component: () => import("../pages/views/InformationPage.vue"),
-    },
-    {
-      path: "/tra-cuu",
-      name: "OrderTracking",
-      component: () => import("../pages/views/OrderTrackingPage.vue"),
-    },
+    path: "/ao-khoac",
+    name: "JacketPage",
+    component: () => import("../pages/views/JacketPage.vue"),
+  },
+  {
+    path: "/thong-tin",
+    name: "Information",
+    component: () => import("../pages/views/InformationPage.vue"),
+  },
+  {
+    path: "/tra-cuu",
+    name: "OrderTracking",
+    component: () => import("../pages/views/OrderTrackingPage.vue"),
+  },
+  {
+    path: "/payment-result",
+    name: "PaymentResult",
+    component: () => import("../pages/views/PaymentResult.vue"),
+  },
 
+  // 2. Route lịch sử mua hàng (Cần đăng nhập)
+  {
+    path: "/my-orders",
+    name: "MyOrders",
+    component: () => import("../pages/views/InvoiceList.vue"),
+  },
+  {
+    path: "/order-detail/:id",
+    name: "ClientOrderDetail",
+    component: () => import("../pages/views/InvoiceDetail.vue"),
+  },
+
+  {
+    path: "/profile",
+    name: "UserProfile",
+    component: () => import("../pages/views/UserProfile.vue"),
+  },
+  {
+    path: "/address",
+    name: "UserAddress",
+    component: () => import("../pages/views/UserAddress.vue"),
+  },
+  {
+    path: "/my-vouchers",
+    name: "UserVoucher",
+    component: () => import("../pages/views/UserVoucher.vue"),
+  },
 
   // LOGIN KHÁCH HÀNG
   {
