@@ -529,13 +529,14 @@ onBeforeUnmount(() => {
 /* ================= PRODUCT GRID ================= */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 30px;
+  /* Kích thước vừa phải: tối thiểu 280px (hiển thị 4 ô trên màn hình lớn) */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
 }
 
 /* ================= PRODUCT CARD ================= */
 .product-card {
-  width: 260px;
+  width: 100%; 
   border-radius: 12px;
   border: 1px solid #eee;
   background: #fff;
@@ -548,6 +549,11 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
+/* Kích thước thẻ riêng cho phần Slider cuộn ngang */
+.best-seller-container .product-card {
+  width: 280px; 
+}
+
 .product-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 24px rgba(107, 63, 30, 0.15);
@@ -556,7 +562,8 @@ onBeforeUnmount(() => {
 
 .image-box {
   width: 100%;
-  height: 280px;
+  /* Chiều cao 320px cân đối với chiều rộng 280px */
+  height: 320px; 
   background: #fff;
   display: flex;
   align-items: center;
@@ -569,9 +576,11 @@ onBeforeUnmount(() => {
 .image-box img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: contain; /* Giữ nguyên contain để không bị mất góc áo */
   transition: transform 0.5s ease;
 }
+
+/* Các CSS về text, hover, nút thêm vào giỏ giữ nguyên... */
 
 .product-card:hover .image-box img {
   transform: scale(1.05);
@@ -701,23 +710,43 @@ onBeforeUnmount(() => {
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {
   .product-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  .best-seller-container .product-card {
+    width: 250px;
+  }
+  .image-box { 
+    height: 280px; 
   }
 }
-@media (max-width: 768px) {
 
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
-  .product-card { width: 100%; max-width: 300px; margin: 0 auto; }
-  .image-box { height: 250px; }
+@media (max-width: 768px) {
+  .product-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 15px;
+  }
+  .best-seller-container .product-card { 
+    width: 220px; 
+  }
+  .image-box { 
+    height: 240px; 
+  }
   .banner-slider { height: 320px; }
   .best-seller-container { padding-bottom: 10px; }
 }
-@media (max-width: 480px) {
-  .product-grid { grid-template-columns: repeat(1, 1fr); justify-items: center; }
-  .banner-slider { height: 200px; }
 
+@media (max-width: 480px) {
+  .product-grid { 
+    grid-template-columns: repeat(1, 1fr); 
+  }
+  .best-seller-container .product-card { 
+    width: 260px; 
+  }
+  .image-box { 
+    height: 300px; 
+  }
+  .banner-slider { height: 200px; }
 }
-/* ================= CHAT ICON & POPUP ================= */
 .chat-wrapper {
   position: fixed;
   bottom: 30px;
