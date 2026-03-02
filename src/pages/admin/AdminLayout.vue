@@ -145,6 +145,11 @@
                 <button @click.stop="viewProfile" class="dropdown-item">
                   Xem thông tin
                 </button>
+                
+                <button @click.stop="viewMyOrders" class="dropdown-item">
+                  Đơn mua của tôi
+                </button>
+
                 <div class="dropdown-divider"></div>
                 <button @click.stop="logout" class="dropdown-item text-danger">
                   Đăng xuất
@@ -165,7 +170,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios"; // 👉 Thêm import axios
+import axios from "axios";
 
 const router = useRouter();
 
@@ -182,17 +187,15 @@ const currentUserName = ref("Admin");
 const currentUserAvatar = ref<string | null>(null);
 
 // Hàm chạy khi load trang để lấy thông tin từ LocalStorage
-onMounted(async () => { // 👉 Thêm async vào đây
+onMounted(async () => {
   const userStr = localStorage.getItem("user");
-  const token = localStorage.getItem("token"); // Lấy token để gọi API
+  const token = localStorage.getItem("token"); 
 
   if (userStr) {
     try {
       const userData = JSON.parse(userStr);
-      // Ưu tiên lấy tên nhân viên -> họ tên -> name
       currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || userData.username || "Admin";
       
-      // 👉 GỌI API LẤY ẢNH BASE64 TỪ BACKEND
       if (userData.id && token) {
         try {
           const res = await axios.get(`http://localhost:8080/api/nhan-vien/${userData.id}`, {
@@ -201,7 +204,6 @@ onMounted(async () => { // 👉 Thêm async vào đây
             }
           });
           
-          // Gán ảnh Base64 từ API vào biến hiển thị
           if (res.data && res.data.avatar) {
             currentUserAvatar.value = res.data.avatar;
           }
@@ -214,7 +216,6 @@ onMounted(async () => { // 👉 Thêm async vào đây
     }
   }
 
-  // Lắng nghe sự kiện click ra ngoài để đóng menu user
   document.addEventListener("click", handleClickOutside);
 });
 
@@ -230,12 +231,10 @@ const getUserInitial = (name: string) => {
   return lastName.charAt(0).toUpperCase();
 };
 
-// Xử lý khi ảnh bị lỗi (link hỏng)
 const handleAvatarError = () => {
-  currentUserAvatar.value = null; // Chuyển về chế độ hiện chữ cái đầu
+  currentUserAvatar.value = null; 
 };
 
-// Đóng menu khi click ra ngoài
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
     isUserMenuOpen.value = false;
@@ -267,7 +266,13 @@ const toggleUserMenu = () => {
 
 const viewProfile = () => {
   isUserMenuOpen.value = false;
-  alert("Chức năng xem thông tin người dùng đang được phát triển.");
+  router.push("/admin/profile"); // Chuyển đến route profile admin
+};
+
+// 👉 ĐÃ THÊM: Logic chuyển hướng sang trang Đơn mua
+const viewMyOrders = () => {
+  isUserMenuOpen.value = false;
+  router.push("/don-hang"); 
 };
 
 const logout = () => {
@@ -391,7 +396,7 @@ const logout = () => {
   color: #6b3f23;
   font-weight: 700;
   border-left: 3px solid #6b3f23;
-  padding-left: 17px; /* Cân bằng lại padding khi có border */
+  padding-left: 17px; 
 }
 
 /* ================= HAS CHILD ================= */
@@ -399,7 +404,7 @@ const logout = () => {
   display: flex;
   align-items: center;
   gap: 15px;
-  justify-content: space-between; /* Đẩy mũi tên sang phải */
+  justify-content: space-between; 
 }
 
 .has-children > div {
@@ -501,7 +506,7 @@ const logout = () => {
 /* ================= FIX LỖI USER DROPDOWN MENU ================= */
 .user-dropdown {
   position: absolute;
-  top: calc(100% + 10px); /* Nằm ngay dưới avatar + 10px khoảng cách */
+  top: calc(100% + 10px);
   right: 0;
   background: white;
   border: 1px solid #ebebeb;
@@ -510,11 +515,9 @@ const logout = () => {
   padding: 5px 0;
   min-width: 160px;
   z-index: 1000;
-  /* Đảm bảo text không bị tràn */
   overflow: hidden; 
 }
 
-/* Mũi tên chỉ lên */
 .user-dropdown::before {
   content: '';
   position: absolute;
@@ -539,7 +542,7 @@ const logout = () => {
   color: #333;
   cursor: pointer;
   transition: background-color 0.2s;
-  box-sizing: border-box; /* Rất quan trọng để padding không cộng dồn vào width */
+  box-sizing: border-box; 
 }
 
 .dropdown-item:hover {
@@ -570,7 +573,7 @@ const logout = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px); /* Trượt từ trên xuống */
+  transform: translateY(-10px);
 }
 
 /* ================= CONTENT ================= */

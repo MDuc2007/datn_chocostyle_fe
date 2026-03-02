@@ -4,7 +4,7 @@ const AUTH_URL = "/auth/"; // Nhớ cấu hình baseURL trong axios ở chỗ kh
 
 class AuthService {
   // ==========================
-  // 1. LOGIN KHÁCH HÀNG (SỬA Ở ĐÂY)
+  // 1. LOGIN KHÁCH HÀNG
   // ==========================
   async loginCustomer(user) {
     const response = await axios.post(AUTH_URL + "login/customer", {
@@ -12,9 +12,11 @@ class AuthService {
       password: user.password,
     });
 
-    if (response.data.accessToken) {
-      // ĐÃ THÊM: Lưu token rời để Header.vue có thể lấy gọi API ảnh
-      localStorage.setItem("token", response.data.accessToken);
+    // SỬA Ở ĐÂY: Bao phủ trường hợp backend trả về 'token' hoặc 'accessToken'
+    const jwtToken = response.data.accessToken || response.data.token;
+
+    if (jwtToken) {
+      localStorage.setItem("token", jwtToken);
       localStorage.setItem("user", JSON.stringify(response.data));
     }
 
@@ -22,12 +24,12 @@ class AuthService {
   }
 
   // ==========================
-  // 1.1 LƯU DỮ LIỆU TỪ GOOGLE/FACEBOOK (HÀM MỚI)
+  // 1.1 LƯU DỮ LIỆU TỪ GOOGLE/FACEBOOK
   // ==========================
-  // Khi bạn nhận được Token và thông tin từ Google/FB trả về, hãy gọi hàm này
   saveSocialLogin(data) {
-    if (data.accessToken) {
-      localStorage.setItem("token", data.accessToken);
+    const jwtToken = data.accessToken || data.token;
+    if (jwtToken) {
+      localStorage.setItem("token", jwtToken);
       localStorage.setItem("user", JSON.stringify(data));
     }
   }
@@ -41,11 +43,14 @@ class AuthService {
       password: user.password,
     });
 
-    if (response.data.accessToken) {
+    // SỬA Ở ĐÂY: Chặn lỗi lưu 'undefined' vào Local Storage
+    const jwtToken = response.data.accessToken || response.data.token;
+
+    if (jwtToken) {
       localStorage.setItem("user", JSON.stringify(response.data));
-      localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("token", jwtToken); // Lưu token chuẩn xác
       localStorage.setItem("idNv", response.data.id); 
-      localStorage.setItem("tenNv", response.data.tenNhanVien); 
+      localStorage.setItem("tenNv", response.data.tenNhanVien || response.data.hoTen); 
     }
 
     return response.data;
@@ -74,7 +79,7 @@ class AuthService {
   }
 
   // ==========================
-  // CÁC HÀM QUÊN MẬT KHẨU GIỮ NGUYÊN...
+  // 5. QUÊN MẬT KHẨU & ĐỔI MẬT KHẨU
   // ==========================
   forgotPassword(email, type) {
     return axios.post(AUTH_URL + "forgot-password", null, {
@@ -84,7 +89,10 @@ class AuthService {
 
   resetPassword(email, otp, newPassword, type) {
     return axios.post(AUTH_URL + "reset-password", {
-      email: email, otp: otp, newPassword: newPassword, type: type,
+      email: email, 
+      otp: otp, 
+      newPassword: newPassword, 
+      type: type,
     });
   }
 }

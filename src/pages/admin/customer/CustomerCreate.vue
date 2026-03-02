@@ -155,11 +155,11 @@
                       
                       <div class="addr-col">
                         <select
-                          :id="'select-prov-' + index"
-                          style="width: 100%;"
-                          class="form-input"
+                          v-model="addr.provinceId"
+                          @change="onProvinceChange(addr)"
+                          class="form-input custom-select"
                         >
-                          <option value="">Chọn Tỉnh/Thành phố</option>
+                          <option :value="null">Chọn Tỉnh/Thành phố</option>
                           <option
                             v-for="p in listProvinces"
                             :key="p.code"
@@ -172,12 +172,12 @@
 
                       <div class="addr-col">
                         <select
-                          :id="'select-dist-' + index"
-                          style="width: 100%;"
-                          class="form-input"
+                          v-model="addr.districtId"
+                          @change="onDistrictChange(addr)"
+                          class="form-input custom-select"
                           :disabled="!addr.provinceId"
                         >
-                          <option value="">Chọn Quận/Huyện</option>
+                          <option :value="null">Chọn Quận/Huyện</option>
                           <option
                             v-for="d in addr.districtOptions"
                             :key="d.code"
@@ -190,12 +190,12 @@
 
                       <div class="addr-col">
                         <select
-                          :id="'select-ward-' + index"
-                          style="width: 100%;"
-                          class="form-input"
+                          v-model="addr.wardCode"
+                          @change="onWardChange(addr)"
+                          class="form-input custom-select"
                           :disabled="!addr.districtId"
                         >
-                          <option value="">Chọn Phường/Xã</option>
+                          <option :value="null">Chọn Phường/Xã</option>
                           <option
                             v-for="w in addr.wardOptions"
                             :key="w.code"
@@ -277,7 +277,7 @@
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <div class="toast-indicator"></div>
         <div class="toast-content">{{ toast.message }}</div>
-        </div>
+      </div>
     </transition>
 
     <transition name="fade-modal">
@@ -308,7 +308,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
@@ -316,6 +316,9 @@ import { customerService } from "../../../services/customerService";
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
+
+// Dùng API v1 chuẩn để chống giật lag
+const PROVINCE_API_URL = "https://provinces.open-api.vn/api/v1";
 
 // --- STATE ---
 const loadingData = ref(true);
@@ -343,86 +346,21 @@ const toast = ref({ show: false, message: "", type: "success" });
 const modal = ref({ show: false, title: "", message: "" });
 
 
-// ===============================================
-// HÀM KHỞI TẠO JQUERY SELECT2 CHO TỪNG DÒNG ĐỊA CHỈ
-// ===============================================
-const initSelect2ForAddress = (index) => {
-  const addr = editForm.value.listDiaChi[index];
-  if (!addr) return;
-  
-  const $prov = window.$(`#select-prov-${index}`);
-  const $dist = window.$(`#select-dist-${index}`);
-  const $ward = window.$(`#select-ward-${index}`);
-
-  // Đảm bảo jQuery DOM tồn tại
-  if (!$prov.length || !$dist.length || !$ward.length) return;
-
-  // Hủy trước khi init để chống lỗi clone DOM
-  if ($prov.hasClass("select2-hidden-accessible")) $prov.select2('destroy');
-  if ($dist.hasClass("select2-hidden-accessible")) $dist.select2('destroy');
-  if ($ward.hasClass("select2-hidden-accessible")) $ward.select2('destroy');
-
-  // Init Tỉnh/Thành
-  $prov.select2({ width: '100%', placeholder: 'Chọn Tỉnh/Thành phố' });
-  if (addr.provinceId) $prov.val(addr.provinceId).trigger('change.select2');
-  $prov.off('change').on('change', async function() {
-    const val = window.$(this).val();
-    if(addr.provinceId !== val) {
-      addr.provinceId = val;
-      await onProvinceChange(addr, index);
-    }
-  });
-
-  // Init Quận/Huyện
-  $dist.select2({ width: '100%', placeholder: 'Chọn Quận/Huyện' });
-  if (addr.districtId) $dist.val(addr.districtId).trigger('change.select2');
-  $dist.off('change').on('change', async function() {
-    const val = window.$(this).val();
-    if(addr.districtId !== val) {
-      addr.districtId = val;
-      await onDistrictChange(addr, index);
-    }
-  });
-
-  // Init Phường/Xã
-  $ward.select2({ width: '100%', placeholder: 'Chọn Phường/Xã' });
-  if (addr.wardCode) $ward.val(addr.wardCode).trigger('change.select2');
-  $ward.off('change').on('change', function() {
-    const val = window.$(this).val();
-    if(addr.wardCode !== val) {
-      addr.wardCode = val;
-      onWardChange(addr);
-    }
-  });
-};
-
-const initAllSelect2 = async () => {
-  await nextTick();
-  editForm.value.listDiaChi.forEach((_, idx) => {
-    initSelect2ForAddress(idx);
-  });
-};
-
 // --- LIFECYCLE ---
 onMounted(async () => {
   await fetchProvinces();
   if (customerId) {
     await fetchCustomerDetail();
-    // Đợi Vue vẽ xong rồi init Select2
-    await nextTick();
-    editForm.value.listDiaChi.forEach((_, idx) => initSelect2ForAddress(idx));
   } else {
-    // THÊM MỚI: Tắt loading trước để Vue vẽ Form HTML ra
     loadingData.value = false;
-    await nextTick(); // Chờ 1 nhịp render
-    addAddressField(); // Hàm này sẽ tự gọi initSelect2ForAddress
+    addAddressField(); 
   }
 });
 
 // --- FETCH DATA ---
 const fetchProvinces = async () => {
   try {
-    const res = await axios.get("https://provinces.open-api.vn/api/?depth=1");
+    const res = await axios.get(`${PROVINCE_API_URL}/p/`);
     listProvinces.value = res.data;
   } catch (e) {
     console.error(e);
@@ -447,56 +385,52 @@ const fetchCustomerDetail = async () => {
   }
 };
 
-// --- ADDRESS LOGIC ---
-const onProvinceChange = async (addr, index) => {
+// --- ADDRESS LOGIC (DÙNG CHUẨN VUE) ---
+const onProvinceChange = async (addr) => {
   addr.districtId = null;
   addr.wardCode = null;
   addr.districtOptions = [];
   addr.wardOptions = [];
   
-  // Clear giao diện Quận, Phường của dòng hiện tại
-  window.$(`#select-dist-${index}`).val(null).trigger('change.select2');
-  window.$(`#select-ward-${index}`).val(null).trigger('change.select2');
-
-  addr.provinceName = listProvinces.value.find((p) => p.code == addr.provinceId)?.name || "";
-  
   if (addr.provinceId) {
+    addr.provinceName = listProvinces.value.find((p) => String(p.code) === String(addr.provinceId))?.name || "";
     try {
-      const res = await axios.get(`https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`);
+      const res = await axios.get(`${PROVINCE_API_URL}/p/${addr.provinceId}?depth=2`);
       addr.districtOptions = res.data.districts;
-      await nextTick();
-      initSelect2ForAddress(index); 
     } catch (error) {
       console.error(error);
     }
+  } else {
+    addr.provinceName = "";
   }
 };
 
-const onDistrictChange = async (addr, index) => {
+const onDistrictChange = async (addr) => {
   addr.wardCode = null;
   addr.wardOptions = [];
   
-  window.$(`#select-ward-${index}`).val(null).trigger('change.select2');
-
-  addr.districtName = addr.districtOptions.find((d) => d.code == addr.districtId)?.name || "";
-  
   if (addr.districtId) {
+    addr.districtName = addr.districtOptions.find((d) => String(d.code) === String(addr.districtId))?.name || "";
     try {
-      const res = await axios.get(`https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`);
+      const res = await axios.get(`${PROVINCE_API_URL}/d/${addr.districtId}?depth=2`);
       addr.wardOptions = res.data.wards;
-      await nextTick();
-      initSelect2ForAddress(index);
     } catch (error) {
        console.error(error);
     }
+  } else {
+    addr.districtName = "";
   }
 };
 
 const onWardChange = (addr) => {
-  addr.wardName = addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
+  if (addr.wardCode) {
+     addr.wardName = addr.wardOptions.find((w) => String(w.code) === String(addr.wardCode))?.name || "";
+  } else {
+     addr.wardName = "";
+  }
 };
 
-const addAddressField = async () => {
+const addAddressField = () => {
   editForm.value.listDiaChi.push({
     provinceId: null,
     districtId: null,
@@ -509,26 +443,13 @@ const addAddressField = async () => {
     wardOptions: [],
     macDinh: editForm.value.listDiaChi.length === 0, 
   });
-
-  // Render DOM xong thì init jquery
-  await nextTick();
-  initSelect2ForAddress(editForm.value.listDiaChi.length - 1);
 };
 
-const removeAddressField = async (i) => {
+const removeAddressField = (i) => {
   if (editForm.value.listDiaChi.length > 1) {
-    // Dọn dẹp select2 để chống lỗi ghost element
-    window.$(`#select-prov-${i}`).select2('destroy');
-    window.$(`#select-dist-${i}`).select2('destroy');
-    window.$(`#select-ward-${i}`).select2('destroy');
-
     const wasDefault = editForm.value.listDiaChi[i].macDinh;
     editForm.value.listDiaChi.splice(i, 1);
-    
     if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
-
-    // Load lại select2 cho mảng mới vì index bị thay đổi
-    await initAllSelect2();
   }
 };
 
@@ -743,6 +664,24 @@ const showToast = (msg, type = "success") => {
 
 .form-input { padding: 10px 15px; height: 42px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: #fff; transition: all 0.2s; box-sizing: border-box; width: 100%; }
 .form-input:focus { border-color: var(--primary-brown); box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); }
+
+/* Đã sửa CSS cho Select HTML mặc định để đẹp như Select2 */
+select.custom-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px top 50%;
+  background-size: 10px auto;
+  cursor: pointer;
+  color: #484848;
+}
+select.custom-select:disabled {
+  background-color: #f9fafb;
+  cursor: not-allowed;
+  border-style: dashed;
+  color: #9ca3af;
+}
+
 .red-border { border-color: #c0392b !important; background-color: #fff5f5; }
 .error-msg { color: #c0392b; font-size: 12px; font-style: italic; margin-top: 4px; }
 
@@ -751,7 +690,7 @@ const showToast = (msg, type = "success") => {
 .radio-item input { accent-color: var(--primary-brown); width: 16px; height: 16px; }
 
 /* =========================================
-   5. ADDRESS SECTION (GIỐNG ẢNH 3 - NẰM NGANG)
+   5. ADDRESS SECTION 
    ========================================= */
 .address-section-wrapper { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd; }
 .section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -768,13 +707,13 @@ const showToast = (msg, type = "success") => {
   gap: 12px; 
   align-items: center; 
   margin-bottom: 10px; 
-  flex-wrap: nowrap; /* Bắt buộc 1 dòng */
+  flex-wrap: nowrap;
 }
 .addr-col { flex: 1; min-width: 140px; }
 .addr-detail-input { flex: 1; min-width: 150px; }
 .addr-action-col { flex: 0 0 35px; display: flex; justify-content: center; }
 
-/* Nút xóa viền mỏng đỏ */
+/* Nút xóa */
 .btn-remove-circle { 
   width: 32px; 
   height: 32px; 
@@ -805,67 +744,6 @@ const showToast = (msg, type = "success") => {
 }
 .btn-default-pill:hover:not(:disabled) { background: #fdf8f6; }
 .btn-default-pill.is-active { background: #63391F; color: #ffffff; cursor: default; }
-
-/* =========================================
-   GHI ĐÈ CSS CHO JQUERY SELECT2 (FIX LỖI CẮT)
-   ========================================= */
-:deep(.select2-container) {
-  width: 100% !important;
-}
-:deep(.select2-container .select2-selection--single) {
-  height: 42px; /* Chiều cao đồng bộ với input */
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  transition: all 0.2s;
-}
-:deep(.select2-container--default.select2-container--focus .select2-selection--single),
-:deep(.select2-container--default.select2-container--open .select2-selection--single) {
-  border-color: #63391F !important;
-  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1) !important;
-  outline: none;
-}
-:deep(.select2-selection__rendered) {
-  font-size: 14px;
-  color: #484848 !important;
-  padding-left: 0 !important;
-  line-height: normal !important;
-}
-:deep(.select2-selection__placeholder) {
-  color: #9ca3af !important;
-}
-:deep(.select2-selection__arrow) {
-  height: 100%;
-  right: 10px;
-}
-:deep(.select2-dropdown) {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
-  margin-top: 4px;
-  z-index: 1000;
-}
-:deep(.select2-search__field) {
-  border: 1px solid #ddd !important;
-  border-radius: 6px !important;
-  outline: none !important;
-  padding: 8px !important;
-}
-:deep(.select2-search__field:focus) {
-  border-color: #63391F !important;
-}
-:deep(.select2-results__option--highlighted) {
-  background-color: #63391F !important;
-  color: white !important;
-}
-:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
-  background-color: #f9fafb;
-  cursor: not-allowed;
-  border-style: dashed;
-}
 
 /* =========================================
    6. FOOTER & MISC

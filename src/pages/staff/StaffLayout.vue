@@ -190,9 +190,12 @@ const toggleUserMenu = () => {
 };
 
 // ===== Xem profile =====
+// Tìm hàm này và sửa lại:
 const viewProfile = () => {
-  isUserMenuOpen.value = false;
-  alert("Chức năng xem thông tin đang phát triển.");
+  isUserMenuOpen.value = false; // Đóng menu dropdown
+  
+  // 👉 SỬA DÒNG NÀY: Chuyển hướng theo đúng tên 'StaffProfile' mà bạn vừa cấu hình
+  router.push({ name: 'StaffProfile' }); 
 };
 
 // ===== Logout =====

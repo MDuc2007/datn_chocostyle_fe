@@ -10,18 +10,13 @@
         <router-link to="/ao-khoac" active-class="active">Áo khoác</router-link>
         <router-link to="/uu-dai" active-class="active">Ưu đãi</router-link>
         <router-link to="/moi-ve" active-class="active">Mới về</router-link>
+        
+        <router-link to="/tra-cuu" active-class="active">Tra cứu</router-link>
+        
         <router-link to="/thong-tin" active-class="active">Thông tin</router-link>
       </nav>
 
       <div class="actions">
-        <img
-          src="/src/assets/icon/box.svg"
-          alt="Tra cứu"
-          class="action-icon"
-          title="Tra cứu đơn hàng"
-          @click="$router.push('/tra-cuu')"
-        />
-
         <img
           src="/src/assets/icon/heart.svg"
           alt="Wishlist"
@@ -69,7 +64,9 @@
                   </p>
                 </div>
                 <div class="menu-divider"></div>
+                
                 <button @click="viewProfile" class="menu-item"><i class="fa fa-user-circle"></i> Tài khoản của tôi</button>
+                
                 <button @click="$router.push('/don-hang')" class="menu-item"><i class="fa fa-shopping-bag"></i> Đơn mua</button>
                 <button @click="logout" class="menu-item logout"><i class="fa fa-sign-out-alt"></i> Đăng xuất</button>
               </template>
@@ -98,15 +95,12 @@ const updateCartTotal = () => {
   cartTotal.value = cart.reduce((sum, item) => sum + item.soLuong, 0);
 };
 
-// 👉 ĐÃ THÊM: Hàm xử lý đường dẫn ảnh từ Backend
+// Hàm xử lý đường dẫn ảnh từ Backend
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  // Nếu ảnh là link Google/Facebook/Imgur thì giữ nguyên
   if (imagePath.startsWith("http")) {
     return imagePath;
   }
-  // Nếu chỉ là tên file (VD: avatar.jpg), nối thêm domain Backend
-  // LƯU Ý: Sửa port 8080 thành port thật của bạn nếu cần
   return `http://localhost:8080/images/${imagePath}`;
 };
 
@@ -133,7 +127,6 @@ const checkLoginStatus = async () => {
       avatar: displayAvatar
     };
 
-    // NẾU CÓ TOKEN, GỌI API ĐỂ LẤY THÔNG TIN MỚI NHẤT TỪ DB
     if (actualToken) {
       const headers = { Authorization: `Bearer ${actualToken}` };
 
@@ -142,7 +135,6 @@ const checkLoginStatus = async () => {
           const res = await axios.get(`http://localhost:8080/api/khach-hang/${currentUser.value.id}`, { headers });
           if (res.data) {
             currentUser.value.tenKhachHang = res.data.tenKhachHang || currentUser.value.tenKhachHang;
-            // Gán lại avatar nếu API trả về ảnh mới
             if (res.data.avatar || res.data.hinhAnh) {
                currentUser.value.avatar = res.data.avatar || res.data.hinhAnh;
             }
@@ -158,7 +150,7 @@ const checkLoginStatus = async () => {
                 }
               }
             } catch (err2) {
-              console.log("Hoàn tất dùng dữ liệu LocalStorage (Không kéo được ảnh từ API).");
+              console.log("Hoàn tất dùng dữ liệu LocalStorage.");
             }
           }
         }
@@ -205,9 +197,10 @@ const goToRegister = () => {
   router.push('/register');
 };
 
+// 👉 ĐÃ SỬA: Chuyển hướng tới trang tài khoản của khách
 const viewProfile = () => {
   isUserMenuOpen.value = false;
-  alert("Chức năng xem thông tin người dùng đang được phát triển.");
+  router.push('/profile'); 
 };
 
 const logout = () => {
@@ -413,7 +406,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 10px;
   transition: background-color 0.2s;
-  box-sizing: border-box; /* Sửa lỗi tràn nền */
+  box-sizing: border-box; 
 }
 
 .menu-item i { width: 16px; text-align: center; color: #6b3f1e;}
