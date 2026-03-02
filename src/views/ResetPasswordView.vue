@@ -102,7 +102,7 @@ const handleResetPassword = async () => {
 
 <style scoped>
 /* Copy CSS từ ForgotPasswordView.vue sang đây để giống hệt nhau */
-@import "../assets/css/auth-style.css"; /* Hoặc copy lại đoạn style scoped ở trên */
+/* @import "../assets/css/auth-style.css"; Hoặc copy lại đoạn style scoped ở trên */
 /* (Để ngắn gọn, bạn hãy copy toàn bộ phần <style scoped> của file ForgotPasswordView vào đây nhé) */
 :root {
   --primary-color: #63391f;

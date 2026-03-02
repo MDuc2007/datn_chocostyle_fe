@@ -149,43 +149,63 @@ onMounted(() => {
         <table class="custom-table">
           <thead>
             <tr>
-              <th width="5%" class="text-center">#</th>
-              <th width="15%">Nhân viên</th>
-              <th width="10%">Ca</th>
-              <th width="15%">Mở</th>
-              <th width="15%">Đóng</th>
-              <th width="10%" class="text-right">DT Tiền mặt</th>
-              <th width="10%" class="text-right">DT CK/Thẻ</th>
-              <th width="10%" class="text-right">Tổng DT</th>
+              <th width="3%" class="text-center">#</th>
+              <th width="12%">Nhân viên / Ca</th>
+              <th width="15%">Thời gian</th>
+              <th width="15%">Quỹ Tiền Mặt</th>
+              <th width="15%">Quỹ Chuyển Khoản</th>
+              <th width="15%">Tổng Kết</th>
               <th width="10%" class="text-center">Trạng thái</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="9" class="text-center py-4">Đang tải dữ liệu...</td>
+              <td colspan="7" class="text-center py-4">Đang tải dữ liệu...</td>
             </tr>
             <tr v-else-if="handovers.length === 0">
-              <td colspan="9" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
+              <td colspan="7" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
             </tr>
             <tr v-else v-for="(item, index) in handovers" :key="item.id">
               <td class="text-center" style="color: #333333">{{ index + 1 }}</td>
               <td>
-                <span class="name-text">{{ item.nhanVien }}</span>
+                <div style="font-weight: 500; color: #333;">{{ item.nhanVien }}</div>
+                <div class="shift-badge" style="margin-top: 4px;">{{ item.ca }}</div>
               </td>
               <td>
-                <span class="shift-badge">{{ item.ca }}</span>
+                <div style="font-size: 12px; color: #4b5563;">Mở: <span class="time-text">{{ item.thoiGianMo }}</span></div>
+                <div style="font-size: 12px; color: #4b5563; margin-top: 4px;">Đóng: <span class="time-text">{{ item.thoiGianDong }}</span></div>
               </td>
-              <td>
-                <span class="time-text">{{ item.thoiGianMo }}</span>
-              </td>
-              <td>
-                <span class="time-text">{{ item.thoiGianDong }}</span>
-              </td>
-              <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienMat) }}</td>
-              <td class="text-right" style="color: #000000">{{ formatCurrency(item.tienChuyenKhoan) }}</td>
               
-              <td class="text-right" style="color: #000000; font-weight: 500;">
-                {{ formatCurrency((item.tienMat || 0) + (item.tienChuyenKhoan || 0)) }}
+              <td>
+                <div style="font-size: 13px; margin-bottom: 2px;">Bán: <span style="color: #000000;">{{ formatCurrency(item.doanhThuTienMat) }}</span></div>
+                <div style="font-size: 13px; margin-bottom: 2px;">Két: <span>{{ formatCurrency(item.tienMat) }}</span></div>
+                <div style="font-size: 13px;">
+                  Lệch: <span :style="{ color: item.chenhLechTienMat < 0 ? '#dc2626' : (item.chenhLechTienMat > 0 ? '#d97706' : '#16a34a') }">
+                    {{ item.chenhLechTienMat > 0 ? '+' : '' }}{{ formatCurrency(item.chenhLechTienMat) }}
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <div style="font-size: 13px; margin-bottom: 2px;">Bán: <span style="color: #000000;">{{ formatCurrency(item.doanhThuCk) }}</span></div>
+                <div style="font-size: 13px; margin-bottom: 2px;">Két: <span>{{ formatCurrency(item.tienChuyenKhoan) }}</span></div>
+                <div style="font-size: 13px; ">
+                  Lệch: <span :style="{ color: item.chenhLechCk < 0 ? '#dc2626' : (item.chenhLechCk > 0 ? '#d97706' : '#16a34a') }">
+                    {{ item.chenhLechCk > 0 ? '+' : '' }}{{ formatCurrency(item.chenhLechCk) }}
+                  </span>
+                </div>
+              </td>
+              
+              <td>
+                <div style="font-size: 14px; color: #000000; margin-bottom: 2px;">DT: {{ formatCurrency(item.tongDoanhThu) }}</div>
+                <div style="font-size: 13px; ">
+                  Lệch: <span :style="{ color: item.tienChenhLech < 0 ? '#dc2626' : (item.tienChenhLech > 0 ? '#d97706' : '#16a34a') }">
+                    {{ item.tienChenhLech > 0 ? '+' : '' }}{{ formatCurrency(item.tienChenhLech) }}
+                  </span>
+                </div>
+                <div v-if="item.ghiChu" style="font-size: 11px; color: #6b7280; font-style: italic; margin-top: 4px; line-height: 1.2;">
+                  "{{ item.ghiChu }}"
+                </div>
               </td>
               
               <td class="text-center">

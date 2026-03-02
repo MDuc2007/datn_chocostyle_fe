@@ -76,11 +76,21 @@
                 </div>
               </div>
 
-              <div class="price text-center">
-                <del v-if="item.discountPercent > 0">{{
-                  formatPrice(item.oldPrice || item.price)
-                }}</del>
-                <span class="sale">{{ formatPrice(item.price) }}</span>
+              <div class="price-cell">
+                <template v-if="item.discountPercent > 0">
+                  <div class="old-price">
+                    {{ formatPrice(item.oldPrice) }}
+                  </div>
+                  <div class="new-price">
+                    {{ formatPrice(item.price) }}
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div class="normal-price">
+                    {{ formatPrice(item.price) }}
+                  </div>
+                </template>
               </div>
 
               <div class="qty text-center">
@@ -216,7 +226,7 @@
                     <select v-model="currentOrder.customer.district">
                       <option value="">Quận/Huyện *</option>
                       <option
-                        v-for="d in districts"
+                        v-for="d in currentOrder.districts"
                         :key="d.code"
                         :value="d.code"
                       >
@@ -232,7 +242,11 @@
                   <div class="form-item">
                     <select v-model="currentOrder.customer.ward">
                       <option value="">Xã/Phường *</option>
-                      <option v-for="w in wards" :key="w.code" :value="w.code">
+                      <option
+                        v-for="w in currentOrder.wards"
+                        :key="w.code"
+                        :value="w.code"
+                      >
                         {{ w.name }}
                       </option>
                     </select>
@@ -288,10 +302,14 @@
               </div>
 
               <div
-                class="payment-row"
+                class="payment-row shipping-row"
                 v-if="currentOrder.deliveryType === 'DELIVERY'"
               >
-                <span class="text-muted">Phí vận chuyển</span>
+                <span class="text-muted shipping-label">
+                  Phí vận chuyển
+                  <img :src="ghnLogo" class="ghn-icon" />
+                </span>
+
                 <span class="fw-600">{{ formatPrice(shippingFee) }}</span>
               </div>
 
@@ -449,11 +467,22 @@
                         >{{ p.stock }}</span
                       >
                     </td>
+
                     <td class="price-cell">
-                      <del v-if="p.discountPercent > 0">{{
-                        formatPrice(p.oldPrice)
-                      }}</del>
-                      <span class="sale">{{ formatPrice(p.price) }}</span>
+                      <template v-if="p.discountPercent > 0">
+                        <div class="old-price">
+                          {{ formatPrice(p.oldPrice) }}
+                        </div>
+                        <div class="new-price">
+                          {{ formatPrice(p.price) }}
+                        </div>
+                      </template>
+
+                      <template v-else>
+                        <div class="normal-price">
+                          {{ formatPrice(p.price) }}
+                        </div>
+                      </template>
                     </td>
                     <td>
                       <button
@@ -577,24 +606,22 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, watch, onMounted, watchEffect, nextTick } from "vue";
 import axios from "axios";
 import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 import { Html5Qrcode } from "html5-qrcode";
-
+import ghnLogo from "../../../assets/logo/ghn.png";
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(-1);
 const MAX_ORDER = 10;
-
 const invoiceToPrint = ref(null);
-
 const customers = ref([]);
 const showQrPopup = ref(false);
 let qrScanner = null;
+const STORAGE_KEY = "POS_COUNTER_ORDERS";
 
 const fetchCustomers = async () => {
   const res = await axios.get("http://localhost:8080/api/khach-hang");
@@ -617,18 +644,34 @@ const fetchProducts = async () => {
 
     const rawData = res.data?.content || [];
 
-    products.value = rawData.map((p) => ({
-      id: p.id,
-      code: `${p.maSanPham}-${p.maChiTietSanPham}`,
-      maCtsp: p.maChiTietSanPham,
-      name: p.tenSanPham,
-      image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
-      stock: p.soLuongTon,
-      color: p.tenMauSac,
-      size: p.tenKichCo,
-      oldPrice: p.giaBan,
-      price: p.giaBan,
-    }));
+    const today = new Date().toISOString().split("T")[0];
+
+    const activePromotion = promotions.value.find((p) => p.ngayBatDau <= today);
+
+    products.value = rawData.map((p) => {
+      let oldPrice = p.giaBan;
+      let newPrice = p.giaBan;
+      let discountPercent = 0;
+
+      if (activePromotion) {
+        discountPercent = activePromotion.giaTriGiam;
+        newPrice = oldPrice - (oldPrice * discountPercent) / 100;
+      }
+
+      return {
+        id: p.id,
+        maCtsp: p.maChiTietSanPham,
+        code: `${p.maSanPham}-${p.maChiTietSanPham}`,
+        name: p.tenSanPham,
+        image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
+        stock: p.soLuongTon,
+        color: p.tenMauSac,
+        size: p.tenKichCo,
+        oldPrice,
+        price: Math.round(newPrice),
+        discountPercent,
+      };
+    });
   } catch (err) {
     console.error("Lỗi fetchProducts:", err);
     products.value = [];
@@ -640,11 +683,9 @@ const openProductPopup = async () => {
   await fetchProducts();
   showProductPopup.value = true;
 };
-
 const currentOrder = computed(
   () => orders.value[activeOrderIndex.value] || null,
 );
-
 const decreaseQty = async (item) => {
   if (item.quantity > 1) {
     try {
@@ -665,12 +706,15 @@ const decreaseQty = async (item) => {
     }
   }
 };
-
 const addToCart = async (product) => {
+  if (!currentOrder.value) {
+    showToast("Vui lòng tạo đơn hàng trước", "error");
+    return;
+  }
   const cart = currentOrder.value.cart;
   const exist = cart.find((i) => i.id === product.id);
-
   try {
+    // 1. Cập nhật tồn kho tạm thời (Code cũ của bạn)
     await axios.put(
       "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
       null,
@@ -681,22 +725,22 @@ const addToCart = async (product) => {
         },
       },
     );
-
     if (exist) {
       exist.quantity++;
     } else {
       cart.push({ ...product, quantity: 1 });
     }
+    showToast(`Đã thêm ${product.name}`);
   } catch (err) {
     showToast(err.response?.data || "Không đủ tồn kho", "error");
   }
-
   showProductPopup.value = false;
 };
 
 const validateCustomer = () => {
   const order = currentOrder.value;
   const c = order.customer;
+
   customerErrors.value = {
     name: "",
     email: "",
@@ -706,25 +750,43 @@ const validateCustomer = () => {
     district: "",
     ward: "",
   };
+
   let isValid = true;
 
   c.name = c.name?.trim() || "";
   c.email = c.email?.trim() || "";
   c.phone = c.phone?.trim() || "";
   c.address = c.address?.trim() || "";
+
   const name = c.name;
   const email = c.email;
   const phone = c.phone;
   const address = c.address;
 
-  if (!name) {
-    customerErrors.value.name = "Vui lòng nhập tên khách hàng";
-    isValid = false;
-  } else if (name.length < 2) {
-    customerErrors.value.name = "Tên phải có ít nhất 2 ký tự";
-    isValid = false;
+  const isGuest = !c.id && order.deliveryType === "COUNTER";
+
+  // ❌ Nếu là khách lẻ tại quầy → không validate name + phone
+  if (!isGuest) {
+    if (!name) {
+      customerErrors.value.name = "Vui lòng nhập tên khách hàng";
+      isValid = false;
+    } else if (name.length < 2) {
+      customerErrors.value.name = "Tên phải có ít nhất 2 ký tự";
+      isValid = false;
+    }
+
+    if (phone) {
+      if (!/^[0-9]+$/.test(phone)) {
+        customerErrors.value.phone = "Số điện thoại chỉ được chứa số";
+        isValid = false;
+      } else if (!/^0[0-9]{8,10}$/.test(phone)) {
+        customerErrors.value.phone = "Số điện thoại không hợp lệ";
+        isValid = false;
+      }
+    }
   }
 
+  // Validate email nếu có nhập
   if (email) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
@@ -733,16 +795,7 @@ const validateCustomer = () => {
     }
   }
 
-  if (phone) {
-    if (!/^[0-9]+$/.test(phone)) {
-      customerErrors.value.phone = "Số điện thoại chỉ được chứa số";
-      isValid = false;
-    } else if (!/^0[0-9]{8,10}$/.test(phone)) {
-      customerErrors.value.phone = "Số điện thoại không hợp lệ";
-      isValid = false;
-    }
-  }
-
+  // Nếu giao hàng → bắt buộc đầy đủ
   if (order.deliveryType === "DELIVERY") {
     if (!phone) {
       customerErrors.value.phone = "Giao hàng bắt buộc nhập số điện thoại";
@@ -765,9 +818,9 @@ const validateCustomer = () => {
       isValid = false;
     }
   }
+
   return isValid;
 };
-
 const validateDelivery = () => {
   const order = currentOrder.value;
   const c = order.customer;
@@ -820,7 +873,6 @@ const confirmSubmitOrder = () => {
   }
 
   if (!validateCustomer()) return;
-  if (!validateDelivery()) return;
 
   openPaymentPopup();
 };
@@ -829,6 +881,7 @@ const removeItem = async (index) => {
   const item = currentOrder.value.cart[index];
 
   try {
+    // 1. Hoàn lại tồn kho (Code cũ của bạn)
     await axios.put(
       "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
       null,
@@ -840,6 +893,15 @@ const removeItem = async (index) => {
       },
     );
 
+    // 2. GỌI API XÓA XUỐNG BACKEND ĐỂ LƯU VẾT LỊCH SỬ (Code mới thêm)
+    if (currentOrder.value && currentOrder.value.idHoaDon) {
+      // Lưu ý: Ở đây chúng ta truyền item.id (chính là idSpct)
+      await axios.delete(
+        `http://localhost:8080/api/hoa-don/${currentOrder.value.idHoaDon}/xoa-sp-khoi-gio/${item.id}`,
+      );
+    }
+
+    // 3. Xóa sản phẩm khỏi giao diện (Code cũ của bạn)
     currentOrder.value.cart.splice(index, 1);
   } catch (err) {
     showToast("Không thể xóa sản phẩm", "error");
@@ -849,6 +911,7 @@ const removeItem = async (index) => {
 const fetchPromotions = async () => {
   const res = await axios.get("http://localhost:8080/api/promotions");
   promotions.value = res.data.filter((p) => p.trangThai === 1);
+  console.log("PROMOTIONS:", promotions.value);
 };
 
 const customerErrors = ref({
@@ -867,60 +930,69 @@ const isSettingAddress = ref(false);
 const selectCustomer = async (c) => {
   const res = await axios.get(`http://localhost:8080/api/khach-hang/${c.id}`);
   const kh = res.data;
+
   currentOrder.value.customer.id = c.id;
   currentOrder.value.customer.name = kh.tenKhachHang || "";
   currentOrder.value.customer.email = kh.email || "";
   currentOrder.value.customer.phone = kh.soDienThoai || "";
-  const diaChi = kh.listDiaChi?.find((d) => d.macDinh) || kh.listDiaChi?.[0];
 
+  const diaChi = kh.listDiaChi?.find((d) => d.macDinh) || kh.listDiaChi?.[0];
   if (!diaChi) {
     showCustomerPopup.value = false;
     return;
   }
+
   if (!provinces.value.length) await fetchProvinces();
+
   isSettingAddress.value = true;
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
   const province = provinces.value.find((p) =>
     p.name.toLowerCase().includes(diaChi.thanhPho.toLowerCase()),
   );
+
   if (!province) {
     showCustomerPopup.value = false;
     return;
   }
+
   currentOrder.value.customer.province = province.code;
 
   const resDistrict = await axios.get(
     `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
   );
-  districts.value = resDistrict.data.districts;
 
-  const district = districts.value.find((d) =>
+  currentOrder.value.districts = resDistrict.data.districts;
+
+  const district = currentOrder.value.districts.find((d) =>
     d.name.toLowerCase().includes(diaChi.quan.toLowerCase()),
   );
+
   if (!district) {
     showCustomerPopup.value = false;
     return;
   }
   currentOrder.value.customer.district = district.code;
-
   const resWard = await axios.get(
     `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
   );
-  wards.value = resWard.data.wards;
+  currentOrder.value.wards = resWard.data.wards;
 
-  const ward = wards.value.find((w) =>
+  const ward = currentOrder.value.wards.find((w) =>
     w.name.toLowerCase().includes(diaChi.phuong.toLowerCase()),
   );
+
   if (!ward) {
     showCustomerPopup.value = false;
     return;
   }
+
   currentOrder.value.customer.ward = ward.code;
 
   setTimeout(() => {
     isSettingAddress.value = false;
   }, 0);
+
   showCustomerPopup.value = false;
 };
 
@@ -959,6 +1031,44 @@ const openPaymentPopup = () => {
   showPaymentPopup.value = true;
 };
 
+const revalidateVoucherBeforeSubmit = async () => {
+  if (!currentOrder.value?.appliedVoucher) return true;
+
+  try {
+    // fetch lại voucher mới nhất theo khách hiện tại
+    await fetchVouchers();
+
+    const currentCode = currentOrder.value.appliedVoucher.code;
+
+    const found = vouchers.value.find((v) => v.maPgg === currentCode);
+
+    // ❌ Không tồn tại nữa
+    if (!found) {
+      return false;
+    }
+
+    // ❌ Không còn hợp lệ
+    if (
+      found.trangThai !== 1 ||
+      (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
+    ) {
+      return false;
+    }
+
+    // ❌ Không còn là voucher tốt nhất nữa
+    const best = bestVoucherSuggestion.value;
+
+    if (!best || best.maPgg !== currentCode) {
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Lỗi revalidate voucher:", err);
+    return false;
+  }
+};
+
 // ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
@@ -973,6 +1083,27 @@ const confirmPayment = async () => {
 
   if (!validatePayment()) return;
 
+  // ✅ CHECK LẠI VOUCHER Ở ĐÂY
+  const isVoucherValid = await revalidateVoucherBeforeSubmit();
+
+  if (!isVoucherValid) {
+    openConfirmModal(
+      "Phiếu giảm giá đã hết hiệu lực",
+      "Phiếu giảm giá hiện tại không còn hợp lệ hoặc không còn là tốt nhất. Bạn có muốn hệ thống tự chọn lại phiếu giảm giá tốt nhất không?",
+      async () => {
+        // reset voucher
+        currentOrder.value.appliedVoucher = null;
+        currentOrder.value.voucherCode = "";
+        voucherMode.value = "AUTO";
+
+        await fetchVouchers(); // lấy lại danh sách mới
+
+        showToast("Đã cập nhật phiếu giảm giá mới nhất", "error");
+      },
+    );
+    return;
+  }
+
   showPaymentPopup.value = false;
 
   openConfirmModal(
@@ -986,21 +1117,14 @@ const confirmPayment = async () => {
 
 const openQrScanner = async () => {
   showQrPopup.value = true;
-
   await nextTick();
-
   qrScanner = new Html5Qrcode("qr-reader");
 
   await qrScanner.start(
     { facingMode: "environment" },
     {
-      fps: 25,
+      fps: 10,
       qrbox: { width: 300, height: 300 },
-      aspectRatio: 1.777,
-      disableFlip: false,
-      experimentalFeatures: {
-        useBarCodeDetectorIfSupported: true,
-      },
     },
     async (decodedText) => {
       await handleQrResult(decodedText);
@@ -1020,10 +1144,15 @@ const closeQrScanner = async () => {
   }
   showQrPopup.value = false;
 };
+
 const handleQrResult = async (decodedText) => {
+  if (!currentOrder.value) {
+    showToast("Vui lòng tạo đơn hàng trước", "error");
+    return;
+  }
+
   let productCode = decodedText.trim();
 
-  // đảm bảo đã load sản phẩm
   if (!products.value.length) {
     await fetchProducts();
   }
@@ -1037,18 +1166,18 @@ const handleQrResult = async (decodedText) => {
     return;
   }
 
-  addToCart(product);
-  showToast(`Đã thêm ${product.name}`);
-  closeQrScanner();
+  await addToCart(product);
 };
 
 const changeMoney = computed(() => {
   if (!currentOrder.value) return 0;
   return Math.max((currentOrder.value.paidAmount || 0) - total.value, 0);
 });
+
 const provinces = ref([]);
-const districts = ref([]);
-const wards = ref([]);
+// const districts = ref([]);
+// const wards = ref([]);
+
 const fetchProvinces = async () => {
   const res = await axios.get("https://provinces.open-api.vn/api/p/");
   provinces.value = res.data;
@@ -1058,15 +1187,19 @@ watch(
   () => currentOrder.value?.customer.province,
   async (newCode) => {
     if (!currentOrder.value || isSettingAddress.value) return;
-    districts.value = [];
-    wards.value = [];
+
+    currentOrder.value.districts = [];
+    currentOrder.value.wards = [];
     currentOrder.value.customer.district = "";
     currentOrder.value.customer.ward = "";
+
     if (!newCode) return;
+
     const res = await axios.get(
       `https://provinces.open-api.vn/api/p/${newCode}?depth=2`,
     );
-    districts.value = res.data.districts;
+
+    currentOrder.value.districts = res.data.districts;
   },
 );
 
@@ -1074,13 +1207,17 @@ watch(
   () => currentOrder.value?.customer.district,
   async (newCode) => {
     if (!currentOrder.value || isSettingAddress.value) return;
-    wards.value = [];
+
+    currentOrder.value.wards = [];
     currentOrder.value.customer.ward = "";
+
     if (!newCode) return;
+
     const res = await axios.get(
       `https://provinces.open-api.vn/api/d/${newCode}?depth=2`,
     );
-    wards.value = res.data.wards;
+
+    currentOrder.value.wards = res.data.wards;
   },
 );
 
@@ -1227,6 +1364,8 @@ const createOrder = async () => {
         district: "",
         province: "",
       },
+      districts: [],
+      wards: [],
       paidAmount: 0,
       paymentMethod: "CASH",
       voucherCode: "",
@@ -1373,30 +1512,25 @@ const removeOrder = (index) => {
               },
             );
           }
+
+          await axios.delete(
+            `http://localhost:8080/api/hoa-don/xoa-don-quay/${targetOrder.idHoaDon}`,
+          );
         }
 
         orders.value.splice(index, 1);
-        showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
 
+        // ✅ FIX active index
         if (!orders.value.length) {
           activeOrderIndex.value = -1;
-          return;
+        } else if (activeOrderIndex.value >= index) {
+          activeOrderIndex.value = Math.max(0, activeOrderIndex.value - 1);
         }
 
-        if (activeOrderIndex.value === index) {
-          activeOrderIndex.value = Math.max(0, index - 1);
-        } else if (index < activeOrderIndex.value) {
-          activeOrderIndex.value--;
-        }
-        voucherMode.value = "AUTO";
+        showToast(`Đã xóa đơn ${targetOrder.maHoaDon}`);
       } catch (error) {
-        console.error("Lỗi xóa hóa đơn:", error);
-        showToast(
-          error.response?.data?.error ||
-            error.response?.data ||
-            "Lỗi hệ thống khi xóa hóa đơn!",
-          "error",
-        );
+        console.error("Lỗi khi xóa đơn:", error);
+        showToast("Xóa đơn thất bại!", "error");
       }
     },
   );
@@ -1438,36 +1572,94 @@ const filteredCustomers = computed(() => {
   );
 });
 
-const STORAGE_KEY = "pos_orders_state";
 const isReady = ref(false);
+
+const validateOrdersWithServer = async () => {
+  const token = localStorage.getItem("token");
+  const validOrders = [];
+
+  for (const order of orders.value) {
+    try {
+      await axios.get(`http://localhost:8080/api/hoa-don/${order.idHoaDon}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      validOrders.push(order);
+    } catch (err) {
+      console.warn("Order không còn tồn tại:", order.maHoaDon);
+    }
+  }
+
+  orders.value = validOrders;
+
+  if (!orders.value.length) {
+    activeOrderIndex.value = -1;
+  } else if (activeOrderIndex.value >= orders.value.length) {
+    activeOrderIndex.value = orders.value.length - 1;
+  }
+};
+
 onMounted(async () => {
   isSettingAddress.value = true;
+
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     const data = JSON.parse(saved);
     orders.value = data.orders;
     activeOrderIndex.value = data.activeOrderIndex ?? -1;
   }
+
+  // ✅ validate trước
+  await validateOrdersWithServer();
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      orders: orders.value,
+      activeOrderIndex: activeOrderIndex.value,
+    }),
+  );
   await fetchProvinces();
+
   for (const order of orders.value) {
     const provinceCode = order.customer.province;
     const districtCode = order.customer.district;
+
     if (provinceCode) {
       const resDistrict = await axios.get(
         `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
       );
-      districts.value = resDistrict.data.districts;
+      order.districts = resDistrict.data.districts;
     }
+
     if (districtCode) {
       const resWard = await axios.get(
         `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
       );
-      wards.value = resWard.data.wards;
+      order.wards = resWard.data.wards;
     }
   }
+
   await fetchVouchers();
+
   isSettingAddress.value = false;
   isReady.value = true;
+
+  // tính shipping
+  for (const order of orders.value) {
+    if (order.deliveryType === "DELIVERY" && order.customer?.district) {
+      const districtObj = order.districts?.find(
+        (d) => d.code === order.customer.district,
+      );
+
+      if (districtObj) {
+        const res = await axios.get("http://localhost:8080/api/shipping", {
+          params: { district: districtObj.name },
+        });
+
+        order.shippingFee = res.data;
+      }
+    }
+  }
 });
 
 watchEffect(() => {
@@ -1482,13 +1674,23 @@ watchEffect(() => {
 });
 
 const fetchVouchers = async () => {
-  const idKhach = currentOrder.value?.customer?.id ?? null;
+  if (!currentOrder.value) {
+    vouchers.value = [];
+    return;
+  }
 
-  const res = await axios.get("http://localhost:8080/admin/voucher/pos", {
-    params: { idKhachHang: idKhach },
-  });
+  try {
+    const idKhach = currentOrder.value.customer?.id ?? null;
 
-  vouchers.value = res.data;
+    const res = await axios.get("http://localhost:8080/admin/voucher/pos", {
+      params: { idKhachHang: idKhach },
+    });
+
+    vouchers.value = res.data;
+  } catch (error) {
+    console.error("Lỗi fetchVouchers:", error);
+    vouchers.value = [];
+  }
 };
 
 watch(
@@ -1532,6 +1734,7 @@ const applyVoucher = () => {
   const code = currentOrder.value.voucherCode?.trim();
   if (!code) {
     voucherError.value = "Vui lòng nhập mã giảm giá";
+    voucherMode.value = "AUTO";
     return;
   }
   const found = vouchers.value.find(
@@ -1540,33 +1743,40 @@ const applyVoucher = () => {
   if (!found) {
     voucherError.value = "Mã giảm giá không tồn tại";
     currentOrder.value.appliedVoucher = null;
+    voucherMode.value = "AUTO";
     return;
   }
   if (found.soLuong !== undefined && found.soLuong <= 0) {
     voucherError.value = "Mã giảm giá đã hết lượt sử dụng";
+    voucherMode.value = "AUTO";
     return;
   }
   if (found.trangThai === 0) {
     voucherError.value = "Mã giảm giá đã bị ngừng";
+    voucherMode.value = "AUTO";
     return;
   }
 
   if (found.trangThai === 2) {
     voucherError.value = "Mã giảm giá chưa đến thời gian sử dụng";
+    voucherMode.value = "AUTO";
     return;
   }
 
   if (found.trangThai === 3) {
     voucherError.value = "Mã giảm giá đã hết hạn";
+    voucherMode.value = "AUTO";
     return;
   }
   if (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang) {
     voucherError.value = "Đơn hàng chưa đạt giá trị tối thiểu";
+    voucherMode.value = "AUTO";
     return;
   }
   if (found.kieuApDung === "PERSONAL") {
     if (!currentOrder.value.customer?.id) {
       voucherError.value = "Voucher này chỉ áp dụng cho khách hàng cụ thể";
+      voucherMode.value = "AUTO";
       return;
     }
   }
@@ -1637,24 +1847,42 @@ const total = computed(
 
 const calculateShipping = async () => {
   if (!currentOrder.value) return;
+
   const districtCode = currentOrder.value.customer.district;
   if (!districtCode) return;
-  const districtObj = districts.value.find((d) => d.code === districtCode);
+
+  const districtObj = currentOrder.value.districts?.find(
+    (d) => d.code === districtCode,
+  );
+
   if (!districtObj) return;
+
   const res = await axios.get("http://localhost:8080/api/shipping", {
     params: { district: districtObj.name },
   });
+
   currentOrder.value.shippingFee = res.data;
 };
 
 const toggleDelivery = async (e) => {
   const isDelivery = e.target.checked;
   if (!currentOrder.value) return;
+
   currentOrder.value.deliveryType = isDelivery ? "DELIVERY" : "COUNTER";
+
+  currentOrder.value.appliedVoucher = null;
+  currentOrder.value.voucherCode = "";
+  voucherMode.value = "AUTO";
+  await fetchVouchers();
+
   if (isDelivery) {
     await calculateShipping();
   } else {
     currentOrder.value.shippingFee = 0;
+    currentOrder.value.customer.address = "";
+    currentOrder.value.customer.province = "";
+    currentOrder.value.customer.district = "";
+    currentOrder.value.customer.ward = "";
   }
 };
 
@@ -1993,7 +2221,6 @@ const showToast = (msg, type = "success") => {
 .product-header {
   text-align: center;
   display: grid;
-  grid-template-columns: 2fr 120px 150px 140px 50px;
   gap: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
@@ -2003,13 +2230,32 @@ const showToast = (msg, type = "success") => {
 }
 
 .product-row {
-  text-align: center;
-  display: flex;
-  grid-template-columns: 2fr 120px 150px 140px 50px;
+  display: grid; /* ✅ đổi flex thành grid */
   gap: 12px;
   align-items: center;
   padding: 16px 0;
   border-bottom: 1px solid #f1f1f1;
+}
+
+.product-header,
+.product-row {
+  grid-template-columns: minmax(0, 2fr) 150px 130px 130px 50px;
+}
+
+.product-header > div:first-child,
+.product-row > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.product-cell-info {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 👈 căn giữa frame */
+  gap: 12px;
+  min-width: 0;
 }
 
 .product-row:last-child {
@@ -2442,6 +2688,7 @@ select:focus {
   padding: 12px;
   border-bottom: 1px solid #eee;
   vertical-align: middle;
+  height: 70px;
 }
 
 .table th,
@@ -2706,13 +2953,15 @@ select:focus {
 }
 
 .voucher-suggestion {
-  flex: 0 0 100%;
+  display: inline-block;
   margin-top: 8px;
   font-size: 13px;
   background: #fdf6ec;
-  padding: 8px 10px;
+  padding: 8px 34px;
   border-radius: 6px;
   border: 1px dashed #e6a23c;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .btn-link {
@@ -2744,8 +2993,12 @@ select:focus {
 }
 
 .price-cell {
-  text-align: center;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  line-height: 1.3;
+  min-height: 60px;
 }
 
 .price-cell del {
@@ -2796,5 +3049,66 @@ select:focus {
 
 .info-box {
   max-width: 100%;
+}
+
+.shipping-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ghn-icon {
+  width: 40px; /* giảm kích thước */
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 1400px) {
+  .product-header,
+  .product-row {
+    grid-template-columns: minmax(0, 1.8fr) 100px 120px 110px 45px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .product-header,
+  .product-row {
+    grid-template-columns: minmax(0, 1.5fr) 90px 110px 100px 40px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .product-header,
+  .product-row {
+    grid-template-columns: minmax(0, 1.2fr) 80px 100px 90px 35px;
+  }
+}
+
+.price-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  height: 100%;
+}
+
+.old-price {
+  font-size: 12px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.new-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e53935;
+}
+
+.normal-price {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
 }
 </style>

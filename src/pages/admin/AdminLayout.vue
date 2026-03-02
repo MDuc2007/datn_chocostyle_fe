@@ -24,7 +24,7 @@
               <div>Thống kê</div>
             </div>
           </router-link>
-          
+
           <router-link to="/admin/sales" class="menu-item">
             <div class="invoice">
               <img src="/src/assets/icon/cashier.svg" class="menu-icon" />
@@ -51,15 +51,33 @@
             </div>
           </div>
           <div class="submenu" v-show="isProductOpen">
-            <router-link to="/admin/product" class="submenu-item">Sản phẩm</router-link>
-            <router-link to="/admin/product/details" class="submenu-item">Biến thể sản phẩm</router-link>
-            <router-link to="/admin/origin" class="submenu-item">Xuất xứ</router-link>
-            <router-link to="/admin/material" class="submenu-item">Chất liệu</router-link>
-            <router-link to="/admin/color" class="submenu-item">Màu sắc</router-link>
-            <router-link to="/admin/size" class="submenu-item">Kích cỡ</router-link>
-            <router-link to="/admin/style" class="submenu-item">Phong cách mặc</router-link>
-            <router-link to="/admin/type" class="submenu-item">Loại áo</router-link>
-            <router-link to="/admin/shapetype" class="submenu-item">Kiểu dáng</router-link>
+            <router-link to="/admin/product" class="submenu-item"
+              >Sản phẩm</router-link
+            >
+            <router-link to="/admin/product/details" class="submenu-item"
+              >Biến thể sản phẩm</router-link
+            >
+            <router-link to="/admin/origin" class="submenu-item"
+              >Xuất xứ</router-link
+            >
+            <router-link to="/admin/material" class="submenu-item"
+              >Chất liệu</router-link
+            >
+            <router-link to="/admin/color" class="submenu-item"
+              >Màu sắc</router-link
+            >
+            <router-link to="/admin/size" class="submenu-item"
+              >Kích cỡ</router-link
+            >
+            <router-link to="/admin/style" class="submenu-item"
+              >Phong cách mặc</router-link
+            >
+            <router-link to="/admin/type" class="submenu-item"
+              >Loại áo</router-link
+            >
+            <router-link to="/admin/shapetype" class="submenu-item"
+              >Kiểu dáng</router-link
+            >
           </div>
         </div>
 
@@ -76,8 +94,12 @@
             </div>
           </div>
           <div class="submenu" v-show="isDiscountOpen">
-            <router-link to="/admin/voucher" class="submenu-item">Phiếu giảm giá</router-link>
-            <router-link to="/admin/promotion" class="submenu-item">Đợt giảm giá</router-link>
+            <router-link to="/admin/voucher" class="submenu-item"
+              >Phiếu giảm giá</router-link
+            >
+            <router-link to="/admin/promotion" class="submenu-item"
+              >Đợt giảm giá</router-link
+            >
           </div>
         </div>
 
@@ -94,17 +116,24 @@
             </div>
           </div>
           <div class="submenu" v-show="isAccountOpen">
-            <router-link to="/admin/employee" class="submenu-item">Nhân viên</router-link>
-            <router-link to="/admin/customer" class="submenu-item">Khách hàng</router-link>
+            <router-link to="/admin/employee" class="submenu-item"
+              >Nhân viên</router-link
+            >
+            <router-link to="/admin/customer" class="submenu-item"
+              >Khách hàng</router-link
+            >
           </div>
         </div>
-        
+
         <div class="menu-group">
           <div class="menu-item has-children" @click="toggleSchedule">
             <img
               src="/src/assets/icon/calendar.svg"
               class="menu-icon"
-              onerror="this.src = 'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'"
+              onerror="
+                this.src =
+                  'https://cdn-icons-png.flaticon.com/512/2693/2693507.png'
+              "
             />
             <div>
               Quản lý lịch làm việc
@@ -112,8 +141,15 @@
             </div>
           </div>
           <div class="submenu" v-show="isScheduleOpen">
-            <router-link to="/admin/shift" class="submenu-item">Ca làm việc</router-link>
-            <router-link to="/admin/schedule" class="submenu-item">Lịch làm việc</router-link>
+            <router-link to="/admin/shift" class="submenu-item"
+              >Ca làm việc</router-link
+            >
+            <router-link to="/admin/schedule" class="submenu-item"
+              >Lịch làm việc</router-link
+            >
+            <router-link to="/admin/shift-handover" class="submenu-item"
+              >Lịch sử hoạt động</router-link
+            >
           </div>
         </div>
       </nav>
@@ -127,13 +163,17 @@
           </div>
 
           <img src="/src/assets/icon/notification.svg" class="icon" />
-          
-          <div class="user-icon-wrapper" @click.stop="toggleUserMenu" ref="userMenuRef">
-            <img 
-              v-if="currentUserAvatar" 
-              :src="currentUserAvatar" 
-              alt="Avatar" 
-              class="user-avatar" 
+
+          <div
+            class="user-icon-wrapper"
+            @click.stop="toggleUserMenu"
+            ref="userMenuRef"
+          >
+            <img
+              v-if="currentUserAvatar"
+              :src="currentUserAvatar"
+              alt="Avatar"
+              class="user-avatar"
               @error="handleAvatarError"
             />
             <div v-else class="user-initial">
@@ -194,16 +234,27 @@ onMounted(async () => {
   if (userStr) {
     try {
       const userData = JSON.parse(userStr);
-      currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || userData.username || "Admin";
-      
+      // Ưu tiên lấy tên nhân viên -> họ tên -> name
+      currentUserName.value =
+        userData.tenNhanVien ||
+        userData.hoTen ||
+        userData.name ||
+        userData.username ||
+        "Admin";
+
+      // 👉 GỌI API LẤY ẢNH BASE64 TỪ BACKEND
       if (userData.id && token) {
         try {
-          const res = await axios.get(`http://localhost:8080/api/nhan-vien/${userData.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
+          const res = await axios.get(
+            `http://localhost:8080/api/nhan-vien/${userData.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          // Gán ảnh Base64 từ API vào biến hiển thị
           if (res.data && res.data.avatar) {
             currentUserAvatar.value = res.data.avatar;
           }
@@ -226,7 +277,7 @@ onBeforeUnmount(() => {
 // Hàm lấy chữ cái đầu tiên
 const getUserInitial = (name: string) => {
   if (!name || name === "Admin") return "A";
-  const words = name.trim().split(' ');
+  const words = name.trim().split(" ");
   const lastName = words[words.length - 1];
   return lastName.charAt(0).toUpperCase();
 };
@@ -247,7 +298,7 @@ const toggleSchedule = () => {
 
 const goToProduct = () => {
   isProductOpen.value = !isProductOpen.value;
-  if(isProductOpen.value) {
+  if (isProductOpen.value) {
     router.push("/admin/product");
   }
 };
@@ -287,7 +338,11 @@ const logout = () => {
   display: flex;
   min-height: 100vh;
   background: #f6f6f6;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 /* ================= SIDEBAR ================= */
@@ -418,7 +473,6 @@ const logout = () => {
   transition: transform 0.2s ease;
   font-size: 12px;
 }
-
 .arrow.open {
   transform: rotate(180deg);
 }
@@ -439,8 +493,8 @@ const logout = () => {
   left: 270px;
   right: 0;
   background: #fff;
-  padding: 15px 25px; 
-  border-bottom: 1px solid #ddd; 
+  padding: 15px 25px;
+  border-bottom: 1px solid #ddd;
   z-index: 900;
   display: flex;
   align-items: center;
@@ -450,7 +504,7 @@ const logout = () => {
   margin-left: auto;
   font-size: 20px;
   display: flex;
-  gap: 20px; 
+  gap: 20px;
   align-items: center;
 }
 
@@ -468,7 +522,7 @@ const logout = () => {
 
 .user-name-bold {
   font-weight: 700;
-  color: #63391f; 
+  color: #63391f;
 }
 
 /* ================= AVATAR / INITIAL ================= */
@@ -485,7 +539,7 @@ const logout = () => {
   object-fit: cover;
   border: 2px solid #eee;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .user-initial {
@@ -515,11 +569,13 @@ const logout = () => {
   padding: 5px 0;
   min-width: 160px;
   z-index: 1000;
-  overflow: hidden; 
+  /* Đảm bảo text không bị tràn */
+  overflow: hidden;
+
 }
 
 .user-dropdown::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -6px;
   right: 12px;
@@ -568,7 +624,9 @@ const logout = () => {
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
 .fade-enter-from,
 .fade-leave-to {

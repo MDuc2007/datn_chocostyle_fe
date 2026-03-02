@@ -499,26 +499,29 @@ onUnmounted(() => {
 
 .custom-input {
   width: 100%;
-  background-color: var(--white-color);
-  border: 1px solid var(--border-color);
-  padding: 12px 45px 12px 15px; 
-  border-radius: 8px;
+  background-color: var(--white-color) !important;
+  border: 1px solid #9ca3af !important; /* Đổi sang màu xám đậm hơn và ép cứng viền */
+  padding: 12px 45px 12px 15px !important; 
+  border-radius: 8px !important;
   font-size: 15px;
   color: var(--text-main);
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   transition: all 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important; /* Thêm bóng đổ chìm */
 }
 
 .custom-input:focus:not(:disabled) {
-  outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); 
+  outline: none !important;
+  border-color: var(--primary-color) !important; /* Chuyển sang màu nâu đậm khi click vào */
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15) !important; 
 }
 
 .custom-input:disabled {
-  background-color: #E5E7EB;
-  color: #9CA3AF;
-  cursor: not-allowed;
+  background-color: #E5E7EB !important;
+  color: #9CA3AF !important;
+  border-color: #D1D5DB !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 
 .currency {

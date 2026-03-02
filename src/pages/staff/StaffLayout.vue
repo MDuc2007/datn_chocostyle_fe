@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-layout">
+  <div class="admin-layout" :class="{ 'view-only-mode': isViewOnly }">
     <aside class="sidebar">
       <div class="logo-wrapper">
         <img
@@ -60,6 +60,15 @@
             </router-link>
           </div>
         </div>
+        <router-link to="/staff/chat" class="menu-item">
+          <div class="invoice">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/134/134914.png"
+              style="width: 30px; height: 30px"
+            />
+            <div>Tin nhắn hỗ trợ</div>
+          </div>
+        </router-link>
       </nav>
     </aside>
 
@@ -103,11 +112,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios"; // 👉 Đã thêm axios để gọi API
+import axios from "axios";
 
 const router = useRouter();
+
+const isViewOnly = ref(false);
 
 // ===== Dropdown State =====
 const isScheduleOpen = ref(false);
@@ -118,27 +129,46 @@ const userMenuRef = ref<HTMLElement | null>(null);
 const currentUserName = ref("Nhân viên");
 const currentUserAvatar = ref<string | null>(null);
 
+// Lắng nghe sự kiện để khóa ngay lập tức khi bấm nút (Từ nhánh HEAD)
+const handleViewOnlyEvent = (e: Event) => {
+  const customEvent = e as CustomEvent;
+  isViewOnly.value = customEvent.detail; 
+};
+
+// Đóng menu khi click ra ngoài (Từ nhánh HungDepZai)
+const handleClickOutside = (event: MouseEvent) => {
+  if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
+    isUserMenuOpen.value = false;
+  }
+};
+
 // ===== Lấy dữ liệu khi load trang =====
 onMounted(async () => {
-  const userStr = localStorage.getItem("user");
-  const token = localStorage.getItem("token"); // 👉 Lấy token để xác thực API
+  // Lắng nghe sự kiện khóa view và click ngoài menu
+  window.addEventListener('set-view-only', handleViewOnlyEvent);
+  document.addEventListener("click", handleClickOutside);
 
+  const userStr = localStorage.getItem("user");
+  const token = localStorage.getItem("token");
+  let idNv = localStorage.getItem("idNv");
+
+  // 1. Lấy thông tin & Avatar User
   if (userStr) {
     try {
       const userData = JSON.parse(userStr);
       // Ưu tiên lấy tenNhanVien, nếu không có lấy hoTen hoặc name
       currentUserName.value = userData.tenNhanVien || userData.hoTen || userData.name || userData.username || "Nhân viên";
       
-      // 👉 GỌI API LẤY ẢNH TRỰC TIẾP TỪ BACKEND
+      // Fallback lấy idNv từ user object nếu localStorage chưa lưu idNv rời
+      if (!idNv && userData.id) idNv = userData.id;
+
+      // GỌI API LẤY ẢNH TRỰC TIẾP TỪ BACKEND
       if (userData.id && token) {
         try {
           const res = await axios.get(`http://localhost:8080/api/nhan-vien/${userData.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
           });
           
-          // Gán ảnh Base64 từ API vào biến hiển thị
           if (res.data && res.data.avatar) {
             currentUserAvatar.value = res.data.avatar;
           }
@@ -149,13 +179,44 @@ onMounted(async () => {
     } catch (e) {
       console.error("Lỗi đọc dữ liệu user:", e);
     }
+  } else {
+    router.push("/login");
+    return; // Ngừng chạy nếu không có user
   }
 
-  // Lắng nghe click ra ngoài để đóng menu user
-  document.addEventListener("click", handleClickOutside);
+  // 2. Kiểm tra ca làm việc để xét View-Only
+  if (idNv && token) {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      // Kiểm tra xem hôm nay CÓ CA không
+      const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
+      
+      if (resCa.data && resCa.data.caLamViec) {
+        // Nếu có ca -> Kiểm tra xem ĐÃ CHECK-OUT chưa
+        const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
+        
+        // Nếu API trả về dữ liệu và có trường gioCheckOut (nghĩa là đã kết thúc ca)
+        if (resChamCong.data && resChamCong.data.gioCheckOut) {
+           isViewOnly.value = true;  // KHÓA MÀN HÌNH
+        } else {
+           isViewOnly.value = false; // MỞ KHÓA (Đang trong ca làm việc)
+        }
+      } else {
+        isViewOnly.value = true;  // Không có ca -> KHÓA
+      }
+    } catch (error) {
+      console.log("Lỗi hoặc không có ca:", error);
+      isViewOnly.value = true; // Lỗi cũng KHÓA luôn cho an toàn
+    }
+  } else {
+    isViewOnly.value = true;
+  }
 });
 
-onBeforeUnmount(() => {
+// Gỡ bỏ Event Listener khi component bị hủy
+onUnmounted(() => {
+  window.removeEventListener('set-view-only', handleViewOnlyEvent);
   document.removeEventListener("click", handleClickOutside);
 });
 
@@ -170,13 +231,6 @@ const getUserInitial = (name: string) => {
 // Handle lỗi ảnh avatar
 const handleAvatarError = () => {
   currentUserAvatar.value = null; // Chuyển về chế độ hiện chữ cái đầu
-};
-
-// Đóng menu khi click ra ngoài
-const handleClickOutside = (event: MouseEvent) => {
-  if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
-    isUserMenuOpen.value = false;
-  }
 };
 
 // ===== Toggle Lịch làm việc =====
@@ -202,6 +256,7 @@ const viewProfile = () => {
 const logout = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("token");
+  localStorage.removeItem("idNv");
   window.location.reload(); 
 };
 </script>
@@ -221,6 +276,29 @@ const logout = () => {
     Helvetica,
     Arial,
     sans-serif;
+}
+
+/* ================= VIEW ONLY MODE (CHỈ XEM) CẢI TIẾN ================= */
+/* 1. Mở khóa Menu bên trái: Chỉ làm mờ nhẹ để báo hiệu, không dùng pointer-events: none nữa */
+.view-only-mode .sidebar {
+  opacity: 0.9;
+}
+
+/* 2. KHÔNG khóa toàn bộ vùng content (để nhân viên còn cuộn scrollbar được) */
+.view-only-mode .content {
+  /* Giữ nguyên, không thêm pointer-events ở đây */
+}
+
+/* 3. KHÓA MÕM TẤT CẢ TƯƠNG TÁC (Nút, Ô nhập, Dropdown, Link) bên trong vùng content */
+.view-only-mode .content :deep(button),
+.view-only-mode .content :deep(input),
+.view-only-mode .content :deep(select),
+.view-only-mode .content :deep(textarea),
+/* Khóa các link, nhưng chừa lại phân trang hoặc menu nếu cần */
+.view-only-mode .content :deep(a) {
+  pointer-events: none !important; /* Chặn click/gõ */
+  opacity: 0.5 !important;        /* Làm mờ */
+  user-select: none !important;    /* Không cho bôi đen text */
 }
 
 /* ================= SIDEBAR ================= */

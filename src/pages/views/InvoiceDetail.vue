@@ -1,419 +1,353 @@
 <template>
-  <div class="invoice-detail-wrapper">
-    <div v-if="!invoice" class="loading-container">
-      <div class="spinner"></div>
-      <p>Đang tải dữ liệu hóa đơn...</p>
+  <div class="app-container">
+    <Header></Header>
+
+    <div class="breadcrumb">
+      <span @click="$router.push('/')">Trang chủ</span>
+      <span class="separator">/</span>
+      <span @click="$router.push('/my-orders')">Đơn mua</span>
+      <span class="separator">/</span>
+      <span class="current">Chi tiết đơn hàng</span>
     </div>
 
-    <div v-else>
-      <div class="detail-header no-print">
-        <div class="header-left">
-          <h1 class="main-title">Chi tiết đơn hàng #{{ invoice.maHoaDon }}</h1>
-          <p class="subtitle">Ngày tạo: {{ formatDate(invoice.ngayTao) }}</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn-back" @click="$router.back()">
-            ← Quay lại danh sách
-          </button>
-        </div>
-      </div>
+    <div class="main-layout">
+      <ClientSidebar />
 
-      <div class="card timeline-section no-print">
-        <div class="stepper-wrapper">
-          <div
-            class="stepper-item"
-            v-for="(step, index) in computedSteps"
-            :key="index"
-            :class="{
-              active: isStepActive(step.status),
-              cancelled:
-                invoice.trangThai === 5 && index === computedSteps.length - 1,
-            }"
-          >
-            <div class="step-icon-circle">
-              <img :src="step.icon" class="step-icon-img" />
-            </div>
-            <div class="step-bar"></div>
-            <div class="step-content">
-              <div class="step-label">{{ step.label }}</div>
-              <div class="step-time">{{ getLogTime(step.status) }}</div>
+      <div class="content-section">
+        <div v-if="!invoice" class="loading-container">
+          <div class="spinner"></div>
+          <p>Đang tải dữ liệu hóa đơn...</p>
+        </div>
+
+        <div v-else>
+          <div class="detail-header no-print">
+            <div class="header-left">
+              <h1 class="main-title">
+                Chi tiết đơn hàng #{{ invoice.maHoaDon }}
+              </h1>
+              <p class="subtitle">
+                Ngày tạo: {{ formatDate(invoice.ngayTao) }}
+              </p>
             </div>
           </div>
-        </div>
 
-        <div class="action-bar-bottom">
-          <div
-            class="action-left"
-            v-if="invoice.trangThai < 4 && invoice.trangThai !== 5"
-          >
-            <button
-              v-if="invoice.trangThai > 0"
-              class="btn-outline-orange"
-              @click="confirmAction('prev')"
-            >
-              <i class="icon-arrow-left">⬅</i> Quay lại
-            </button>
-
-            <button class="btn-orange" @click="confirmAction('next')">
-              {{ getNextActionName(invoice.trangThai) }}
-              <i class="icon-arrow-right">➡</i>
-            </button>
-
-            <button class="btn-white-border" @click="confirmAction('cancel')">
-              Xác nhận hủy đơn
-            </button>
-          </div>
-
-          <div class="action-right">
-            <button
-              v-if="invoice.trangThai === 5 && daThanhToan > 0"
-              class="btn-outline-red"
-              @click="openRefundModal"
-            >
-              💸 Xác nhận hoàn tiền
-            </button>
-
-            <button
-              v-if="invoice.trangThai !== 5"
-              class="btn-orange"
-              @click="handlePrint"
-            >
-              <i class="icon-print"
-                ><img
-                  src="/src/assets/icon/print-svgrepo-com.svg"
-                  style="width: 24px; height: 24px"
-                  alt=""
-              /></i>
-              In hóa đơn
-            </button>
-            <button class="btn-orange" @click="openHistoryModal">
-              <i class="icon-history"
-                ><img
-                  src="/src/assets/icon/file-clock-svgrepo-com.svg"
-                  style="width: 24px; height: 24px"
-                  alt=""
-              /></i>
-              Lịch sử hóa đơn
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="dashboard-stats-grid no-print">
-        <div class="stat-card">
-          <div class="stat-icon" :class="getStatusIconClass(invoice.trangThai)">
-            <img :src="getStatusIcon(invoice.trangThai)" alt="status icon" />
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">Trạng thái hiện tại</div>
-            <div class="stat-value" :class="getStatusColor(invoice.trangThai)">
-              {{ getStatusName(invoice.trangThai) }}
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon icon-green">
-            <span
-              ><img
-                src="/src/assets/icon/money-dollar-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-            /></span>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">Tổng tiền</div>
-            <div class="stat-value text-money-big">
-              {{ formatCurrency(invoice.tongThanhToan) }}
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon icon-purple">
-            <span
-              ><img
-                src="/src/assets/icon/shipping-box-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-            /></span>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">Số lượng sản phẩm</div>
-            <div class="stat-value">{{ totalProductQuantity }} sản phẩm</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="dashboard-info-grid no-print">
-        <div class="detail-card">
-          <div class="card-header-clean">
-            <div class="header-icon">
-              <img
-                src="/src/assets/icon/user.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
-            </div>
-            <h3>Thông tin khách hàng</h3>
-          </div>
-          <div class="card-body-clean">
-            <div class="customer-profile">
-              <div class="avatar-placeholder">
-                {{ invoice.tenKhachHang.charAt(0).toUpperCase() }}
-              </div>
-              <div class="profile-text">
-                <div class="profile-name">{{ invoice.tenKhachHang }}</div>
-                <div class="profile-sub">{{ invoice.soDienThoai }}</div>
-                <div class="profile-sub email-text">
-                  {{ invoice.diaChi || "Mua tại quầy" }}
+          <div class="card timeline-section no-print">
+            <div class="stepper-wrapper">
+              <div
+                class="stepper-item"
+                v-for="(step, index) in computedSteps"
+                :key="index"
+                :class="{
+                  active: isStepActive(step.status),
+                  cancelled:
+                    invoice.trangThai === 5 &&
+                    index === computedSteps.length - 1,
+                }"
+              >
+                <div class="step-icon-circle">
+                  <img :src="step.icon" class="step-icon-img" />
+                </div>
+                <div class="step-bar"></div>
+                <div class="step-content">
+                  <div class="step-label">{{ step.label }}</div>
+                  <div class="step-time">{{ getLogTime(step.status) }}</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="detail-card">
-          <div class="card-header-clean">
-            <div class="header-icon">
+          <div class="dashboard-stats-grid no-print">
+            <div class="stat-card">
+              <div
+                class="stat-icon"
+                :class="getStatusIconClass(invoice.trangThai)"
+              >
+                <img
+                  :src="getStatusIcon(invoice.trangThai)"
+                  alt="status icon"
+                />
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">Trạng thái hiện tại</div>
+                <div
+                  class="stat-value"
+                  :class="getStatusColor(invoice.trangThai)"
+                >
+                  {{ getStatusName(invoice.trangThai) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-green">
+                <span>
+                  <img
+                    src="/src/assets/icon/money-dollar-svgrepo-com.svg"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                </span>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">Tổng tiền</div>
+                <div class="stat-value text-money-big">
+                  {{ formatCurrency(invoice.tongThanhToan) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-purple">
+                <span>
+                  <img
+                    src="/src/assets/icon/shipping-box-svgrepo-com.svg"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                </span>
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">Số lượng sản phẩm</div>
+                <div class="stat-value">
+                  {{ totalProductQuantity }} sản phẩm
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-info-grid no-print">
+            <div class="detail-card">
+              <div class="card-header-clean">
+                <div class="header-icon">
+                  <img
+                    src="/src/assets/icon/user.svg"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                </div>
+                <h3>Thông tin khách hàng</h3>
+              </div>
+              <div class="card-body-clean">
+                <div class="customer-profile">
+                  <div class="avatar-placeholder">
+                    {{ invoice.tenKhachHang.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="profile-text">
+                    <div class="profile-name">{{ invoice.tenKhachHang }}</div>
+                    <div class="profile-sub">{{ invoice.soDienThoai }}</div>
+                    <div class="profile-sub email-text">
+                      {{ invoice.diaChi || "Mua tại quầy" }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="card-header-clean">
+                <div class="header-icon">
+                  <img
+                    src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                </div>
+                <h3>Tóm tắt đơn hàng</h3>
+              </div>
+              <div class="card-body-clean summary-body">
+                <div class="summary-item">
+                  <div class="sum-label">Tổng dòng sản phẩm</div>
+                  <div class="sum-val">
+                    {{ invoice.sanPhamList.length }} loại
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="sum-label">Tổng số lượng</div>
+                  <div class="sum-val">{{ totalProductQuantity }} cái</div>
+                </div>
+                <div class="summary-item" v-if="invoice.giamGia > 0">
+                  <div class="sum-label">Voucher giảm</div>
+                  <div class="sum-val text-red">
+                    -{{ formatCurrency(invoice.giamGia) }}
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="sum-label">Phí vận chuyển</div>
+                  <div class="sum-val">
+                    {{ formatCurrency(invoice.phiShip) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="card-header-clean">
+                <div class="header-icon">
+                  <img
+                    src="/src/assets/icon/credit-card-svgrepo-com.svg"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                </div>
+                <h3>Thông tin thanh toán</h3>
+              </div>
+              <div class="card-body-clean">
+                <div class="payment-clean-info">
+                  <div class="pay-method-row">
+                    <div class="pay-icon-small">🏧</div>
+                    <div class="pay-text">
+                      <div class="pay-title">{{ getPaymentMethodName() }}</div>
+                      <div class="pay-sub">Phương thức</div>
+                    </div>
+                    <div
+                      class="pay-status-badge"
+                      :class="getPaymentBadgeClass()"
+                    >
+                      {{ getPaymentStatusLabel() }}
+                    </div>
+                  </div>
+                  <div class="pay-total-row">
+                    <span>Tổng tiền thanh toán:</span>
+                    <span class="pay-total-val">{{
+                      formatCurrency(invoice.tongThanhToan)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card payment-history-section no-print">
+            <h3 class="card-title">Lịch sử thanh toán</h3>
+            <div class="table-responsive">
+              <table class="payment-table text-center-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Mã giao dịch</th>
+                    <th>Loại giao dịch</th>
+                    <th>Phương thức</th>
+                    <th>Trạng thái</th>
+                    <th>Thời gian</th>
+                    <th>Tổng tiền</th>
+                    <th>Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-if="
+                      !invoice.thanhToanList ||
+                      invoice.thanhToanList.length === 0
+                    "
+                  >
+                    <td colspan="8" class="text-center empty-cell">
+                      Chưa có lịch sử thanh toán
+                    </td>
+                  </tr>
+                  <tr
+                    v-else
+                    v-for="(pay, index) in invoice.thanhToanList"
+                    :key="index"
+                  >
+                    <td>{{ index + 1 }}</td>
+                    <td class="font-bold">{{ pay.maGiaoDich || "---" }}</td>
+                    <td>
+                      <span v-if="pay.loaiGiaoDich === 2" class="badge-soft-red"
+                        >Hoàn tiền</span
+                      >
+                      <span v-else class="badge-type">Thanh toán</span>
+                    </td>
+                    <td>
+                      <span class="badge-method">{{ pay.phuongThuc }}</span>
+                    </td>
+                    <td>
+                      <span
+                        class="badge-status-payment"
+                        :class="pay.trangThai === 1 ? 'completed' : 'pending'"
+                      >
+                        {{ pay.trangThai === 1 ? "Thành công" : "Chờ xử lý" }}
+                      </span>
+                    </td>
+                    <td>{{ formatDate(pay.thoiGian) }}</td>
+                    <td class="font-bold">
+                      <span v-if="pay.loaiGiaoDich === 2" class="text-danger">
+                        -{{ formatCurrency(pay.soTien) }}
+                      </span>
+                      <span v-else class="text-money">
+                        {{ formatCurrency(pay.soTien) }}
+                      </span>
+                    </td>
+                    <td>{{ pay.ghiChu || "" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div
+            class="card cancelled-section no-print"
+            v-if="invoice.trangThai === 5"
+          >
+            <h3>❌ Đơn hàng đã bị hủy</h3>
+            <p>Lý do: {{ invoice.ghiChu || "Không có lý do cụ thể" }}</p>
+          </div>
+
+          <div class="card product-card no-print">
+            <h3 class="card-title">
               <img
                 src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
                 style="width: 24px; height: 24px"
                 alt=""
               />
-            </div>
-            <h3>Tóm tắt đơn hàng</h3>
-          </div>
-          <div class="card-body-clean summary-body">
-            <div class="summary-item">
-              <div class="sum-label">Tổng dòng sản phẩm</div>
-              <div class="sum-val">{{ invoice.sanPhamList.length }} loại</div>
-            </div>
-            <div class="summary-item">
-              <div class="sum-label">Tổng số lượng</div>
-              <div class="sum-val">{{ totalProductQuantity }} cái</div>
-            </div>
-            <div class="summary-item" v-if="invoice.giamGia > 0">
-              <div class="sum-label">Voucher giảm</div>
-              <div class="sum-val text-red">
-                -{{ formatCurrency(invoice.giamGia) }}
-              </div>
-            </div>
-            <div class="summary-item">
-              <div class="sum-label">Phí vận chuyển</div>
-              <div class="sum-val">
-                {{ formatCurrency(invoice.phiShip) }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-card">
-          <div class="card-header-clean">
-            <div class="header-icon">
-              <img
-                src="/src/assets/icon/credit-card-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
-            </div>
-            <h3>Thông tin thanh toán</h3>
-          </div>
-          <div class="card-body-clean">
-            <div class="payment-clean-info">
-              <div class="pay-method-row">
-                <div class="pay-icon-small">🏧</div>
-                <div class="pay-text">
-                  <div class="pay-title">{{ getPaymentMethodName() }}</div>
-                  <div class="pay-sub">Phương thức</div>
-                </div>
-                <div class="pay-status-badge" :class="getPaymentBadgeClass()">
-                  {{ getPaymentStatusLabel() }}
-                </div>
-              </div>
-              <div class="pay-total-row">
-                <span>Tổng tiền thanh toán:</span>
-                <span class="pay-total-val">{{
-                  formatCurrency(invoice.tongThanhToan)
-                }}</span>
-              </div>
+              Danh sách sản phẩm
+            </h3>
+            <div class="table-responsive">
+              <table class="modern-table text-center-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px">STT</th>
+                    <th class="text-left-force">Sản phẩm</th>
+                    <th>Phân loại hàng</th>
+                    <th>Đơn giá</th>
+                    <th>Số lượng</th>
+                    <th class="text-right-force">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
+                    <td class="index-cell">{{ index + 1 }}</td>
+                    <td class="text-left-force">
+                      <div class="product-cell">
+                        <div class="product-thumb"></div>
+                        <div class="product-info-text">
+                          <div class="product-name">{{ p.tenSanPham }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="variant-tags">
+                        <span class="variant-badge color-badge">{{
+                          p.mauSac
+                        }}</span>
+                        <span class="variant-badge size-badge">{{
+                          p.kichCo
+                        }}</span>
+                      </div>
+                    </td>
+                    <td class="light-text">
+                      {{ formatCurrency(p.donGia) }}
+                    </td>
+                    <td class="quantity-text">x{{ p.soLuong }}</td>
+                    <td class="text-right-force">
+                      <span class="total-price-text">{{
+                        formatCurrency(p.thanhTien)
+                      }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="card payment-history-section no-print">
-        <h3 class="card-title">Lịch sử thanh toán</h3>
-        <div class="table-responsive">
-          <table class="payment-table text-center-table">
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Mã giao dịch</th>
-                <th>Loại giao dịch</th>
-                <th>Phương thức</th>
-                <th>Trạng thái</th>
-                <th>Thời gian</th>
-                <th>Tổng tiền</th>
-                <th>Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-if="
-                  !invoice.thanhToanList || invoice.thanhToanList.length === 0
-                "
-              >
-                <td colspan="8" class="text-center empty-cell">
-                  Chưa có lịch sử thanh toán
-                </td>
-              </tr>
-              <tr
-                v-else
-                v-for="(pay, index) in invoice.thanhToanList"
-                :key="index"
-              >
-                <td>{{ index + 1 }}</td>
-                <td class="font-bold">{{ pay.maGiaoDich || "---" }}</td>
-                <td>
-                  <span v-if="pay.loaiGiaoDich === 2" class="badge-soft-red"
-                    >Hoàn tiền</span
-                  >
-                  <span v-else class="badge-type">Thanh toán</span>
-                </td>
-                <td>
-                  <span class="badge-method">{{ pay.phuongThuc }}</span>
-                </td>
-                <td>
-                  <span
-                    class="badge-status-payment"
-                    :class="pay.trangThai === 1 ? 'completed' : 'pending'"
-                  >
-                    {{ pay.trangThai === 1 ? "Thành công" : "Chờ xử lý" }}
-                  </span>
-                </td>
-                <td>{{ formatDate(pay.thoiGian) }}</td>
-                <td class="font-bold">
-                  <span v-if="pay.loaiGiaoDich === 2" class="text-danger">
-                    -{{ formatCurrency(pay.soTien) }}
-                  </span>
-                  <span v-else class="text-money">
-                    {{ formatCurrency(pay.soTien) }}
-                  </span>
-                </td>
-                <td>{{ pay.ghiChu || "" }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        class="card cancelled-section no-print"
-        v-if="invoice.trangThai === 5"
-      >
-        <h3>❌ Đơn hàng đã bị hủy</h3>
-        <p>Lý do: {{ invoice.ghiChu || "Không có lý do cụ thể" }}</p>
-      </div>
-
-      <div class="card product-card no-print">
-        <h3 class="card-title">
-          <img
-            src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
-            style="width: 24px; height: 24px"
-            alt=""
-          />
-          Danh sách sản phẩm
-        </h3>
-        <div class="table-responsive">
-          <table class="modern-table text-center-table">
-            <thead>
-              <tr>
-                <th style="width: 60px">STT</th>
-                <th class="text-left-force">Sản phẩm</th>
-                <th>Phân loại hàng</th>
-                <th>Đơn giá</th>
-                <th>Số lượng</th>
-                <th class="text-right-force">Thành tiền</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
-                <td class="index-cell">{{ index + 1 }}</td>
-                <td class="text-left-force">
-                  <div class="product-cell">
-                    <div class="product-thumb"></div>
-                    <div class="product-info-text">
-                      <div class="product-name">{{ p.tenSanPham }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="variant-tags">
-                    <span class="variant-badge color-badge">{{
-                      p.mauSac
-                    }}</span>
-                    <span class="variant-badge size-badge">{{ p.kichCo }}</span>
-                  </div>
-                </td>
-                <td class="light-text">{{ formatCurrency(p.donGia) }}</td>
-                <td class="quantity-text">x{{ p.soLuong }}</td>
-                <td class="text-right-force">
-                  <span class="total-price-text">{{
-                    formatCurrency(p.thanhTien)
-                  }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="modal.show" class="modal-overlay">
-      <div class="modal-card">
-        <div class="modal-header-icon" :class="getModalTypeClass(modal.type)">
-          <span v-if="modal.type === 'cancel'">✕</span>
-          <span v-else-if="modal.type === 'refund'">💸</span>
-          <span v-else-if="modal.type === 'prev'">↩️</span>
-          <span v-else>➜</span>
-        </div>
-
-        <h3 class="modal-title-modern">{{ modal.title }}</h3>
-
-        <div class="modal-body-modern">
-          <p class="modal-message-modern">{{ modal.message }}</p>
-
-          <div v-if="modal.type === 'refund'" class="refund-alert-box">
-            Số tiền cần hoàn: <strong>{{ formatCurrency(daThanhToan) }}</strong>
-          </div>
-
-          <div class="modal-input-wrapper">
-            <label class="input-label">Ghi chú xác nhận:</label>
-            <textarea
-              v-model="modal.note"
-              rows="3"
-              :placeholder="
-                modal.type === 'cancel'
-                  ? 'Vui lòng nhập lý do hủy đơn...'
-                  : 'Nhập ghi chú cho hệ thống (tùy chọn)...'
-              "
-              class="modern-textarea"
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer-modern">
-          <button class="btn-modern btn-secondary" @click="closeModal">
-            Đóng
-          </button>
-          <button
-            class="btn-modern"
-            :class="getConfirmButtonClass(modal.type)"
-            @click="handleConfirm"
-          >
-            {{ modal.type === "refund" ? "Hoàn tiền ngay" : "Xác nhận" }}
-          </button>
         </div>
       </div>
     </div>
@@ -490,9 +424,7 @@
       <div class="toast-message">{{ toast.message }}</div>
     </div>
 
-    <Teleport to="body">
-      <InvoicePrintTemplate v-if="invoice" :invoice="invoice" />
-    </Teleport>
+    <Footer></Footer>
   </div>
 </template>
 
@@ -500,9 +432,10 @@
 import { ref, onMounted, computed, reactive } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
-import InvoicePrintTemplate from "./InvoicePrintTemplate.vue";
-import checkIcon from "../../../assets/icon/check.svg";
-import cancelIcon from "../../../assets/icon/cancel-svgrepo-com.svg";
+// import InvoicePrintTemplate from "./InvoicePrintTemplate.vue";
+import Header from "../../layout/header/Header.vue";
+import Footer from "../../layout/footer/Footer.vue";
+import ClientSidebar from "../../pages/views/ClientSidebar.vue";
 
 // --- INTERFACES ---
 interface InvoiceProduct {
@@ -552,7 +485,6 @@ interface InvoiceDetail {
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
-  
 // ===============================================
 // [MỚI] Timeline linh hoạt (Tại quầy chỉ còn Chờ xác nhận và Hoàn thành)
 // ===============================================
@@ -671,8 +603,8 @@ const getPaymentBadgeClass = () => {
 };
 
 const getStatusIcon = (status: number) => {
-  if (status === 5) return cancelIcon;
-  return checkIcon;
+  if (status === 5) return "/src/assets/icon/cancel-svgrepo-com.svg";
+  return "/src/assets/icon/check.svg";
 };
 const getStatusIconClass = (status: number) => {
   if (status === 5) return "icon-red";
@@ -912,6 +844,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.app-container {
+  background: #f7f9fa;
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+}
 /* GLOBAL & FONTS */
 .invoice-detail-wrapper {
   background: #f8f9fa;
@@ -919,6 +856,28 @@ onMounted(() => {
   min-height: 100vh;
   font-family: "Inter", "Segoe UI", sans-serif;
   color: #333;
+}
+.main-layout {
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 4%;
+  display: flex; /* Quan trọng */
+  flex-direction: row; /* Mặc định là hàng ngang */
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-section {
+  flex: 1;
+  /* width: 100%;  <-- XÓA DÒNG NÀY: Nó làm phần content bị ép full width đẩy sidebar đi */
+  min-width: 0; /* Giúp flex item co giãn tốt hơn */
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 .card {
   background: #fff;
@@ -1943,5 +1902,38 @@ onMounted(() => {
 .user-icon {
   font-size: 12px;
   opacity: 0.7;
+}
+/* Breadcrumb */
+
+.breadcrumb {
+  max-width: 1400px;
+
+  margin: 20px auto;
+
+  padding: 0 4%;
+
+  font-size: 14px;
+
+  color: #666;
+}
+
+.breadcrumb span {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.breadcrumb span:hover {
+  color: #6b3f1e;
+}
+
+.breadcrumb .separator {
+  margin: 0 10px;
+  cursor: default;
+}
+
+.breadcrumb .current {
+  font-weight: 600;
+  color: #6b3f1e;
+  cursor: default;
 }
 </style>
