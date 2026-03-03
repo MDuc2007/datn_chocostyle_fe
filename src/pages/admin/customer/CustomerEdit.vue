@@ -148,15 +148,14 @@
                 <transition-group name="list-anim">
                   <div
                     v-for="(addr, index) in editForm.listDiaChi"
-                    :key="'addr-'+index"
+                    :key="'addr-' + index"
                     class="address-card-v3 hover-lift"
                   >
                     <div class="address-main-row">
-                      
                       <div class="addr-select-col">
                         <select
                           :id="'select-prov-' + index"
-                          style="width: 100%;"
+                          style="width: 100%"
                           class="form-input"
                         >
                           <option value="">Chọn Tỉnh/TP</option>
@@ -173,7 +172,7 @@
                       <div class="addr-select-col">
                         <select
                           :id="'select-dist-' + index"
-                          style="width: 100%;"
+                          style="width: 100%"
                           class="form-input"
                           :disabled="!addr.provinceId"
                         >
@@ -191,7 +190,7 @@
                       <div class="addr-select-col">
                         <select
                           :id="'select-ward-' + index"
-                          style="width: 100%;"
+                          style="width: 100%"
                           class="form-input"
                           :disabled="!addr.districtId"
                         >
@@ -275,15 +274,26 @@
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <div class="toast-indicator"></div>
         <div class="toast-content">{{ toast.message }}</div>
-        </div>
+      </div>
     </transition>
 
     <transition name="fade-modal">
       <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="#f59e0b">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 12l3 3 5-5"></path>
             </svg>
           </div>
           <h3 class="confirm-title">{{ modal.title }}</h3>
@@ -340,51 +350,57 @@ const errors = ref({});
 const toast = ref({ show: false, message: "", type: "success" });
 const modal = ref({ show: false, title: "", message: "" });
 
-
 // ===============================================
 // HÀM KHỞI TẠO JQUERY SELECT2 CHO TỪNG DÒNG ĐỊA CHỈ
 // ===============================================
 const initSelect2ForAddress = (index) => {
   const addr = editForm.value.listDiaChi[index];
   if (!addr) return;
-  
+
   const $prov = window.$(`#select-prov-${index}`);
   const $dist = window.$(`#select-dist-${index}`);
   const $ward = window.$(`#select-ward-${index}`);
 
-  // Hủy nếu đã init trước đó để chống lỗi leak DOM
-  if ($prov.hasClass("select2-hidden-accessible")) $prov.select2('destroy');
-  if ($dist.hasClass("select2-hidden-accessible")) $dist.select2('destroy');
-  if ($ward.hasClass("select2-hidden-accessible")) $ward.select2('destroy');
+  if (!$prov.length || !$dist.length || !$ward.length) return;
 
-  // Khởi tạo Select2 Tỉnh/Thành
-  $prov.select2({ width: '100%', placeholder: 'Chọn Tỉnh/TP' });
-  if (addr.provinceId) $prov.val(addr.provinceId).trigger('change.select2');
-  $prov.off('change').on('change', async function() {
-    const val = window.$(this).val();
-    if(addr.provinceId !== val) {
+  // --- INIT TỈNH/THÀNH ---
+  $prov.select2({ width: "100%", placeholder: "Chọn Tỉnh/Thành phố" });
+
+  // Set giá trị ban đầu (convert sang String)
+  if (addr.provinceId) $prov.val(String(addr.provinceId)).trigger("change");
+
+  // Bắt sự kiện chọn
+  $prov.off("select2:select").on("select2:select", async function (e) {
+    const val = e.params.data.id;
+    if (addr.provinceId != val) {
       addr.provinceId = val;
       await onProvinceChange(addr, index);
     }
   });
 
-  // Khởi tạo Select2 Quận/Huyện
-  $dist.select2({ width: '100%', placeholder: 'Chọn Quận/Huyện' });
-  if (addr.districtId) $dist.val(addr.districtId).trigger('change.select2');
-  $dist.off('change').on('change', async function() {
-    const val = window.$(this).val();
-    if(addr.districtId !== val) {
+  // --- INIT QUẬN/HUYỆN ---
+  $dist.select2({ width: "100%", placeholder: "Chọn Quận/Huyện" });
+  if (addr.districtId) $dist.val(String(addr.districtId)).trigger("change");
+
+  $dist.off("select2:select").on("select2:select", async function (e) {
+    const val = e.params.data.id;
+    if (addr.districtId != val) {
       addr.districtId = val;
       await onDistrictChange(addr, index);
     }
   });
 
-  // Khởi tạo Select2 Phường/Xã
-  $ward.select2({ width: '100%', placeholder: 'Chọn Phường/Xã' });
-  if (addr.wardCode) $ward.val(addr.wardCode).trigger('change.select2');
-  $ward.off('change').on('change', function() {
-    const val = window.$(this).val();
-    if(addr.wardCode !== val) {
+  // --- INIT PHƯỜNG/XÃ (Chỗ hay bị lỗi nhất) ---
+  $ward.select2({ width: "100%", placeholder: "Chọn Phường/Xã" });
+
+  // Quan trọng: Đảm bảo options đã render xong mới set value
+  if (addr.wardCode) {
+    $ward.val(String(addr.wardCode)).trigger("change");
+  }
+
+  $ward.off("select2:select").on("select2:select", function (e) {
+    const val = e.params.data.id;
+    if (addr.wardCode != val) {
       addr.wardCode = val;
       onWardChange(addr);
     }
@@ -444,20 +460,23 @@ const onProvinceChange = async (addr, index) => {
   addr.wardCode = null;
   addr.districtOptions = [];
   addr.wardOptions = [];
-  
-  // Clear giao diện Quận, Phường của dòng hiện tại
-  window.$(`#select-dist-${index}`).val(null).trigger('change.select2');
-  window.$(`#select-ward-${index}`).val(null).trigger('change.select2');
 
-  addr.provinceName = listProvinces.value.find((p) => p.code == addr.provinceId)?.name || "";
-  
+  // Clear giao diện Quận, Phường của dòng hiện tại
+  window.$(`#select-dist-${index}`).val(null).trigger("change.select2");
+  window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
+
+  addr.provinceName =
+    listProvinces.value.find((p) => p.code == addr.provinceId)?.name || "";
+
   if (addr.provinceId) {
     try {
-      const res = await axios.get(`https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`);
+      const res = await axios.get(
+        `https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`,
+      );
       addr.districtOptions = res.data.districts;
       // Khởi tạo lại select2 cho quận/huyện để bắt trạng thái disable/enable mới
       await nextTick();
-      initSelect2ForAddress(index); 
+      initSelect2ForAddress(index);
     } catch (error) {
       console.error(error);
     }
@@ -467,25 +486,29 @@ const onProvinceChange = async (addr, index) => {
 const onDistrictChange = async (addr, index) => {
   addr.wardCode = null;
   addr.wardOptions = [];
-  
-  window.$(`#select-ward-${index}`).val(null).trigger('change.select2');
 
-  addr.districtName = addr.districtOptions.find((d) => d.code == addr.districtId)?.name || "";
-  
+  window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
+
+  addr.districtName =
+    addr.districtOptions.find((d) => d.code == addr.districtId)?.name || "";
+
   if (addr.districtId) {
     try {
-      const res = await axios.get(`https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`);
+      const res = await axios.get(
+        `https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`,
+      );
       addr.wardOptions = res.data.wards;
       await nextTick();
       initSelect2ForAddress(index);
     } catch (error) {
-       console.error(error);
+      console.error(error);
     }
   }
 };
 
 const onWardChange = (addr) => {
-  addr.wardName = addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
+  addr.wardName =
+    addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
 };
 
 const addAddressField = async () => {
@@ -499,7 +522,7 @@ const addAddressField = async () => {
     detail: "",
     districtOptions: [],
     wardOptions: [],
-    macDinh: editForm.value.listDiaChi.length === 0, 
+    macDinh: editForm.value.listDiaChi.length === 0,
   });
 
   // Render DOM xong thì init jquery
@@ -510,13 +533,13 @@ const addAddressField = async () => {
 const removeAddressField = async (i) => {
   if (editForm.value.listDiaChi.length > 1) {
     // Dọn dẹp select2 để chống lỗi ghost element
-    window.$(`#select-prov-${i}`).select2('destroy');
-    window.$(`#select-dist-${i}`).select2('destroy');
-    window.$(`#select-ward-${i}`).select2('destroy');
+    window.$(`#select-prov-${i}`).select2("destroy");
+    window.$(`#select-dist-${i}`).select2("destroy");
+    window.$(`#select-ward-${i}`).select2("destroy");
 
     const wasDefault = editForm.value.listDiaChi[i].macDinh;
     editForm.value.listDiaChi.splice(i, 1);
-    
+
     if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
 
     // Load lại select2 cho mảng mới vì index bị thay đổi
@@ -604,8 +627,10 @@ const handleUpdateClick = () => {
   }
   modal.value = {
     show: true,
-    title: customerId ? "Xác nhận cập nhật" : "Xác nhận thêm mới", 
-    message: customerId ? `Bạn có chắc chắn muốn thay đổi thông tin khách hàng này?` : `Bạn có chắc chắn muốn thêm khách hàng này?`, 
+    title: customerId ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
+    message: customerId
+      ? `Bạn có chắc chắn muốn thay đổi thông tin khách hàng này?`
+      : `Bạn có chắc chắn muốn thêm khách hàng này?`,
   };
 };
 
@@ -615,7 +640,8 @@ const confirmUpdateAction = async () => {
 
   try {
     const isEmailChanged = editForm.value.email !== originalData.value.email;
-    const isPhoneChanged = editForm.value.soDienThoai !== originalData.value.soDienThoai;
+    const isPhoneChanged =
+      editForm.value.soDienThoai !== originalData.value.soDienThoai;
 
     if (isEmailChanged || isPhoneChanged) {
       const checkRes = await customerService.checkUnique({
@@ -624,7 +650,10 @@ const confirmUpdateAction = async () => {
       });
       const result = checkRes.data;
 
-      if ((isEmailChanged && result.isEmailExist) || (isPhoneChanged && result.isPhoneExist)) {
+      if (
+        (isEmailChanged && result.isEmailExist) ||
+        (isPhoneChanged && result.isPhoneExist)
+      ) {
         if (result.isEmailExist) errors.value.email = "Email đã tồn tại!";
         if (result.isPhoneExist) errors.value.soDienThoai = "SĐT đã tồn tại!";
         showToast("Thông tin bị trùng lặp!", "error");
@@ -643,19 +672,22 @@ const confirmUpdateAction = async () => {
       macDinh: a.macDinh,
     }));
 
-    if(customerId) {
-        await customerService.update(customerId, payload, selectedFile.value);
-        showToast("Cập nhật thành công!", "success");
+    if (customerId) {
+      await customerService.update(customerId, payload, selectedFile.value);
+      showToast("Cập nhật thành công!", "success");
     } else {
-        await customerService.create(payload, selectedFile.value);
-        showToast("Thêm mới thành công!", "success");
+      await customerService.create(payload, selectedFile.value);
+      showToast("Thêm mới thành công!", "success");
     }
-    
+
     setTimeout(() => router.push("/admin/customer"), 1500);
   } catch (error) {
     console.error("Lỗi:", error);
     if (error.response && error.response.data) {
-      const msg = typeof error.response.data === "string" ? error.response.data : error.response.data.message;
+      const msg =
+        typeof error.response.data === "string"
+          ? error.response.data
+          : error.response.data.message;
       showToast(msg || "Có lỗi xảy ra", "error");
     } else {
       showToast("Có lỗi xảy ra", "error");
@@ -979,7 +1011,6 @@ const showToast = (msg, type = "success") => {
 }
 .addr-input-detail {
   width: 100%;
-
 }
 
 .btn-remove-circle {
@@ -1039,9 +1070,14 @@ const showToast = (msg, type = "success") => {
   padding: 0 10px;
   transition: all 0.2s;
 }
-:deep(.select2-container--default.select2-container--focus .select2-selection--single),
-:deep(.select2-container--default.select2-container--open .select2-selection--single) {
-  border-color: #63391F !important;
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+),
+:deep(
+  .select2-container--default.select2-container--open .select2-selection--single
+) {
+  border-color: #63391f !important;
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1) !important;
   outline: none;
 }
@@ -1055,13 +1091,15 @@ const showToast = (msg, type = "success") => {
   color: #9ca3af !important;
 }
 :deep(.select2-selection__arrow) {
-  height: 100%;
-  right: 10px;
+  height: 100% !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  right: 10px !important;
 }
 :deep(.select2-dropdown) {
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   margin-top: 4px;
   z-index: 1000;
 }
@@ -1072,19 +1110,21 @@ const showToast = (msg, type = "success") => {
   padding: 8px !important;
 }
 :deep(.select2-search__field:focus) {
-  border-color: #63391F !important;
+  border-color: #63391f !important;
 }
 :deep(.select2-results__option--highlighted) {
-  background-color: #63391F !important;
+  background-color: #63391f !important;
   color: white !important;
 }
 /* Hiệu ứng mờ khi select2 bị disable */
-:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
+:deep(
+  .select2-container--default.select2-container--disabled
+    .select2-selection--single
+) {
   background-color: #f9fafb;
   cursor: not-allowed;
   border-style: dashed;
 }
-
 
 /* =========================================
    6. FOOTER & MISC
@@ -1163,32 +1203,32 @@ const showToast = (msg, type = "success") => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   font-weight: 500;
-  background: #F0FDF4; 
-  color: #374151; 
+  background: #f0fdf4;
+  color: #374151;
 }
 
 .toast-indicator {
-    width: 6px;
-    height: 100%;
-    background-color: #22C55E; 
-    position: absolute;
-    left: 0;
-    top: 0;
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
+  width: 6px;
+  height: 100%;
+  background-color: #22c55e;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
 }
 
 .toast-content {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .toast-notification.error {
-  background: #FEF2F2;
+  background: #fef2f2;
   color: #991b1b;
 }
 
 .toast-notification.error .toast-indicator {
-    background-color: #ef4444;
+  background-color: #ef4444;
 }
 
 /* =========================================
@@ -1217,7 +1257,8 @@ const showToast = (msg, type = "success") => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #FEF3C7; 
+  background-color: #e8f5e9;
+  color: #22c55e;
   margin: 0 auto 20px;
   display: flex;
   align-items: center;
@@ -1249,7 +1290,7 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
 }
 .btn-confirm {
-  background-color: #a88164; 
+  background-color: #a88164;
   color: #fff;
 }
 .btn-confirm:hover {

@@ -202,45 +202,47 @@
                 </span>
               </td>
 
-              <td class="action">
-                <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
-                  <span class="icon view" @click="goToDetail(item.id)">
-                    <img
-                      src="/src/assets/icon/eye.svg"
-                      style="width: 20px; height: 20px"
-                    />
-                  </span>
-                </div>
+              <td>
+                <div class="action-inner">
+                  <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
+                    <span class="icon view" @click="goToDetail(item.id)">
+                      <img
+                        src="/src/assets/icon/eye.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
 
-                <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
-                  <span class="icon edit" @click="goToUpdate(item.id)">
-                    <img
-                      src="/src/assets/icon/edit.svg"
-                      style="width: 20px; height: 20px"
-                    />
-                  </span>
-                </div>
+                  <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                    <span class="icon edit" @click="goToUpdate(item.id)">
+                      <img
+                        src="/src/assets/icon/edit.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
 
-                <div
-                  class="tooltip-wrapper"
-                  :data-tooltip="
-                    item.trangThai === 1
-                      ? 'Ngừng bán'
-                      : item.trangThai === 2
-                        ? 'Bán lại'
-                        : 'Không khả dụng'
-                  "
-                >
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="item.trangThai === 1"
-                      @click.prevent="toggleStatus(item)"
-                      :disabled="item.trangThai === 0"
-                    />
+                  <div
+                    class="tooltip-wrapper"
+                    :data-tooltip="
+                      item.trangThai === 1
+                        ? 'Ngừng bán'
+                        : item.trangThai === 2
+                          ? 'Bán lại'
+                          : 'Không khả dụng'
+                    "
+                  >
+                    <label class="switch">
+                      <input
+                        type="checkbox"
+                        :checked="item.trangThai === 1"
+                        @click.prevent="toggleStatus(item)"
+                        :disabled="item.trangThai === 0"
+                      />
 
-                    <span class="slider"></span>
-                  </label>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -1127,13 +1129,12 @@ onMounted(() => {
   filter: brightness(0.95);
 }
 
-.action {
+.action-inner {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
 }
-
 .switch {
   position: relative;
   width: 50px;

@@ -190,35 +190,37 @@
                   {{ getStatusText(item) }}
                 </span>
               </td>
-              <td class="action">
-                <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
-                  <span class="icon edit" @click="goToUpdate(item.id)">
-                    <img
-                      src="/src/assets/icon/edit.svg"
-                      style="width: 20px; height: 20px"
-                    />
-                  </span>
-                </div>
+              <td>
+                <div class="action-inner">
+                  <div class="tooltip-wrapper" data-tooltip="Chỉnh sửa">
+                    <span class="icon edit" @click="goToUpdate(item.id)">
+                      <img
+                        src="/src/assets/icon/edit.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
 
-                <div
-                  class="tooltip-wrapper"
-                  :data-tooltip="
-                    item.trangThai === 1
-                      ? 'Ngừng bán'
-                      : item.trangThai === 2
-                        ? 'Bán lại'
-                        : 'Không khả dụng'
-                  "
-                >
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="item.trangThai === 1"
-                      @click.prevent="toggleStatus(item)"
-                      :disabled="item.trangThai === 0"
-                    />
-                    <span class="slider"></span>
-                  </label>
+                  <div
+                    class="tooltip-wrapper"
+                    :data-tooltip="
+                      item.trangThai === 1
+                        ? 'Ngừng bán'
+                        : item.trangThai === 2
+                          ? 'Bán lại'
+                          : 'Không khả dụng'
+                    "
+                  >
+                    <label class="switch">
+                      <input
+                        type="checkbox"
+                        :checked="item.trangThai === 1"
+                        @click.prevent="toggleStatus(item)"
+                        :disabled="item.trangThai === 0"
+                      />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -1003,7 +1005,7 @@ onMounted(() => {
   border-color: #fca5a5;
   font-size: 10px;
 }
-.action {
+.action-inner {
   display: flex;
   justify-content: center;
   align-items: center;

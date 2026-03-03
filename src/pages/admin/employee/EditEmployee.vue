@@ -164,12 +164,11 @@
             <div class="form-group">
               <label>Tỉnh/Thành phố <span class="req">*</span></label>
               <select
-                v-model="selectedCity"
-                @change="onCityChange"
+                id="select-city"
                 :class="{ 'red-border': errors.tinhThanh }"
               >
-                <option :value="null">Chọn Tỉnh/TP</option>
-                <option v-for="c in listCity" :key="c.code" :value="c">
+                <option value="">Chọn Tỉnh/TP</option>
+                <option v-for="c in listCity" :key="c.code" :value="c.code">
                   {{ c.name }}
                 </option>
               </select>
@@ -177,15 +176,16 @@
                 errors.tinhThanh
               }}</span>
             </div>
+
             <div class="form-group">
               <label>Quận/Huyện <span class="req">*</span></label>
               <select
-                v-model="selectedDistrict"
-                @change="onDistrictChange"
+                id="select-district"
                 :class="{ 'red-border': errors.quanHuyen }"
+                :disabled="!selectedCity"
               >
-                <option :value="null">Chọn Quận/Huyện</option>
-                <option v-for="d in listDistrict" :key="d.code" :value="d">
+                <option value="">Chọn Quận/Huyện</option>
+                <option v-for="d in listDistrict" :key="d.code" :value="d.code">
                   {{ d.name }}
                 </option>
               </select>
@@ -193,14 +193,16 @@
                 errors.quanHuyen
               }}</span>
             </div>
+
             <div class="form-group">
               <label>Xã/Phường <span class="req">*</span></label>
               <select
-                v-model="selectedWard"
+                id="select-ward"
                 :class="{ 'red-border': errors.xaPhuong }"
+                :disabled="!selectedDistrict"
               >
-                <option :value="null">Chọn Xã/Phường</option>
-                <option v-for="w in listWard" :key="w.code" :value="w">
+                <option value="">Chọn Xã/Phường</option>
+                <option v-for="w in listWard" :key="w.code" :value="w.code">
                   {{ w.name }}
                 </option>
               </select>
@@ -209,7 +211,6 @@
               }}</span>
             </div>
           </div>
-
           <div class="form-group full-width">
             <div class="label-flex">
               <label
@@ -277,7 +278,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
@@ -310,6 +311,40 @@ const form = ref({
   ngayCapNhat: "",
 });
 const errors = ref({});
+
+const initSelect2 = () => {
+  const $city = window.$("#select-city");
+  const $dist = window.$("#select-district");
+  const $ward = window.$("#select-ward");
+
+  // Init
+  $city.select2({ width: "100%", placeholder: "Chọn Tỉnh/TP" });
+  $dist.select2({ width: "100%", placeholder: "Chọn Quận/Huyện" });
+  $ward.select2({ width: "100%", placeholder: "Chọn Xã/Phường" });
+
+  // Event Listeners
+  $city.off("select2:select").on("select2:select", async (e) => {
+    const code = Number(e.params.data.id);
+    selectedCity.value = listCity.value.find((c) => c.code == code) || null;
+    await onCityChange();
+  });
+
+  $dist.off("select2:select").on("select2:select", async (e) => {
+    const code = Number(e.params.data.id);
+    selectedDistrict.value =
+      listDistrict.value.find((d) => d.code == code) || null;
+    await onDistrictChange();
+  });
+
+  $ward.off("select2:select").on("select2:select", (e) => {
+    const code = Number(e.params.data.id);
+    selectedWard.value = listWard.value.find((w) => w.code == code) || null;
+  });
+};
+
+const updateSelect2UI = (id, value) => {
+  window.$(id).val(value).trigger("change");
+};
 
 // --- TOAST NOTIFICATION ---
 const notifications = ref([]);
@@ -370,13 +405,17 @@ const hasFormChanged = computed(() => {
 // --- 1. LOAD DATA ---
 onMounted(async () => {
   try {
-    // Load địa chỉ
+    // 1. Load Tỉnh/Thành trước
     const resAddr = await axios.get(
       "https://provinces.open-api.vn/api/?depth=3",
     );
     listCity.value = resAddr.data;
 
-    // Load thông tin nhân viên
+    // Init Select2 ngay khi có listCity
+    await nextTick();
+    initSelect2();
+
+    // 2. Load Nhân Viên sau
     const empId = route.params.id;
     if (empId) await fetchEmployeeDetail(empId);
   } catch (e) {
@@ -416,21 +455,36 @@ async function fetchEmployeeDetail(id) {
 
     // Fill lại Combobox Địa chỉ
     if (data.tinhThanhId) {
-      selectedCity.value = listCity.value.find(
-        (c) => c.code == data.tinhThanhId,
-      );
-      if (selectedCity.value) {
-        listDistrict.value = selectedCity.value.districts;
+      // 1. Set Tỉnh
+      const foundCity = listCity.value.find((c) => c.code == data.tinhThanhId);
+      if (foundCity) {
+        selectedCity.value = foundCity;
+        updateSelect2UI("#select-city", foundCity.code); // Update UI
+
+        listDistrict.value = foundCity.districts;
+        await nextTick(); // Đợi option Quận render xong
+
+        // 2. Set Quận
         if (data.quanHuyenId) {
-          selectedDistrict.value = listDistrict.value.find(
+          const foundDist = listDistrict.value.find(
             (d) => d.code == data.quanHuyenId,
           );
-          if (selectedDistrict.value) {
-            listWard.value = selectedDistrict.value.wards;
+          if (foundDist) {
+            selectedDistrict.value = foundDist;
+            updateSelect2UI("#select-district", foundDist.code); // Update UI
+
+            listWard.value = foundDist.wards;
+            await nextTick(); // Đợi option Phường render xong
+
+            // 3. Set Phường
             if (data.xaPhuongId) {
-              selectedWard.value = listWard.value.find(
+              const foundWard = listWard.value.find(
                 (w) => w.code == data.xaPhuongId,
               );
+              if (foundWard) {
+                selectedWard.value = foundWard;
+                updateSelect2UI("#select-ward", foundWard.code); // Update UI
+              }
             }
           }
         }
@@ -595,15 +649,23 @@ function formatDate(dateStr) {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleString("vi-VN");
 }
-function onCityChange() {
+async function onCityChange() {
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
   listWard.value = [];
   selectedWard.value = null;
+
+  await nextTick();
+  updateSelect2UI("#select-district", "");
+  updateSelect2UI("#select-ward", "");
 }
-function onDistrictChange() {
+
+async function onDistrictChange() {
   listWard.value = selectedDistrict.value ? selectedDistrict.value.wards : [];
   selectedWard.value = null;
+
+  await nextTick();
+  updateSelect2UI("#select-ward", "");
 }
 async function goBack() {
   // Check if form has unsaved data
@@ -1001,5 +1063,58 @@ select:focus {
     transform: scale(1);
     opacity: 1;
   }
+}
+:deep(.select2-container) {
+  width: 100% !important;
+}
+:deep(.select2-container .select2-selection--single) {
+  height: 42px; /* Chiều cao bằng input thường */
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow
+) {
+  height: 100%;
+  right: 10px;
+}
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered
+) {
+  padding-left: 0;
+  color: #333;
+}
+:deep(.select2-container--default .select2-selection--single:focus) {
+  border-color: #63391f;
+  outline: none;
+}
+/* Style cho dropdown khi mở ra */
+:deep(.select2-dropdown) {
+  border: 1px solid #63391f;
+  border-radius: 6px;
+  z-index: 9999;
+}
+:deep(.select2-results__option--highlighted) {
+  background-color: #63391f !important;
+  color: white !important;
+}
+:deep(.select2-search__field) {
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+}
+/* Style khi bị disabled */
+:deep(
+  .select2-container--default.select2-container--disabled
+    .select2-selection--single
+) {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
 }
 </style>
