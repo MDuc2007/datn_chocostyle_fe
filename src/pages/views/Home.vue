@@ -93,6 +93,24 @@
                       {{ formatPrice(sp.giaMax) }}
                     </span>
                   </p>
+
+                  <button
+                    class="btn-quick-add"
+                    @click.stop="openQuickAddModal(sp)"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      class="cart-icon"
+                    >
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    Thêm nhanh
+                  </button>
                 </div>
               </div>
             </div>
@@ -148,7 +166,7 @@
 
                     <button
                       class="btn-quick-add"
-                      @click.stop="quickAddToCart(sp)"
+                      @click.stop="openQuickAddModal(sp)"
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -159,11 +177,9 @@
                       >
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
-                        <path
-                          d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                        ></path>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                       </svg>
-                      Thêm vào giỏ
+                      Thêm nhanh
                     </button>
                   </div>
                 </div>
@@ -210,6 +226,79 @@
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
+
+    <transition name="modal-fade">
+      <div v-if="isQuickAddModalOpen" class="modal-overlay" @click.self="closeQuickAddModal">
+        <div class="quick-add-modal">
+          <button class="close-btn" @click="closeQuickAddModal">×</button>
+          
+          <div class="modal-content" v-if="selectedProduct">
+            <div class="modal-left">
+              <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
+            </div>
+            
+            <div class="modal-right">
+              <h3 class="modal-product-name">{{ selectedProduct.tenSp }}</h3>
+              
+              <p class="modal-price">
+                <span v-if="currentVariant">
+                  {{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}
+                </span>
+                <span v-else>
+                  <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">
+                    {{ formatPrice(selectedProduct.giaMin) }}
+                  </span>
+                  <span v-else>
+                    {{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}
+                  </span>
+                </span>
+              </p>
+
+              <div class="attribute-group" v-if="availableColors.length > 0">
+                <label>Màu sắc:</label>
+                <div class="btn-group">
+                  <button 
+                    v-for="color in availableColors" :key="color"
+                    :class="{ active: selectedColor === color }" 
+                    @click="selectedColor = color"
+                  >{{ color }}</button>
+                </div>
+              </div>
+
+              <div class="attribute-group" v-if="availableSizes.length > 0">
+                <label>Kích cỡ:</label>
+                <div class="btn-group">
+                  <button 
+                    v-for="size in availableSizes" :key="size"
+                    :class="{ active: selectedSize === size }" 
+                    @click="selectedSize = size"
+                  >{{ size }}</button>
+                </div>
+              </div>
+
+              <div class="attribute-group">
+                <label>
+                  Số lượng: 
+                  <span v-if="currentVariant" style="font-weight: normal; font-size: 14px; color: #888; margin-left: 10px;">
+                    (Kho: {{ currentVariant.soLuongTon || currentVariant.soLuong || 0 }})
+                  </span>
+                </label>
+                <div class="quantity-control">
+                  <button @click="quantity > 1 && quantity--">-</button>
+                  <input type="number" v-model="quantity" min="1" readonly />
+                  <button @click="quantity++">+</button>
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button class="btn-confirm-add" @click="confirmAddToCart">Xác nhận Thêm</button>
+                <button class="btn-view-detail" @click="goDetail(selectedProduct.id)">Xem chi tiết</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -222,7 +311,7 @@ import { useRouter } from "vue-router";
 import Chat from "../../views/Chat.vue";
 
 const isChatOpen = ref(false);
-const unreadCount = ref(0); // Số tin nhắn chưa đọc (nếu muốn làm thêm)
+const unreadCount = ref(0); 
 
 const toggleChat = () => {
   isChatOpen.value = !isChatOpen.value;
@@ -234,9 +323,8 @@ const router = useRouter();
 // ================= LOGIC SLIDER BANNER =================
 const banners = ref([
   "/src/assets/logo/banner 1.png",
-  // Thêm link ảnh thật của bạn vào 2 dòng dưới này (hoặc xóa đi nếu chỉ dùng 1 ảnh):
-  "https://file.hstatic.net/1000360022/file/banner_web_2_9e3d09a06cc54ffab917ccf95e2cd0d4_master.jpg",
-  "https://file.hstatic.net/1000360022/file/banner_web_1_8f1dbb16ba6f4523ad0328ed4a29a39f_master.jpg"
+  "/src/assets/logo/banner 2.png",
+  // "/src/assets/logo/banner 3.png",
 ]);
 const currentBanner = ref(0);
 let slideInterval = null;
@@ -254,7 +342,7 @@ const goToBanner = (index) => {
 };
 
 const startSlide = () => {
-  slideInterval = setInterval(nextBanner, 4000); // 4 giây tự động lướt 1 lần
+  slideInterval = setInterval(nextBanner, 4000); 
 };
 
 const pauseSlide = () => {
@@ -287,13 +375,6 @@ const loadMoreProducts = () => {
 
 const goDetail = (id) => {
   router.push(`/home/product/${id}`);
-};
-
-const quickAddToCart = (sp) => {
-
-  showToast("Vui lòng chọn màu sắc và kích cỡ trong trang chi tiết!", "warning");
-  setTimeout(() => goDetail(sp.id), 1000);
-
 };
 
 const formatPrice = (v) => {
@@ -332,14 +413,139 @@ const fetchData = async () => {
     isLoading.value = false;
   }
 };
+// ================= LOGIC THÊM NHANH (QUICK ADD) THẬT TỪ API =================
+const isQuickAddModalOpen = ref(false);
+const selectedProduct = ref(null);
+const quantity = ref(1);
+
+const selectedColor = ref("");
+const selectedSize = ref("");
+
+// Chứa danh sách chi tiết sản phẩm thật gọi từ API
+const productVariants = ref([]);
+const availableColors = ref([]);
+const availableSizes = ref([]);
+
+// Tự động tìm Biến thể (Chi tiết sản phẩm) khớp với Màu và Size đang chọn
+const currentVariant = computed(() => {
+  if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
+  
+  return productVariants.value.find(v => {
+    // Tùy thuộc vào tên trường API trả về (có thể là tenMauSac, hoặc mauSac.tenMauSac)
+    const tenMau = v.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
+    const tenSize = v.tenKichCo || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
+    
+    return tenMau === selectedColor.value && tenSize === selectedSize.value;
+  });
+});
+
+const openQuickAddModal = async (sp) => {
+  selectedProduct.value = sp;
+  quantity.value = 1;
+  isQuickAddModalOpen.value = true;
+
+  try {
+    // GỌI API THEO ĐÚNG CONTROLLER BẠN CUNG CẤP
+    const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?productId=${sp.id}&size=100`);
+    
+    // Spring Boot Page trả về mảng dữ liệu trong thuộc tính 'content'
+    productVariants.value = res.data.content || res.data || [];
+
+    if (productVariants.value.length > 0) {
+      // Trích xuất danh sách Màu sắc không trùng lặp
+      const colors = [...new Set(productVariants.value.map(v => v.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau))].filter(Boolean);
+      // Trích xuất danh sách Kích cỡ không trùng lặp
+      const sizes = [...new Set(productVariants.value.map(v => v.tenKichCo || v.kichCo?.tenKichCo || v.kichCo || v.tenSize))].filter(Boolean);
+
+      availableColors.value = colors;
+      availableSizes.value = sizes;
+
+      // Chọn sẵn lựa chọn đầu tiên cho khách
+      if (colors.length > 0) selectedColor.value = colors[0];
+      if (sizes.length > 0) selectedSize.value = sizes[0];
+    } else {
+      availableColors.value = [];
+      availableSizes.value = [];
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết sản phẩm:", error);
+    showToast("Không thể tải thông tin chi tiết của sản phẩm này!", "error");
+  }
+};
+
+const closeQuickAddModal = () => {
+  isQuickAddModalOpen.value = false;
+  setTimeout(() => { 
+    selectedProduct.value = null; 
+    productVariants.value = [];
+  }, 300);
+};
+
+const confirmAddToCart = () => {
+  if (!selectedColor.value || !selectedSize.value) {
+    showToast("Vui lòng chọn màu sắc và kích cỡ!", "warning");
+    return;
+  }
+
+  if (!currentVariant.value) {
+    showToast("Phân loại này hiện không tồn tại hoặc đã hết hàng!", "error");
+    return;
+  }
+
+  // Lấy tồn kho (Tùy thuộc tên trường là soLuongTon hay soLuong)
+  const tonKhoThucTe = currentVariant.value.soLuongTon || currentVariant.value.soLuong || 0;
+
+  if (quantity.value > tonKhoThucTe) {
+    showToast(`Kho chỉ còn ${tonKhoThucTe} sản phẩm!`, "error");
+    return;
+  }
+  
+  try {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    const newItem = {
+      productId: selectedProduct.value.id,
+      variantId: currentVariant.value.id, // Lấy đúng ID của bảng ChiTietSanPham
+      tenSp: selectedProduct.value.tenSp,
+      hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
+      mauSac: { tenMau: selectedColor.value, rgb: '#6b3f1e' }, // CSS màu mặc định
+      kichCo: selectedSize.value,
+      giaBan: currentVariant.value.giaBan || currentVariant.value.gia || 0,
+      soLuong: quantity.value,
+      tonKho: tonKhoThucTe
+    };
+
+    const existingIndex = cart.findIndex(item => item.variantId === newItem.variantId);
+    
+    if (existingIndex !== -1) {
+      const newQty = cart[existingIndex].soLuong + newItem.soLuong;
+      if(newQty > cart[existingIndex].tonKho) {
+        showToast(`Vượt quá số lượng tồn kho (${tonKhoThucTe})!`, "error");
+        return;
+      }
+      cart[existingIndex].soLuong = newQty;
+    } else {
+      cart.push(newItem);
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    showToast(`Đã thêm ${selectedProduct.value.tenSp} vào giỏ hàng!`, "success");
+    closeQuickAddModal();
+  } catch (error) {
+    console.error(error);
+    showToast("Thêm vào giỏ thất bại, vui lòng kiểm tra lại!", "error");
+  }
+};
 
 onMounted(() => {
   fetchData();
-  startSlide(); // Khởi động slider
+  startSlide(); 
 });
 
 onBeforeUnmount(() => {
-  pauseSlide(); // Xóa bộ nhớ dọn dẹp khi rời trang
+  pauseSlide(); 
 });
 </script>
 
@@ -351,7 +557,7 @@ onBeforeUnmount(() => {
   background-color: #fafafa;
 }
 
-/* ================= SLIDER BANNER CSS (MỚI) ================= */
+/* ================= SLIDER BANNER CSS ================= */
 .banner-slider {
   position: relative;
   width: 100%;
@@ -394,7 +600,7 @@ onBeforeUnmount(() => {
   z-index: 10;
   transition: all 0.3s;
   color: #333;
-  opacity: 0; /* Ẩn mặc định, hiện khi hover vào banner */
+  opacity: 0; 
 }
 
 .slider-arrow svg { width: 28px; height: 28px; }
@@ -529,7 +735,6 @@ onBeforeUnmount(() => {
 /* ================= PRODUCT GRID ================= */
 .product-grid {
   display: grid;
-  /* Kích thước vừa phải: tối thiểu 280px (hiển thị 4 ô trên màn hình lớn) */
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
 }
@@ -549,7 +754,6 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-/* Kích thước thẻ riêng cho phần Slider cuộn ngang */
 .best-seller-container .product-card {
   width: 280px; 
 }
@@ -562,7 +766,6 @@ onBeforeUnmount(() => {
 
 .image-box {
   width: 100%;
-  /* Chiều cao 320px cân đối với chiều rộng 280px */
   height: 320px; 
   background: #fff;
   display: flex;
@@ -576,17 +779,14 @@ onBeforeUnmount(() => {
 .image-box img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Giữ nguyên contain để không bị mất góc áo */
+  object-fit: contain; 
   transition: transform 0.5s ease;
 }
-
-/* Các CSS về text, hover, nút thêm vào giỏ giữ nguyên... */
 
 .product-card:hover .image-box img {
   transform: scale(1.05);
 }
 
-/* Thông tin sản phẩm */
 .product-info {
   padding: 16px;
   text-align: center;
@@ -639,6 +839,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: 8px;
   margin-top: 10px;
+  z-index: 3;
 }
 .cart-icon {
   width: 16px;
@@ -682,11 +883,10 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease;
 }
 .btn-load-more:hover {
-  background-color: #6b3f1e;
+  background: #6b3f1e;
   color: #fff;
   box-shadow: 0 4px 10px rgba(107, 63, 30, 0.2);
 }
-
 
 /* ================= STATES & TOAST ================= */
 .loading-state, .error-state, .empty-state { text-align: center; padding: 80px 0; color: #666; font-size: 16px; }
@@ -706,6 +906,267 @@ onBeforeUnmount(() => {
 .toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
 
+/* ================= CHAT ================= */
+.chat-wrapper {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
+}
+
+.chat-toggle-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #6b3f1e;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.chat-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.chat-toggle-btn img {
+  width: 30px;
+  height: 30px;
+  filter: invert(1);
+}
+
+.chat-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 2px solid white;
+}
+
+.chat-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 350px;
+  height: 500px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= MODAL QUICK ADD (MỚI) ================= */
+.modal-overlay {
+  position: fixed; 
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+}
+
+.quick-add-modal {
+  background: #fff; 
+  width: 90%; 
+  max-width: 800px;
+  border-radius: 12px; 
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  padding: 30px; 
+  animation: slideUp 0.3s ease;
+}
+
+.close-btn {
+  position: absolute; 
+  top: 15px; 
+  right: 15px;
+  background: transparent; 
+  border: none; 
+  font-size: 28px;
+  cursor: pointer; 
+  color: #888; 
+  transition: color 0.3s;
+}
+
+.close-btn:hover { color: #d32f2f; }
+
+.modal-content { 
+  display: flex; 
+  gap: 30px; 
+}
+
+.modal-left { 
+  flex: 1; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background: #f9f9f9; 
+  border-radius: 8px; 
+  overflow: hidden; 
+  height: 400px; 
+}
+
+.modal-left img { 
+  max-width: 100%; 
+  max-height: 100%; 
+  object-fit: contain; 
+}
+
+.modal-right { 
+  flex: 1.2; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+}
+
+.modal-product-name { 
+  font-size: 22px; 
+  color: #333; 
+  margin-bottom: 10px; 
+}
+
+.modal-price { 
+  font-size: 20px; 
+  color: #d32f2f; 
+  font-weight: bold; 
+  margin-bottom: 25px; 
+  border-bottom: 1px solid #eee; 
+  padding-bottom: 15px; 
+}
+
+.attribute-group { 
+  margin-bottom: 20px; 
+}
+
+.attribute-group label { 
+  display: block; 
+  font-weight: 600; 
+  margin-bottom: 10px; 
+  color: #555; 
+}
+
+.btn-group { 
+  display: flex; 
+  gap: 10px; 
+  flex-wrap: wrap; 
+}
+
+.btn-group button { 
+  padding: 8px 16px; 
+  border: 1px solid #ccc; 
+  background: #fff; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  font-size: 14px; 
+}
+
+.btn-group button:hover { 
+  border-color: #6b3f1e; 
+  color: #6b3f1e; 
+}
+
+.btn-group button.active { 
+  background: #6b3f1e; 
+  color: #fff; 
+  border-color: #6b3f1e; 
+  font-weight: bold; 
+}
+
+.quantity-control { 
+  display: flex; 
+  align-items: center; 
+  border: 1px solid #ccc; 
+  width: fit-content; 
+  border-radius: 6px; 
+  overflow: hidden; 
+}
+
+.quantity-control button { 
+  width: 35px; 
+  height: 35px; 
+  background: #f5f5f5; 
+  border: none; 
+  font-size: 18px; 
+  cursor: pointer; 
+}
+
+.quantity-control button:hover { 
+  background: #e0e0e0; 
+}
+
+.quantity-control input { 
+  height: 35px; 
+  text-align: center; 
+  border: none; 
+  border-left: 1px solid #ccc; 
+  border-right: 1px solid #ccc; 
+  font-size: 16px; 
+  font-weight: bold; 
+  outline: none; 
+}
+
+.modal-actions { 
+  margin-top: 30px; 
+  display: flex; 
+  gap: 15px; 
+}
+
+.btn-confirm-add { 
+  flex: 2; 
+  background: #6b3f1e; 
+  color: white; 
+  border: none; 
+  padding: 12px; 
+  font-size: 16px; 
+  font-weight: bold; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  transition: background 0.3s; 
+}
+
+.btn-confirm-add:hover { 
+  background: #553218; 
+}
+
+.btn-view-detail { 
+  flex: 1; 
+  background: transparent; 
+  color: #6b3f1e; 
+  border: 1px solid #6b3f1e; 
+  padding: 12px; 
+  font-size: 16px; 
+  font-weight: bold; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  transition: all 0.3s; 
+}
+
+.btn-view-detail:hover { 
+  background: #6b3f1e; 
+  color: white; 
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active { 
+  transition: opacity 0.3s; 
+}
+
+.modal-fade-enter-from, .modal-fade-leave-to { 
+  opacity: 0; 
+}
+
+@keyframes slideUp { 
+  from { transform: translateY(30px); opacity: 0; } 
+  to { transform: translateY(0); opacity: 1; } 
+}
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {
@@ -733,6 +1194,10 @@ onBeforeUnmount(() => {
   }
   .banner-slider { height: 320px; }
   .best-seller-container { padding-bottom: 10px; }
+  
+  /* Căn lại modal cho Mobile */
+  .modal-content { flex-direction: column; gap: 15px; }
+  .modal-left { height: 250px; }
 }
 
 @media (max-width: 480px) {
@@ -746,61 +1211,5 @@ onBeforeUnmount(() => {
     height: 300px; 
   }
   .banner-slider { height: 200px; }
-}
-.chat-wrapper {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 9999;
-}
-
-.chat-toggle-btn {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #6b3f1e; /* Màu nâu ChocoStyle */
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease;
-}
-
-.chat-toggle-btn:hover {
-  transform: scale(1.1);
-}
-
-.chat-toggle-btn img {
-  width: 30px;
-  height: 30px;
-  filter: invert(1); /* Chuyển icon sang màu trắng cho nổi bật */
-}
-
-.chat-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 2px solid white;
-}
-
-.chat-popup {
-  position: absolute;
-  bottom: 80px;
-  right: 0;
-  width: 350px;
-  height: 500px;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 </style>
