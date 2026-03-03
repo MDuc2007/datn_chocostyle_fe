@@ -231,35 +231,43 @@ const callAI = async (content) => {
   if (isLoading.value) return;
   isLoading.value = true;
 
+  // 1. Hiển thị tin nhắn của khách hàng lên màn hình ngay lập tức
+  messages.value.push({
+    id: Date.now(),
+    senderId: senderId.value,
+    senderType: "KHACH_HANG",
+    content: content,
+    sentAt: new Date(),
+  });
+  scrollToBottom();
 
   try {
+    // 2. Gửi kèm ID để Backend biết đường mà lưu vào DB
     const res = await axios.post("http://localhost:8080/api/chat", {
       message: content,
+      khachHangId: senderId.value,         // Thêm dòng này
+      conversationId: conversationId.value // Thêm dòng này
     });
 
-
+    // 3. Hiển thị phản hồi từ AI
     messages.value.push({
-      id: Date.now(),
+      id: Date.now() + 1,
       senderType: "AI",
       senderName: "ChocoBot",
       content: res.data.reply,
       sentAt: new Date(),
     });
 
-
-    scrollToBottom();
   } catch (e) {
     console.error("AI lỗi:", e);
-    // Thông báo lỗi ra màn hình chat cho dễ theo dõi
     messages.value.push({
-      id: Date.now(),
+      id: Date.now() + 1,
       senderType: "AI",
       senderName: "Hệ thống",
       content: "Kết nối AI thất bại, vui lòng kiểm tra console Backend.",
       sentAt: new Date(),
     });
   } finally {
-    // Luôn luôn chạy dòng này kể cả thành công hay thất bại
     isLoading.value = false;
     scrollToBottom();
   }
