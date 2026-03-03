@@ -10,15 +10,18 @@
       </div>
     </div>
 
+
     <div class="messages-box" ref="msgBox">
       <div
         v-for="msg in messages"
         :key="msg.id"
         :class="[
           'msg-wrapper',
-          msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
-            ? 'mine'
-            : 'theirs',
+          msg.senderType === 'AI'
+            ? 'ai'
+            : msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
+              ? 'mine'
+              : 'theirs',
         ]"
       >
         <div class="msg-bubble">
@@ -30,6 +33,7 @@
         </div>
       </div>
     </div>
+
 
     <div class="input-area">
       <div class="input-wrapper">
@@ -56,11 +60,13 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
+
 
 const stompClient = ref(null);
 const connected = ref(false);
@@ -71,6 +77,7 @@ const senderId = ref(null);
 const senderType = ref("KHACH_HANG");
 const conversationId = ref(null);
 const assignedNhanVien = ref("");
+
 
 const formatTime = (time) =>
   time
@@ -84,19 +91,67 @@ const scrollToBottom = () =>
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
 
+
+const messageSubscription = ref(null);
+const takeoverSubscription = ref(null);
+
+
 const connectAndSubscribe = (id) => {
+  // Nếu đã có connection thì đóng lại trước
+  if (stompClient.value && stompClient.value.connected) {
+    stompClient.value.disconnect();
+  }
+
+
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
+
+
   stompClient.value.connect({}, () => {
     connected.value = true;
-    stompClient.value.subscribe(`/topic/chat/${id}`, (tick) => {
-      messages.value.push(JSON.parse(tick.body));
-      scrollToBottom();
-    });
+
+
+    // Nếu đã từng subscribe thì hủy trước
+    if (messageSubscription.value) {
+      messageSubscription.value.unsubscribe();
+    }
+
+
+    if (takeoverSubscription.value) {
+      takeoverSubscription.value.unsubscribe();
+    }
+
+
+    messageSubscription.value = stompClient.value.subscribe(
+      `/topic/chat/${id}`,
+      (tick) => {
+        messages.value.push(JSON.parse(tick.body));
+        scrollToBottom();
+      }
+    );
+
+
+    takeoverSubscription.value = stompClient.value.subscribe(
+      `/topic/chat/takeover/${id}`,
+      (tick) => {
+        assignedNhanVien.value = tick.body;
+
+
+        messages.value.push({
+          id: Date.now(),
+          senderType: "SYSTEM",
+          senderName: "Hệ thống",
+          content: "Nhân viên " + tick.body + " đã tiếp nhận cuộc trò chuyện.",
+          sentAt: new Date(),
+        });
+
+
+        scrollToBottom();
+      }
+    );
   });
 };
-
 onMounted(async () => {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
@@ -104,7 +159,7 @@ onMounted(async () => {
   try {
     const response = await axios.post(
       "http://localhost:8080/api/conversations/get-or-create",
-      { khachHangId: user.id, onlyFind: true },
+      { khachHangId: user.id, onlyFind: false },
     );
     if (response.data) {
       conversationId.value = response.data.id;
@@ -123,20 +178,30 @@ onMounted(async () => {
   }
 });
 
+
 const sendMessage = async () => {
   if (!newMessage.value.trim()) return;
+
+
+  const content = newMessage.value;
+
+
+  newMessage.value = "";
+  scrollToBottom();
+
+
   if (!conversationId.value) {
-    try {
-      const res = await axios.post(
-        "http://localhost:8080/api/conversations/get-or-create",
-        { khachHangId: senderId.value, onlyFind: false },
-      );
-      conversationId.value = res.data.id;
-      connectAndSubscribe(res.data.id);
-    } catch (e) {
-      return;
-    }
+    await callAI(content);
+    return;
   }
+
+
+  if (!assignedNhanVien.value || assignedNhanVien.value.includes("Đang chờ")) {
+    await callAI(content);
+    return;
+  }
+
+
   const attemptSend = () => {
     if (connected.value) {
       stompClient.value.send(
@@ -146,17 +211,61 @@ const sendMessage = async () => {
           conversationId: conversationId.value,
           senderId: senderId.value,
           senderType: senderType.value,
-          content: newMessage.value,
+          content: content,
         }),
       );
-      newMessage.value = "";
     } else {
       setTimeout(attemptSend, 200);
     }
   };
+
+
   attemptSend();
 };
+
+
+const isLoading = ref(false); // Thêm dòng này
+
+
+const callAI = async (content) => {
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+
+  try {
+    const res = await axios.post("http://localhost:8080/api/chat", {
+      message: content,
+    });
+
+
+    messages.value.push({
+      id: Date.now(),
+      senderType: "AI",
+      senderName: "ChocoBot",
+      content: res.data.reply,
+      sentAt: new Date(),
+    });
+
+
+    scrollToBottom();
+  } catch (e) {
+    console.error("AI lỗi:", e);
+    // Thông báo lỗi ra màn hình chat cho dễ theo dõi
+    messages.value.push({
+      id: Date.now(),
+      senderType: "AI",
+      senderName: "Hệ thống",
+      content: "Kết nối AI thất bại, vui lòng kiểm tra console Backend.",
+      sentAt: new Date(),
+    });
+  } finally {
+    // Luôn luôn chạy dòng này kể cả thành công hay thất bại
+    isLoading.value = false;
+    scrollToBottom();
+  }
+};
 </script>
+
 
 <style scoped>
 .chat-popup-inner {
@@ -190,6 +299,7 @@ const sendMessage = async () => {
   margin-right: 6px;
 }
 
+
 .messages-box {
   flex: 1;
   overflow-y: auto;
@@ -210,6 +320,7 @@ const sendMessage = async () => {
   justify-content: flex-start;
 }
 
+
 .msg-bubble {
   max-width: 80%;
   padding: 10px 14px;
@@ -229,6 +340,7 @@ const sendMessage = async () => {
   border-bottom-left-radius: 4px;
   border: 1px solid #eee;
 }
+
 
 .sender-name {
   font-size: 11px;
@@ -273,4 +385,14 @@ const sendMessage = async () => {
 .send-btn:disabled {
   color: #ccc;
 }
+.ai .msg-bubble {
+  background: #f0e6ff;
+  color: #4b0082;
+  border-bottom-left-radius: 4px;
+}
 </style>
+
+
+
+
+
