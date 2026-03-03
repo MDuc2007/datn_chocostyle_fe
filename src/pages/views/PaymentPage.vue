@@ -650,7 +650,11 @@ const getDiscountedPrice = (item) => {
 // Fetch và áp dụng khuyến mãi cho TOÀN BỘ danh sách sản phẩm
 const fetchPromotions = async () => {
   try {
+    // Gọi API lấy khuyến mãi
     const res = await axios.get("http://localhost:8080/api/promotions");
+    
+    if (!res.data) return;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -663,7 +667,7 @@ const fetchPromotions = async () => {
       return today >= start && today <= end;
     });
 
-    // Duyệt qua từng sản phẩm trong giỏ và tìm khuyến mãi phù hợp nhất
+    // Cập nhật chiết khấu cho từng sản phẩm
     checkoutItems.value.forEach((item) => {
       const itemPromos = validPromos.filter((p) =>
         p.chiTietSanPhamIds?.some(
@@ -672,7 +676,6 @@ const fetchPromotions = async () => {
       );
 
       if (itemPromos.length > 0) {
-        // Lấy khuyến mãi có giá trị giảm cao nhất
         const best = itemPromos.reduce((max, cur) =>
           Number(cur.giaTriGiam) > Number(max.giaTriGiam) ? cur : max,
         );
@@ -682,7 +685,14 @@ const fetchPromotions = async () => {
       }
     });
   } catch (err) {
-    console.error("Lỗi check khuyến mãi:", err);
+    // XỬ LÝ LỖI RIÊNG CHO KHÁCH VÃNG LAI
+    if (err.response && err.response.status === 401) {
+      console.warn("Chế độ khách vãng lai: Không thể áp dụng khuyến mãi yêu cầu đăng nhập.");
+      // Đảm bảo discount về 0 nếu không gọi được API
+      checkoutItems.value.forEach(item => item.discountPercent = 0);
+    } else {
+      console.error("Lỗi hệ thống khi check khuyến mãi:", err);
+    }
   }
 };
 
@@ -917,8 +927,26 @@ const selectAddress = async (item) => {
 };
 
 onMounted(async () => {
+  // 1. Luôn gọi lấy tỉnh thành vì khách vãng lai cũng cần địa chỉ
   await getProvinces();
-  await fetchCustomer();
+
+  // 2. CHỈ GỌI fetchCustomer khi đã đăng nhập (có token)
+  const token = localStorage.getItem("token"); 
+  if (token) {
+    try {
+      await fetchCustomer();
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin khách hàng:", error);
+      // Nếu token hết hạn (401), có thể xóa token để họ tiếp tục mua như khách vãng lai
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("token");
+      }
+    }
+  } else {
+    console.log("Chế độ mua hàng không đăng nhập (Guest Checkout)");
+  }
+
+  // --- Giữ nguyên các logic check giỏ hàng và mua ngay phía dưới ---
 
   // CHECK 1: Dữ liệu từ Giỏ hàng (localStorage: checkout_items)
   const checkoutData = localStorage.getItem("checkout_items");
@@ -926,16 +954,12 @@ onMounted(async () => {
     try {
       const items = JSON.parse(checkoutData);
       if (Array.isArray(items) && items.length > 0) {
-        // Map dữ liệu vào checkoutItems
         checkoutItems.value = items.map((i) => ({
           ...i,
-          // Đảm bảo các trường không bị undefined
           mauSacTen: i.mauSac?.tenMau || i.mauSacTen || "",
           kichCo: i.kichCo || "",
-          discountPercent: 0, // Reset về 0 để tính lại từ API cho chính xác
+          discountPercent: 0, 
         }));
-
-        // Gọi API khuyến mãi để cập nhật discountPercent
         await fetchPromotions();
       }
     } catch (e) {
