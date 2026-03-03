@@ -120,12 +120,11 @@
             <div class="form-group">
               <label>Tỉnh/Thành phố <span class="req">*</span></label>
               <select
-                v-model="selectedCity"
-                @change="onCityChange"
+                id="select-city"
                 :class="{ 'red-border': errors.tinhThanh }"
               >
-                <option :value="null">Chọn Tỉnh/TP</option>
-                <option v-for="c in listCity" :key="c.code" :value="c">
+                <option value="">Chọn Tỉnh/TP</option>
+                <option v-for="c in listCity" :key="c.code" :value="c.code">
                   {{ c.name }}
                 </option>
               </select>
@@ -133,27 +132,30 @@
                 errors.tinhThanh
               }}</span>
             </div>
+
             <div class="form-group">
               <label>Quận/Huyện <span class="req">*</span></label>
               <select
-                v-model="selectedDistrict"
-                @change="onDistrictChange"
+                id="select-district"
                 :class="{ 'red-border': errors.quanHuyen }"
+                :disabled="!selectedCity"
               >
-                <option :value="null">Chọn Quận/Huyện</option>
-                <option v-for="d in listDistrict" :key="d.code" :value="d">
+                <option value="">Chọn Quận/Huyện</option>
+                <option v-for="d in listDistrict" :key="d.code" :value="d.code">
                   {{ d.name }}
                 </option>
               </select>
             </div>
+
             <div class="form-group">
               <label>Xã/Phường <span class="req">*</span></label>
               <select
-                v-model="selectedWard"
+                id="select-ward"
                 :class="{ 'red-border': errors.xaPhuong }"
+                :disabled="!selectedDistrict"
               >
-                <option :value="null">Chọn Xã/Phường</option>
-                <option v-for="w in listWard" :key="w.code" :value="w">
+                <option value="">Chọn Xã/Phường</option>
+                <option v-for="w in listWard" :key="w.code" :value="w.code">
                   {{ w.name }}
                 </option>
               </select>
@@ -298,7 +300,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
@@ -324,6 +326,44 @@ const form = ref({
   avatar: "",
 });
 const errors = ref({});
+
+const initSelect2 = () => {
+  // 1. Tỉnh/Thành
+  const $city = window.$("#select-city");
+  $city.select2({ width: "100%", placeholder: "Chọn Tỉnh/TP" });
+
+  $city.off("select2:select").on("select2:select", async (e) => {
+    const code = Number(e.params.data.id);
+    // Tìm object trong listCity dựa trên code
+    selectedCity.value = listCity.value.find((c) => c.code == code) || null;
+    await onCityChange();
+  });
+
+  // 2. Quận/Huyện
+  const $dist = window.$("#select-district");
+  $dist.select2({ width: "100%", placeholder: "Chọn Quận/Huyện" });
+
+  $dist.off("select2:select").on("select2:select", async (e) => {
+    const code = Number(e.params.data.id);
+    selectedDistrict.value =
+      listDistrict.value.find((d) => d.code == code) || null;
+    await onDistrictChange();
+  });
+
+  // 3. Phường/Xã
+  const $ward = window.$("#select-ward");
+  $ward.select2({ width: "100%", placeholder: "Chọn Xã/Phường" });
+
+  $ward.off("select2:select").on("select2:select", (e) => {
+    const code = Number(e.params.data.id);
+    selectedWard.value = listWard.value.find((w) => w.code == code) || null;
+  });
+};
+
+// Hàm cập nhật giao diện Select2 từ code (Dùng cho AutoFill QR)
+const updateSelect2UI = (id, value) => {
+  window.$(id).val(value).trigger("change");
+};
 
 // Scanner State
 const showScanModal = ref(false);
@@ -383,6 +423,10 @@ onMounted(async () => {
   try {
     const res = await axios.get("https://provinces.open-api.vn/api/?depth=3");
     listCity.value = res.data;
+
+    // Init Select2 sau khi có dữ liệu
+    await nextTick();
+    initSelect2();
   } catch (e) {
     console.error("Lỗi API địa chỉ", e);
   }
@@ -603,35 +647,66 @@ function paintBoundingBox(detectedCodes, ctx) {
     ctx.strokeRect(x, y, width, height);
   }
 }
-function onCityChange() {
+async function onCityChange() {
+  // Reset data cấp dưới
   listDistrict.value = selectedCity.value ? selectedCity.value.districts : [];
   selectedDistrict.value = null;
   listWard.value = [];
   selectedWard.value = null;
+
+  // Reset UI Select2 cấp dưới
+  await nextTick();
+  updateSelect2UI("#select-district", "");
+  updateSelect2UI("#select-ward", "");
 }
-function onDistrictChange() {
-  listWard.value = selectedDistrict.value ? selectedDistrict.value.wards : [];
+
+async function onDistrictChange() {
+  listWard.value = selectedDistrict.value
+    ? selectedDistrict.value.districts || selectedDistrict.value.wards
+    : [];
   selectedWard.value = null;
+
+  await nextTick();
+  updateSelect2UI("#select-ward", "");
 }
-function autoFillAddress(fullStr) {
+
+// --- LOGIC AUTO FILL (Khi quét QR) ---
+async function autoFillAddress(fullStr) {
   const arr = fullStr.split(",").map((s) => s.trim());
   if (arr.length < 3) return;
   const strCity = arr[arr.length - 1];
   const strDistrict = arr[arr.length - 2];
   const strWard = arr[arr.length - 3];
   form.value.diaChiCuThe = arr.slice(0, arr.length - 3).join(", ");
+
   const foundCity = listCity.value.find((c) => compareStr(c.name, strCity));
   if (foundCity) {
     selectedCity.value = foundCity;
+    // Cập nhật UI Tỉnh
+    updateSelect2UI("#select-city", foundCity.code);
+
+    // Load Quận
     listDistrict.value = foundCity.districts;
+    await nextTick();
+
     const foundDistrict = listDistrict.value.find((d) =>
       compareStr(d.name, strDistrict),
     );
     if (foundDistrict) {
       selectedDistrict.value = foundDistrict;
+      // Cập nhật UI Quận
+      updateSelect2UI("#select-district", foundDistrict.code);
+
+      // Load Phường
       listWard.value = foundDistrict.wards;
+      await nextTick();
+
       const foundWard = listWard.value.find((w) => compareStr(w.name, strWard));
-      if (foundWard) selectedWard.value = foundWard;
+      if (foundWard) {
+        selectedWard.value = foundWard;
+        // Cập nhật UI Phường
+        updateSelect2UI("#select-ward", foundWard.code);
+      }
     }
   }
 }
@@ -1263,5 +1338,58 @@ select:focus {
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
+}
+:deep(.select2-container) {
+  width: 100% !important;
+}
+:deep(.select2-container .select2-selection--single) {
+  height: 42px; /* Chiều cao bằng input thường */
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow
+) {
+  height: 100%;
+  right: 10px;
+}
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered
+) {
+  padding-left: 0;
+  color: #333;
+}
+:deep(.select2-container--default .select2-selection--single:focus) {
+  border-color: #63391f;
+  outline: none;
+}
+/* Style cho dropdown khi mở ra */
+:deep(.select2-dropdown) {
+  border: 1px solid #63391f;
+  border-radius: 6px;
+  z-index: 9999;
+}
+:deep(.select2-results__option--highlighted) {
+  background-color: #63391f !important;
+  color: white !important;
+}
+:deep(.select2-search__field) {
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+}
+/* Style khi bị disabled */
+:deep(
+  .select2-container--default.select2-container--disabled
+    .select2-selection--single
+) {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
 }
 </style>

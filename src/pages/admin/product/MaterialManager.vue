@@ -65,34 +65,36 @@
                   }}
                 </span>
               </td>
-              <td class="action">
-                <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
-                  <span class="icon view" @click="editColor(item)">
-                    <img
-                      src="/src/assets/icon/eye.svg"
-                      style="width: 20px; height: 20px"
-                    />
-                  </span>
-                </div>
-                <div
-                  class="tooltip-wrapper"
-                  :data-tooltip="
-                    item.trangThai === 1
-                      ? 'Ngừng hoạt động'
-                      : item.trangThai === 0
-                        ? 'Hoạt động'
-                        : 'Không khả dụng'
-                  "
-                >
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="item.trangThai === 1"
-                      @click.prevent="toggleStatus(item)"
-                    />
+              <td>
+                <div class="action-inner">
+                  <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
+                    <span class="icon view" @click="editColor(item)">
+                      <img
+                        src="/src/assets/icon/eye.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
+                  <div
+                    class="tooltip-wrapper"
+                    :data-tooltip="
+                      item.trangThai === 1
+                        ? 'Ngừng hoạt động'
+                        : item.trangThai === 0
+                          ? 'Hoạt động'
+                          : 'Không khả dụng'
+                    "
+                  >
+                    <label class="switch">
+                      <input
+                        type="checkbox"
+                        :checked="item.trangThai === 1"
+                        @click.prevent="toggleStatus(item)"
+                      />
 
-                    <span class="slider"></span>
-                  </label>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -575,7 +577,7 @@ const deleteColor = async (item) => {
   font-size: 10px;
 }
 
-.action {
+.action-inner {
   display: flex;
   justify-content: center;
   align-items: center;

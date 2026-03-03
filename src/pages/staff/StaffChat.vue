@@ -94,7 +94,7 @@
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
-import Stomp from "stompjs";
+import { Client } from "@stomp/stompjs";
 import axios from "axios";
 
 const conversations = ref([]);
@@ -153,15 +153,16 @@ const selectConversation = async (conv) => {
 };
 
 const subscribeToTopic = (id) => {
-  if (stompClient.value && stompClient.value.connected) {
-    stompClient.value.subscribe(`/topic/chat/${id}`, (tick) => {
-      const msg = JSON.parse(tick.body);
-      if (currentConversation.value?.id === msg.conversationId) {
-        messages.value.push(msg);
-        scrollToBottom();
-      }
-    });
-  }
+  if (!stompClient.value) return;
+
+  stompClient.value.subscribe(`/topic/chat/${id}`, (message) => {
+    const msg = JSON.parse(message.body);
+
+    if (currentConversation.value?.id === msg.conversationId) {
+      messages.value.push(msg);
+      scrollToBottom();
+    }
+  });
 };
 
 const sendChatMessage = () => {
@@ -170,33 +171,46 @@ const sendChatMessage = () => {
     stompClient.value &&
     currentConversation.value
   ) {
-    stompClient.value.send(
-      "/app/chat.send",
-      {},
-      JSON.stringify({
+    stompClient.value.publish({
+      destination: "/app/chat.send",
+      body: JSON.stringify({
         conversationId: currentConversation.value.id,
         senderId: staff.id,
         senderType: "NHAN_VIEN",
         content: newMessage.value,
       }),
-    );
+    });
+
     newMessage.value = "";
   }
 };
 
 onMounted(() => {
   loadConversations();
-  const socket = new SockJS("http://localhost:8080/ws-chocostyle");
-  stompClient.value = Stomp.over(socket);
-  stompClient.value.debug = null;
-  stompClient.value.connect({}, () => {
-    stompClient.value.subscribe("/topic/chat/reload-waiting", () =>
-      loadConversations(),
-    );
-    stompClient.value.subscribe("/topic/chat/new-waiting", () =>
-      loadConversations(),
-    );
+
+  const client = new Client({
+    webSocketFactory: () =>
+      new SockJS("http://localhost:8080/ws-chocostyle"),
+
+    reconnectDelay: 5000, // tự reconnect nếu mất kết nối
+
+    debug: () => {},
+
+    onConnect: () => {
+      console.log("STOMP Connected");
+
+      client.subscribe("/topic/chat/reload-waiting", () =>
+        loadConversations(),
+      );
+
+      client.subscribe("/topic/chat/new-waiting", () =>
+        loadConversations(),
+      );
+    },
   });
+
+  client.activate();
+  stompClient.value = client;
 });
 </script>
 
