@@ -17,6 +17,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/DetailProductHome.vue"),
   },
   {
+    path: '/change-password',
+    name: 'ChangePassword',
+    component: () => import("../pages/views/ChangePassword.vue"),
+    meta: { requiresAuth: true } 
+  },
+  {
     path: "/moi-ve",
     name: "NewArrivals",
     component: () => import("../pages/views/NewArrivalsPage.vue"),
@@ -426,6 +432,9 @@ router.beforeEach((to, from, next) => {
     "/admin/login",
     "/uu-dai",
     "/payment",
+    "/ao-khoac",       // <--- Thêm trang Áo khoác
+    "/tra-cuu",        // <--- Thêm trang Tra cứu đơn hàng
+    "/payment-result"  // <--- Thêm trang Kết quả thanh toán
   ];
 
   const isPublic =
@@ -436,7 +445,7 @@ router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
 
-  // 1. Chưa đăng nhập
+  // 1. Chưa đăng nhập mà đòi vào trang yêu cầu Auth -> Đuổi ra Login
   if (authRequired && !user) {
     if (to.path.startsWith("/admin") || to.path.startsWith("/staff")) {
       return next("/admin/login");
@@ -444,20 +453,20 @@ router.beforeEach((to, from, next) => {
     return next("/login");
   }
 
-  // 2. Kiểm tra phân quyền
+  // 2. Kiểm tra phân quyền Admin / Staff
   const authorizedRoles = to.matched
     .filter((record) => record.meta.authorize)
-    .flatMap((record) => record.meta.authorize as string[]);
+    .flatMap((record) => record.meta.authorize);
 
   if (authorizedRoles.length > 0) {
     const userRole = user?.role;
 
     if (!authorizedRoles.includes(userRole)) {
-      return next("/");
+      return next("/"); // Không đủ quyền thì đá về trang chủ
     }
   }
 
-  // 3. Đã login mà vào login lại
+  // 3. Đã login mà cố tình vào lại trang Login -> Đẩy vào Dashboard tương ứng
   if (user && ["/login", "/register", "/admin/login"].includes(to.path)) {
     switch (user.role) {
       case "ROLE_ADMIN":

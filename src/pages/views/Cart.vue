@@ -279,7 +279,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Header from "../../layout/header/Header.vue";
@@ -473,33 +473,36 @@ const handleModalConfirm = () => {
   closeModalConfirm();
 };
 
-const closeConfirmModal = () => {
-  confirmModal.value.show = false;
-};
-
-const executeRemove = () => {
-  if (confirmModal.value.isClearAll) {
-    cartItems.value = [];
-    showToast("Đã xóa toàn bộ giỏ hàng.");
-  } else {
-    cartItems.value.splice(confirmModal.value.indexToRemove, 1);
-    showToast("Đã xóa sản phẩm khỏi giỏ hàng.");
-  }
-  saveCart();
-  closeConfirmModal();
-};
-
 const goToDetail = (productId) => {
   router.push(`/home/product/${productId}`);
 };
 
+// 👉 THAY ĐỔI CHÍNH Ở ĐÂY: KIỂM TRA ĐĂNG NHẬP TRƯỚC KHI THANH TOÁN
 const proceedToCheckout = () => {
+  // 1. Kiểm tra trạng thái đăng nhập
+  const userStr = localStorage.getItem("user");
+  const token = localStorage.getItem("token");
+
+  if (!userStr && !token) {
+    showToast("Vui lòng đăng nhập để tiến hành thanh toán!", "warning");
+    
+    // Tự động chuyển hướng sang trang đăng nhập sau 1.5 giây
+    setTimeout(() => {
+      router.push("/login");
+    }, 1500);
+    
+    return;
+  }
+
+  // 2. Nếu đã đăng nhập, kiểm tra xem đã chọn sản phẩm chưa
   const selectedItems = cartItems.value.filter((item) => item.checked);
 
   if (selectedItems.length === 0) {
     showToast("Vui lòng chọn sản phẩm để thanh toán.", "warning");
     return;
   }
+
+  // 3. Tiến hành thanh toán
   localStorage.setItem("checkout_items", JSON.stringify(selectedItems));
   router.push({ path: "/payment", query: { fromCart: "true" } });
 };
@@ -570,10 +573,6 @@ const showToast = (msg, type = "success") => {
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.5px;
-}
-.cart-count {
-  font-size: 14px;
-  color: #6b7280;
 }
 
 /* Inputs & Buttons */
@@ -1042,7 +1041,7 @@ const showToast = (msg, type = "success") => {
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 100;
+  z-index: 10000;
   background: #111827;
   color: #fff;
   padding: 16px 24px;
@@ -1050,6 +1049,11 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.toast-notification.warning {
+  background: #f59e0b;
+  color: #fff;
 }
 
 /* Responsive */

@@ -870,31 +870,40 @@ const updateOriginalCartAfterPurchase = () => {
     localStorage.removeItem("checkout_items");
   }
 };
-
 // ================== 5. KHỞI TẠO DỮ LIỆU ==================
 const fetchCustomer = async () => {
   const userStr = localStorage.getItem("user");
   if (!userStr) return;
-  const { accessToken, username } = JSON.parse(userStr);
+  
+  // 👉 SỬA LẠI: Lấy 'id' thay vì 'username'
+  const user = JSON.parse(userStr);
+  const userId = user.id; 
+  const token = user.accessToken || localStorage.getItem("token");
+
+  if (!userId) return;
+
   try {
+    // 👉 SỬA LẠI: Gọi API theo ID (chuẩn giống trang Profile)
     const res = await axios.get(
-      `http://localhost:8080/api/khach-hang/email/${username}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
+      `http://localhost:8080/api/khach-hang/${userId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
+    
     customer.value = res.data;
     form.value.tenKhachHang = res.data.tenKhachHang;
     form.value.soDienThoai = res.data.soDienThoai;
     form.value.email = res.data.email;
 
-    const addr =
-      res.data.listDiaChi?.find((d) => d.macDinh) || res.data.listDiaChi?.[0];
+    const addr = res.data.listDiaChi?.find((d) => d.macDinh) || res.data.listDiaChi?.[0];
     if (addr) {
       form.value.diaChiCuThe = addr.diaChiCuThe;
       await mapAddressFromText(addr.thanhPho, addr.quan, addr.phuong);
     }
+    
     await fetchVouchers(res.data.id);
+    
   } catch (err) {
-    console.error(err);
+    console.error("Lỗi lấy thông tin khách hàng:", err);
   }
 };
 
