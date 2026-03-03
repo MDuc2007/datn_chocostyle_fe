@@ -158,7 +158,7 @@
                           style="width: 100%"
                           class="form-input"
                         >
-                          <option value="">Chọn Tỉnh/TP</option>
+                          <option value="" disabled selected>Chọn Tỉnh/TP</option>
                           <option
                             v-for="p in listProvinces"
                             :key="p.code"
@@ -176,7 +176,7 @@
                           class="form-input"
                           :disabled="!addr.provinceId"
                         >
-                          <option value="">Chọn Quận/Huyện</option>
+                          <option value="" disabled selected>Chọn Quận/Huyện</option>
                           <option
                             v-for="d in addr.districtOptions"
                             :key="d.code"
@@ -194,7 +194,7 @@
                           class="form-input"
                           :disabled="!addr.districtId"
                         >
-                          <option value="">Chọn Phường/Xã</option>
+                          <option value="" disabled selected>Chọn Phường/Xã</option>
                           <option
                             v-for="w in addr.wardOptions"
                             :key="w.code"
@@ -316,7 +316,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
@@ -324,6 +324,8 @@ import { customerService } from "../../../services/customerService";
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
+
+const PROVINCE_API_URL = "https://provinces.open-api.vn/api/v1";
 
 // --- STATE ---
 const loadingData = ref(true);
@@ -349,6 +351,7 @@ const originalData = ref({});
 const errors = ref({});
 const toast = ref({ show: false, message: "", type: "success" });
 const modal = ref({ show: false, title: "", message: "" });
+
 
 // ===============================================
 // HÀM KHỞI TẠO JQUERY SELECT2 CHO TỪNG DÒNG ĐỊA CHỈ
@@ -419,17 +422,16 @@ onMounted(async () => {
   await fetchProvinces();
   if (customerId) {
     await fetchCustomerDetail();
-    await initAllSelect2(); // Load Select2 khi có dữ liệu sửa
   } else {
-    addAddressField();
     loadingData.value = false;
+    addAddressField(); 
   }
 });
 
 // --- FETCH DATA ---
 const fetchProvinces = async () => {
   try {
-    const res = await axios.get("https://provinces.open-api.vn/api/?depth=1");
+    const res = await axios.get(`${PROVINCE_API_URL}/p/`);
     listProvinces.value = res.data;
   } catch (e) {
     console.error(e);
@@ -442,11 +444,26 @@ const fetchCustomerDetail = async () => {
     editForm.value = { ...data, matKhau: "", confirmPassword: "" };
 
     if (data.avatarFullUrl) previewImage.value = data.avatarFullUrl;
+    originalData.value = { email: data.email, soDienThoai: data.soDienThoai };
 
-    originalData.value = {
-      email: data.email,
-      soDienThoai: data.soDienThoai,
-    };
+    // TẢI TRƯỚC DỮ LIỆU HUYỆN / XÃ ĐỂ VUE TỰ ĐỘNG BINDING
+    for (let i = 0; i < editForm.value.listDiaChi.length; i++) {
+      const addr = editForm.value.listDiaChi[i];
+      if (addr.provinceId) {
+        const resDist = await axios.get(`${PROVINCE_API_URL}/p/${addr.provinceId}?depth=2`);
+        addr.districtOptions = resDist.data.districts;
+      }
+      if (addr.districtId) {
+        const resWard = await axios.get(`${PROVINCE_API_URL}/d/${addr.districtId}?depth=2`);
+        addr.wardOptions = resWard.data.wards;
+      }
+      
+      // Xử lý trường hợp dữ liệu cũ lưu dạng string nhưng v-model cần đúng kiểu
+      if(addr.provinceId) addr.provinceId = Number(addr.provinceId);
+      if(addr.districtId) addr.districtId = Number(addr.districtId);
+      if(addr.wardCode) addr.wardCode = String(addr.wardCode); 
+    }
+
   } catch (e) {
     showToast("Không thể tải thông tin khách hàng", "error");
   } finally {
@@ -455,9 +472,9 @@ const fetchCustomerDetail = async () => {
 };
 
 // --- ADDRESS LOGIC ---
-const onProvinceChange = async (addr, index) => {
-  addr.districtId = null;
-  addr.wardCode = null;
+const onProvinceChange = async (addr) => {
+  addr.districtId = ""; // Dùng "" để khớp với option "Chọn..."
+  addr.wardCode = "";
   addr.districtOptions = [];
   addr.wardOptions = [];
 
@@ -483,8 +500,8 @@ const onProvinceChange = async (addr, index) => {
   }
 };
 
-const onDistrictChange = async (addr, index) => {
-  addr.wardCode = null;
+const onDistrictChange = async (addr) => {
+  addr.wardCode = "";
   addr.wardOptions = [];
 
   window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
@@ -498,8 +515,6 @@ const onDistrictChange = async (addr, index) => {
         `https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`,
       );
       addr.wardOptions = res.data.wards;
-      await nextTick();
-      initSelect2ForAddress(index);
     } catch (error) {
       console.error(error);
     }
@@ -511,11 +526,11 @@ const onWardChange = (addr) => {
     addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
 };
 
-const addAddressField = async () => {
+const addAddressField = () => {
   editForm.value.listDiaChi.push({
-    provinceId: null,
-    districtId: null,
-    wardCode: null,
+    provinceId: "",
+    districtId: "",
+    wardCode: "",
     provinceName: "",
     districtName: "",
     wardName: "",
@@ -524,13 +539,9 @@ const addAddressField = async () => {
     wardOptions: [],
     macDinh: editForm.value.listDiaChi.length === 0,
   });
-
-  // Render DOM xong thì init jquery
-  await nextTick();
-  initSelect2ForAddress(editForm.value.listDiaChi.length - 1);
 };
 
-const removeAddressField = async (i) => {
+const removeAddressField = (i) => {
   if (editForm.value.listDiaChi.length > 1) {
     // Dọn dẹp select2 để chống lỗi ghost element
     window.$(`#select-prov-${i}`).select2("destroy");
@@ -541,9 +552,6 @@ const removeAddressField = async (i) => {
     editForm.value.listDiaChi.splice(i, 1);
 
     if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
-
-    // Load lại select2 cho mảng mới vì index bị thay đổi
-    await initAllSelect2();
   }
 };
 
@@ -858,19 +866,6 @@ const showToast = (msg, type = "success") => {
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
 }
-.btn-scan-cccd {
-  background-color: #8d6e63;
-  color: #fff;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
 .form-grid-container {
   display: flex;
@@ -915,6 +910,25 @@ const showToast = (msg, type = "success") => {
   border-color: var(--primary-brown);
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
+
+/* CSS Tùy chỉnh cho Select Native đẹp như Select2 */
+select.custom-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23484848' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  color: #484848;
+}
+select.custom-select:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
 .red-border {
   border-color: #c0392b !important;
   background-color: #fff5f5;
@@ -998,16 +1012,20 @@ const showToast = (msg, type = "success") => {
 
 .address-main-row {
   display: flex;
-  gap: 12px; /* Tăng khoảng cách ra một chút cho đẹp */
+  gap: 12px; 
   align-items: center;
   margin-bottom: 15px;
-  flex-wrap: nowrap; /* 👉 ĐỔI THÀNH nowrap ĐỂ ÉP TRÊN 1 DÒNG */
-  padding-right: 36px; /* Chừa chỗ cho nút Xóa */
+  flex-wrap: nowrap; 
+  padding-right: 36px; 
   position: relative;
 }
 .addr-select-col {
   flex: 1;
   min-width: 140px;
+}
+.addr-detail-col {
+  flex: 1;
+  min-width: 150px;
 }
 .addr-input-detail {
   width: 100%;
@@ -1053,6 +1071,7 @@ const showToast = (msg, type = "success") => {
   color: #ffffff;
   cursor: default;
 }
+
 
 /* =========================================
    GHI ĐÈ CSS CHO SELECT2 ĐỂ GIỐNG FORM INPUT
@@ -1125,6 +1144,7 @@ const showToast = (msg, type = "success") => {
   cursor: not-allowed;
   border-style: dashed;
 }
+
 
 /* =========================================
    6. FOOTER & MISC

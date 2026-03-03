@@ -158,7 +158,7 @@
                           style="width: 100%"
                           class="form-input"
                         >
-                          <option value="">Chọn Tỉnh/Thành phố</option>
+                          <option :value="null">Chọn Tỉnh/Thành phố</option>
                           <option
                             v-for="p in listProvinces"
                             :key="p.code"
@@ -176,7 +176,7 @@
                           class="form-input"
                           :disabled="!addr.provinceId"
                         >
-                          <option value="">Chọn Quận/Huyện</option>
+                          <option :value="null">Chọn Quận/Huyện</option>
                           <option
                             v-for="d in addr.districtOptions"
                             :key="d.code"
@@ -194,7 +194,7 @@
                           class="form-input"
                           :disabled="!addr.districtId"
                         >
-                          <option value="">Chọn Phường/Xã</option>
+                          <option :value="null">Chọn Phường/Xã</option>
                           <option
                             v-for="w in addr.wardOptions"
                             :key="w.code"
@@ -318,7 +318,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
@@ -326,6 +326,9 @@ import { customerService } from "../../../services/customerService";
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
+
+// Dùng API v1 chuẩn để chống giật lag
+const PROVINCE_API_URL = "https://provinces.open-api.vn/api/v1";
 
 // --- STATE ---
 const loadingData = ref(true);
@@ -421,21 +424,16 @@ onMounted(async () => {
   await fetchProvinces();
   if (customerId) {
     await fetchCustomerDetail();
-    // Đợi Vue vẽ xong rồi init Select2
-    await nextTick();
-    editForm.value.listDiaChi.forEach((_, idx) => initSelect2ForAddress(idx));
   } else {
-    // THÊM MỚI: Tắt loading trước để Vue vẽ Form HTML ra
     loadingData.value = false;
-    await nextTick(); // Chờ 1 nhịp render
-    addAddressField(); // Hàm này sẽ tự gọi initSelect2ForAddress
+    addAddressField(); 
   }
 });
 
 // --- FETCH DATA ---
 const fetchProvinces = async () => {
   try {
-    const res = await axios.get("https://provinces.open-api.vn/api/?depth=1");
+    const res = await axios.get(`${PROVINCE_API_URL}/p/`);
     listProvinces.value = res.data;
   } catch (e) {
     console.error(e);
@@ -460,12 +458,13 @@ const fetchCustomerDetail = async () => {
   }
 };
 
-// --- ADDRESS LOGIC ---
-const onProvinceChange = async (addr, index) => {
+// --- ADDRESS LOGIC (DÙNG CHUẨN VUE) ---
+const onProvinceChange = async (addr) => {
   addr.districtId = null;
   addr.wardCode = null;
   addr.districtOptions = [];
   addr.wardOptions = [];
+
 
   // Clear giao diện Quận, Phường của dòng hiện tại
   window.$(`#select-dist-${index}`).val(null).trigger("change.select2");
@@ -474,23 +473,30 @@ const onProvinceChange = async (addr, index) => {
   addr.provinceName =
     listProvinces.value.find((p) => p.code == addr.provinceId)?.name || "";
 
+
   if (addr.provinceId) {
+    addr.provinceName = listProvinces.value.find((p) => String(p.code) === String(addr.provinceId))?.name || "";
     try {
+
       const res = await axios.get(
         `https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`,
       );
       addr.districtOptions = res.data.districts;
       await nextTick();
       initSelect2ForAddress(index);
+
     } catch (error) {
       console.error(error);
     }
+  } else {
+    addr.provinceName = "";
   }
 };
 
-const onDistrictChange = async (addr, index) => {
+const onDistrictChange = async (addr) => {
   addr.wardCode = null;
   addr.wardOptions = [];
+
 
   window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
 
@@ -498,25 +504,28 @@ const onDistrictChange = async (addr, index) => {
     addr.districtOptions.find((d) => d.code == addr.districtId)?.name || "";
 
   if (addr.districtId) {
+    addr.districtName = addr.districtOptions.find((d) => String(d.code) === String(addr.districtId))?.name || "";
     try {
+
       const res = await axios.get(
         `https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`,
       );
       addr.wardOptions = res.data.wards;
-      await nextTick();
-      initSelect2ForAddress(index);
     } catch (error) {
       console.error(error);
     }
+  } else {
+    addr.districtName = "";
   }
 };
 
 const onWardChange = (addr) => {
+
   addr.wardName =
     addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
 };
 
-const addAddressField = async () => {
+const addAddressField = () => {
   editForm.value.listDiaChi.push({
     provinceId: null,
     districtId: null,
@@ -529,14 +538,11 @@ const addAddressField = async () => {
     wardOptions: [],
     macDinh: editForm.value.listDiaChi.length === 0,
   });
-
-  // Render DOM xong thì init jquery
-  await nextTick();
-  initSelect2ForAddress(editForm.value.listDiaChi.length - 1);
 };
 
-const removeAddressField = async (i) => {
+const removeAddressField = (i) => {
   if (editForm.value.listDiaChi.length > 1) {
+
     // Dọn dẹp select2 để chống lỗi ghost element
     window.$(`#select-prov-${i}`).select2("destroy");
     window.$(`#select-dist-${i}`).select2("destroy");
@@ -545,10 +551,8 @@ const removeAddressField = async (i) => {
     const wasDefault = editForm.value.listDiaChi[i].macDinh;
     editForm.value.listDiaChi.splice(i, 1);
 
-    if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
 
-    // Load lại select2 cho mảng mới vì index bị thay đổi
-    await initAllSelect2();
+    if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
   }
 };
 
@@ -882,6 +886,7 @@ const showToast = (msg, type = "success") => {
   margin-left: 3px;
 }
 
+
 .form-input {
   padding: 10px 15px;
   height: 42px;
@@ -929,7 +934,7 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
-   5. ADDRESS SECTION (GIỐNG ẢNH 3 - NẰM NGANG)
+   5. ADDRESS SECTION 
    ========================================= */
 .address-section-wrapper {
   margin-top: 20px;
@@ -977,12 +982,14 @@ const showToast = (msg, type = "success") => {
 }
 
 /* Cột Layout Ngang */
+
 .address-main-row {
   display: flex;
   gap: 12px;
   align-items: center;
   margin-bottom: 10px;
   flex-wrap: nowrap; /* Bắt buộc 1 dòng */
+
 }
 .addr-col {
   flex: 1;
@@ -997,6 +1004,7 @@ const showToast = (msg, type = "success") => {
   display: flex;
   justify-content: center;
 }
+
 
 /* Nút xóa viền mỏng đỏ */
 .btn-remove-circle {
@@ -1039,6 +1047,7 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
+
    GHI ĐÈ CSS CHO JQUERY SELECT2 (FIX LỖI CẮT)
    ========================================= */
 :deep(.select2-container) {
@@ -1110,6 +1119,8 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
+=======
+>>>>>>> 
    6. FOOTER & MISC
    ========================================= */
 .footer-actions {
