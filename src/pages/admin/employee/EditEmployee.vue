@@ -141,16 +141,6 @@
 
           <div class="grid-row">
             <div class="form-group">
-              <label>Chức vụ</label>
-              <select v-model="form.vaiTro">
-                <option value="Nhân viên">Nhân viên</option>
-                <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
-                <option value="Quản lý">Quản lý</option>
-                <option value="Thủ kho">Thủ kho</option>
-              </select>
-            </div>
-
-            <div class="form-group">
               <label>Trạng thái</label>
               <select v-model="form.trangThai" class="status-select">
                 <option :value="1">Đang làm việc</option>
@@ -303,7 +293,6 @@ const form = ref({
   email: "",
   sdt: "",
   diaChiCuThe: "",
-  vaiTro: "Nhân viên",
   ngayVaoLam: "",
   avatar: "",
   trangThai: 1,
@@ -393,7 +382,6 @@ const hasFormChanged = computed(() => {
     form.value.sdt !== originalForm.value.sdt ||
     form.value.ngaySinh !== originalForm.value.ngaySinh ||
     form.value.gioiTinh !== originalForm.value.gioiTinh ||
-    form.value.vaiTro !== originalForm.value.vaiTro ||
     form.value.trangThai !== originalForm.value.trangThai ||
     form.value.diaChiCuThe !== originalForm.value.diaChiCuThe ||
     selectedCity.value?.code !== originalForm.value.tinhThanhId ||
@@ -434,7 +422,6 @@ async function fetchEmployeeDetail(id) {
       ...data,
       ngaySinh: formatDateForInput(data.ngaySinh),
       ngayVaoLam: formatDateForInput(data.ngayVaoLam),
-      vaiTro: data.chucVu || "Nhân viên",
       diaChiCuThe: data.diaChiCuThe,
     };
 
@@ -445,7 +432,6 @@ async function fetchEmployeeDetail(id) {
       sdt: form.value.sdt,
       ngaySinh: form.value.ngaySinh,
       gioiTinh: form.value.gioiTinh,
-      vaiTro: form.value.vaiTro,
       trangThai: form.value.trangThai,
       diaChiCuThe: form.value.diaChiCuThe,
       tinhThanhId: data.tinhThanhId,
@@ -608,7 +594,6 @@ async function submitForm() {
     quanHuyen: selectedDistrict.value?.name,
     xaPhuongId: selectedWard.value?.code,
     xaPhuong: selectedWard.value?.name,
-    chucVu: form.value.vaiTro,
   };
 
   try {
