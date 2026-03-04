@@ -66,8 +66,9 @@
                   }}
                 </span>
               </td>
-              <td class="action">
-                <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
+              <td>
+                <div class="action-inner">
+                  <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
                   <span class="icon view" @click="editColor(item)">
                     <img
                       src="/src/assets/icon/eye.svg"
@@ -93,6 +94,7 @@
                     />
                     <span class="slider"></span>
                   </label>
+                </div>
                 </div>
               </td>
             </tr>
@@ -597,7 +599,7 @@ const deleteColor = async (item) => {
   font-size: 10px;
 }
 
-.action {
+.action-inner {
   display: flex;
   justify-content: center;
   align-items: center;
