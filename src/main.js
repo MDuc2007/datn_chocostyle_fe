@@ -2,9 +2,19 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import axios from "axios"; // Import thư viện axios
-
+import { registerSW } from 'virtual:pwa-register'
 // --- CẤU HÌNH TOÀN CỤC CHO AXIOS ---
-
+const updateSW = registerSW({
+  onNeedRefresh() {
+    // Thông báo khi có bản cập nhật mới
+    if (confirm('Có phiên bản App mới, bạn có muốn cập nhật không?')) {
+      updateSW(true)
+    }
+  },
+  onOfflineReady() {
+    console.log('App đã sẵn sàng để chạy offline')
+  },
+})
 // 1. Thiết lập đường dẫn gốc (Base URL)
 axios.defaults.baseURL = "http://localhost:8080/api";
 
