@@ -11,11 +11,7 @@
                 <span class="icon-circle">👤</span>
                 <h2>Thông tin giao hàng</h2>
               </div>
-              <button
-                type="button"
-                class="btn-outline"
-                @click="openCustomerModal"
-              >
+              <button type="button" class="btn-outline" @click="openCustomerModal">
                 📋 Chọn từ sổ địa chỉ
               </button>
             </div>
@@ -24,19 +20,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>Họ và tên người nhận</label>
-                  <input
-                    v-model="form.tenKhachHang"
-                    type="text"
-                    class="form-control"
-                  />
+                  <input v-model="form.tenKhachHang" type="text" class="form-control" />
                 </div>
                 <div class="form-group">
                   <label>Số điện thoại</label>
-                  <input
-                    v-model="form.soDienThoai"
-                    type="text"
-                    class="form-control"
-                  />
+                  <input v-model="form.soDienThoai" type="text" class="form-control" />
                 </div>
               </div>
 
@@ -50,11 +38,7 @@
                   <label>Tỉnh/Thành phố</label>
                   <select id="select-province" class="form-control">
                     <option value="">Chọn Tỉnh/Thành phố</option>
-                    <option
-                      v-for="p in provinces"
-                      :key="p.ProvinceID"
-                      :value="p.ProvinceID"
-                    >
+                    <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                       {{ p.ProvinceName }}
                     </option>
                   </select>
@@ -62,17 +46,9 @@
 
                 <div class="form-group">
                   <label>Quận/Huyện</label>
-                  <select
-                    id="select-district"
-                    class="form-control"
-                    :disabled="!selectedProvince"
-                  >
+                  <select id="select-district" class="form-control" :disabled="!selectedProvince">
                     <option value="">Chọn Quận/Huyện</option>
-                    <option
-                      v-for="d in districts"
-                      :key="d.DistrictID"
-                      :value="d.DistrictID"
-                    >
+                    <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
                       {{ d.DistrictName }}
                     </option>
                   </select>
@@ -80,17 +56,9 @@
 
                 <div class="form-group">
                   <label>Phường/Xã</label>
-                  <select
-                    id="select-ward"
-                    class="form-control"
-                    :disabled="!selectedDistrict"
-                  >
+                  <select id="select-ward" class="form-control" :disabled="!selectedDistrict">
                     <option value="">Chọn Phường/Xã</option>
-                    <option
-                      v-for="w in wards"
-                      :key="w.WardCode"
-                      :value="w.WardCode"
-                    >
+                    <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
                       {{ w.WardName }}
                     </option>
                   </select>
@@ -99,11 +67,7 @@
 
               <div class="form-group">
                 <label>Địa chỉ cụ thể</label>
-                <input
-                  v-model="form.diaChiCuThe"
-                  type="text"
-                  class="form-control"
-                />
+                <input v-model="form.diaChiCuThe" type="text" class="form-control" />
               </div>
 
               <div class="payment-section mt-4">
@@ -112,27 +76,17 @@
                   <h2>Phương thức thanh toán</h2>
                 </div>
                 <div class="payment-options">
-                  <label
-                    class="payment-card"
-                    :class="{ active: paymentMethod === 'COD' }"
-                    @click="paymentMethod = 'COD'"
-                  >
+                  <label class="payment-card" :class="{ active: paymentMethod === 'COD' }"
+                    @click="paymentMethod = 'COD'">
                     <div class="pay-info">
-                      <span class="pay-name"
-                        >Thanh toán khi nhận hàng (COD)</span
-                      >
+                      <span class="pay-name">Thanh toán khi nhận hàng (COD)</span>
                     </div>
                     <div class="radio-indicator"></div>
                   </label>
-                  <label
-                    class="payment-card"
-                    :class="{ active: paymentMethod === 'ONLINE' }"
-                    @click="paymentMethod = 'ONLINE'"
-                  >
+                  <label class="payment-card" :class="{ active: paymentMethod === 'ONLINE' }"
+                    @click="paymentMethod = 'ONLINE'">
                     <div class="pay-info">
-                      <span class="pay-name"
-                        >Thanh toán trực tuyến (VNPAY)</span
-                      >
+                      <span class="pay-name">Thanh toán trực tuyến (VNPAY)</span>
                     </div>
                     <div class="radio-indicator"></div>
                   </label>
@@ -147,11 +101,7 @@
             <h2 class="summary-title">Tóm tắt đơn hàng</h2>
 
             <div class="product-list">
-              <div
-                class="product-item"
-                v-for="(item, index) in checkoutItems"
-                :key="item.variantId + '-' + index"
-              >
+              <div class="product-item" v-for="(item, index) in checkoutItems" :key="item.variantId + '-' + index">
                 <div class="product-img-wrapper">
                   <img :src="item.hinhAnh" @error="handleImageError" />
                   <span class="product-qty-badge">{{ item.soLuong }}</span>
@@ -177,15 +127,9 @@
             <div class="divider"></div>
 
             <div class="voucher-section">
-              <div
-                class="d-flex justify-content-between align-items-center mb-2"
-              >
+              <div class="d-flex justify-content-between align-items-center mb-2">
                 <label class="small-label mb-0">Phiếu giảm giá</label>
-                <button
-                  type="button"
-                  class="btn-link-sm"
-                  @click="showVoucherModal = true"
-                >
+                <button type="button" class="btn-link-sm" @click="showVoucherModal = true">
                   {{ selectedVoucher ? "Thay đổi" : "Chọn mã" }}
                 </button>
               </div>
@@ -200,11 +144,7 @@
                   &times;
                 </button>
               </div>
-              <div
-                v-else
-                class="no-voucher-box"
-                @click="showVoucherModal = true"
-              >
+              <div v-else class="no-voucher-box" @click="showVoucherModal = true">
                 Chưa áp dụng mã giảm giá
               </div>
             </div>
@@ -218,15 +158,11 @@
               </div>
               <div class="price-row" v-if="totalPromotionDiscount > 0">
                 <span class="label">Giảm giá sản phẩm:</span>
-                <span class="value discount-text"
-                  >- {{ formatPrice(totalPromotionDiscount) }}</span
-                >
+                <span class="value discount-text">- {{ formatPrice(totalPromotionDiscount) }}</span>
               </div>
               <div class="price-row" v-if="voucherDiscountAmount > 0">
                 <span class="label">Voucher giảm giá:</span>
-                <span class="value discount-text"
-                  >- {{ formatPrice(voucherDiscountAmount) }}</span
-                >
+                <span class="value discount-text">- {{ formatPrice(voucherDiscountAmount) }}</span>
               </div>
               <div class="price-row">
                 <span class="label">Phí vận chuyển:</span>
@@ -243,11 +179,7 @@
               }}</span>
             </div>
 
-            <button
-              type="button"
-              class="btn-submit-order"
-              @click="confirmOrder"
-            >
+            <button type="button" class="btn-submit-order" @click="confirmOrder">
               Hoàn tất đặt hàng
             </button>
           </div>
@@ -256,11 +188,7 @@
     </div>
 
     <transition name="fade">
-      <div
-        v-if="showVoucherModal"
-        class="modal-backdrop"
-        @click.self="showVoucherModal = false"
-      >
+      <div v-if="showVoucherModal" class="modal-backdrop" @click.self="showVoucherModal = false">
         <div class="modal-dialog modal-small-custom">
           <div class="modal-header">
             <h3>Chọn phiếu giảm giá</h3>
@@ -270,13 +198,8 @@
           </div>
           <div class="modal-body custom-scroll">
             <div v-if="availableVouchers.length > 0" class="voucher-list">
-              <div
-                v-for="v in availableVouchers"
-                :key="v.id"
-                class="v-card-modern"
-                :class="{ 'v-active': selectedVoucher?.id === v.id }"
-                @click="selectVoucher(v)"
-              >
+              <div v-for="v in availableVouchers" :key="v.id" class="v-card-modern"
+                :class="{ 'v-active': selectedVoucher?.id === v.id }" @click="selectVoucher(v)">
                 <div class="v-tag-side">
                   <div class="brand-logo">CHOCO</div>
                   <div class="ticket-name">Mã giảm giá</div>
@@ -310,10 +233,7 @@
                     <p class="v-exp">📅 HSD: {{ v.ngayKetThuc }}</p>
                   </div>
                 </div>
-                <div
-                  class="v-selected-icon"
-                  v-if="selectedVoucher?.id === v.id"
-                >
+                <div class="v-selected-icon" v-if="selectedVoucher?.id === v.id">
                   ✓
                 </div>
               </div>
@@ -327,11 +247,7 @@
     </transition>
 
     <transition name="fade">
-      <div
-        v-if="showCustomerModal"
-        class="modal-backdrop"
-        @click.self="showCustomerModal = false"
-      >
+      <div v-if="showCustomerModal" class="modal-backdrop" @click.self="showCustomerModal = false">
         <div class="modal-dialog modal-lg">
           <div class="modal-header">
             <h3>Sổ địa chỉ của bạn</h3>
@@ -341,12 +257,7 @@
           </div>
           <div class="modal-body">
             <div class="search-box mb-3">
-              <input
-                type="text"
-                v-model="searchKeyword"
-                placeholder="🔍 Tìm kiếm..."
-                class="form-control"
-              />
+              <input type="text" v-model="searchKeyword" placeholder="🔍 Tìm kiếm..." class="form-control" />
             </div>
             <div class="table-responsive">
               <table class="modern-table">
@@ -403,12 +314,7 @@
 
     <div class="toast-container">
       <transition-group name="slide-fade">
-        <div
-          v-for="notif in notifications"
-          :key="notif.id"
-          class="modern-toast"
-          :class="'toast-' + notif.type"
-        >
+        <div v-for="notif in notifications" :key="notif.id" class="modern-toast" :class="'toast-' + notif.type">
           <span class="toast-icon">
             <template v-if="notif.type === 'success'">✓</template>
             <template v-else>✕</template>
@@ -652,7 +558,7 @@ const fetchPromotions = async () => {
   try {
     // Gọi API lấy khuyến mãi
     const res = await axios.get("http://localhost:8080/api/promotions");
-    
+
     if (!res.data) return;
 
     const today = new Date();
@@ -940,7 +846,7 @@ onMounted(async () => {
   await getProvinces();
 
   // 2. CHỈ GỌI fetchCustomer khi đã đăng nhập (có token)
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
   if (token) {
     try {
       await fetchCustomer();
@@ -967,7 +873,7 @@ onMounted(async () => {
           ...i,
           mauSacTen: i.mauSac?.tenMau || i.mauSacTen || "",
           kichCo: i.kichCo || "",
-          discountPercent: 0, 
+          discountPercent: 0,
         }));
         await fetchPromotions();
       }
@@ -1057,7 +963,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
       const foundDistrict = districts.value.find(
         (d) =>
           d.DistrictName.toLowerCase().trim() ===
-            districtName.toLowerCase().trim() ||
+          districtName.toLowerCase().trim() ||
           d.NameExtension?.some(
             (ext) => ext.toLowerCase() === districtName.toLowerCase().trim(),
           ),
@@ -1122,18 +1028,23 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .mb-3 {
   margin-bottom: 1rem;
 }
+
 .mt-4 {
   margin-top: 1.5rem;
 }
+
 .text-center {
   text-align: center;
 }
+
 .text-muted {
   color: #6c757d;
 }
+
 .small {
   font-size: 0.875rem;
 }
+
 .shadow-sm {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
@@ -1143,12 +1054,15 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   text-align: center;
   margin-bottom: 40px;
 }
+
 .page-title {
   font-size: 28px;
   font-weight: 800;
-  color: #4a2c11; /* Đậm phong cách thời trang nam */
+  color: #4a2c11;
+  /* Đậm phong cách thời trang nam */
   margin: 0 0 8px 0;
 }
+
 .page-subtitle {
   color: #6c757d;
   font-size: 15px;
@@ -1162,6 +1076,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   gap: 30px;
   align-items: start;
 }
+
 @media (max-width: 992px) {
   .checkout-grid {
     grid-template-columns: 1fr;
@@ -1216,10 +1131,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
+
 .form-row.triplet {
   grid-template-columns: 1fr 1fr 1fr;
 }
+
 @media (max-width: 768px) {
+
   .form-row,
   .form-row.triplet {
     grid-template-columns: 1fr;
@@ -1230,6 +1148,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .form-group {
   margin-bottom: 20px;
 }
+
 .form-group label {
   display: block;
   font-size: 14px;
@@ -1248,6 +1167,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
+
 .form-control:focus {
   outline: none;
   border-color: #b97a3a;
@@ -1273,9 +1193,11 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   position: relative;
   background: #fff;
 }
+
 .payment-card:hover {
   border-color: #ced4da;
 }
+
 .payment-card.active {
   border-color: #b97a3a;
   background-color: #fefcf9;
@@ -1292,11 +1214,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   flex-direction: column;
   flex-grow: 1;
 }
+
 .pay-name {
   font-weight: 600;
   color: #212529;
   font-size: 15px;
 }
+
 .pay-desc {
   font-size: 13px;
   color: #6c757d;
@@ -1311,10 +1235,12 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   position: relative;
   transition: all 0.2s;
 }
+
 .payment-card.active .radio-indicator {
   border-color: #b97a3a;
   background: #b97a3a;
 }
+
 .payment-card.active .radio-indicator::after {
   content: "";
   position: absolute;
@@ -1352,6 +1278,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   height: 85px;
   flex-shrink: 0;
 }
+
 .product-img-wrapper img {
   width: 100%;
   height: 100%;
@@ -1359,6 +1286,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   border-radius: 8px;
   border: 1px solid #eee;
 }
+
 .product-qty-badge {
   position: absolute;
   top: -8px;
@@ -1379,6 +1307,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .product-detail {
   flex-grow: 1;
 }
+
 .product-name {
   font-size: 15px;
   font-weight: 600;
@@ -1389,11 +1318,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .product-meta {
   font-size: 13px;
   color: #6c757d;
   margin: 0 0 4px 0;
 }
+
 .product-price {
   font-weight: 700;
   color: #4a2c11;
@@ -1405,6 +1336,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   border-top: 1px solid #e9ecef;
   margin: 20px 0;
 }
+
 .divider.dashed {
   border-top-style: dashed;
 }
@@ -1413,10 +1345,12 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   display: flex;
   gap: 10px;
 }
+
 .input-voucher {
   flex-grow: 1;
   text-transform: uppercase;
 }
+
 .btn-apply {
   background: #212529;
   color: white;
@@ -1427,6 +1361,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .btn-apply:hover {
   background: #495057;
 }
@@ -1435,11 +1370,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   font-size: 15px;
   color: #495057;
 }
+
 .price-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
 }
+
 .price-total {
   display: flex;
   justify-content: space-between;
@@ -1448,10 +1385,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   font-weight: 700;
   margin-bottom: 25px;
 }
+
 .highlight-price {
   color: #d35400;
   font-size: 22px;
-} /* Đỏ cam bắt mắt */
+}
+
+/* Đỏ cam bắt mắt */
 
 /* Buttons */
 .btn-outline {
@@ -1465,6 +1405,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .btn-outline:hover {
   background: #fdf5eb;
 }
@@ -1489,6 +1430,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
     transform 0.2s,
     box-shadow 0.2s;
 }
+
 .btn-submit-order:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(139, 90, 43, 0.35);
@@ -1505,6 +1447,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   align-items: center;
   z-index: 9999;
 }
+
 .modal-dialog {
   background: #fff;
   border-radius: 20px;
@@ -1514,9 +1457,11 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   display: flex;
   flex-direction: column;
 }
+
 .modal-lg {
   max-width: 800px;
 }
+
 .modal-sm {
   max-width: 400px;
   padding: 30px;
@@ -1529,11 +1474,13 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   justify-content: space-between;
   align-items: center;
 }
+
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
 }
+
 .btn-close-modal {
   background: none;
   border: none;
@@ -1541,6 +1488,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   color: #6c757d;
   cursor: pointer;
 }
+
 .btn-close-modal:hover {
   color: #dc3545;
 }
@@ -1556,6 +1504,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   border-collapse: separate;
   border-spacing: 0;
 }
+
 .modern-table th {
   background: #f8f9fa;
   padding: 12px 15px;
@@ -1564,15 +1513,18 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   text-align: left;
   border-bottom: 2px solid #e9ecef;
 }
+
 .modern-table td {
   padding: 15px;
   border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
   font-size: 14px;
 }
+
 .modern-table tr:hover td {
   background: #fdfdfd;
 }
+
 .address-cell {
   max-width: 250px;
   line-height: 1.5;
@@ -1589,6 +1541,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-select:hover {
   background: #b97a3a;
   color: white;
@@ -1606,20 +1559,24 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   justify-content: center;
   margin: 0 auto 20px;
 }
+
 .confirm-title {
   font-size: 22px;
   color: #212529;
   margin-bottom: 10px;
 }
+
 .confirm-desc {
   color: #6c757d;
   margin-bottom: 30px;
   line-height: 1.6;
 }
+
 .confirm-actions {
   display: flex;
   gap: 15px;
 }
+
 .confirm-actions button {
   flex: 1;
   padding: 12px;
@@ -1628,17 +1585,21 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
   border: none;
 }
+
 .btn-cancel {
   background: #f1f3f5;
   color: #495057;
 }
+
 .btn-cancel:hover {
   background: #e2e6ea;
 }
+
 .btn-confirm {
   background: #8b5a2b;
   color: white;
 }
+
 .btn-confirm:hover {
   background: #6b4421;
 }
@@ -1654,6 +1615,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   gap: 10px;
   pointer-events: none;
 }
+
 .modern-toast {
   display: flex;
   align-items: center;
@@ -1665,25 +1627,31 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   min-width: 300px;
   border-left: 4px solid #ced4da;
 }
+
 .toast-success {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
 }
+
 .toast-success .toast-icon {
   background: #d4edda;
   color: #28a745;
 }
+
 .toast-error {
   border-left-color: #dc3545;
 }
+
 .toast-error .toast-icon {
   background: #f8d7da;
   color: #dc3545;
 }
+
 .toast-warning {
   border-left-color: #ffc107;
 }
+
 .toast-warning .toast-icon {
   background: #fff3cd;
   color: #ffc107;
@@ -1699,6 +1667,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   font-weight: bold;
   font-size: 12px;
 }
+
 .toast-message {
   font-size: 14px;
   font-weight: 500;
@@ -1710,6 +1679,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -1719,6 +1689,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .zoom-leave-active {
   transition: all 0.3s ease;
 }
+
 .zoom-enter-from,
 .zoom-leave-to {
   opacity: 0;
@@ -1728,27 +1699,33 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 .slide-fade-enter-active {
   transition: all 0.3s ease-out;
 }
+
 .slide-fade-leave-active {
   transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
 }
+
 .slide-fade-enter-from,
 .slide-fade-leave-to {
   transform: translateX(50px);
   opacity: 0;
 }
+
 .price-display {
   display: flex;
   flex-direction: column;
 }
+
 .old-price {
   text-decoration: line-through;
   color: #999;
   font-size: 0.9rem;
 }
+
 .discount-text {
   color: #dc3545;
   font-weight: 600;
 }
+
 .small-label {
   font-size: 13px;
   font-weight: 600;
@@ -1756,36 +1733,43 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   margin-bottom: 5px;
   display: block;
 }
+
 .voucher-section {
   margin: 15px 0;
 }
+
 /* Các style cũ giữ nguyên từ file gốc của bạn */
 .checkout-wrapper {
   background-color: #f8f9fa;
   min-height: 100vh;
   padding-bottom: 60px;
 }
+
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
+
 .checkout-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 30px;
 }
+
 .card {
   background: #fff;
   border-radius: 16px;
   padding: 30px;
   border: 1px solid #eaebec;
 }
+
 .highlight-price {
   color: #d35400;
   font-size: 22px;
   font-weight: 700;
 }
+
 .btn-link-sm {
   background: none;
   border: none;
@@ -1795,6 +1779,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   font-size: 14px;
   text-decoration: underline;
 }
+
 .no-voucher-box {
   border: 1px dashed #ced4da;
   padding: 12px;
@@ -1804,6 +1789,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
   font-size: 14px;
 }
+
 .selected-voucher-tag {
   display: flex;
   align-items: center;
@@ -1813,23 +1799,28 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   border-radius: 8px;
   position: relative;
 }
+
 .voucher-icon {
   font-size: 20px;
   margin-right: 10px;
 }
+
 .voucher-info {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
+
 .voucher-info strong {
   color: #b97a3a;
   font-size: 14px;
 }
+
 .voucher-info small {
   color: #8b5a2b;
   font-size: 12px;
 }
+
 .btn-remove-v {
   background: none;
   border: none;
@@ -1845,6 +1836,7 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   flex-direction: column;
   gap: 12px;
 }
+
 .voucher-card {
   display: flex;
   border: 1px solid #e9ecef;
@@ -1854,13 +1846,16 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   transition: 0.2s;
   position: relative;
 }
+
 .voucher-card:hover {
   border-color: #b97a3a;
 }
+
 .voucher-card.active {
   border-color: #b97a3a;
   background: #fffcf9;
 }
+
 .v-left {
   background: #b97a3a;
   color: #fff;
@@ -1871,21 +1866,25 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   font-weight: 700;
   font-size: 14px;
 }
+
 .v-right {
   padding: 12px;
   flex-grow: 1;
 }
+
 .v-code {
   margin: 0;
   font-size: 16px;
   color: #333;
 }
+
 .v-desc,
 .v-date {
   margin: 4px 0 0;
   font-size: 12px;
   color: #666;
 }
+
 .v-check {
   position: absolute;
   right: 15px;
@@ -1900,15 +1899,18 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   display: flex;
   flex-direction: column;
 }
+
 .old-price {
   text-decoration: line-through;
   color: #999;
   font-size: 13px;
 }
+
 .product-price {
   color: #d35400;
   font-weight: 700;
 }
+
 .discount-text {
   color: #dc3545;
   font-weight: 600;
@@ -1922,34 +1924,41 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   color: #333;
   padding-bottom: 60px;
 }
+
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
+
 .checkout-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 30px;
 }
+
 .card {
   background: #ffffff;
   border-radius: 16px;
   padding: 30px;
   border: 1px solid #eaebec;
 }
+
 .highlight-price {
   color: #d35400;
   font-size: 22px;
   font-weight: 700;
 }
+
 .divider {
   border-top: 1px solid #e9ecef;
   margin: 20px 0;
 }
+
 .divider.dashed {
   border-top-style: dashed;
 }
+
 .modal-small-custom {
   max-width: 450px !important;
   width: 90%;
@@ -1996,16 +2005,19 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   position: relative;
   flex-shrink: 0;
 }
+
 .brand-logo {
   font-weight: 900;
   font-size: 16px;
   margin-bottom: 5px;
 }
+
 .ticket-name {
   font-size: 11px;
   opacity: 0.9;
   text-align: center;
 }
+
 .v-content-main {
   padding: 12px;
   flex-grow: 1;
@@ -2122,45 +2134,55 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   min-height: 100vh;
   padding-bottom: 60px;
 }
+
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
+
 .checkout-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 30px;
 }
+
 .card {
   background: #ffffff;
   border-radius: 16px;
   padding: 30px;
   border: 1px solid #eaebec;
 }
+
 .highlight-price {
   color: #d35400;
   font-size: 22px;
   font-weight: 700;
 }
+
 .divider {
   border-top: 1px solid #e9ecef;
   margin: 20px 0;
 }
+
 .divider.dashed {
   border-top-style: dashed;
 }
+
 .custom-scroll-list {
   max-height: 300px;
   overflow-y: auto;
   padding-right: 5px;
 }
+
 /* ================== SELECT2 CUSTOM STYLES ================== */
 :deep(.select2-container) {
   width: 100% !important;
 }
+
 :deep(.select2-container .select2-selection--single) {
-  height: 48px; /* Khớp với form-control */
+  height: 48px;
+  /* Khớp với form-control */
   padding: 10px 15px;
   font-size: 15px;
   border: 1.5px solid #e9ecef;
@@ -2169,57 +2191,49 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   display: flex;
   align-items: center;
 }
-:deep(
-  .select2-container--default
-    .select2-selection--single
-    .select2-selection__arrow
-) {
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__arrow) {
   height: 100%;
   right: 15px;
 }
-:deep(
-  .select2-container--default
-    .select2-selection--single
-    .select2-selection__rendered
-) {
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__rendered) {
   padding-left: 0;
   color: #333;
   line-height: normal;
 }
-:deep(
-  .select2-container--default
-    .select2-selection--single
-    .select2-selection__placeholder
-) {
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__placeholder) {
   color: #6c757d;
 }
+
 :deep(.select2-dropdown) {
   border: 1px solid #b97a3a;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  z-index: 9999; /* Đảm bảo nổi lên trên */
+  z-index: 9999;
+  /* Đảm bảo nổi lên trên */
 }
+
 :deep(.select2-search__field) {
   border-radius: 6px !important;
   padding: 8px !important;
   border: 1px solid #ddd !important;
 }
+
 :deep(.select2-results__option--highlighted) {
   background-color: #b97a3a !important;
   color: white !important;
 }
+
 /* Trạng thái focus */
-:deep(
-  .select2-container--default.select2-container--open .select2-selection--single
-) {
+:deep(.select2-container--default.select2-container--open .select2-selection--single) {
   border-color: #b97a3a;
   box-shadow: 0 0 0 4px rgba(185, 122, 58, 0.1);
 }
+
 /* Trạng thái disabled */
-:deep(
-  .select2-container--default.select2-container--disabled
-    .select2-selection--single
-) {
+:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
   background-color: #e9ecef;
   border-color: #e9ecef;
 }

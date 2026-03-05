@@ -434,7 +434,8 @@ router.beforeEach((to, from, next) => {
     "/payment",
     "/ao-khoac",       // <--- Thêm trang Áo khoác
     "/tra-cuu",        // <--- Thêm trang Tra cứu đơn hàng
-    "/payment-result"  // <--- Thêm trang Kết quả thanh toán
+    "/payment-result",
+    "/my-orders" 
   ];
 
   const isPublic =

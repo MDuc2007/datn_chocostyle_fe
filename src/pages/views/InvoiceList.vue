@@ -36,7 +36,18 @@
                   <circle cx="12" cy="15" r="2"></circle>
                 </svg>
               </div>
-              <p>Chưa có đơn hàng nào ở trạng thái này</p>
+              
+              <div v-if="!isLoggedIn">
+                <p>Bạn chưa đăng nhập. Vui lòng đăng nhập để xem lịch sử mua hàng.</p>
+                <button class="btn-detail mt-3" @click="$router.push('/login')">
+                  Đăng nhập ngay
+                </button>
+                <p class="mt-3 text-sm">
+                  Hoặc <span @click="$router.push('/tra-cuu')" class="link-orange">Tra cứu đơn hàng khách lẻ</span>
+                </p>
+              </div>
+              <p v-else>Chưa có đơn hàng nào ở trạng thái này</p>
+
             </div>
 
             <div v-else class="order-card" v-for="hd in filteredInvoices" :key="hd.id">
@@ -65,7 +76,7 @@
                   <span class="label">Cập nhật lần cuối:</span>
                   <span class="value">{{ hd.ngayCapNhat ? formatDate(hd.ngayCapNhat) : formatDate(hd.ngayTao) }}</span>
                 </div>
-                </div>
+              </div>
 
               <div class="order-footer">
                 <div class="total-price-box">
@@ -100,6 +111,7 @@ import ClientSidebar from "../../pages/views/ClientSidebar.vue";
 const router = useRouter();
 const invoices = ref([]);
 const filters = ref({ trangThai: null });
+const isLoggedIn = ref(false); // Thêm state kiểm tra đăng nhập
 
 const statusTabs = [
   { label: "Tất cả", value: null },
@@ -112,11 +124,12 @@ const statusTabs = [
 const fetchMyOrders = async () => {
   try {
     const userStr = localStorage.getItem("user");
+    
+    // ĐÃ SỬA: Nếu không có user, không đá ra trang login nữa
     if (!userStr) {
-      alert("Vui lòng đăng nhập!");
-      router.push("/login");
-      return;
+      return; 
     }
+
     const user = JSON.parse(userStr);
     const res = await axios.get("http://localhost:8080/api/hoa-don/my-orders", {
       headers: { Authorization: `Bearer ${user.accessToken}` },
@@ -179,6 +192,8 @@ const getStatusClass = (stt) => {
 };
 
 onMounted(() => {
+  // Cập nhật trạng thái đăng nhập để render giao diện tương ứng
+  isLoggedIn.value = !!localStorage.getItem("user");
   fetchMyOrders();
 });
 </script>
@@ -450,6 +465,21 @@ onMounted(() => {
 .empty-state p {
   font-size: 16px;
   margin: 0;
+}
+
+.mt-3 {
+  margin-top: 15px;
+}
+
+.text-sm {
+  font-size: 14px;
+}
+
+.link-orange {
+  color: #ee4d2d;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 /* ================== RESPONSIVE ================== */

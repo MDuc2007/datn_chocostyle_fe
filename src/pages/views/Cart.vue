@@ -477,24 +477,8 @@ const goToDetail = (productId) => {
   router.push(`/home/product/${productId}`);
 };
 
-// 👉 THAY ĐỔI CHÍNH Ở ĐÂY: KIỂM TRA ĐĂNG NHẬP TRƯỚC KHI THANH TOÁN
+// 👉 SỬA LẠI: Cho phép qua thẳng Payment, không chặn đăng nhập nữa
 const proceedToCheckout = () => {
-  // 1. Kiểm tra trạng thái đăng nhập
-  const userStr = localStorage.getItem("user");
-  const token = localStorage.getItem("token");
-
-  if (!userStr && !token) {
-    showToast("Vui lòng đăng nhập để tiến hành thanh toán!", "warning");
-    
-    // Tự động chuyển hướng sang trang đăng nhập sau 1.5 giây
-    setTimeout(() => {
-      router.push("/login");
-    }, 1500);
-    
-    return;
-  }
-
-  // 2. Nếu đã đăng nhập, kiểm tra xem đã chọn sản phẩm chưa
   const selectedItems = cartItems.value.filter((item) => item.checked);
 
   if (selectedItems.length === 0) {
@@ -502,7 +486,7 @@ const proceedToCheckout = () => {
     return;
   }
 
-  // 3. Tiến hành thanh toán
+  // Đẩy thẳng qua trang thanh toán
   localStorage.setItem("checkout_items", JSON.stringify(selectedItems));
   router.push({ path: "/payment", query: { fromCart: "true" } });
 };

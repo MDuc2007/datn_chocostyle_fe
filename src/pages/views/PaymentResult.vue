@@ -34,7 +34,8 @@
 
         <div class="action-buttons">
           <button class="btn-primary" @click="goToHome">Về trang chủ</button>
-          <button v-if="orderId" class="btn-outline" @click="goToDetail">
+          
+          <button v-if="orderId || vnpRef" class="btn-outline" @click="goToDetail">
             Xem chi tiết đơn hàng
           </button>
         </div>
@@ -87,9 +88,23 @@ const formatPrice = (value) => {
 const goToHome = () => router.push("/");
 
 const goToDetail = () => {
-  if (orderId.value) {
-    // Chuyển hướng đến chi tiết đơn hàng (Dùng tên route ClientOrderDetail như đã cấu hình)
-    router.push({ name: "ClientOrderDetail", params: { id: orderId.value } });
+  const isLoggedIn = !!localStorage.getItem("token");
+
+  if (isLoggedIn) {
+    // NẾU ĐÃ ĐĂNG NHẬP -> Vào thẳng lịch sử đơn hàng
+    if (orderId.value) {
+      router.push({ name: "ClientOrderDetail", params: { id: orderId.value } });
+    } else {
+      router.push("/my-orders");
+    }
+  } else {
+    // NẾU KHÁCH LẺ -> Đẩy sang trang tra cứu đơn hàng (mang theo mã vnpRef nếu có)
+    if (vnpRef.value) {
+      // Gửi mã giao dịch qua query để trang Tra Cứu có thể tự động điền (tùy chỉnh thêm ở trang Tra cứu nếu cần)
+      router.push({ path: "/tra-cuu", query: { code: vnpRef.value } });
+    } else {
+      router.push("/tra-cuu");
+    }
   }
 };
 </script>
