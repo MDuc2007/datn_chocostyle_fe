@@ -684,26 +684,18 @@ onMounted(() => {
 
 .image-box {
   width: 100%;
-  height: 280px;
-  background: #F9F9F9;
+  height: 300px;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  cursor: pointer;
   position: relative;
+  cursor: pointer;
 }
 
-.image-box img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.product-card:hover .image-box img {
-  transform: scale(1.05);
-}
+.image-box img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.5s ease; }
+.product-card:hover .image-box img { transform: scale(1.05); }
 
 .badge {
   position: absolute;

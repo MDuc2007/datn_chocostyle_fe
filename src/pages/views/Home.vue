@@ -646,12 +646,31 @@ onBeforeUnmount(() => {
 .slider-container .product-card { width: 280px; }
 .product-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(107, 63, 30, 0.1); border-color: rgba(107, 63, 30, 0.1); }
 
-.card-sale { border: 1px solid rgba(211, 47, 47, 0.05); }
-.card-sale:hover { box-shadow: 0 20px 40px rgba(211, 47, 47, 0.12); border-color: rgba(211, 47, 47, 0.15); }
+.image-box {
+  width: 100%;
+  /* Chiều cao 320px cân đối với chiều rộng 280px */
+  height: 320px; 
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f5f5f5;
+  overflow: hidden;
+  position: relative;
+}
 
-.image-box { width: 100%; height: 340px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; cursor: pointer; }
-.image-box img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); mix-blend-mode: multiply; }
-.product-card:hover .image-box img { transform: scale(1.08); }
+.image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Giữ nguyên contain để không bị mất góc áo */
+  transition: transform 0.5s ease;
+}
+
+/* Các CSS về text, hover, nút thêm vào giỏ giữ nguyên... */
+
+.product-card:hover .image-box img {
+  transform: scale(1.05);
+}
 
 /* BADGES */
 .badge { position: absolute; top: 15px; left: 15px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; font-family: 'Montserrat', sans-serif; color: white; z-index: 2; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }

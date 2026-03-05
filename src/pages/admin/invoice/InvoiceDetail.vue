@@ -20,26 +20,28 @@
 
       <div class="card timeline-section no-print">
         <div class="stepper-wrapper">
-          <div
-            class="stepper-item"
-            v-for="(step, index) in computedSteps"
-            :key="index"
-            :class="{
-              active: isStepActive(step.status),
-              cancelled:
-                invoice.trangThai === 5 && index === computedSteps.length - 1,
-            }"
-          >
-            <div class="step-icon-circle">
-              <img :src="step.icon" class="step-icon-img" />
-            </div>
-            <div class="step-bar"></div>
-            <div class="step-content">
-              <div class="step-label">{{ step.label }}</div>
-              <div class="step-time">{{ getLogTime(step.status) }}</div>
-            </div>
-          </div>
-        </div>
+  <div
+    class="stepper-item"
+    v-for="(step, index) in timelineSteps"
+    :key="index"
+    :class="{
+      active: index < timelineSteps.length - 1, 
+      current: index === timelineSteps.length - 1,
+      cancelled: step.status === 5
+    }"
+  >
+    <div class="step-icon-circle">
+      <img :src="step.icon" class="step-icon-img" />
+    </div>
+    
+    <div v-if="index < timelineSteps.length - 1" class="step-line"></div>
+    
+    <div class="step-content">
+      <div class="step-label">{{ step.label }}</div>
+      <div class="step-time">{{ formatDate(step.time) }}</div>
+    </div>
+  </div>
+</div>
 
         <div class="action-bar-bottom">
           <div
@@ -59,7 +61,11 @@
               <i class="icon-arrow-right">➡</i>
             </button>
 
-            <button class="btn-white-border" @click="confirmAction('cancel')">
+            <button 
+              v-if="invoice.trangThai === 1"
+              class="btn-white-border" 
+              @click="confirmAction('cancel')"
+            >
               Xác nhận hủy đơn
             </button>
           </div>
@@ -556,42 +562,42 @@ const invoice = ref<InvoiceDetail | null>(null);
 // ===============================================
 // [MỚI] Timeline linh hoạt (Tại quầy chỉ còn Chờ xác nhận và Hoàn thành)
 // ===============================================
-const computedSteps = computed(() => {
-  const baseSteps = [
-    {
-      status: 0,
-      label: "Chờ xác nhận",
-      icon: "/src/assets/icon/contract-pending-line-svgrepo-com.svg",
-    },
-    {
-      status: 1,
-      label: "Đã xác nhận",
-      icon: "/src/assets/icon/check-svgrepo-com.svg",
-    },
-    {
-      status: 2,
-      label: "Chờ vận chuyển",
-      icon: "/src/assets/icon/shipping-box-svgrepo-com.svg",
-    },
-    {
-      status: 3,
-      label: "Đang vận chuyển",
-      icon: "/src/assets/icon/shipping-truck-svgrepo-com.svg",
-    },
-    {
-      status: 4,
-      label: "Hoàn thành",
-      icon: "/src/assets/icon/party-horn-svgrepo-com.svg",
-    },
-  ];
+// const computedSteps = computed(() => {
+//   const baseSteps = [
+//     {
+//       status: 0,
+//       label: "Chờ xác nhận",
+//       icon: "/src/assets/icon/contract-pending-line-svgrepo-com.svg",
+//     },
+//     {
+//       status: 1,
+//       label: "Đã xác nhận",
+//       icon: "/src/assets/icon/check-svgrepo-com.svg",
+//     },
+//     {
+//       status: 2,
+//       label: "Chờ vận chuyển",
+//       icon: "/src/assets/icon/shipping-box-svgrepo-com.svg",
+//     },
+//     {
+//       status: 3,
+//       label: "Đang vận chuyển",
+//       icon: "/src/assets/icon/shipping-truck-svgrepo-com.svg",
+//     },
+//     {
+//       status: 4,
+//       label: "Hoàn thành",
+//       icon: "/src/assets/icon/party-horn-svgrepo-com.svg",
+//     },
+//   ];
 
-  // Nếu là đơn Tại Quầy (loaiDon === 1), chỉ giữ lại trạng thái 0 và 4
-  if (invoice.value?.loaiDon === 1) {
-    return baseSteps.filter((s) => s.status === 0 || s.status === 4);
-  }
+//   // Nếu là đơn Tại Quầy (loaiDon === 1), chỉ giữ lại trạng thái 0 và 4
+//   if (invoice.value?.loaiDon === 1) {
+//     return baseSteps.filter((s) => s.status === 0 || s.status === 4);
+//   }
 
-  return baseSteps;
-});
+//   return baseSteps;
+// });
 
 const modal = reactive({
   show: false,
@@ -731,16 +737,59 @@ const formatDate = (dateStr: string) => {
     return dateStr;
   }
 };
-const isStepActive = (stepStatus: number) => {
-  if (!invoice.value) return false;
-  if (invoice.value.trangThai === 5) return false;
-  return stepStatus <= invoice.value.trangThai;
-};
-const getLogTime = (stepStatus: number) => {
-  if (!invoice.value || !invoice.value.lichSuList) return "";
-  const log = invoice.value.lichSuList.find((x) => x.trangThai === stepStatus);
-  return log ? formatDate(log.thoiGian) : "";
-};
+// const isStepActive = (stepStatus: number) => {
+//   if (!invoice.value) return false;
+
+//   // Nếu đơn bị hủy
+//   if (invoice.value.trangThai === 5) {
+//     const lastNormalStatus = invoice.value.lichSuList
+//       ?.filter(l => l.trangThai !== 5)
+//       ?.sort((a, b) =>
+//         new Date(b.thoiGian).getTime() - new Date(a.thoiGian).getTime()
+//       )[0];
+
+//     return lastNormalStatus
+//       ? stepStatus <= lastNormalStatus.trangThai
+//       : false;
+//   }
+
+//   return stepStatus <= invoice.value.trangThai;
+// };
+// const getLogTime = (stepStatus: number) => {
+//   if (!invoice.value || !invoice.value.lichSuList) return "";
+//   const log = invoice.value.lichSuList.find((x) => x.trangThai === stepStatus);
+//   return log ? formatDate(log.thoiGian) : "";
+// };
+
+const timelineSteps = computed(() => {
+  // Nếu chưa có lịch sử
+  if (!invoice.value?.lichSuList || invoice.value.lichSuList.length === 0) {
+    return [
+      {
+        status: 0,
+        label: "Chờ xác nhận",
+        icon: "/src/assets/icon/check-svgrepo-com.svg",
+        time: invoice.value?.ngayTao,
+      },
+    ];
+  }
+
+  return [...invoice.value.lichSuList]
+    .sort(
+      (a, b) =>
+        new Date(a.thoiGian).getTime() -
+        new Date(b.thoiGian).getTime()
+    )
+    .map((log) => ({
+      status: log.trangThai,
+      label: getStatusName(log.trangThai),
+      icon:
+        log.trangThai === 5
+          ? cancelIcon
+          : "/src/assets/icon/check-svgrepo-com.svg",
+      time: log.thoiGian,
+    }));
+});
 const getPaymentMethodName = () => {
   if (
     invoice.value &&
@@ -802,7 +851,7 @@ const confirmAction = (actionType: "next" | "prev" | "cancel") => {
       nextStatus = validStatuses[currentIndex + 1];
     }
     // Lùi lại
-    else if (actionType === "prev" && currentIndex > 0) {
+    if (actionType === "prev" && currentIndex > 0) {
       nextStatus = validStatuses[currentIndex - 1];
     }
 
@@ -1298,43 +1347,44 @@ onMounted(() => {
   color: #333;
 }
 
-/* Timeline Stepper */
+/* Container chính */
 .timeline-section {
-  padding: 30px 20px 20px;
-  overflow-x: auto;
+  padding: 40px 20px;
+  background: #fff;
+  overflow: visible; /* Để hiển thị shadow của icon current */
 }
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
   width: 100%;
-  min-width: 600px;
 }
 .stepper-item {
   position: relative;
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
 }
+/* Icon tròn - Điểm nhấn chính */
 .step-icon-circle {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background-color: #e9ecef;
-  color: #6c757d;
+  background-color: #fff;
+  border: 2px solid #e2e8f0; /* Màu xám nhạt cho bước chưa tới */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   z-index: 2;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: -20px;
+  transition: all 0.3s ease;
 }
 .step-icon-img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+  width: 18px;
+  height: 18px;
+  filter: grayscale(1); /* Xám hóa icon nếu chưa active */
+  opacity: 0.5;
 }
 .step-bar {
   width: 100%;
@@ -1342,30 +1392,36 @@ onMounted(() => {
   background-color: #e9ecef;
   clip-path: polygon(0% 0%, 95% 0%, 100% 50%, 95% 100%, 0% 100%, 5% 50%);
 }
-.step-content {
-  text-align: center;
-  margin-top: 10px;
-  padding: 0 5px;
+
+.stepper-item.current .step-icon-img {
+  filter: brightness(0) invert(1); /* Chuyển icon sang màu trắng */
+  opacity: 1;
 }
+.stepper-item.current .step-label {
+  color: #8b5e34;
+  font-weight: 700;
+}
+/* Label & Thời gian */
+.step-content {
+  margin-top: 12px;
+  text-align: center;
+}
+
 .step-label {
+  font-size: 14px;
   font-weight: 600;
-  font-size: 13px;
-  color: #6c757d;
-  text-transform: capitalize;
+  color: #64748b;
+  margin-bottom: 4px;
 }
 .step-time {
-  font-size: 11px;
-  color: #adb5bd;
-  margin-top: 2px;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 /* Nền trắng, viền gradient, chữ màu nâu cam */
 .stepper-item.active .step-icon-circle {
-  background:
-    linear-gradient(#fff, #fff) padding-box,
-    linear-gradient(90deg, #c79a63, #8b5e34) border-box;
-  border: 3px solid transparent;
-  color: #c79a63;
+  border-color: #c79a63; /* Màu nâu Choco của bạn */
+  background-color: #fff;
 }
 .stepper-item.active .step-bar {
   background: linear-gradient(90deg, #c79a63, #8b5e34);
@@ -1943,5 +1999,33 @@ onMounted(() => {
 .user-icon {
   font-size: 12px;
   opacity: 0.7;
+}
+.stepper-item.current .step-icon-circle {
+  background: linear-gradient(135deg, #c79a63, #8b5e34);
+  border-color: transparent;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(199, 154, 99, 0.4);
+}
+/* Xử lý khi bị HỦY */
+.stepper-item.cancelled .step-icon-circle {
+  border-color: #ef4444;
+  background-color: #fee2e2;
+}
+.stepper-item.active .step-line {
+  background-color: #c79a63;
+}
+.stepper-item.active .step-icon-img {
+  filter: none;
+  opacity: 1;
+}
+/* Đường kẻ nối giữa các bước */
+.step-line {
+  position: absolute;
+  top: 18px; /* Bằng 1/2 chiều cao icon */
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: #e2e8f0;
+  z-index: 1;
 }
 </style>

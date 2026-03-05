@@ -689,21 +689,22 @@ onMounted(() => {
 
 .image-box {
   width: 100%;
-  height: 280px;
-  background: #F9F9F9;
+  height: 300px;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  cursor: pointer;
   position: relative;
+  
+  /* SỬA DÒNG NÀY: Theo thứ tự là (Trên - Phải - Dưới - Trái) */
+  padding: 30px 15px 15px 15px; 
 }
-
 .image-box img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+  transition: transform 0.5s ease;
 }
 
 .product-card:hover .image-box img {
