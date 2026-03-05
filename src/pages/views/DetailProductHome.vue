@@ -6,30 +6,30 @@
       <div class="breadcrumb">
         <span @click="$router.push('/')">Trang chủ</span>
         <span class="separator">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
         </span>
         <span @click="$router.push('/ao-khoac')">Áo khoác</span>
         <span class="separator">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
         </span>
         <span class="current">{{ product.tenSp }}</span>
       </div>
 
       <div class="product-wrapper">
-        
+
         <div class="gallery-section">
           <div class="main-display">
-            <img :src="activeImage || product.hinhAnh" class="main-image" @error="handleImageError" alt="Product Image" />
+            <img :src="activeImage || product.hinhAnh" class="main-image" @error="handleImageError"
+              alt="Product Image" />
           </div>
 
           <div v-if="variantImages.length > 0" class="thumbnail-carousel">
-            <div
-              v-for="(image, index) in variantImages"
-              :key="index"
-              class="thumb"
-              :class="{ active: activeImage === image }"
-              @click="setActiveImage(image)"
-            >
+            <div v-for="(image, index) in variantImages" :key="index" class="thumb"
+              :class="{ active: activeImage === image }" @click="setActiveImage(image)">
               <img :src="image" class="thumb-image" @error="handleImageError" />
             </div>
           </div>
@@ -59,16 +59,11 @@
               <span class="variant-selected-text">{{ selectedColor ? selectedColor.tenMau : 'Chưa chọn' }}</span>
             </div>
             <div class="color-options">
-              <button
-                v-for="(mau, i) in uniqueColors"
-                :key="i"
-                class="color-circle"
+              <button v-for="(mau, i) in uniqueColors" :key="i" class="color-circle"
                 :class="{ selected: selectedColor && selectedColor.rgb === mau.rgb }"
-                :style="{ backgroundColor: mau.rgb }"
-                :title="mau.tenMau"
-                @click="selectColor(mau)"
-              >
-                <svg v-if="selectedColor && selectedColor.rgb === mau.rgb" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                :style="{ backgroundColor: mau.rgb }" :title="mau.tenMau" @click="selectColor(mau)">
+                <svg v-if="selectedColor && selectedColor.rgb === mau.rgb" class="check-icon" viewBox="0 0 24 24"
+                  fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </button>
@@ -83,23 +78,20 @@
                 <span class="variant-selected-text">{{ selectedSize || 'Chưa chọn' }}</span>
               </div>
               <button class="btn-size-guide" @click="showSizeGuide = true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21.3 15.3l-2.6-2.6a2 2 0 0 0-2.8 0L3.1 25.5a2 2 0 0 0 0 2.8l2.6 2.6a2 2 0 0 0 2.8 0L21.3 18.1a2 2 0 0 0 0-2.8zM4.5 26.9l-1.4-1.4M8.7 22.7l-1.4-1.4M12.9 18.5l-1.4-1.4M17.1 14.3l-1.4-1.4"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path
+                    d="M21.3 15.3l-2.6-2.6a2 2 0 0 0-2.8 0L3.1 25.5a2 2 0 0 0 0 2.8l2.6 2.6a2 2 0 0 0 2.8 0L21.3 18.1a2 2 0 0 0 0-2.8zM4.5 26.9l-1.4-1.4M8.7 22.7l-1.4-1.4M12.9 18.5l-1.4-1.4M17.1 14.3l-1.4-1.4">
+                  </path>
+                </svg>
                 Hướng dẫn chọn size
               </button>
             </div>
             <div class="size-options">
-              <button
-                v-for="s in uniqueSizes"
-                :key="s"
-                class="size-box"
-                :class="{ 
-                  active: s === selectedSize,
-                  disabled: !isSizeAvailableForSelectedColor(s)
-                }"
-                :disabled="!isSizeAvailableForSelectedColor(s)"
-                @click="selectSize(s)"
-                :title="!isSizeAvailableForSelectedColor(s) ? 'Hết hàng màu này' : ''"
-              >
+              <button v-for="s in uniqueSizes" :key="s" class="size-box" :class="{
+                active: s === selectedSize,
+                disabled: !isSizeAvailableForSelectedColor(s)
+              }" :disabled="!isSizeAvailableForSelectedColor(s)" @click="selectSize(s)"
+                :title="!isSizeAvailableForSelectedColor(s) ? 'Hết hàng màu này' : ''">
                 {{ s }}
               </button>
             </div>
@@ -113,11 +105,17 @@
             <div class="qty-wrapper">
               <div class="qty-control">
                 <button class="qty-btn" @click="changeQty(-1)" :disabled="quantity <= 1">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
                 </button>
                 <input type="number" class="qty-input" v-model.number="quantity" @change="validateQty" />
-                <button class="qty-btn" @click="changeQty(1)" :disabled="selectedVariant && quantity >= selectedVariant.soLuongTon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <button class="qty-btn" @click="changeQty(1)"
+                  :disabled="selectedVariant && quantity >= selectedVariant.soLuongTon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
                 </button>
               </div>
               <span class="stock-hint" v-if="selectedVariant">
@@ -132,7 +130,8 @@
           <div class="action-group">
             <button class="btn btn-outline-brand" @click="addToCart" :disabled="totalStock === 0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
-                <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
               </svg>
               Thêm vào giỏ
@@ -141,25 +140,37 @@
               Mua ngay
             </button>
           </div>
-          
+
           <ul class="policy-list">
             <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
               <span>Miễn phí giao hàng toàn quốc cho đơn từ 500k.</span>
             </li>
             <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 2v6h6"></path>
+                <path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path>
+                <path d="M21 22v-6h-6"></path>
+                <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+              </svg>
               <span>Đổi trả cực dễ chỉ trong vòng 7 ngày.</span>
             </li>
             <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
               <span>Cam kết hàng chính hãng, bảo hành 30 ngày.</span>
             </li>
           </ul>
         </div>
       </div>
     </main>
-    
+
     <main v-else class="loading-full-page">
       <div class="spinner"></div>
     </main>
@@ -172,7 +183,10 @@
           <div class="modal-header">
             <h3>Bảng thông số Kích cỡ</h3>
             <button @click="closeModal" class="close-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
           <div class="modal-body">
@@ -185,9 +199,19 @@
     <transition name="toast-slide">
       <div v-if="toast.show" class="modern-toast" :class="'toast-' + toast.type">
         <div class="toast-icon-wrap">
-          <svg v-if="toast.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <svg v-else-if="toast.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <svg v-if="toast.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <svg v-else-if="toast.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
         </div>
         <div class="toast-text">{{ toast.message }}</div>
       </div>
@@ -230,7 +254,7 @@ const showToast = (msg, type = "success") => {
 const formatPrice = (v) => new Intl.NumberFormat("vi-VN").format(v) + " đ";
 
 const handleImageError = (event) => {
-  event.target.src = "/src/assets/logo/no-image-placeholder.png"; 
+  event.target.src = "/src/assets/logo/no-image-placeholder.png";
 };
 
 const priceMin = computed(() => {
@@ -273,8 +297,8 @@ const variantImages = computed(() => {
 
 const isSizeAvailableForSelectedColor = (size) => {
   if (!selectedColor.value) return true;
-  return product.value.bienTheList.some(b => 
-    b.mauSacList.some(m => m.rgb === selectedColor.value.rgb) && 
+  return product.value.bienTheList.some(b =>
+    b.mauSacList.some(m => m.rgb === selectedColor.value.rgb) &&
     b.kichCoList.includes(size) &&
     b.soLuongTon > 0
   );
@@ -283,7 +307,7 @@ const isSizeAvailableForSelectedColor = (size) => {
 const selectColor = (mau) => {
   selectedColor.value = mau;
   showColorError.value = false;
-  
+
   if (selectedSize.value && !isSizeAvailableForSelectedColor(selectedSize.value)) {
     selectedSize.value = null;
     showToast(`Màu ${mau.tenMau} đã hết size ${selectedSize.value}`, "warning");
@@ -338,7 +362,7 @@ const checkValidation = () => {
   let isValid = true;
   if (!selectedColor.value) { showColorError.value = true; isValid = false; }
   if (uniqueSizes.value.length > 0 && !selectedSize.value) { showSizeError.value = true; isValid = false; }
-  
+
   if (!isValid) showToast("Vui lòng chọn đầy đủ Màu sắc và Kích cỡ!", "error");
   return isValid;
 };
@@ -352,7 +376,7 @@ const addToCart = () => {
     variantId: selectedVariant.value.id,
     tenSp: product.value.tenSp,
     hinhAnh: activeImage.value || product.value.hinhAnh,
-    mauSac: selectedColor.value, 
+    mauSac: selectedColor.value,
     kichCo: selectedSize.value,
     giaBan: selectedVariant.value.giaBan,
     soLuong: quantity.value,
@@ -398,15 +422,15 @@ watch([selectedColor, selectedSize], () => {
         b.kichCoList.includes(selectedSize.value)
     );
     selectedVariant.value = found || null;
-    
+
     if (selectedVariant.value) {
-       if(selectedVariant.value.hinhAnhUrls && selectedVariant.value.hinhAnhUrls.length > 0) {
-           setActiveImage(selectedVariant.value.hinhAnhUrls[0]);
-           stopAutoPlay();
-       }
-       if (quantity.value > selectedVariant.value.soLuongTon) {
-          quantity.value = selectedVariant.value.soLuongTon || 1;
-       }
+      if (selectedVariant.value.hinhAnhUrls && selectedVariant.value.hinhAnhUrls.length > 0) {
+        setActiveImage(selectedVariant.value.hinhAnhUrls[0]);
+        stopAutoPlay();
+      }
+      if (quantity.value > selectedVariant.value.soLuongTon) {
+        quantity.value = selectedVariant.value.soLuongTon || 1;
+      }
     }
   }
 });
@@ -415,7 +439,7 @@ onMounted(async () => {
   try {
     const res = await axios.get(`http://localhost:8080/api/san-pham/${route.params.id}`);
     product.value = res.data;
-    
+
     if (variantImages.value.length > 0) {
       activeImage.value = variantImages.value[0];
     }
@@ -455,10 +479,27 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
 }
-.breadcrumb span { cursor: pointer; transition: color 0.2s; }
-.breadcrumb span:hover { color: #6b3f1e; }
-.breadcrumb .separator svg { width: 14px; height: 14px; margin-top: 3px;}
-.breadcrumb .current { font-weight: 500; color: #111827; cursor: default; }
+
+.breadcrumb span {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.breadcrumb span:hover {
+  color: #6b3f1e;
+}
+
+.breadcrumb .separator svg {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+}
+
+.breadcrumb .current {
+  font-weight: 500;
+  color: #111827;
+  cursor: default;
+}
 
 /* ================== LAYOUT CHÍNH ================== */
 .detail-container {
@@ -469,7 +510,7 @@ onUnmounted(() => {
 
 .product-wrapper {
   display: grid;
-  grid-template-columns: 1.2fr 1fr; 
+  grid-template-columns: 1.2fr 1fr;
   gap: 60px;
 }
 
@@ -481,7 +522,7 @@ onUnmounted(() => {
 }
 
 .main-display {
-  background: #f9fafb; 
+  background: #f9fafb;
   border-radius: 16px;
   height: 650px;
   display: flex;
@@ -497,7 +538,10 @@ onUnmounted(() => {
   object-fit: cover;
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.main-display:hover .main-image { transform: scale(1.08); }
+
+.main-display:hover .main-image {
+  transform: scale(1.08);
+}
 
 .thumbnail-carousel {
   display: flex;
@@ -506,7 +550,10 @@ onUnmounted(() => {
   padding-bottom: 8px;
   scrollbar-width: none;
 }
-.thumbnail-carousel::-webkit-scrollbar { display: none; }
+
+.thumbnail-carousel::-webkit-scrollbar {
+  display: none;
+}
 
 .thumb {
   width: 90px;
@@ -519,10 +566,15 @@ onUnmounted(() => {
   transition: all 0.2s;
   background: #f9fafb;
 }
-.thumb:hover { opacity: 0.8; }
+
+.thumb:hover {
+  opacity: 0.8;
+}
+
 .thumb.active {
   border-color: #6b3f1e;
 }
+
 .thumb-image {
   width: 100%;
   height: 100%;
@@ -557,7 +609,7 @@ onUnmounted(() => {
 .price {
   font-size: 28px;
   font-weight: 700;
-  color: #b91c1c; 
+  color: #b91c1c;
 }
 
 .stock-badge {
@@ -566,8 +618,16 @@ onUnmounted(() => {
   font-size: 13px;
   font-weight: 600;
 }
-.in-stock { background: #ecfdf5; color: #059669; }
-.out-of-stock { background: #fef2f2; color: #dc2626; }
+
+.in-stock {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.out-of-stock {
+  background: #fef2f2;
+  color: #dc2626;
+}
 
 .divider {
   height: 1px;
@@ -582,9 +642,10 @@ onUnmounted(() => {
   border-radius: 12px;
   border: 1px solid transparent;
   transition: all 0.3s;
-  margin-left: -12px; 
+  margin-left: -12px;
   margin-right: -12px;
 }
+
 .variant-block.has-error {
   background-color: #fef2f2;
 }
@@ -592,6 +653,7 @@ onUnmounted(() => {
 .variant-header {
   margin-bottom: 16px;
 }
+
 .flex-between {
   display: flex;
   justify-content: space-between;
@@ -604,6 +666,7 @@ onUnmounted(() => {
   color: #111827;
   margin-right: 8px;
 }
+
 .variant-selected-text {
   font-size: 15px;
   color: #6b7280;
@@ -623,7 +686,11 @@ onUnmounted(() => {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.btn-size-guide svg { width: 16px; height: 16px; }
+
+.btn-size-guide svg {
+  width: 16px;
+  height: 16px;
+}
 
 /* Colors */
 .color-options {
@@ -631,11 +698,12 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 16px;
 }
+
 .color-circle {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   position: relative;
   display: flex;
@@ -643,15 +711,20 @@ onUnmounted(() => {
   justify-content: center;
   transition: transform 0.2s;
 }
-.color-circle:hover { transform: scale(1.1); }
+
+.color-circle:hover {
+  transform: scale(1.1);
+}
+
 .color-circle.selected {
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6b3f1e;
   border: none;
 }
+
 .check-icon {
   width: 16px;
   height: 16px;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); 
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
 /* Sizes */
@@ -660,6 +733,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 12px;
 }
+
 .size-box {
   min-width: 64px;
   height: 44px;
@@ -668,17 +742,20 @@ onUnmounted(() => {
   border-radius: 8px;
   font-size: 15px;
   font-weight: 500;
-  color: #111827 !important; /* Dùng !important để đảm bảo màu chữ hiển thị */
+  color: #111827 !important;
+  /* Dùng !important để đảm bảo màu chữ hiển thị */
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .size-box:hover:not(.disabled) {
   border-color: #111827;
 }
+
 /* ---- FIX LỖI TÀNG HÌNH CHỮ KHI CHỌN SIZE ---- */
 .size-box.active {
   background: #111827 !important;
-  color: #ffffff !important; 
+  color: #ffffff !important;
   border-color: #111827 !important;
 }
 
@@ -690,10 +767,13 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
 }
+
 .size-box.disabled::after {
   content: '';
   position: absolute;
-  top: 50%; left: 0; right: 0;
+  top: 50%;
+  left: 0;
+  right: 0;
   height: 1px;
   background: #d1d5db;
   transform: rotate(-30deg);
@@ -735,9 +815,21 @@ onUnmounted(() => {
   justify-content: center;
   transition: 0.2s;
 }
-.qty-btn svg { width: 18px; height: 18px; }
-.qty-btn:hover:not(:disabled) { background: #e5e7eb; color: #111827; }
-.qty-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.qty-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .qty-input {
   width: 50px;
@@ -750,15 +842,25 @@ onUnmounted(() => {
   font-weight: 500;
   color: #111827;
 }
-.qty-input:focus { outline: none; }
+
+.qty-input:focus {
+  outline: none;
+}
+
 .qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 .stock-hint {
   font-size: 14px;
   color: #6b7280;
 }
-.stock-hint strong { color: #111827; }
+
+.stock-hint strong {
+  color: #111827;
+}
 
 /* ================== NÚT HÀNH ĐỘNG ================== */
 .action-group {
@@ -780,13 +882,18 @@ onUnmounted(() => {
   gap: 10px;
   transition: all 0.3s ease;
 }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-outline-brand {
   background: #fff;
   color: #6b3f1e;
   border: 1px solid #6b3f1e;
 }
+
 .btn-outline-brand:hover:not(:disabled) {
   background: #fdf6f0;
 }
@@ -797,13 +904,17 @@ onUnmounted(() => {
   border: none;
   box-shadow: 0 8px 16px rgba(107, 63, 30, 0.2);
 }
+
 .btn-brand:hover:not(:disabled) {
   background: #5a3218;
   transform: translateY(-2px);
   box-shadow: 0 12px 20px rgba(107, 63, 30, 0.3);
 }
 
-.btn-icon { width: 22px; height: 22px; }
+.btn-icon {
+  width: 22px;
+  height: 22px;
+}
 
 /* ================== CHÍNH SÁCH ================== */
 .policy-list {
@@ -833,19 +944,98 @@ onUnmounted(() => {
 }
 
 /* ================== MODAL ================== */
-.loading-full-page { height: 60vh; display: flex; align-items: center; justify-content: center; }
-.spinner { border: 3px solid #f3f4f6; border-top: 3px solid #6b3f1e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.loading-full-page {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-.modal-content { background: #fff; border-radius: 16px; max-width: 700px; width: 90%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #f3f4f6; }
-.modal-header h3 { margin: 0; font-size: 18px; font-weight: 600; color: #111827;}
-.close-btn { background: none; border: none; cursor: pointer; color: #9ca3af; padding: 0; transition: 0.2s;}
-.close-btn svg { width: 24px; height: 24px; }
-.close-btn:hover { color: #111827; }
-.modal-body { padding: 24px; overflow-y: auto; text-align: center; }
-.size-guide-img { max-width: 100%; border-radius: 8px; }
+.spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #6b3f1e;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  transition: 0.2s;
+}
+
+.close-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.close-btn:hover {
+  color: #111827;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.size-guide-img {
+  max-width: 100%;
+  border-radius: 8px;
+}
 
 /* ---- FIX LỖI TOAST THÔNG BÁO TÀNG HÌNH CHỮ ---- */
 .modern-toast {
@@ -859,35 +1049,79 @@ onUnmounted(() => {
   padding: 16px 20px;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   min-width: 300px;
 }
+
 .toast-icon-wrap {
-  width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0;
-}
-.toast-success .toast-icon-wrap { background: #10b981 !important; }
-.toast-error .toast-icon-wrap { background: #ef4444 !important; }
-.toast-warning .toast-icon-wrap { background: #f59e0b !important; }
-
-.toast-icon-wrap svg { width: 16px; height: 16px; }
-
-.toast-text { 
-  font-size: 15px; 
-  font-weight: 600; 
-  color: #111827 !important; /* Ép cứng màu chữ đen */
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
+.toast-success .toast-icon-wrap {
+  background: #10b981 !important;
+}
+
+.toast-error .toast-icon-wrap {
+  background: #ef4444 !important;
+}
+
+.toast-warning .toast-icon-wrap {
+  background: #f59e0b !important;
+}
+
+.toast-icon-wrap svg {
+  width: 16px;
+  height: 16px;
+}
+
+.toast-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827 !important;
+  /* Ép cứng màu chữ đen */
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
 
 /* ================== RESPONSIVE ================== */
 @media (max-width: 900px) {
-  .product-wrapper { grid-template-columns: 1fr; gap: 40px; }
-  .main-display { height: 500px; }
+  .product-wrapper {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .main-display {
+    height: 500px;
+  }
 }
+
 @media (max-width: 480px) {
-  .main-display { height: 350px; }
-  .title { font-size: 24px; }
-  .action-group { flex-direction: column; }
+  .main-display {
+    height: 350px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .action-group {
+    flex-direction: column;
+  }
 }
 </style>

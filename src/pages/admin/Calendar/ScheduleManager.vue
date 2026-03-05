@@ -24,6 +24,7 @@ const handleImportExcel = async (event: Event) => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(await file.arrayBuffer());
     const worksheet = workbook.worksheets[0]; // Lấy sheet đầu tiên
+    
     const formatDateToYYYYMMDD = (dateValue: any): string | null => {
       if (!dateValue) return null;
       
@@ -42,22 +43,24 @@ const handleImportExcel = async (event: Event) => {
       
       return `${year}-${month}-${day}`; // Trả về chuẩn YYYY-MM-DD
     };
+    
     const payloads: any[] = [];
     let errorRows: number[] = [];
 
-    // Giả định Format Excel cột như sau:
-    // Cột B (2): Ngày (YYYY-MM-DD), Cột C (3): Mã NV, Cột E (5): Tên Ca, Cột H (8): Ghi chú
+    // Format Excel cột sau khi bỏ Giờ BĐ và Giờ KT:
+    // Cột B (2): Ngày, Cột C (3): Mã NV, Cột E (5): Tên Ca, Cột F (6): Ghi chú
     // Bỏ qua 2 dòng đầu (Tiêu đề và Header), bắt đầu đọc từ dòng 3
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber <= 2) return; 
 
-      // SỬA Ở ĐÂY: Dùng row.getCell(2).value thay vì .text để lấy chính xác object Date hoặc String
       const rawDate = row.getCell(2).value; 
       const ngayLamViec = formatDateToYYYYMMDD(rawDate); // Gọi hàm chuẩn hóa
 
       const maNv = row.getCell(3).text?.trim();
       const tenCa = row.getCell(5).text?.trim();
-      const ghiChu = row.getCell(8).text?.trim() || '';
+      
+      // ĐÃ SỬA: Lấy Ghi chú từ ô số 6 (Cột F) thay vì ô số 8 (Cột H)
+      const ghiChu = row.getCell(6).text?.trim() || '';
 
       if (!ngayLamViec && !maNv && !tenCa) return; // Bỏ qua dòng trống
 
@@ -66,11 +69,11 @@ const handleImportExcel = async (event: Event) => {
 
       if (emp && shift && ngayLamViec) {
         payloads.push({
-          ngayLamViec: ngayLamViec, // Bây giờ nó chắc chắn là "2026-03-01"
+          ngayLamViec: ngayLamViec,
           idNhanVien: emp.id,
           idCa: shift.idCa,
           ghiChu: ghiChu,
-          trangThai: 2 
+          trangThai: 2 // Tự động set trạng thái là Đang mở (2)
         });
       } else {
         errorRows.push(rowNumber);
@@ -88,7 +91,7 @@ const handleImportExcel = async (event: Event) => {
     }
 
     // Gọi API Batch để lưu
-    await axios.post(`${API_URL}/batch`, payloads);
+    // await axios.post(`${API_URL}/batch`, payloads);
     showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
     refreshData();
 
@@ -102,14 +105,30 @@ const downloadTemplate = async () => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Template_PhanCa');
 
-  // Dòng 1: Tiêu đề
-  worksheet.mergeCells('A1:H1');
-  worksheet.getCell('A1').value = 'MẪU NHẬP LỊCH LÀM VIỆC (Không sửa 2 dòng đầu)';
-  worksheet.getCell('A1').font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-  worksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } };
-  worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+  // Căn chỉnh độ rộng cột (A -> F)
+  worksheet.columns = [
+    { width: 10 }, // A: STT
+    { width: 20 }, // B: Ngày
+    { width: 15 }, // C: Mã NV
+    { width: 30 }, // D: Tên NV
+    { width: 20 }, // E: Tên Ca
+    { width: 30 }  // F: Ghi chú
+  ];
 
-  // Dòng 2: Header (Cột B, C, E, H là quan trọng nhất theo code Import)
+  // Dòng 1: Tiêu đề
+  worksheet.mergeCells('A1:F1');
+  const titleCell = worksheet.getCell('A1');
+  titleCell.value = 'MẪU NHẬP LỊCH LÀM VIỆC (Không sửa 2 dòng đầu)';
+  titleCell.font = { 
+    name: "Times New Roman", 
+    size: 16, 
+    bold: true, 
+    color: { argb: 'FF000000' } 
+  };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getRow(1).height = 30;
+
+  // Dòng 2: Header (Đồng bộ màu xám FFD9D9D9 và Font Times New Roman)
   const headerRow = worksheet.getRow(2);
   headerRow.values = [
     'STT', 
@@ -117,32 +136,68 @@ const downloadTemplate = async () => {
     'Mã NV', 
     'Tên Nhân Viên', 
     'Tên Ca', 
-    'Giờ BĐ', 
-    'Giờ KT', 
     'Ghi chú'
   ];
-  headerRow.font = { bold: true };
-  headerRow.alignment = { horizontal: 'center' };
+  headerRow.height = 25;
+  headerRow.eachCell((cell) => {
+    cell.font = { name: "Times New Roman", bold: true };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9D9D9" },
+    };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
 
-  // Dòng 3: Data mẫu (để người dùng dễ hình dung)
-  worksheet.getRow(3).values = [1, '2026-03-01', 'NV001', 'Nguyễn Văn A', 'Ca Sáng', '08:00', '12:00', 'Test import'];
+  // Lấy danh sách Tên Ca từ DB để làm Dropdown trong Excel
+  const shiftNames = shifts.value.map(s => s.tenCa).join(',');
+  const listFormula = `"${shiftNames}"`;
 
-  // Căn chỉnh độ rộng cột cho đẹp
-  worksheet.columns = [
-    { width: 8 },  // A: STT
-    { width: 20 }, // B: Ngày
-    { width: 15 }, // C: Mã NV
-    { width: 25 }, // D: Tên NV
-    { width: 15 }, // E: Tên Ca
-    { width: 12 }, // F: Giờ BĐ
-    { width: 12 }, // G: Giờ KT
-    { width: 30 }  // H: Ghi chú
-  ];
+  // Dòng 3: Data mẫu
+  const sampleRow = worksheet.getRow(3);
+  sampleRow.values = [1, '2026-03-01', 'NV001', 'Nguyễn Văn A', shifts.value[0]?.tenCa || 'Ca Sáng', 'Test import'];
+
+  // Định dạng viền, Font chữ, Căn lề và Dropdown cho các dòng nhập liệu (Làm sẵn 50 dòng)
+  for (let i = 3; i <= 52; i++) {
+    // Thêm Dropdown cho cột Tên Ca (E)
+    const cellE = worksheet.getCell(`E${i}`);
+    cellE.dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [listFormula]
+    };
+
+    // Kẻ viền và định dạng dữ liệu từng ô
+    const row = worksheet.getRow(i);
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      if (colNumber <= 6) {
+        cell.font = { name: "Times New Roman" };
+        cell.border = {
+          top: { style: "thin" }, left: { style: "thin" },
+          bottom: { style: "thin" }, right: { style: "thin" }
+        };
+        
+        // Căn trái cho cột 4 (Tên NV) và cột 6 (Ghi chú), các cột khác căn giữa
+        if (colNumber !== 4 && colNumber !== 6) {
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+        } else {
+          cell.alignment = { vertical: "middle", horizontal: "left" };
+        }
+      }
+    });
+  }
 
   // Xuất file
   const buffer = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buffer]), 'Template_NhapLichLamViec.xlsx');
 };
+
 // --- 1. INTERFACES ---
 interface Employee {
   id: number;
@@ -731,21 +786,16 @@ const exportExcel = async () => {
   const worksheet = workbook.addWorksheet("Lịch làm việc");
 
   // Kiểm tra xem có đang ở chế độ Lịch Tuần không
-  const isWeekView =
-    viewMode.value === "calendar" && calendarView.value === "week";
+  const isWeekView = viewMode.value === "calendar" && calendarView.value === "week";
 
   if (isWeekView) {
     // ==============================================================
-    // 1. XUẤT EXCEL DẠNG MA TRẬN (DÀNH CHO LỊCH TUẦN)
+    // 1. XUẤT EXCEL DẠNG MA TRẬN (DÀNH CHO LỊCH TUẦN) - Giữ nguyên
     // ==============================================================
-
-    // Tạo cấu trúc cột: Cột đầu là Ca, các cột sau là các Ngày trong tuần
     const columns = [
       { header: "CA / NGÀY", key: "shift", width: 25 },
       ...calendarDays.value.map((day) => {
-        const dayLabel =
-          weekDays.find((d) => d.val === new Date(day.dateStr).getDay())
-            ?.label || "";
+        const dayLabel = weekDays.find((d) => d.val === new Date(day.dateStr).getDay())?.label || "";
         const dateLabel = formatDate(day.dateStr);
         return {
           header: `${dayLabel}\n${dateLabel}`,
@@ -756,31 +806,103 @@ const exportExcel = async () => {
     ];
     worksheet.columns = columns;
 
-    // Chèn Tiêu đề ở Dòng 1
     worksheet.insertRow(1, ["BẢNG PHÂN CA LÀM VIỆC TUẦN"]);
-    // Merge ô tiêu đề (Từ cột A đến cột cuối cùng của tuần)
     const lastColChar = String.fromCharCode(65 + calendarDays.value.length);
     worksheet.mergeCells(`A1:${lastColChar}1`);
 
     const titleCell = worksheet.getCell("A1");
-    titleCell.font = { size: 16, bold: true, color: { argb: "FF63391F" } }; // Chữ nâu
+    titleCell.font = { size: 16, bold: true, color: { argb: "FF63391F" } };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
     worksheet.getRow(1).height = 30;
 
-    // Format Dòng Header (Dòng 2: Ca / Ngày)
     worksheet.getRow(2).height = 40;
     worksheet.getRow(2).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FF374151" } };
-      cell.alignment = {
-        horizontal: "center",
-        vertical: "middle",
-        wrapText: true,
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF9FAFB" } };
+      cell.border = {
+        top: { style: "thin" }, left: { style: "thin" },
+        bottom: { style: "thin" }, right: { style: "thin" },
       };
+    });
+
+    sortedShifts.value.forEach((shift) => {
+      const rowData: Record<string, string> = {
+        shift: `${shift.tenCa}\n(${formatTime(shift.gioBatDau)} - ${formatTime(shift.gioKetThuc)})`,
+      };
+      calendarDays.value.forEach((day) => {
+        const employeesInShift = getSchedulesForShiftAndDate(shift.idCa, day.dateStr);
+        if (employeesInShift.length > 0) {
+          rowData[day.dateStr] = employeesInShift.map((s) => `- ${s.nhanVien?.hoTen} (${s.nhanVien?.maNv})`).join("\n\n");
+        } else {
+          rowData[day.dateStr] = ""; 
+        }
+      });
+      const addedRow = worksheet.addRow(rowData);
+      addedRow.eachCell((cell) => {
+        cell.alignment = { vertical: "top", wrapText: true }; 
+        cell.border = {
+          top: { style: "thin" }, left: { style: "thin" },
+          bottom: { style: "thin" }, right: { style: "thin" },
+        };
+      });
+    });
+ } else {
+    // ==============================================================
+    // 2. XUẤT EXCEL DẠNG DANH SÁCH - ĐỒNG BỘ VỚI QUẢN LÝ NHÂN VIÊN
+    // ==============================================================
+    
+    // Thiết lập độ rộng các cột (từ A đến F)
+    worksheet.columns = [
+      { key: "stt", width: 10 },          // A
+      { key: "ngayLamViec", width: 15 },  // B
+      { key: "maNv", width: 15 },         // C
+      { key: "hoTen", width: 30 },        // D
+      { key: "tenCa", width: 20 },        // E
+      { key: "ghiChu", width: 30 }        // F
+    ];
+
+    // Dòng 1: Tiêu đề
+    worksheet.mergeCells("A1:F1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "DANH SÁCH LỊCH LÀM VIỆC";
+    titleCell.font = {
+      name: "Times New Roman",
+      size: 16,
+      bold: true,
+      color: { argb: "FF000000" },
+    };
+    titleCell.alignment = { vertical: "middle", horizontal: "center" };
+
+    // Dòng 2: Ngày xuất
+    worksheet.mergeCells("A2:F2");
+    const subTitleCell = worksheet.getCell("A2");
+    const today = new Date();
+    subTitleCell.value = `Xuất file excel vào: ${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    subTitleCell.font = { name: "Times New Roman", size: 11, italic: true };
+    subTitleCell.alignment = { vertical: "middle", horizontal: "center" };
+
+    // Dòng 3: Dòng trống
+    worksheet.addRow([]);
+
+    // Dòng 4: Header
+    const headerRow = worksheet.addRow([
+      "STT",
+      "Ngày",
+      "Mã NV",
+      "Họ và tên",
+      "Ca",
+      "Ghi chú",
+    ]);
+
+    headerRow.eachCell((cell) => {
+      cell.font = { name: "Times New Roman", bold: true };
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "FFF9FAFB" },
-      }; // Nền xám nhạt
+        fgColor: { argb: "FFD9D9D9" }, // Màu xám nhạt như file NV
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
@@ -789,95 +911,53 @@ const exportExcel = async () => {
       };
     });
 
-    // Điền dữ liệu các Ca làm việc
-    sortedShifts.value.forEach((shift) => {
-      // Cột đầu tiên: Tên ca và Giờ
-      const rowData: Record<string, string> = {
-        shift: `${shift.tenCa}\n(${formatTime(shift.gioBatDau)} - ${formatTime(shift.gioKetThuc)})`,
-      };
+    // Lấy dữ liệu để xuất
+    const dataToExport = viewMode.value === "table" ? pagedSchedules.value : schedules.value;
 
-      // Các cột tiếp theo: Tìm nhân viên làm trong ngày đó, ca đó
-      calendarDays.value.forEach((day) => {
-        // Tận dụng luôn hàm có sẵn bộ lọc bạn vừa làm
-        const employeesInShift = getSchedulesForShiftAndDate(
-          shift.idCa,
-          day.dateStr,
-        );
-
-        if (employeesInShift.length > 0) {
-          // Nối tên các nhân viên bằng dấu xuống dòng (\n)
-          rowData[day.dateStr] = employeesInShift
-            .map((s) => `- ${s.nhanVien?.hoTen} (${s.nhanVien?.maNv})`)
-            .join("\n\n");
-        } else {
-          rowData[day.dateStr] = ""; // Ô trống nếu không có ai làm
-        }
-      });
-
-      // Thêm dòng vào Excel
-      const addedRow = worksheet.addRow(rowData);
-
-      // Format cho dòng nội dung (Tự động giãn chiều cao để hiển thị hết tên)
-      addedRow.eachCell((cell) => {
-        cell.alignment = { vertical: "top", wrapText: true }; // wrapText giúp \n xuống dòng được trong Excel
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" },
-        };
-      });
-    });
-  } else {
-    // ==============================================================
-    // 2. XUẤT EXCEL DẠNG DANH SÁCH (NHƯ CŨ DÀNH CHO BẢNG)
-    // ==============================================================
-    worksheet.columns = [
-      { key: "stt", width: 10 },
-      { key: "ngayLamViec", width: 15 },
-      { key: "maNv", width: 15 },
-      { key: "hoTen", width: 30 },
-      { key: "tenCa", width: 20 },
-      { key: "gioBatDau", width: 12 },
-      { key: "gioKetThuc", width: 12 },
-      { key: "ghiChu", width: 30 },
-      { key: "trangThai", width: 15 },
-    ];
-    worksheet.mergeCells("A1:I1");
-    worksheet.getCell("A1").value = "DANH SÁCH LỊCH LÀM VIỆC";
-    worksheet.addRow([]);
-    worksheet.addRow([
-      "STT",
-      "Ngày",
-      "Mã NV",
-      "Họ và tên",
-      "Ca",
-      "Bắt đầu",
-      "Kết thúc",
-      "Ghi chú",
-      "Trạng thái",
-    ]);
-
-    // Format Header của bảng
-    worksheet.getRow(3).font = { bold: true };
-    worksheet.getRow(3).alignment = { horizontal: "center" };
-
-    const dataToExport =
-      viewMode.value === "table" ? pagedSchedules.value : schedules.value;
-
+    // Dòng 5 trở đi: Ghi dữ liệu
     dataToExport.forEach((sche, index) => {
-      worksheet.addRow([
+      const row = worksheet.addRow([
         index + 1,
         sche.ngayLamViec,
         sche.nhanVien?.maNv,
         sche.nhanVien?.hoTen,
         sche.caLamViec?.tenCa,
-        formatTime(sche.caLamViec?.gioBatDau),
-        formatTime(sche.caLamViec?.gioKetThuc),
-        sche.ghiChu || "",
-        getStatusText(sche.trangThai),
+        sche.ghiChu || ""
       ]);
+
+      // Thêm tham số colNumber vào callback
+    row.eachCell((cell, colNumber) => {
+      cell.font = { name: "Times New Roman" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      
+      // Sử dụng colNumber (chắc chắn là số) để so sánh
+      if (colNumber !== 4 && colNumber !== 6) {
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+      } else {
+        cell.alignment = { vertical: "middle", horizontal: "left" };
+      }
     });
+    });
+
+    // Thêm Dropdown cho cột Tên Ca (Cột E) trong file xuất ra cho những dòng CÓ DỮ LIỆU
+    const shiftNames = shifts.value.map(s => s.tenCa).join(',');
+    const listFormula = `"${shiftNames}"`;
+    const startRow = 5; 
+    
+    // Chỉ lặp đúng số lượng dòng có dữ liệu
+    for (let i = startRow; i < startRow + dataToExport.length; i++) {
+      const cellE = worksheet.getCell(`E${i}`);
+      cellE.dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [listFormula]
+      };
+    }
   }
 
   // Ghi ra file

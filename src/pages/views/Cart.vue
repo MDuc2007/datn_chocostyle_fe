@@ -16,18 +16,9 @@
 
         <div v-if="cartItems.length === 0" class="empty-cart fade-in">
           <div class="empty-icon-wrapper">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="empty-svg"
-            >
-              <path
-                d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
-              ></path>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" class="empty-svg">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <path d="M16 10a4 4 0 0 1-8 0"></path>
             </svg>
@@ -42,12 +33,7 @@
           <div class="cart-left">
             <div class="cart-actions-top">
               <label class="select-all-label">
-                <input
-                  type="checkbox"
-                  :checked="isAllSelected"
-                  @change="toggleSelectAll"
-                  class="custom-checkbox"
-                />
+                <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="custom-checkbox" />
                 <span>Chọn tất cả</span>
               </label>
               <button class="btn-text-danger" @click="confirmClearCart">
@@ -57,35 +43,15 @@
 
             <div class="cart-list-body">
               <transition-group name="list" tag="div">
-                <div
-                  v-for="(item, index) in cartItems"
-                  :key="item.variantId + '-' + index"
-                  class="cart-item"
-                >
+                <div v-for="(item, index) in cartItems" :key="item.variantId + '-' + index" class="cart-item">
                   <div class="item-checkbox">
-                    <input
-                      type="checkbox"
-                      v-model="item.checked"
-                      class="custom-checkbox"
-                    />
+                    <input type="checkbox" v-model="item.checked" class="custom-checkbox" />
                   </div>
 
                   <div class="item-info">
-                    <div
-                      class="img-wrapper"
-                      @click="goToDetail(item.productId)"
-                    >
-                      <img
-                        :src="item.hinhAnh"
-                        :alt="item.tenSp"
-                        class="item-img"
-                        @error="handleImageError"
-                      />
-                      <span
-                        v-if="item.discountPercent > 0"
-                        class="discount-badge"
-                        >-{{ item.discountPercent }}%</span
-                      >
+                    <div class="img-wrapper" @click="goToDetail(item.productId)">
+                      <img :src="item.hinhAnh" :alt="item.tenSp" class="item-img" @error="handleImageError" />
+                      <span v-if="item.discountPercent > 0" class="discount-badge">-{{ item.discountPercent }}%</span>
                     </div>
                     <div class="item-details">
                       <h3 class="item-name" @click="goToDetail(item.productId)">
@@ -102,11 +68,7 @@
                         <span class="current-price">{{
                           formatPrice(getDiscountedPrice(item))
                         }}</span>
-                        <span
-                          v-if="item.discountPercent > 0"
-                          class="old-price"
-                          >{{ formatPrice(item.giaBan) }}</span
-                        >
+                        <span v-if="item.discountPercent > 0" class="old-price">{{ formatPrice(item.giaBan) }}</span>
                       </div>
                     </div>
                   </div>
@@ -122,32 +84,16 @@
 
                   <div class="item-qty">
                     <div class="qty-control">
-                      <button
-                        @click="decreaseQty(index)"
-                        :disabled="item.soLuong <= 1"
-                        class="qty-btn"
-                      >
+                      <button @click="decreaseQty(index)" :disabled="item.soLuong <= 1" class="qty-btn">
                         −
                       </button>
-                      <input
-                        type="number"
-                        v-model.number="item.soLuong"
-                        @change="validateQty(index)"
-                        class="qty-input"
-                      />
-                      <button
-                        @click="increaseQty(index)"
-                        :disabled="item.soLuong >= item.tonKho"
-                        class="qty-btn"
-                      >
+                      <input type="number" v-model.number="item.soLuong" @change="validateQty(index)"
+                        class="qty-input" />
+                      <button @click="increaseQty(index)" :disabled="item.soLuong >= item.tonKho" class="qty-btn">
                         +
                       </button>
                     </div>
-                    <span
-                      v-if="item.soLuong >= item.tonKho"
-                      class="stock-warning"
-                      >Đạt giới hạn kho</span
-                    >
+                    <span v-if="item.soLuong >= item.tonKho" class="stock-warning">Đạt giới hạn kho</span>
                   </div>
 
                   <div class="item-total desktop-only">
@@ -155,22 +101,10 @@
                   </div>
 
                   <div class="item-action">
-                    <button
-                      class="btn-remove"
-                      @click="openConfirmModal(index)"
-                      title="Xóa"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        class="icon-trash"
-                      >
+                    <button class="btn-remove" @click="openConfirmModal(index)" title="Xóa">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="icon-trash">
                         <polyline points="3 6 5 6 21 6"></polyline>
-                        <path
-                          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                        ></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                       </svg>
                     </button>
                   </div>
@@ -183,9 +117,7 @@
             <h3 class="summary-title">Thông tin đơn hàng</h3>
 
             <div class="summary-row">
-              <span class="text-muted"
-                >Tổng tiền ({{ selectedItemsCount }} sản phẩm)</span
-              >
+              <span class="text-muted">Tổng tiền ({{ selectedItemsCount }} sản phẩm)</span>
               <span class="summary-val">{{
                 formatPrice(totalOriginalPriceSelected)
               }}</span>
@@ -193,9 +125,7 @@
 
             <div class="summary-row" v-if="totalDiscountSelected > 0">
               <span class="text-muted">Giảm giá</span>
-              <span class="summary-val text-success"
-                >- {{ formatPrice(totalDiscountSelected) }}</span
-              >
+              <span class="summary-val text-success">- {{ formatPrice(totalDiscountSelected) }}</span>
             </div>
 
             <div class="summary-divider"></div>
@@ -210,11 +140,7 @@
               Phí vận chuyển sẽ được tính ở trang thanh toán
             </p>
 
-            <button
-              class="btn-checkout"
-              @click="proceedToCheckout"
-              :disabled="selectedItemsCount === 0"
-            >
+            <button class="btn-checkout" @click="proceedToCheckout" :disabled="selectedItemsCount === 0">
               Thanh toán ngay
             </button>
             <button class="btn-continue-shopping" @click="$router.push('/')">
@@ -228,24 +154,11 @@
     <Footer></Footer>
 
     <transition name="fade-modal">
-      <div
-        v-if="modal.show"
-        class="modal-confirm"
-        @click.self="closeModalConfirm"
-      >
+      <div v-if="modal.show" class="modal-confirm" @click.self="closeModalConfirm">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="8" y1="8" x2="16" y2="16"></line>
               <line x1="16" y1="8" x2="8" y2="16"></line>
@@ -259,10 +172,7 @@
             <button class="btn-cancel hover-effect" @click="closeModalConfirm">
               Hủy
             </button>
-            <button
-              class="btn-confirm hover-effect"
-              @click="handleModalConfirm"
-            >
+            <button class="btn-confirm hover-effect" @click="handleModalConfirm">
               Đồng ý
             </button>
           </div>
@@ -530,16 +440,20 @@ const showToast = (msg, type = "success") => {
   font-size: 13px;
   color: #6b7280;
 }
+
 .breadcrumb span {
   cursor: pointer;
 }
+
 .breadcrumb span:hover {
   color: #6b3f23;
 }
+
 .breadcrumb .separator {
   margin: 0 8px;
   cursor: default;
 }
+
 .breadcrumb .current {
   color: #6b3f23;
   font-weight: 500;
@@ -552,6 +466,7 @@ const showToast = (msg, type = "success") => {
   gap: 12px;
   margin-bottom: 24px;
 }
+
 .cart-title {
   font-size: 24px;
   font-weight: 700;
@@ -576,19 +491,23 @@ const showToast = (msg, type = "success") => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
 }
+
 .empty-icon-wrapper {
   margin-bottom: 16px;
   color: #9ca3af;
 }
+
 .empty-svg {
   width: 48px;
   height: 48px;
 }
+
 .empty-cart p {
   font-size: 16px;
   color: #4b5563;
   margin-bottom: 24px;
 }
+
 .btn-continue {
   background: #111827;
   color: #fff;
@@ -600,6 +519,7 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
   transition: background 0.2s;
 }
+
 .btn-continue:hover {
   background: #374151;
 }
@@ -623,6 +543,7 @@ const showToast = (msg, type = "success") => {
   border-bottom: none;
   border-radius: 8px 8px 0 0;
 }
+
 .select-all-label {
   display: flex;
   align-items: center;
@@ -631,6 +552,7 @@ const showToast = (msg, type = "success") => {
   font-weight: 500;
   cursor: pointer;
 }
+
 .btn-text-danger {
   background: none;
   border: none;
@@ -638,6 +560,7 @@ const showToast = (msg, type = "success") => {
   font-size: 14px;
   cursor: pointer;
 }
+
 .btn-text-danger:hover {
   text-decoration: underline;
 }
@@ -648,6 +571,7 @@ const showToast = (msg, type = "success") => {
   border: 1px solid #e5e7eb;
   border-radius: 0 0 8px 8px;
 }
+
 .cart-item {
   display: flex;
   align-items: center;
@@ -655,6 +579,7 @@ const showToast = (msg, type = "success") => {
   border-bottom: 1px solid #f3f4f6;
   gap: 24px;
 }
+
 .cart-item:last-child {
   border-bottom: none;
 }
@@ -665,6 +590,7 @@ const showToast = (msg, type = "success") => {
   flex: 2;
   gap: 16px;
 }
+
 .img-wrapper {
   width: 80px;
   height: 100px;
@@ -675,11 +601,13 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   flex-shrink: 0;
 }
+
 .item-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .discount-badge {
   position: absolute;
   top: 0;
@@ -691,11 +619,13 @@ const showToast = (msg, type = "success") => {
   padding: 2px 6px;
   border-bottom-right-radius: 4px;
 }
+
 .item-details {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+
 .item-name {
   font-size: 15px;
   font-weight: 500;
@@ -708,19 +638,23 @@ const showToast = (msg, type = "success") => {
   overflow: hidden;
   line-height: 1.4;
 }
+
 .item-name:hover {
   color: #4b5563;
 }
+
 .item-variant {
   font-size: 13px;
   color: #6b7280;
   display: flex;
   align-items: center;
 }
+
 .divider {
   margin: 0 8px;
   color: #d1d5db;
 }
+
 .item-price-mobile {
   display: none;
 }
@@ -730,11 +664,13 @@ const showToast = (msg, type = "success") => {
   flex: 1;
   text-align: right;
 }
+
 .current-price {
   font-weight: 600;
   font-size: 15px;
   color: #111827;
 }
+
 .old-price {
   font-size: 12px;
   text-decoration: line-through;
@@ -748,6 +684,7 @@ const showToast = (msg, type = "success") => {
   flex-direction: column;
   align-items: center;
 }
+
 .qty-control {
   display: flex;
   align-items: center;
@@ -756,6 +693,7 @@ const showToast = (msg, type = "success") => {
   height: 32px;
   width: 100px;
 }
+
 .qty-btn {
   width: 30px;
   background: transparent;
@@ -764,10 +702,12 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   color: #4b5563;
 }
+
 .qty-btn:disabled {
   color: #d1d5db;
   cursor: not-allowed;
 }
+
 .qty-input {
   flex: 1;
   text-align: center;
@@ -777,9 +717,11 @@ const showToast = (msg, type = "success") => {
   padding: 0;
   width: 100%;
 }
+
 .qty-input:focus {
   outline: none;
 }
+
 .stock-warning {
   font-size: 11px;
   color: #ef4444;
@@ -798,6 +740,7 @@ const showToast = (msg, type = "success") => {
   width: 32px;
   text-align: right;
 }
+
 .btn-remove {
   background: transparent;
   border: none;
@@ -805,9 +748,11 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   padding: 4px;
 }
+
 .btn-remove:hover {
   color: #ef4444;
 }
+
 .icon-trash {
   width: 20px;
   height: 20px;
@@ -822,6 +767,7 @@ const showToast = (msg, type = "success") => {
   position: sticky;
   top: 24px;
 }
+
 .summary-title {
   font-size: 16px;
   font-weight: 600;
@@ -829,18 +775,22 @@ const showToast = (msg, type = "success") => {
   padding-bottom: 16px;
   border-bottom: 1px solid #f3f4f6;
 }
+
 .summary-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
   font-size: 14px;
 }
+
 .text-muted {
   color: #4b5563;
 }
+
 .summary-val {
   font-weight: 500;
 }
+
 .text-success {
   color: #10b981;
 }
@@ -849,19 +799,23 @@ const showToast = (msg, type = "success") => {
   border-top: 1px dashed #e5e7eb;
   margin: 20px 0;
 }
+
 .total-row {
   align-items: center;
   margin-bottom: 8px;
 }
+
 .total-row span:first-child {
   font-weight: 500;
   font-size: 15px;
 }
+
 .final-price {
   font-size: 20px;
   font-weight: 700;
   color: #111827;
 }
+
 .vat-note {
   font-size: 12px;
   color: #6b7280;
@@ -882,14 +836,17 @@ const showToast = (msg, type = "success") => {
   transition: background 0.2s;
   margin-bottom: 12px;
 }
+
 .btn-checkout:hover:not(:disabled) {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
 }
+
 .btn-checkout:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
 }
+
 .btn-continue-shopping {
   width: 100%;
   padding: 14px;
@@ -902,6 +859,7 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .btn-continue-shopping:hover {
   background: #f9fafb;
 }
@@ -911,9 +869,11 @@ const showToast = (msg, type = "success") => {
 .list-leave-active {
   transition: all 0.3s;
 }
+
 .list-leave-active {
   position: absolute;
 }
+
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
@@ -1020,6 +980,7 @@ const showToast = (msg, type = "success") => {
 .fade-modal-leave-to {
   opacity: 0;
 }
+
 /* Toast */
 .toast-notification {
   position: fixed;
@@ -1045,6 +1006,7 @@ const showToast = (msg, type = "success") => {
   .cart-content {
     grid-template-columns: 1fr;
   }
+
   .cart-summary {
     position: static;
   }
@@ -1054,29 +1016,35 @@ const showToast = (msg, type = "success") => {
   .desktop-only {
     display: none !important;
   }
+
   .item-price-mobile {
     display: block;
     margin-top: 8px;
   }
+
   .cart-item {
     flex-wrap: wrap;
     position: relative;
     gap: 16px;
   }
+
   .item-info {
     flex: 100%;
   }
+
   .item-qty {
     flex: 1;
     align-items: flex-start;
     padding-left: 38px;
   }
+
   .item-action {
     position: absolute;
     top: 24px;
     right: 24px;
   }
 }
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
