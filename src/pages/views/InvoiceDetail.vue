@@ -858,7 +858,7 @@ onMounted(() => {
   color: #333;
 }
 .main-layout {
-  max-width: 1400px;
+  max-width: 1536px;
   margin: 0 auto 40px auto;
   padding: 0 4%;
   display: flex; /* Quan trọng */
@@ -1906,7 +1906,7 @@ onMounted(() => {
 /* Breadcrumb */
 
 .breadcrumb {
-  max-width: 1400px;
+  max-width: 1536px;
 
   margin: 20px auto;
 

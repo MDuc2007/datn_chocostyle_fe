@@ -38,10 +38,6 @@
             </div>
 
             <div class="toolbar-right">
-              <span class="result-count" v-if="filteredProducts.length > 0">
-                Hiển thị <strong>{{ displayedProducts.length }}</strong> trên <strong>{{ filteredProducts.length
-                  }}</strong> sản phẩm
-              </span>
               <div class="sort-box">
                 <span class="toolbar-icon ms-3">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -287,7 +283,7 @@ const applyFilters = () => {
   fetchFilteredData();
 }
 
-// ================= LOGIC GỌI API TỪ BACKEND TƯƠNG TỰ FILE MẪU =================
+// ================= LOGIC GỌI API TỪ BACKEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -306,7 +302,7 @@ const fetchFilteredData = async (isAppend = false) => {
     const res = await axios.get(url);
     const data = res.data;
 
-    // GOM NHÓM SẢN PHẨM TRÙNG (Do API chi tiết trả về từng biến thể)
+    // GOM NHÓM SẢN PHẨM TRÙNG
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
 
@@ -317,7 +313,6 @@ const fetchFilteredData = async (isAppend = false) => {
       if (adv.colors.length > 0 && !adv.colors.includes(item.tenMauSac)) passFilter = false;
 
       if (passFilter) {
-
         // 👉 CHỈ LẤY SẢN PHẨM CÓ KHUYẾN MÃI
         const percent = item.phanTramGiam || 0;
 
@@ -348,6 +343,11 @@ const fetchFilteredData = async (isAppend = false) => {
             const currentGia = item.giaSauGiam || item.giaBan;
             if (currentGia < existing.giaMin) existing.giaMin = currentGia;
             if (currentGia > existing.giaMax) existing.giaMax = currentGia;
+            
+            // 👉 CẬP NHẬT LẤY % GIẢM GIÁ CAO NHẤT (MAX)
+            if (percent > existing.phanTramGiam) {
+              existing.phanTramGiam = percent;
+            }
           }
         }
       }
@@ -503,7 +503,7 @@ onMounted(() => {
 
 /* Breadcrumb */
 .breadcrumb-container {
-  max-width: 1400px;
+  max-width: 1536px;
   margin: 20px auto 0;
   padding: 0 4%;
 }
@@ -539,7 +539,7 @@ onMounted(() => {
   align-items: flex-start;
   gap: 40px;
   padding: 30px 4% 60px;
-  max-width: 1400px;
+  max-width: 1536px;
   margin: 0 auto;
 }
 

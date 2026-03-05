@@ -523,7 +523,7 @@ onMounted(() => {
 
 /* Breadcrumb */
 .breadcrumb-container {
-  max-width: 1400px;
+  max-width: 1536px;
   margin: 20px auto 0;
   padding: 0 4%;
 }
@@ -559,7 +559,7 @@ onMounted(() => {
   align-items: flex-start;
   gap: 40px;
   padding: 30px 4% 60px;
-  max-width: 1400px;
+  max-width: 1536px;
   margin: 0 auto;
 }
 

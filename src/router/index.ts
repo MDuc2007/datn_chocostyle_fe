@@ -439,7 +439,9 @@ router.beforeEach((to, from, next) => {
   ];
 
   const isPublic =
-    publicPages.includes(to.path) || to.path.startsWith("/home/product/");
+    publicPages.includes(to.path) || 
+    to.path.startsWith("/home/product/") ||
+    to.path.startsWith("/order-detail/");
 
   const authRequired = !isPublic;
 

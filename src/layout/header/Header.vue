@@ -11,7 +11,7 @@
 
       <nav class="nav">
         <router-link to="/" exact-active-class="active">Trang chủ</router-link>
-        <router-link to="/ao-khoac" active-class="active">Áo khoác</router-link>
+        <router-link to="/ao-khoac" active-class="active">Sản phẩm</router-link>
         <router-link to="/uu-dai" active-class="active">Ưu đãi</router-link>
         <router-link to="/moi-ve" active-class="active">Mới về</router-link>
         <router-link to="/tra-cuu" active-class="active">Tra cứu</router-link>
@@ -19,11 +19,6 @@
       </nav>
 
       <div class="actions">
-        <!-- <div class="action-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </div> -->
-
-
         <div class="action-btn cart-wrapper" @click="$router.push('/cart')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
           <span v-if="cartTotal > 0" class="cart-badge">{{ cartTotal }}</span>
@@ -51,8 +46,14 @@
           <transition name="dropdown-fade">
             <div v-if="isUserMenuOpen" class="user-menu" @click.stop>
               <template v-if="!currentUser">
-                <button @click="goToLogin" class="menu-item login-btn">Đăng nhập</button>
-                <button @click="goToRegister" class="menu-item">Đăng ký</button>
+                <button @click="goToLogin" class="menu-item login-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                  Đăng nhập
+                </button>
+                <button @click="goToRegister" class="menu-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                  Đăng ký
+                </button>
               </template>
 
               <template v-else>
@@ -74,13 +75,11 @@
           </transition>
         </div>
       </div>
-
     </div>
   </header>
 </template>
 
 <script setup>
-// Giữ nguyên 100% logic script của bạn
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
@@ -194,7 +193,6 @@ const goToRegister = () => {
   router.push("/register");
 };
 
-// 👉 ĐÃ SỬA: Chuyển hướng tới trang tài khoản của khách
 const viewProfile = () => {
   isUserMenuOpen.value = false;
   router.push('/profile'); 
@@ -231,11 +229,13 @@ onBeforeUnmount(() => {
 .header {
   position: sticky;
   top: 0;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid #f3f4f6;
   z-index: 1000;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
 }
 
 .header-container {
@@ -258,22 +258,22 @@ onBeforeUnmount(() => {
 .logo img {
   height: 60px;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .logo:hover img {
-  transform: scale(1.05);
+  transform: scale(1.08) rotate(-2deg);
 }
 
 /* ================= NAV MENU ================= */
 .nav {
   display: flex;
-  gap: 35px; /* Giãn khoảng cách các menu ra */
+  gap: 35px;
 }
 
 .nav a {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #4b5563;
   text-decoration: none;
   text-transform: uppercase;
@@ -284,24 +284,24 @@ onBeforeUnmount(() => {
 }
 
 .nav a:hover {
-  color: #111827;
+  color: #6b3f1e;
 }
 
-/* Hiệu ứng gạch chân thanh lịch thay cho cục nền màu nâu */
 .nav a::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 0%;
   height: 2px;
   background-color: #6b3f1e;
   transition: width 0.3s ease;
+  border-radius: 2px;
 }
 
 .nav a.active {
   color: #111827;
-  font-weight: 600;
 }
 
 .nav a.active::after {
@@ -311,13 +311,13 @@ onBeforeUnmount(() => {
 /* ================= ACTIONS (ICONS) ================= */
 .actions {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   align-items: center;
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -326,85 +326,102 @@ onBeforeUnmount(() => {
   color: #374151;
   transition: all 0.2s ease;
   position: relative;
+  background-color: transparent;
 }
 
 .action-btn svg {
   width: 22px;
   height: 22px;
+  transition: transform 0.2s ease;
 }
 
 .action-btn:hover {
   background-color: #f3f4f6;
-  color: #111827;
+  color: #6b3f1e;
+}
+
+.action-btn:hover svg {
+  transform: scale(1.1);
 }
 
 /* Giỏ hàng */
 .cart-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background-color: #ef4444; /* Đỏ thông báo chuẩn */
+  top: 0px;
+  right: 0px;
+  background-color: #ef4444;
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #fff; /* Viền trắng tách biệt với icon */
+  box-shadow: 0 0 0 2px #fff;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.action-btn:hover .cart-badge {
+  transform: scale(1.15);
 }
 
 /* ================= USER AVATAR ================= */
 .user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.3s ease;
+}
+
+.user-icon-wrapper:hover .user-avatar {
+  border-color: #6b3f1e;
 }
 
 .user-initial {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background-color: #fdf6f0;
+  background: linear-gradient(135deg, #fdf6f0, #f3e8df);
   color: #6b3f1e;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
+  border: 1px solid #e5e7eb;
 }
 
 /* ================= DROPDOWN MENU ================= */
 .user-menu {
   position: absolute;
-  top: 50px;
+  top: 55px;
   right: 0;
-  background: white;
+  background: #ffffff;
   border: 1px solid #f3f4f6;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   padding: 8px;
   z-index: 1000;
-  min-width: 220px;
+  min-width: 240px;
 }
 
 .user-welcome {
-  padding: 12px 12px 8px;
+  padding: 16px 12px 12px;
 }
 
 .welcome-text {
   margin: 0;
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: 13px;
+  color: #6b7280;
 }
 
 .user-name {
-  margin: 2px 0 0 0;
-  font-size: 15px;
+  margin: 4px 0 0 0;
+  font-size: 16px;
   font-weight: 700;
   color: #111827;
   white-space: nowrap;
@@ -420,23 +437,21 @@ onBeforeUnmount(() => {
 
 .menu-item {
   margin: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   text-align: left;
   background: none;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #4b5563;
   width: 100%;
   display: flex;
   align-items: center;
-
-  gap: 10px;
-  transition: background-color 0.2s;
+  gap: 12px;
+  transition: all 0.2s ease;
   box-sizing: border-box; 
-
 }
 
 .menu-item svg {
@@ -449,6 +464,7 @@ onBeforeUnmount(() => {
 .menu-item:hover {
   background-color: #f9fafb;
   color: #111827;
+  transform: translateX(4px);
 }
 
 .menu-item:hover svg {
@@ -457,7 +473,6 @@ onBeforeUnmount(() => {
 
 .login-btn {
   color: #111827;
-  font-weight: 600;
 }
 
 .logout {
@@ -474,15 +489,15 @@ onBeforeUnmount(() => {
   color: #ef4444;
 }
 
-/* Animations */
+/* Animations Dropdown */
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .dropdown-fade-enter-from,
 .dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(10px) scale(0.95);
+  transform: translateY(15px) scale(0.95);
 }
 
 /* ================= RESPONSIVE ================= */
