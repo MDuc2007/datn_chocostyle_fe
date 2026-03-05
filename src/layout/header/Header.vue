@@ -19,9 +19,9 @@
       </nav>
 
       <div class="actions">
-        <div class="action-btn">
+        <!-- <div class="action-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </div>
+        </div> -->
 
 
         <div class="action-btn cart-wrapper" @click="$router.push('/cart')">

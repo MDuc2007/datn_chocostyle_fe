@@ -89,7 +89,7 @@
           >
             <img src="/src/assets/icon/pgg.svg" class="menu-icon" />
             <div>
-              Khuyến mại
+              Quản lý giảm giá
               <span class="arrow" :class="{ open: isDiscountOpen }">▾</span>
             </div>
           </div>

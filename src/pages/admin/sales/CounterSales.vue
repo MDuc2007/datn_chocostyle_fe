@@ -7,13 +7,8 @@
 
     <div v-if="orders.length" class="pos-card">
       <div class="order-tabs">
-        <div
-          v-for="(o, index) in orders"
-          :key="o.id"
-          class="order-tab"
-          :class="{ active: index === activeOrderIndex }"
-          @click="activeOrderIndex = index"
-        >
+        <div v-for="(o, index) in orders" :key="o.id" class="order-tab" :class="{ active: index === activeOrderIndex }"
+          @click="activeOrderIndex = index">
           <span>
             Đơn {{ index + 1 }}
             <span class="order-code">- {{ o.maHoaDon }}</span>
@@ -22,11 +17,7 @@
         </div>
       </div>
 
-      <div
-        v-if="currentOrder"
-        class="main-layout"
-        :class="{ 'full-product': !currentOrder.cart.length }"
-      >
+      <div v-if="currentOrder" class="main-layout" :class="{ 'full-product': !currentOrder.cart.length }">
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
@@ -56,11 +47,7 @@
               <div class="text-right">Thành tiền</div>
               <div></div>
             </div>
-            <div
-              v-for="(item, index) in currentOrder.cart"
-              :key="index"
-              class="product-row"
-            >
+            <div v-for="(item, index) in currentOrder.cart" :key="index" class="product-row">
               <div class="product-cell-info">
                 <div class="img-wrap">
                   <img :src="item.image" class="product-img" />
@@ -94,10 +81,7 @@
               </div>
 
               <div class="qty text-center">
-                <button
-                  @click="decreaseQty(item)"
-                  :disabled="item.quantity <= 1"
-                >
+                <button @click="decreaseQty(item)" :disabled="item.quantity <= 1">
                   −
                 </button>
                 <input type="text" readonly :value="item.quantity" />
@@ -109,11 +93,7 @@
               </div>
 
               <div class="action-delete">
-                <button
-                  class="btn-danger"
-                  @click="removeItem(index)"
-                  title="Xóa"
-                >
+                <button class="btn-danger" @click="removeItem(index)" title="Xóa">
                   ✕
                 </button>
               </div>
@@ -126,19 +106,12 @@
             <div class="section-header column">
               <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
 
-              <div
-                class="customer-actions-row"
-                :class="{ 'single-btn': !currentOrder.customer.id }"
-              >
+              <div class="customer-actions-row" :class="{ 'single-btn': !currentOrder.customer.id }">
                 <button class="btn-outline" @click="openCustomerPopup">
                   Chọn khách hàng
                 </button>
 
-                <button
-                  v-if="currentOrder.customer.id"
-                  class="btn-outline"
-                  @click="resetToGuest"
-                >
+                <button v-if="currentOrder.customer.id" class="btn-outline" @click="resetToGuest">
                   Khách lẻ
                 </button>
               </div>
@@ -147,19 +120,13 @@
             <div class="customer-form">
               <div class="form-row">
                 <div class="form-item">
-                  <input
-                    v-model="currentOrder.customer.name"
-                    placeholder="Tên khách hàng *"
-                  />
+                  <input v-model="currentOrder.customer.name" placeholder="Tên khách hàng *" />
                   <div v-if="customerErrors.name" class="field-error">
                     {{ customerErrors.name }}
                   </div>
                 </div>
                 <div class="form-item">
-                  <input
-                    v-model="currentOrder.customer.phone"
-                    placeholder="Số điện thoại *"
-                  />
+                  <input v-model="currentOrder.customer.phone" placeholder="Số điện thoại *" />
                   <div v-if="customerErrors.phone" class="field-error">
                     {{ customerErrors.phone }}
                   </div>
@@ -167,41 +134,24 @@
               </div>
 
               <div class="delivery-toggle-wrap mt-2">
-                <span
-                  class="toggle-label"
-                  :class="{
-                    'active-brown': currentOrder.deliveryType === 'DELIVERY',
-                  }"
-                  >Giao hàng tận nơi</span
-                >
+                <span class="toggle-label" :class="{
+                  'active-brown': currentOrder.deliveryType === 'DELIVERY',
+                }">Giao hàng tận nơi</span>
                 <label class="switch">
-                  <input
-                    type="checkbox"
-                    :checked="currentOrder.deliveryType === 'DELIVERY'"
-                    @change="toggleDelivery"
-                  />
+                  <input type="checkbox" :checked="currentOrder.deliveryType === 'DELIVERY'" @change="toggleDelivery" />
                   <span class="slider"></span>
                 </label>
               </div>
 
-              <div
-                v-if="currentOrder.deliveryType === 'DELIVERY'"
-                class="delivery-form"
-              >
+              <div v-if="currentOrder.deliveryType === 'DELIVERY'" class="delivery-form">
                 <div class="form-item mt-2">
-                  <input
-                    v-model="currentOrder.customer.email"
-                    placeholder="Email (Tùy chọn)"
-                  />
+                  <input v-model="currentOrder.customer.email" placeholder="Email (Tùy chọn)" />
                   <div v-if="customerErrors.email" class="field-error">
                     {{ customerErrors.email }}
                   </div>
                 </div>
                 <div class="form-item mt-2">
-                  <input
-                    v-model="currentOrder.customer.address"
-                    placeholder="Địa chỉ cụ thể (Số nhà, đường) *"
-                  />
+                  <input v-model="currentOrder.customer.address" placeholder="Địa chỉ cụ thể (Số nhà, đường) *" />
                   <div v-if="customerErrors.address" class="field-error">
                     {{ customerErrors.address }}
                   </div>
@@ -210,11 +160,7 @@
                   <div class="form-item">
                     <select v-model="currentOrder.customer.province">
                       <option value="">Tỉnh/Thành phố *</option>
-                      <option
-                        v-for="p in provinces"
-                        :key="p.code"
-                        :value="p.code"
-                      >
+                      <option v-for="p in provinces" :key="p.code" :value="p.code">
                         {{ p.name }}
                       </option>
                     </select>
@@ -225,11 +171,7 @@
                   <div class="form-item">
                     <select v-model="currentOrder.customer.district">
                       <option value="">Quận/Huyện *</option>
-                      <option
-                        v-for="d in currentOrder.districts"
-                        :key="d.code"
-                        :value="d.code"
-                      >
+                      <option v-for="d in currentOrder.districts" :key="d.code" :value="d.code">
                         {{ d.name }}
                       </option>
                     </select>
@@ -242,11 +184,7 @@
                   <div class="form-item">
                     <select v-model="currentOrder.customer.ward">
                       <option value="">Xã/Phường *</option>
-                      <option
-                        v-for="w in currentOrder.wards"
-                        :key="w.code"
-                        :value="w.code"
-                      >
+                      <option v-for="w in currentOrder.wards" :key="w.code" :value="w.code">
                         {{ w.name }}
                       </option>
                     </select>
@@ -265,10 +203,7 @@
             </div>
 
             <div class="voucher-row">
-              <input
-                v-model="currentOrder.voucherCode"
-                placeholder="Mã giảm giá..."
-              />
+              <input v-model="currentOrder.voucherCode" placeholder="Mã giảm giá..." />
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
               <div v-if="bestVoucherSuggestion" class="voucher-suggestion">
                 Voucher tốt nhất:
@@ -301,10 +236,7 @@
                 <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
 
-              <div
-                class="payment-row shipping-row"
-                v-if="currentOrder.deliveryType === 'DELIVERY'"
-              >
+              <div class="payment-row shipping-row" v-if="currentOrder.deliveryType === 'DELIVERY'">
                 <span class="text-muted shipping-label">
                   Phí vận chuyển
                   <img :src="ghnLogo" class="ghn-icon" />
@@ -337,19 +269,12 @@
               </div>
             </div>
 
-            <div
-              v-if="currentOrder.paymentMethod === 'CASH'"
-              class="payment-row mt-2 text-red fw-600"
-            >
+            <div v-if="currentOrder.paymentMethod === 'CASH'" class="payment-row mt-2 text-red fw-600">
               <span>Tiền thừa</span>
               <span>{{ formatPrice(changeMoney) }}</span>
             </div>
 
-            <button
-              class="btn-submit big mt-4"
-              @click="confirmSubmitOrder"
-              :disabled="!currentOrder.cart.length"
-            >
+            <button class="btn-submit big mt-4" @click="confirmSubmitOrder" :disabled="!currentOrder.cart.length">
               XÁC NHẬN ĐẶT HÀNG
             </button>
           </div>
@@ -368,11 +293,7 @@
             </button>
           </div>
           <div class="modal-body">
-            <input
-              v-model="customerSearch"
-              class="search-input"
-              placeholder="Tìm theo tên, email, số điện thoại..."
-            />
+            <input v-model="customerSearch" class="search-input" placeholder="Tìm theo tên, email, số điện thoại..." />
             <div class="table-responsive">
               <table class="table">
                 <thead>
@@ -416,10 +337,7 @@
           </div>
           <div class="modal-body">
             <div class="filter-row">
-              <input
-                v-model="searchText"
-                placeholder=" Tìm mã, tên sản phẩm..."
-              />
+              <input v-model="searchText" placeholder=" Tìm mã, tên sản phẩm..." />
               <select v-model="filterColor">
                 <option value="">Tất cả màu</option>
                 <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
@@ -448,11 +366,7 @@
                     <td>
                       <div class="img-wrap small">
                         <img :src="p.image" class="thumb" />
-                        <span
-                          v-if="p.discountPercent > 0"
-                          class="sale-badge small"
-                          >-{{ p.discountPercent }}%</span
-                        >
+                        <span v-if="p.discountPercent > 0" class="sale-badge small">-{{ p.discountPercent }}%</span>
                       </div>
                     </td>
                     <td>
@@ -461,11 +375,7 @@
                     </td>
                     <td>{{ p.color }} - {{ p.size }}</td>
                     <td class="text-center">
-                      <span
-                        class="badge-stock"
-                        :class="{ 'out-of-stock': p.stock <= 0 }"
-                        >{{ p.stock }}</span
-                      >
+                      <span class="badge-stock" :class="{ 'out-of-stock': p.stock <= 0 }">{{ p.stock }}</span>
                     </td>
 
                     <td class="price-cell">
@@ -485,11 +395,7 @@
                       </template>
                     </td>
                     <td>
-                      <button
-                        class="btn-primary"
-                        :disabled="p.stock <= 0"
-                        @click="addToCart(p)"
-                      >
+                      <button class="btn-primary" :disabled="p.stock <= 0" @click="addToCart(p)">
                         Chọn
                       </button>
                     </td>
@@ -511,38 +417,33 @@
           </div>
           <div class="modal-body payment-popup">
             <div class="pay-type-tabs">
-              <button
-                :class="{ active: paymentMethod === 'CASH' }"
-                @click="paymentMethod = 'CASH'"
-              >
+              <button :class="{ active: paymentMethod === 'CASH' }" @click="paymentMethod = 'CASH'">
                 💵 Tiền mặt
               </button>
-              <button
-                :class="{ active: paymentMethod === 'BANK' }"
-                @click="paymentMethod = 'BANK'"
-              >
+              <button :class="{ active: paymentMethod === 'BANK' }" @click="paymentMethod = 'BANK'">
                 🏦 Chuyển khoản
               </button>
             </div>
-
             <div v-if="paymentMethod === 'CASH'" class="cash-input-box mt-3">
               <label class="input-label">Số tiền khách đưa:</label>
+
               <div class="money-input-wrapper">
-                <input
-                  type="number"
-                  v-model.number="cashInput"
-                  placeholder="0"
-                  class="input-money-lg"
-                />
+                <input type="text" :value="cashDisplay" @input="handleCashInput" @focus="cashDisplay = ''"
+                  placeholder="0" class="input-money-lg" />
                 <span class="currency-unit">₫</span>
               </div>
+
               <div class="quick-money mt-2">
-                <button class="btn-quick-money" @click="cashInput = total">
+                <button class="btn-quick-money" @click="
+                  () => {
+                    cashInput = total;
+                    cashDisplay = formatCurrencyInput(total);
+                  }
+                ">
                   Đúng số tiền
                 </button>
               </div>
             </div>
-
             <div v-if="paymentMethod === 'BANK'" class="bank-box mt-3">
               <img :src="bankQR" class="qr-img" />
               <div class="bank-info mt-2">
@@ -561,28 +462,9 @@
     </div>
 
     <transition name="fade-modal">
-      <div
-        v-if="modal.show"
-        class="modal-confirm"
-        @click.self="closeConfirmModal"
-      >
+      <div v-if="modal.show" class="modal-confirm" @click.self="closeConfirmModal">
         <div class="confirm-box">
-          <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M8 12l3 3 5-5"></path>
-            </svg>
-          </div>
+          <div class="confirm-icon-wrapper">⚠️</div>
           <h3 class="confirm-title">{{ modal.title }}</h3>
           <p class="confirm-desc">{{ modal.message }}</p>
           <div class="confirm-actions">
@@ -675,7 +557,6 @@ const fetchProducts = async () => {
 
       return {
         id: p.id,
-        maCtsp: p.maChiTietSanPham,
         code: `${p.maSanPham}-${p.maChiTietSanPham}`,
         name: p.tenSanPham,
         image: Array.isArray(p.hinhAnh) ? p.hinhAnh[0] : p.hinhAnh,
@@ -880,8 +761,32 @@ const validatePayment = () => {
   }
   return true;
 };
+const checkBetterVoucherBeforePayment = async () => {
+  if (!currentOrder.value) return { hasBetter: false };
 
-const confirmSubmitOrder = () => {
+  await fetchVouchers();
+  await nextTick();
+
+  const best = bestVoucherSuggestion.value;
+  const current = currentOrder.value.appliedVoucher;
+
+  if (!best) return { hasBetter: false };
+
+  // Nếu chưa có voucher nào
+  if (!current) {
+    return { hasBetter: true, best };
+  }
+
+  // Tính discount hiện tại
+  const currentDiscount = discount.value;
+
+  if (best.discountValue > currentDiscount) {
+    return { hasBetter: true, best };
+  }
+
+  return { hasBetter: false };
+};
+const confirmSubmitOrder = async () => {
   if (!currentOrder.value?.cart.length) {
     showToast("Vui lòng chọn sản phẩm trước khi đặt hàng", "error");
     return;
@@ -889,9 +794,98 @@ const confirmSubmitOrder = () => {
 
   if (!validateCustomer()) return;
 
+  const isPriceValid = await revalidateCartPrice();
+
+  if (!isPriceValid) {
+    showToast(
+      "Giá sản phẩm hoặc khuyến mãi vừa thay đổi. Vui lòng kiểm tra lại đơn hàng!",
+      "error",
+    );
+    return;
+  }
+
+  // ✅ CHECK VOUCHER CHUẨN BẰNG HÀM CHUNG
+  const voucherCheck = await revalidateVoucherBeforeSubmit();
+
+  if (!voucherCheck.valid) {
+    const suggested = voucherCheck.suggested;
+
+    let message = "Phiếu giảm giá hiện tại đã thay đổi hoặc không còn hợp lệ.";
+
+    if (suggested) {
+      message += `\nHệ thống đề xuất: ${suggested.maPgg} - Giảm ${formatPrice(
+        suggested.discountValue,
+      )}`;
+    }
+
+    openConfirmModal("Phiếu giảm giá đã thay đổi", message, async () => {
+      if (suggested) {
+        const isPercent =
+          suggested.loaiGiam === "PERCENT" ||
+          suggested.loaiGiam === "PHAN_TRAM" ||
+          suggested.loaiGiam === 0;
+
+        voucherMode.value = "MANUAL";
+
+        currentOrder.value.voucherCode = suggested.maPgg;
+
+        currentOrder.value.appliedVoucher = {
+          code: suggested.maPgg,
+          percent: isPercent ? Number(suggested.giaTri) : 0,
+          amount: !isPercent ? Number(suggested.giaTri) : 0,
+          maxValue: suggested.giaTriToiDa,
+          message: suggested.tenPgg,
+        };
+      } else {
+        currentOrder.value.appliedVoucher = null;
+        currentOrder.value.voucherCode = "";
+      }
+
+      showToast("Đã cập nhật phiếu giảm giá mới nhất");
+    });
+
+    return; // 🛑 không mở popup thanh toán
+  }
+
+  // ✅ OK thì mới check voucher tốt hơn
+  const betterCheck = await checkBetterVoucherBeforePayment();
+
+  if (betterCheck.hasBetter) {
+    const best = betterCheck.best;
+
+    openConfirmModal(
+      "Có phiếu giảm giá tốt hơn",
+      `Hệ thống tìm thấy mã ${best.maPgg} giúp bạn giảm ${formatPrice(
+        best.discountValue,
+      )}. Bạn có muốn sử dụng không?`,
+      async () => {
+        const isPercent =
+          best.loaiGiam === "PERCENT" ||
+          best.loaiGiam === "PHAN_TRAM" ||
+          best.loaiGiam === 0;
+
+        voucherMode.value = "MANUAL";
+
+        currentOrder.value.voucherCode = best.maPgg;
+
+        currentOrder.value.appliedVoucher = {
+          code: best.maPgg,
+          percent: isPercent ? Number(best.giaTri) : 0,
+          amount: !isPercent ? Number(best.giaTri) : 0,
+          maxValue: best.giaTriToiDa,
+          message: best.tenPgg,
+        };
+
+        showToast("Đã áp dụng phiếu giảm giá tốt hơn");
+        openPaymentPopup();
+      },
+    );
+
+    return;
+  }
+
   openPaymentPopup();
 };
-
 const removeItem = async (index) => {
   const item = currentOrder.value.cart[index];
 
@@ -1039,51 +1033,60 @@ const resetToGuest = async () => {
 const showPaymentPopup = ref(false);
 const paymentMethod = ref("CASH");
 const cashInput = ref(0);
-
 const openPaymentPopup = () => {
   paymentMethod.value = "CASH";
-  cashInput.value = total.value;
+  cashInput.value = 0;
+  cashDisplay.value = "";
   showPaymentPopup.value = true;
 };
-
 const revalidateVoucherBeforeSubmit = async () => {
-  if (!currentOrder.value?.appliedVoucher) return true;
-
-  try {
-    // fetch lại voucher mới nhất theo khách hiện tại
-    await fetchVouchers();
-
-    const currentCode = currentOrder.value.appliedVoucher.code;
-
-    const found = vouchers.value.find((v) => v.maPgg === currentCode);
-
-    // ❌ Không tồn tại nữa
-    if (!found) {
-      return false;
-    }
-
-    // ❌ Không còn hợp lệ
-    if (
-      found.trangThai !== 1 ||
-      (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
-    ) {
-      return false;
-    }
-
-    // ❌ Không còn là voucher tốt nhất nữa
-    const best = bestVoucherSuggestion.value;
-
-    if (!best || best.maPgg !== currentCode) {
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error("Lỗi revalidate voucher:", err);
-    return false;
+  if (!currentOrder.value?.appliedVoucher) {
+    return { valid: true };
   }
+
+  await fetchVouchers();
+  await nextTick(); // ⭐ BẮT BUỘC
+
+  const currentCode = currentOrder.value.appliedVoucher.code;
+
+  const found = vouchers.value.find((v) => v.maPgg === currentCode);
+
+  if (!found) {
+    return { valid: false, reason: "NOT_EXIST" };
+  }
+
+  if (
+    found.trangThai !== 1 ||
+    (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
+  ) {
+    return { valid: false, reason: "INVALID" };
+  }
+
+  const best = bestVoucherSuggestion.value;
+
+  if (!best || best.maPgg !== currentCode) {
+    return {
+      valid: false,
+      reason: "NOT_BEST",
+      suggested: best || null,
+    };
+  }
+
+  return { valid: true };
 };
 
+const cashDisplay = ref("");
+
+const formatCurrencyInput = (value) => {
+  if (!value) return "";
+  return Number(value).toLocaleString("vi-VN");
+};
+
+const handleCashInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, ""); // chỉ giữ số
+  cashInput.value = Number(raw) || 0;
+  cashDisplay.value = formatCurrencyInput(raw);
+};
 // ĐÃ MERGE FIX TỪ BẢN TRƯỚC: Thêm Modal xác nhận thanh toán
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
@@ -1098,27 +1101,46 @@ const confirmPayment = async () => {
 
   if (!validatePayment()) return;
 
-  // ✅ CHECK LẠI VOUCHER Ở ĐÂY
-  const isVoucherValid = await revalidateVoucherBeforeSubmit();
+  const voucherCheck = await revalidateVoucherBeforeSubmit();
 
-  if (!isVoucherValid) {
-    openConfirmModal(
-      "Phiếu giảm giá đã hết hiệu lực",
-      "Phiếu giảm giá hiện tại không còn hợp lệ hoặc không còn là tốt nhất. Bạn có muốn hệ thống tự chọn lại phiếu giảm giá tốt nhất không?",
-      async () => {
-        // reset voucher
+  if (!voucherCheck.valid) {
+    const suggested = voucherCheck.suggested;
+
+    let message = "Phiếu giảm giá hiện tại không còn hợp lệ.";
+
+    if (suggested) {
+      message += `\nHệ thống đề xuất: ${suggested.maPgg} - Giảm ${formatPrice(
+        suggested.discountValue,
+      )}`;
+    }
+
+    openConfirmModal("Phiếu giảm giá đã thay đổi", message, async () => {
+      if (suggested) {
+        // apply voucher mới
+        currentOrder.value.voucherCode = suggested.maPgg;
+
+        const isPercent =
+          suggested.loaiGiam === "PERCENT" ||
+          suggested.loaiGiam === "PHAN_TRAM" ||
+          suggested.loaiGiam === 0;
+
+        currentOrder.value.appliedVoucher = {
+          code: suggested.maPgg,
+          percent: isPercent ? Number(suggested.giaTri) : 0,
+          amount: !isPercent ? Number(suggested.giaTri) : 0,
+          maxValue: suggested.giaTriToiDa,
+          message: suggested.tenPgg,
+        };
+      } else {
         currentOrder.value.appliedVoucher = null;
         currentOrder.value.voucherCode = "";
-        voucherMode.value = "AUTO";
+      }
 
-        await fetchVouchers(); // lấy lại danh sách mới
+      showToast("Đã cập nhật phiếu giảm giá mới nhất");
+    });
 
-        showToast("Đã cập nhật phiếu giảm giá mới nhất", "error");
-      },
-    );
     return;
   }
-
   showPaymentPopup.value = false;
 
   openConfirmModal(
@@ -1129,26 +1151,37 @@ const confirmPayment = async () => {
     },
   );
 };
+let isScanning = false;
 
 const openQrScanner = async () => {
   showQrPopup.value = true;
   await nextTick();
+
+  isScanning = false;
+
   qrScanner = new Html5Qrcode("qr-reader");
 
   await qrScanner.start(
     { facingMode: "environment" },
     {
-      fps: 10,
+      fps: 25,
       qrbox: { width: 300, height: 300 },
     },
     async (decodedText) => {
-      await handleQrResult(decodedText);
+      // 🚫 Nếu đang xử lý thì bỏ qua
+      if (isScanning) return;
 
-      await qrScanner.stop();
-      await qrScanner.clear();
-      showQrPopup.value = false;
+      isScanning = true;
+
+      try {
+        await handleQrResult(decodedText);
+      } finally {
+        await qrScanner.stop();
+        await qrScanner.clear();
+        showQrPopup.value = false;
+      }
     },
-    () => {},
+    () => { },
   );
 };
 
@@ -1166,14 +1199,16 @@ const handleQrResult = async (decodedText) => {
     return;
   }
 
+  // Đảm bảo đã lấy danh sách khuyến mãi trước khi fetch sản phẩm
+  await fetchPromotions();
+
   let productCode = decodedText.trim();
 
-  if (!products.value.length) {
-    await fetchProducts();
-  }
+  // Load lại sản phẩm để áp dụng giá mới nhất từ promotions
+  await fetchProducts();
 
-  const product = products.value.find(
-    (p) => p.maCtsp?.toLowerCase() === productCode.toLowerCase(),
+  const product = products.value.find((p) =>
+    p.code?.toLowerCase().includes(productCode.toLowerCase()),
   );
 
   if (!product) {
@@ -1183,7 +1218,6 @@ const handleQrResult = async (decodedText) => {
 
   await addToCart(product);
 };
-
 const changeMoney = computed(() => {
   if (!currentOrder.value) return 0;
   return Math.max((currentOrder.value.paidAmount || 0) - total.value, 0);
@@ -1879,6 +1913,41 @@ const calculateShipping = async () => {
   currentOrder.value.shippingFee = res.data;
 };
 
+const revalidateCartPrice = async () => {
+  if (!currentOrder.value) return true;
+
+  try {
+    // 1️⃣ Lấy lại promotion mới nhất
+    await fetchPromotions();
+
+    // 2️⃣ Lấy lại sản phẩm mới nhất
+    await fetchProducts();
+
+    let hasChanged = false;
+
+    currentOrder.value.cart.forEach((item) => {
+      const latest = products.value.find((p) => p.id === item.id);
+
+      if (!latest) {
+        hasChanged = true;
+        return;
+      }
+
+      // So sánh giá
+      if (latest.price !== item.price) {
+        item.oldPrice = latest.oldPrice;
+        item.price = latest.price;
+        item.discountPercent = latest.discountPercent;
+        hasChanged = true;
+      }
+    });
+
+    return !hasChanged;
+  } catch (err) {
+    console.error("Lỗi revalidateCartPrice:", err);
+    return false;
+  }
+};
 const toggleDelivery = async (e) => {
   const isDelivery = e.target.checked;
   if (!currentOrder.value) return;
@@ -2245,7 +2314,8 @@ const showToast = (msg, type = "success") => {
 }
 
 .product-row {
-  display: grid; /* ✅ đổi flex thành grid */
+  display: grid;
+  /* ✅ đổi flex thành grid */
   gap: 12px;
   align-items: center;
   padding: 16px 0;
@@ -2257,8 +2327,8 @@ const showToast = (msg, type = "success") => {
   grid-template-columns: minmax(0, 2fr) 150px 130px 130px 50px;
 }
 
-.product-header > div:first-child,
-.product-row > div:first-child {
+.product-header>div:first-child,
+.product-row>div:first-child {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2268,7 +2338,8 @@ const showToast = (msg, type = "success") => {
 .product-cell-info {
   display: flex;
   align-items: center;
-  justify-content: center; /* 👈 căn giữa frame */
+  justify-content: center;
+  /* 👈 căn giữa frame */
   gap: 12px;
   min-width: 0;
 }
@@ -2484,11 +2555,11 @@ select:focus {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-.switch input:checked + .slider {
+.switch input:checked+.slider {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
 }
 
-.switch input:checked + .slider::before {
+.switch input:checked+.slider::before {
   transform: translateX(20px);
 }
 
@@ -2866,8 +2937,8 @@ select:focus {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #e8f5e9;
-  color: #22c55e;
+  background: #fff4e5;
+  color: #ff9800;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3073,12 +3144,14 @@ select:focus {
 }
 
 .ghn-icon {
-  width: 40px; /* giảm kích thước */
+  width: 40px;
+  /* giảm kích thước */
   height: auto;
   object-fit: contain;
 }
 
 @media (max-width: 1400px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.8fr) 100px 120px 110px 45px;
@@ -3086,6 +3159,7 @@ select:focus {
 }
 
 @media (max-width: 1200px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.5fr) 90px 110px 100px 40px;
@@ -3094,6 +3168,7 @@ select:focus {
 }
 
 @media (max-width: 1024px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.2fr) 80px 100px 90px 35px;

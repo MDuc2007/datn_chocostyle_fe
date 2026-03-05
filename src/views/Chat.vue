@@ -12,18 +12,14 @@
 
 
     <div class="messages-box" ref="msgBox">
-      <div
-        v-for="msg in messages"
-        :key="msg.id"
-        :class="[
-          'msg-wrapper',
-          msg.senderType === 'AI'
-            ? 'ai'
-            : msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
-              ? 'mine'
-              : 'theirs',
-        ]"
-      >
+      <div v-for="msg in messages" :key="msg.id" :class="[
+        'msg-wrapper',
+        msg.senderType === 'AI'
+          ? 'ai'
+          : msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
+            ? 'mine'
+            : 'theirs',
+      ]">
         <div class="msg-bubble">
           <div v-if="msg.senderType != 'KHACH_HANG'" class="sender-name">
             {{ msg.senderName }}
@@ -37,22 +33,11 @@
 
     <div class="input-area">
       <div class="input-wrapper">
-        <input
-          v-model="newMessage"
-          @keyup.enter="sendMessage"
-          placeholder="Nhập nội dung tin nhắn..."
-          :disabled="!senderId"
-        />
-        <button
-          @click="sendMessage"
-          :disabled="!newMessage.trim()"
-          class="send-btn"
-        >
+        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Nhập nội dung tin nhắn..."
+          :disabled="!senderId" />
+        <button @click="sendMessage" :disabled="!newMessage.trim()" class="send-btn">
           <svg viewBox="0 0 24 24" width="24" height="24">
-            <path
-              fill="currentColor"
-              d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
-            ></path>
+            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
           </svg>
         </button>
       </div>
@@ -82,9 +67,9 @@ const assignedNhanVien = ref("");
 const formatTime = (time) =>
   time
     ? new Date(time).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "";
 const scrollToBottom = () =>
   nextTick(() => {
@@ -126,9 +111,21 @@ const connectAndSubscribe = (id) => {
     messageSubscription.value = stompClient.value.subscribe(
       `/topic/chat/${id}`,
       (tick) => {
-        messages.value.push(JSON.parse(tick.body));
+        const incoming = JSON.parse(tick.body);
+
+
+        // Nếu là tin nhắn của chính mình thì bỏ qua
+        if (
+          incoming.senderId == senderId.value &&
+          incoming.senderType === "KHACH_HANG"
+        ) {
+          return;
+        }
+
+
+        messages.value.push(incoming);
         scrollToBottom();
-      }
+      },
     );
 
 
@@ -148,7 +145,7 @@ const connectAndSubscribe = (id) => {
 
 
         scrollToBottom();
-      }
+      },
     );
   });
 };
@@ -172,6 +169,16 @@ onMounted(async () => {
       messages.value = history.data;
       connectAndSubscribe(response.data.id);
       scrollToBottom();
+      if (messages.value.length === 0) {
+        messages.value.push({
+          id: Date.now(),
+          senderType: "AI",
+          senderName: "ChocoBot",
+          content:
+            "Chào anh/chị. Shop chuyên áo khoác nam. Tôi có thể hỗ trợ thông tin sản phẩm hoặc phiếu giảm giá cho anh/chị.",
+          sentAt: new Date(),
+        });
+      }
     }
   } catch (error) {
     console.log("Khách hàng mới.");
@@ -187,6 +194,18 @@ const sendMessage = async () => {
 
 
   newMessage.value = "";
+
+
+  messages.value.push({
+    id: Date.now(),
+    senderId: senderId.value,
+    senderType: senderType.value,
+    senderName: "Bạn",
+    content: content,
+    sentAt: new Date(),
+  });
+
+
   scrollToBottom();
 
 
@@ -231,45 +250,64 @@ const callAI = async (content) => {
   if (isLoading.value) return;
   isLoading.value = true;
 
-  // 1. Hiển thị tin nhắn của khách hàng lên màn hình ngay lập tức
+
+  // 1️⃣ Thêm tin nhắn loading trước khi gọi API
   messages.value.push({
-    id: Date.now(),
-    senderId: senderId.value,
-    senderType: "KHACH_HANG",
-    content: content,
+    id: "loading",
+    senderType: "AI",
+    senderName: "ChocoBot",
+    content: "Đang xử lý...",
     sentAt: new Date(),
   });
+
+
   scrollToBottom();
 
+
   try {
-    // 2. Gửi kèm ID để Backend biết đường mà lưu vào DB
     const res = await axios.post("http://localhost:8080/api/chat", {
       message: content,
-      khachHangId: senderId.value,         // Thêm dòng này
-      conversationId: conversationId.value // Thêm dòng này
     });
 
-    // 3. Hiển thị phản hồi từ AI
+
+    // 2️⃣ XÓA loading trước khi thêm câu trả lời thật
+    messages.value = messages.value.filter(
+      (m) => m.id !== "loading"
+    );
+
+
     messages.value.push({
-      id: Date.now() + 1,
+      id: Date.now(),
       senderType: "AI",
       senderName: "ChocoBot",
       content: res.data.reply,
       sentAt: new Date(),
     });
 
+
+    scrollToBottom();
   } catch (e) {
     console.error("AI lỗi:", e);
+
+
+    // 3️⃣ XÓA loading nếu có lỗi
+    messages.value = messages.value.filter(
+      (m) => m.id !== "loading"
+    );
+
+
     messages.value.push({
-      id: Date.now() + 1,
+      id: Date.now(),
       senderType: "AI",
       senderName: "Hệ thống",
-      content: "Kết nối AI thất bại, vui lòng kiểm tra console Backend.",
+      content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
       sentAt: new Date(),
     });
+
+
+    scrollToBottom();
   } finally {
     isLoading.value = false;
-    scrollToBottom();
   }
 };
 </script>
@@ -282,16 +320,19 @@ const callAI = async (content) => {
   height: 100%;
   background: #fff;
 }
+
 .chat-header {
   padding: 15px;
   background: #6b3f1e;
   color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
 .header-info h4 {
   margin: 0;
   font-size: 16px;
 }
+
 .status {
   font-size: 12px;
   margin: 4px 0 0;
@@ -299,6 +340,7 @@ const callAI = async (content) => {
   align-items: center;
   opacity: 0.9;
 }
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -317,13 +359,16 @@ const callAI = async (content) => {
   gap: 12px;
   background: #f9f9f9;
 }
+
 .msg-wrapper {
   display: flex;
   width: 100%;
 }
+
 .msg-wrapper.mine {
   justify-content: flex-end;
 }
+
 .msg-wrapper.theirs {
   justify-content: flex-start;
 }
@@ -337,11 +382,13 @@ const callAI = async (content) => {
   font-size: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
 .mine .msg-bubble {
   background: #6b3f1e;
   color: white;
   border-bottom-right-radius: 4px;
 }
+
 .theirs .msg-bubble {
   background: #fff;
   color: #333;
@@ -356,17 +403,20 @@ const callAI = async (content) => {
   margin-bottom: 4px;
   color: #6b3f1e;
 }
+
 .time {
   font-size: 10px;
   margin-top: 4px;
   opacity: 0.7;
   text-align: right;
 }
+
 .input-area {
   padding: 15px;
   background: #fff;
   border-top: 1px solid #eee;
 }
+
 .input-wrapper {
   display: flex;
   align-items: center;
@@ -374,6 +424,7 @@ const callAI = async (content) => {
   border-radius: 25px;
   padding: 4px 15px;
 }
+
 .input-wrapper input {
   flex: 1;
   background: transparent;
@@ -382,6 +433,7 @@ const callAI = async (content) => {
   outline: none;
   font-size: 14px;
 }
+
 .send-btn {
   background: none;
   border: none;
@@ -390,17 +442,14 @@ const callAI = async (content) => {
   padding: 5px;
   display: flex;
 }
+
 .send-btn:disabled {
   color: #ccc;
 }
+
 .ai .msg-bubble {
   background: #f0e6ff;
   color: #4b0082;
   border-bottom-left-radius: 4px;
 }
 </style>
-
-
-
-
-

@@ -5,7 +5,9 @@
     <div class="breadcrumb">
       <span @click="$router.push('/')">Trang chủ</span>
       <span class="separator">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
       </span>
       <span class="current">Đơn mua của tôi</span>
     </div>
@@ -16,35 +18,45 @@
       <div class="content-section">
         <div class="order-container">
           <div class="modern-tabs">
-            <div
-              v-for="status in statusTabs"
-              :key="status.value"
-              class="tab-item"
-              :class="{ active: filters.trangThai === status.value }"
-              @click="setFilterStatus(status.value)"
-            >
+            <div v-for="status in statusTabs" :key="status.value" class="tab-item"
+              :class="{ active: filters.trangThai === status.value }" @click="setFilterStatus(status.value)">
               {{ status.label }}
             </div>
           </div>
 
           <div class="order-list">
-            
+
             <div v-if="filteredInvoices.length === 0" class="empty-state">
               <div class="empty-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 8h-2.4a2 2 0 0 0-1.89-1.33l-3.41-5.12A1 1 0 0 0 12.47 1h-1a1 1 0 0 0-.83.45L7.22 6.57A2 2 0 0 0 5.4 8H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zM12 3.12l2.6 3.9H9.4L12 3.12zM21 21H3v-9h18v9z"></path>
+                  <path
+                    d="M21 8h-2.4a2 2 0 0 0-1.89-1.33l-3.41-5.12A1 1 0 0 0 12.47 1h-1a1 1 0 0 0-.83.45L7.22 6.57A2 2 0 0 0 5.4 8H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zM12 3.12l2.6 3.9H9.4L12 3.12zM21 21H3v-9h18v9z">
+                  </path>
                   <circle cx="12" cy="15" r="2"></circle>
                 </svg>
               </div>
-              <p>Chưa có đơn hàng nào ở trạng thái này</p>
+
+              <div v-if="!isLoggedIn">
+                <p>Bạn chưa đăng nhập. Vui lòng đăng nhập để xem lịch sử mua hàng.</p>
+                <button class="btn-detail mt-3" @click="$router.push('/login')">
+                  Đăng nhập ngay
+                </button>
+                <p class="mt-3 text-sm">
+                  Hoặc <span @click="$router.push('/tra-cuu')" class="link-orange">Tra cứu đơn hàng khách lẻ</span>
+                </p>
+              </div>
+              <p v-else>Chưa có đơn hàng nào ở trạng thái này</p>
+
             </div>
 
             <div v-else class="order-card" v-for="hd in filteredInvoices" :key="hd.id">
-              
+
               <div class="order-header">
                 <div class="order-id">
                   <svg class="icon-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <path
+                      d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
                     <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                     <line x1="12" y1="22.08" x2="12" y2="12"></line>
                   </svg>
@@ -65,7 +77,7 @@
                   <span class="label">Cập nhật lần cuối:</span>
                   <span class="value">{{ hd.ngayCapNhat ? formatDate(hd.ngayCapNhat) : formatDate(hd.ngayTao) }}</span>
                 </div>
-                </div>
+              </div>
 
               <div class="order-footer">
                 <div class="total-price-box">
@@ -100,6 +112,7 @@ import ClientSidebar from "../../pages/views/ClientSidebar.vue";
 const router = useRouter();
 const invoices = ref([]);
 const filters = ref({ trangThai: null });
+const isLoggedIn = ref(false); // Thêm state kiểm tra đăng nhập
 
 const statusTabs = [
   { label: "Tất cả", value: null },
@@ -112,11 +125,12 @@ const statusTabs = [
 const fetchMyOrders = async () => {
   try {
     const userStr = localStorage.getItem("user");
+
+    // ĐÃ SỬA: Nếu không có user, không đá ra trang login nữa
     if (!userStr) {
-      alert("Vui lòng đăng nhập!");
-      router.push("/login");
       return;
     }
+
     const user = JSON.parse(userStr);
     const res = await axios.get("http://localhost:8080/api/hoa-don/my-orders", {
       headers: { Authorization: `Bearer ${user.accessToken}` },
@@ -179,6 +193,8 @@ const getStatusClass = (stt) => {
 };
 
 onMounted(() => {
+  // Cập nhật trạng thái đăng nhập để render giao diện tương ứng
+  isLoggedIn.value = !!localStorage.getItem("user");
   fetchMyOrders();
 });
 </script>
@@ -251,11 +267,13 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .modern-tabs::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
+  /* Chrome/Safari */
 }
 
 .tab-item {
@@ -348,17 +366,41 @@ onMounted(() => {
   border-radius: 50%;
 }
 
-.status-success { color: #059669; }
-.status-success .status-dot { background-color: #059669; box-shadow: 0 0 0 3px #ecfdf5; }
+.status-success {
+  color: #059669;
+}
 
-.status-danger { color: #dc2626; }
-.status-danger .status-dot { background-color: #dc2626; box-shadow: 0 0 0 3px #fef2f2; }
+.status-success .status-dot {
+  background-color: #059669;
+  box-shadow: 0 0 0 3px #ecfdf5;
+}
 
-.status-warning { color: #d97706; }
-.status-warning .status-dot { background-color: #d97706; box-shadow: 0 0 0 3px #fffbeb; }
+.status-danger {
+  color: #dc2626;
+}
 
-.status-info { color: #0284c7; }
-.status-info .status-dot { background-color: #0284c7; box-shadow: 0 0 0 3px #e0f2fe; }
+.status-danger .status-dot {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 3px #fef2f2;
+}
+
+.status-warning {
+  color: #d97706;
+}
+
+.status-warning .status-dot {
+  background-color: #d97706;
+  box-shadow: 0 0 0 3px #fffbeb;
+}
+
+.status-info {
+  color: #0284c7;
+}
+
+.status-info .status-dot {
+  background-color: #0284c7;
+  box-shadow: 0 0 0 3px #e0f2fe;
+}
 
 /* Body Card */
 .order-body {
@@ -404,7 +446,8 @@ onMounted(() => {
 }
 
 .total-price-box .money {
-  color: #ee4d2d; /* Màu cam đỏ chuẩn e-commerce */
+  color: #ee4d2d;
+  /* Màu cam đỏ chuẩn e-commerce */
   font-size: 18px;
   font-weight: 700;
 }
@@ -452,33 +495,48 @@ onMounted(() => {
   margin: 0;
 }
 
+.mt-3 {
+  margin-top: 15px;
+}
+
+.text-sm {
+  font-size: 14px;
+}
+
+.link-orange {
+  color: #ee4d2d;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* ================== RESPONSIVE ================== */
 @media (max-width: 768px) {
   .main-layout {
     flex-direction: column;
   }
-  
+
   .tab-item {
     padding: 14px 16px;
     font-size: 14px;
   }
-  
+
   .order-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .order-footer {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .total-price-box {
     justify-content: flex-end;
   }
-  
+
   .btn-detail {
     width: 100%;
   }

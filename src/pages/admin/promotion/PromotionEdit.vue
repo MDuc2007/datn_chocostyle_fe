@@ -92,7 +92,6 @@
                   </button>
                 </th>
                 <th>Ảnh</th>
-                <th>Ảnh</th>
                 <th>Mã SP</th>
                 <th>Tên sản phẩm</th>
               </tr>
