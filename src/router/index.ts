@@ -17,10 +17,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/DetailProductHome.vue"),
   },
   {
-    path: '/change-password',
-    name: 'ChangePassword',
+    path: "/change-password",
+    name: "ChangePassword",
     component: () => import("../pages/views/ChangePassword.vue"),
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true },
   },
   {
     path: "/moi-ve",
@@ -432,9 +432,10 @@ router.beforeEach((to, from, next) => {
     "/admin/login",
     "/uu-dai",
     "/payment",
-    "/ao-khoac",       // <--- Thêm trang Áo khoác
-    "/tra-cuu",        // <--- Thêm trang Tra cứu đơn hàng
-    "/payment-result"  // <--- Thêm trang Kết quả thanh toán
+    "/ao-khoac", // <--- Thêm trang Áo khoác
+    "/tra-cuu", // <--- Thêm trang Tra cứu đơn hàng
+    "/payment-result", // <--- Thêm trang Kết quả thanh toán
+    "/my-orders"
   ];
 
   const isPublic =

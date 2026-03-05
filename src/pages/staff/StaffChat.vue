@@ -5,18 +5,13 @@
         <h3>Inbox Hỗ Trợ</h3>
       </div>
       <div class="conversation-list">
-        <div
-          v-for="conv in conversations"
-          :key="conv.id"
-          :class="[
-            'conversation-item',
-            {
-              active: currentConversation?.id === conv.id,
-              'is-waiting': !conv.nhanVien,
-            },
-          ]"
-          @click="selectConversation(conv)"
-        >
+        <div v-for="conv in conversations" :key="conv.id" :class="[
+          'conversation-item',
+          {
+            active: currentConversation?.id === conv.id,
+            'is-waiting': !conv.nhanVien,
+          },
+        ]" @click="selectConversation(conv)">
           <div class="avatar-circle">
             {{ conv.khachHang.tenKhachHang.charAt(0) }}
           </div>
@@ -52,14 +47,10 @@
 
 
         <div class="messages-display" ref="msgBox">
-          <div
-            v-for="msg in messages"
-            :key="msg.id"
-            :class="[
-              'message-row',
-              msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
-            ]"
-          >
+          <div v-for="msg in messages" :key="msg.id" :class="[
+            'message-row',
+            msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
+          ]">
             <div class="message-bubble">
               <div class="content">{{ msg.content }}</div>
               <div class="msg-time">{{ formatTime(msg.sentAt) }}</div>
@@ -70,16 +61,9 @@
 
         <div class="chat-input-area">
           <div class="input-container">
-            <input
-              v-model="newMessage"
-              @keyup.enter="sendChatMessage"
-              placeholder="Nhập câu trả lời cho khách hàng..."
-            />
-            <button
-              @click="sendChatMessage"
-              :disabled="!newMessage.trim()"
-              class="staff-send-btn"
-            >
+            <input v-model="newMessage" @keyup.enter="sendChatMessage"
+              placeholder="Nhập câu trả lời cho khách hàng..." />
+            <button @click="sendChatMessage" :disabled="!newMessage.trim()" class="staff-send-btn">
               Gửi tin nhắn
             </button>
           </div>
@@ -283,19 +267,23 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
 }
+
 .sidebar-header {
   padding: 25px 20px;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .sidebar-header h3 {
   margin: 0;
   color: #6b3f23;
   font-size: 18px;
 }
+
 .conversation-list {
   flex: 1;
   overflow-y: auto;
 }
+
 .conversation-item {
   display: flex;
   padding: 15px 20px;
@@ -305,13 +293,16 @@ onMounted(async () => {
   border-bottom: 1px solid #f9f9f9;
   align-items: center;
 }
+
 .conversation-item:hover {
   background: #fdf8f4;
 }
+
 .conversation-item.active {
   background: #fdf8f4;
   border-right: 4px solid #6b3f23;
 }
+
 .is-waiting {
   background: #fff9f0;
 }
@@ -329,16 +320,19 @@ onMounted(async () => {
   font-weight: bold;
   font-size: 18px;
 }
+
 .name-box {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
 }
+
 .customer-name {
   font-weight: 600;
   color: #333;
 }
+
 .badge-new {
   background: #ff9800;
   color: white;
@@ -347,6 +341,7 @@ onMounted(async () => {
   border-radius: 10px;
   font-weight: bold;
 }
+
 .last-msg {
   font-size: 13px;
   color: #888;
@@ -361,16 +356,19 @@ onMounted(async () => {
   flex-direction: column;
   background: #fcfcfc;
 }
+
 .chat-window-header {
   padding: 15px 30px;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .customer-profile {
   display: flex;
   align-items: center;
   gap: 15px;
 }
+
 .header-avatar {
   width: 40px;
   height: 40px;
@@ -381,10 +379,12 @@ onMounted(async () => {
   justify-content: center;
   font-weight: bold;
 }
+
 .header-text h4 {
   margin: 0;
   color: #333;
 }
+
 .header-text span {
   font-size: 12px;
   color: #4caf50;
@@ -399,13 +399,16 @@ onMounted(async () => {
   flex-direction: column;
   gap: 20px;
 }
+
 .message-row {
   display: flex;
   width: 100%;
 }
+
 .message-row.mine {
   justify-content: flex-end;
 }
+
 .message-row.theirs {
   justify-content: flex-start;
 }
@@ -419,17 +422,20 @@ onMounted(async () => {
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
+
 .mine .message-bubble {
   background: #6b3f23;
   color: white;
   border-bottom-right-radius: 4px;
 }
+
 .theirs .message-bubble {
   background: #fff;
   color: #333;
   border-bottom-left-radius: 4px;
   border: 1px solid #eee;
 }
+
 .msg-time {
   font-size: 11px;
   margin-top: 6px;
@@ -442,11 +448,13 @@ onMounted(async () => {
   background: #fff;
   border-top: 1px solid #f0f0f0;
 }
+
 .input-container {
   display: flex;
   gap: 15px;
   align-items: center;
 }
+
 .input-container input {
   flex: 1;
   border: 1px solid #ddd;
@@ -455,10 +463,12 @@ onMounted(async () => {
   outline: none;
   transition: 0.3s;
 }
+
 .input-container input:focus {
   border-color: #6b3f23;
   box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1);
 }
+
 .staff-send-btn {
   background: #6b3f23;
   color: white;
@@ -469,6 +479,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: 0.3s;
 }
+
 .staff-send-btn:hover {
   background: #5a3419;
 }
@@ -483,11 +494,9 @@ onMounted(async () => {
   color: #aaa;
   text-align: center;
 }
+
 .empty-icon {
   font-size: 60px;
   margin-bottom: 20px;
 }
 </style>
-
-
-
