@@ -203,7 +203,7 @@
 
               <div class="attribute-group">
                 <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
-                }})</span></label>
+                    }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
                   <input type="number" v-model="quantity" min="1" readonly />
@@ -689,22 +689,21 @@ onMounted(() => {
 
 .image-box {
   width: 100%;
-  height: 300px;
-  background: #fff;
+  height: 280px;
+  background: #F9F9F9;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  cursor: pointer;
   position: relative;
-  
-  /* SỬA DÒNG NÀY: Theo thứ tự là (Trên - Phải - Dưới - Trái) */
-  padding: 30px 15px 15px 15px; 
 }
+
 .image-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; 
-  transition: transform 0.5s ease;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .product-card:hover .image-box img {
