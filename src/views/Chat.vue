@@ -10,16 +10,19 @@
       </div>
     </div>
 
-
     <div class="messages-box" ref="msgBox">
-      <div v-for="msg in messages" :key="msg.id" :class="[
-        'msg-wrapper',
-        msg.senderType === 'AI'
-          ? 'ai'
-          : msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
-            ? 'mine'
-            : 'theirs',
-      ]">
+      <div
+        v-for="msg in messages"
+        :key="msg.id"
+        :class="[
+          'msg-wrapper',
+          msg.senderType === 'AI'
+            ? 'ai'
+            : msg.senderId == senderId && msg.senderType == 'KHACH_HANG'
+              ? 'mine'
+              : 'theirs',
+        ]"
+      >
         <div class="msg-bubble">
           <div v-if="msg.senderType != 'KHACH_HANG'" class="sender-name">
             {{ msg.senderName }}
@@ -30,14 +33,24 @@
       </div>
     </div>
 
-
     <div class="input-area">
       <div class="input-wrapper">
-        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Nhập nội dung tin nhắn..."
-          :disabled="!senderId" />
-        <button @click="sendMessage" :disabled="!newMessage.trim()" class="send-btn">
+        <input
+          v-model="newMessage"
+          @keyup.enter="sendMessage"
+          placeholder="Nhập nội dung tin nhắn..."
+          :disabled="!senderId"
+        />
+        <button
+          @click="sendMessage"
+          :disabled="!newMessage.trim()"
+          class="send-btn"
+        >
           <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            <path
+              fill="currentColor"
+              d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+            ></path>
           </svg>
         </button>
       </div>
@@ -45,13 +58,11 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
-
 
 const stompClient = ref(null);
 const connected = ref(false);
@@ -63,23 +74,20 @@ const senderType = ref("KHACH_HANG");
 const conversationId = ref(null);
 const assignedNhanVien = ref("");
 
-
 const formatTime = (time) =>
   time
     ? new Date(time).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : "";
 const scrollToBottom = () =>
   nextTick(() => {
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
 
-
 const messageSubscription = ref(null);
 const takeoverSubscription = ref(null);
-
 
 const connectAndSubscribe = (id) => {
   // Nếu đã có connection thì đóng lại trước
@@ -87,32 +95,26 @@ const connectAndSubscribe = (id) => {
     stompClient.value.disconnect();
   }
 
-
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
 
-
   stompClient.value.connect({}, () => {
     connected.value = true;
-
 
     // Nếu đã từng subscribe thì hủy trước
     if (messageSubscription.value) {
       messageSubscription.value.unsubscribe();
     }
 
-
     if (takeoverSubscription.value) {
       takeoverSubscription.value.unsubscribe();
     }
-
 
     messageSubscription.value = stompClient.value.subscribe(
       `/topic/chat/${id}`,
       (tick) => {
         const incoming = JSON.parse(tick.body);
-
 
         // Nếu là tin nhắn của chính mình thì bỏ qua
         if (
@@ -122,18 +124,15 @@ const connectAndSubscribe = (id) => {
           return;
         }
 
-
         messages.value.push(incoming);
         scrollToBottom();
       },
     );
 
-
     takeoverSubscription.value = stompClient.value.subscribe(
       `/topic/chat/takeover/${id}`,
       (tick) => {
         assignedNhanVien.value = tick.body;
-
 
         messages.value.push({
           id: Date.now(),
@@ -142,7 +141,6 @@ const connectAndSubscribe = (id) => {
           content: "Nhân viên " + tick.body + " đã tiếp nhận cuộc trò chuyện.",
           sentAt: new Date(),
         });
-
 
         scrollToBottom();
       },
@@ -185,16 +183,12 @@ onMounted(async () => {
   }
 });
 
-
 const sendMessage = async () => {
   if (!newMessage.value.trim()) return;
 
-
   const content = newMessage.value;
 
-
   newMessage.value = "";
-
 
   messages.value.push({
     id: Date.now(),
@@ -205,21 +199,17 @@ const sendMessage = async () => {
     sentAt: new Date(),
   });
 
-
   scrollToBottom();
-
 
   if (!conversationId.value) {
     await callAI(content);
     return;
   }
 
-
   if (!assignedNhanVien.value || assignedNhanVien.value.includes("Đang chờ")) {
     await callAI(content);
     return;
   }
-
 
   const attemptSend = () => {
     if (connected.value) {
@@ -238,18 +228,14 @@ const sendMessage = async () => {
     }
   };
 
-
   attemptSend();
 };
 
-
 const isLoading = ref(false); // Thêm dòng này
-
 
 const callAI = async (content) => {
   if (isLoading.value) return;
   isLoading.value = true;
-
 
   // 1️⃣ Thêm tin nhắn loading trước khi gọi API
   messages.value.push({
@@ -260,21 +246,15 @@ const callAI = async (content) => {
     sentAt: new Date(),
   });
 
-
   scrollToBottom();
-
 
   try {
     const res = await axios.post("http://localhost:8080/api/chat", {
       message: content,
     });
 
-
     // 2️⃣ XÓA loading trước khi thêm câu trả lời thật
-    messages.value = messages.value.filter(
-      (m) => m.id !== "loading"
-    );
-
+    messages.value = messages.value.filter((m) => m.id !== "loading");
 
     messages.value.push({
       id: Date.now(),
@@ -284,17 +264,12 @@ const callAI = async (content) => {
       sentAt: new Date(),
     });
 
-
     scrollToBottom();
   } catch (e) {
     console.error("AI lỗi:", e);
 
-
     // 3️⃣ XÓA loading nếu có lỗi
-    messages.value = messages.value.filter(
-      (m) => m.id !== "loading"
-    );
-
+    messages.value = messages.value.filter((m) => m.id !== "loading");
 
     messages.value.push({
       id: Date.now(),
@@ -304,14 +279,12 @@ const callAI = async (content) => {
       sentAt: new Date(),
     });
 
-
     scrollToBottom();
   } finally {
     isLoading.value = false;
   }
 };
 </script>
-
 
 <style scoped>
 .chat-popup-inner {
@@ -349,7 +322,6 @@ const callAI = async (content) => {
   margin-right: 6px;
 }
 
-
 .messages-box {
   flex: 1;
   overflow-y: auto;
@@ -373,7 +345,6 @@ const callAI = async (content) => {
   justify-content: flex-start;
 }
 
-
 .msg-bubble {
   max-width: 80%;
   padding: 10px 14px;
@@ -395,7 +366,6 @@ const callAI = async (content) => {
   border-bottom-left-radius: 4px;
   border: 1px solid #eee;
 }
-
 
 .sender-name {
   font-size: 11px;

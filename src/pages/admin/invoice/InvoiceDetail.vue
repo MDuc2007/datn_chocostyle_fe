@@ -706,6 +706,7 @@ const timelineSteps = computed(() => {
 
   return finalSteps;
 });
+
 const getPaymentMethodName = () => {
   if (
     invoice.value &&
