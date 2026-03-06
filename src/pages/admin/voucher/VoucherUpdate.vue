@@ -56,8 +56,9 @@
           <label> Giá trị giảm <span class="required">*</span> </label>
           <div class="input-suffix">
             <input
-              type="number"
-              v-model.number="form.giaTri"
+              type="text"
+              v-model="giaTriDisplay"
+              @input="handleGiaTriInput"
               :disabled="voucherMeta.trangThai !== 'CHUA_DIEN_RA'"
               :class="{ error: errors.giaTri }"
             />
@@ -76,8 +77,9 @@
             <span v-if="form.loaiGiam === 'PERCENT'" class="required">*</span>
           </label>
           <input
-            type="number"
-            v-model.number="form.giaTriToiDa"
+            type="text"
+            v-model="giaTriToiDaDisplay"
+            @input="handleGiaTriToiDaInput"
             :disabled="
               form.loaiGiam === 'MONEY' ||
               voucherMeta.trangThai !== 'CHUA_DIEN_RA'
@@ -93,8 +95,9 @@
         <div class="form-group">
           <label> Điều kiện đơn hàng <span class="required">*</span> </label>
           <input
-            type="number"
-            v-model.number="form.dieuKienDonHang"
+            type="text"
+            v-model="dieuKienDisplay"
+            @input="handleDieuKienInput"
             :class="{ error: errors.dieuKienDonHang }"
           />
           <small v-if="errors.dieuKienDonHang" class="error-text">
@@ -322,6 +325,33 @@ const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
 let originalTenPgg = "";
+
+const giaTriDisplay = ref("");
+const giaTriToiDaDisplay = ref("");
+const dieuKienDisplay = ref("");
+
+const formatNumber = (value) => {
+  if (!value) return "";
+  return Number(value).toLocaleString("vi-VN");
+};
+
+const handleGiaTriInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.giaTri = Number(raw);
+  giaTriDisplay.value = formatNumber(raw);
+};
+
+const handleGiaTriToiDaInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.giaTriToiDa = Number(raw);
+  giaTriToiDaDisplay.value = formatNumber(raw);
+};
+
+const handleDieuKienInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.dieuKienDonHang = Number(raw);
+  dieuKienDisplay.value = formatNumber(raw);
+};
 
 const selectedCustomerIds = ref([]);
 
@@ -801,6 +831,10 @@ onMounted(async () => {
     ngayKetThuc,
     soLuong,
   });
+
+  giaTriDisplay.value = formatNumber(form.giaTri);
+  giaTriToiDaDisplay.value = formatNumber(form.giaTriToiDa);
+  dieuKienDisplay.value = formatNumber(form.dieuKienDonHang);
 
   originalTenPgg = tenPgg;
 
