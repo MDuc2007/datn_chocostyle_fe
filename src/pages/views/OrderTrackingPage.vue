@@ -70,21 +70,6 @@
 
     <transition name="toast-slide">
       <div v-if="toast.show" class="modern-toast" :class="'toast-' + toast.type">
-        <div class="toast-icon-wrap">
-          <svg v-if="toast.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <svg v-else-if="toast.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-        </div>
         <div class="toast-text">{{ toast.message }}</div>
       </div>
     </transition>
@@ -424,19 +409,20 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.toast-success .toast-icon-wrap {
+
+.toast-success {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
 }
 
-.toast-error .toast-icon-wrap {
+.toast-error {
   background: #f8d7da;
   color: #721c24;
   border-left: 4px solid #dc3545;
 }
 
-.toast-warning .toast-icon-wrap {
+.toast-warning {
   background: #ffc107;
   color: #333;
   border-left: 4px solid #ff9800;

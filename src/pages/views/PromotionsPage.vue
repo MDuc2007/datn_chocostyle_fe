@@ -159,7 +159,7 @@
                     <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
                       formatPrice(selectedProduct.giaMin) }}</span>
                     <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
-                      }}</span>
+                    }}</span>
                   </span>
                 </p>
               </div>
@@ -182,7 +182,7 @@
 
               <div class="attribute-group">
                 <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
-                    }})</span></label>
+                }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
                   <input type="number" v-model="quantity" min="1" readonly />
@@ -343,7 +343,7 @@ const fetchFilteredData = async (isAppend = false) => {
             const currentGia = item.giaSauGiam || item.giaBan;
             if (currentGia < existing.giaMin) existing.giaMin = currentGia;
             if (currentGia > existing.giaMax) existing.giaMax = currentGia;
-            
+
             // 👉 CẬP NHẬT LẤY % GIẢM GIÁ CAO NHẤT (MAX)
             if (percent > existing.phanTramGiam) {
               existing.phanTramGiam = percent;
@@ -684,18 +684,26 @@ onMounted(() => {
 
 .image-box {
   width: 100%;
-  height: 300px;
-  background: #fff;
+  height: 280px;
+  background: #F9F9F9;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  position: relative;
   cursor: pointer;
+  position: relative;
 }
 
-.image-box img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.5s ease; }
-.product-card:hover .image-box img { transform: scale(1.05); }
+.image-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card:hover .image-box img {
+  transform: scale(1.05);
+}
 
 .badge {
   position: absolute;

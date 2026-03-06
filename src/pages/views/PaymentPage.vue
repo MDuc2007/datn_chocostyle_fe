@@ -196,45 +196,35 @@
               &times;
             </button>
           </div>
-          <div class="modal-body custom-scroll">
-            <div v-if="availableVouchers.length > 0" class="voucher-list">
-              <div v-for="v in availableVouchers" :key="v.id" class="v-card-modern"
+          <div class="modal-body custom-scroll shopee-modal-body">
+            <div v-if="processedVouchers.length > 0" class="voucher-list">
+              <div v-for="v in processedVouchers" :key="v.id" class="shopee-voucher-card"
                 :class="{ 'v-active': selectedVoucher?.id === v.id }" @click="selectVoucher(v)">
-                <div class="v-tag-side">
-                  <div class="brand-logo">CHOCO</div>
-                  <div class="ticket-name">Mã giảm giá</div>
+
+                <div class="v-best-badge" v-if="v.isBest">Lựa chọn tốt nhất</div>
+
+                <div class="shopee-v-left">
+                  <div class="brand-text">CHOCO<br />STYLE</div>
                 </div>
-                <div class="v-content-main">
-                  <div class="v-header">
-                    <span class="v-code">{{ v.maPgg }}</span>
-                    <span class="v-name">{{ v.tenPgg }}</span>
+
+                <div class="shopee-v-right">
+                  <div class="v-info-wrap">
+                    <div class="v-title">Giảm {{ v.loaiGiam === "PERCENT" ? v.giaTri + "%" : formatPrice(v.giaTri) }}
+                    </div>
+                    <div class="v-condition">Đơn tối thiểu {{ formatPrice(v.dieueKienDonHang || v.dieuKienDonHang || 0)
+                    }}</div>
+
+                    <div class="v-expiry">
+                      <span v-if="v.giaTriToiDa && v.loaiGiam === 'PERCENT'" class="v-max-discount">
+                        Giảm tối đa {{ formatPrice(v.giaTriToiDa) }}
+                      </span>
+                      HSD: {{ v.ngayKetThuc }}
+                    </div>
                   </div>
-                  <div class="v-details">
-                    <p>
-                      ✨ Giảm:
-                      <strong>{{
-                        v.loaiGiam === "PERCENT"
-                          ? v.giaTri + "%"
-                          : formatPrice(v.giaTri)
-                      }}</strong>
-                    </p>
-                    <p v-if="v.giaTriToiDa">
-                      📉 Tối đa:
-                      <strong>{{ formatPrice(v.giaTriToiDa) }}</strong>
-                    </p>
-                    <p>
-                      📦 Đơn tối thiểu:
-                      <strong>{{
-                        formatPrice(
-                          v.dieueKienDonHang || v.dieuKienDonHang || 0,
-                        )
-                      }}</strong>
-                    </p>
-                    <p class="v-exp">📅 HSD: {{ v.ngayKetThuc }}</p>
+
+                  <div class="v-radio-wrap">
+                    <div class="shopee-radio" :class="{ 'checked': selectedVoucher?.id === v.id }"></div>
                   </div>
-                </div>
-                <div class="v-selected-icon" v-if="selectedVoucher?.id === v.id">
-                  ✓
                 </div>
               </div>
             </div>
@@ -315,10 +305,6 @@
     <div class="toast-container">
       <transition-group name="slide-fade">
         <div v-for="notif in notifications" :key="notif.id" class="modern-toast" :class="'toast-' + notif.type">
-          <span class="toast-icon">
-            <template v-if="notif.type === 'success'">✓</template>
-            <template v-else>✕</template>
-          </span>
           <span class="toast-message">{{ notif.message }}</span>
         </div>
       </transition-group>
@@ -662,6 +648,42 @@ const finalTotal = computed(() => {
   return total > 0 ? Math.round(total) : 0;
 });
 
+// Tính toán số tiền giảm và tìm "Lựa chọn tốt nhất"
+const processedVouchers = computed(() => {
+  const basePrice = subTotal.value;
+
+  let list = availableVouchers.value.map(v => {
+    const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
+    const isEligible = basePrice >= dieuKien;
+
+    // Giả lập tính toán số tiền thực tế sẽ được giảm
+    let simulatedDiscount = 0;
+    if (isEligible) {
+      if (v.loaiGiam === "PERCENT") {
+        simulatedDiscount = (basePrice * v.giaTri) / 100;
+        if (v.giaTriToiDa && simulatedDiscount > v.giaTriToiDa) {
+          simulatedDiscount = v.giaTriToiDa;
+        }
+      } else {
+        simulatedDiscount = v.giaTri;
+      }
+    }
+
+    return { ...v, simulatedDiscount };
+  });
+
+  // Sắp xếp giảm dần theo số tiền được giảm (mã giảm nhiều nhất lên đầu)
+  list.sort((a, b) => b.simulatedDiscount - a.simulatedDiscount);
+
+  // Đánh dấu "Lựa chọn tốt nhất" cho voucher đầu tiên (nếu có giảm giá)
+  if (list.length > 0 && list[0].simulatedDiscount > 0) {
+    list[0].isBest = true;
+  }
+
+  return list;
+});
+
+// Giữ nguyên logic báo lỗi gốc của bạn
 const selectVoucher = (v) => {
   const basePrice = subTotal.value;
   const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
@@ -780,10 +802,10 @@ const updateOriginalCartAfterPurchase = () => {
 const fetchCustomer = async () => {
   const userStr = localStorage.getItem("user");
   if (!userStr) return;
-  
+
   // 👉 SỬA LẠI: Lấy 'id' thay vì 'username'
   const user = JSON.parse(userStr);
-  const userId = user.id; 
+  const userId = user.id;
   const token = user.accessToken || localStorage.getItem("token");
 
   if (!userId) return;
@@ -794,7 +816,7 @@ const fetchCustomer = async () => {
       `http://localhost:8080/api/khach-hang/${userId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    
+
     customer.value = res.data;
     form.value.tenKhachHang = res.data.tenKhachHang;
     form.value.soDienThoai = res.data.soDienThoai;
@@ -805,9 +827,9 @@ const fetchCustomer = async () => {
       form.value.diaChiCuThe = addr.diaChiCuThe;
       await mapAddressFromText(addr.thanhPho, addr.quan, addr.phuong);
     }
-    
+
     await fetchVouchers(res.data.id);
-    
+
   } catch (err) {
     console.error("Lỗi lấy thông tin khách hàng:", err);
   }
@@ -1489,10 +1511,6 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   cursor: pointer;
 }
 
-.btn-close-modal:hover {
-  color: #dc3545;
-}
-
 .modal-body {
   padding: 25px;
   overflow-y: auto;
@@ -1634,28 +1652,18 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   border-left: 4px solid #28a745;
 }
 
-.toast-success .toast-icon {
-  background: #d4edda;
-  color: #28a745;
-}
-
 .toast-error {
-  border-left-color: #dc3545;
-}
-
-.toast-error .toast-icon {
   background: #f8d7da;
-  color: #dc3545;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
 .toast-warning {
-  border-left-color: #ffc107;
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
-.toast-warning .toast-icon {
-  background: #fff3cd;
-  color: #ffc107;
-}
 
 .toast-icon {
   width: 24px;
@@ -2236,5 +2244,138 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 :deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
   background-color: #e9ecef;
   border-color: #e9ecef;
+}
+
+/* ================== SHOPEE VOUCHER STYLE ================== */
+.shopee-modal-body {
+  background-color: #f5f5f5;
+  padding: 15px;
+}
+
+.shopee-voucher-card {
+  display: flex;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 12px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s;
+  height: 130px;
+}
+
+.shopee-voucher-card:hover {
+  border-color: #ee4d2d;
+}
+
+.shopee-voucher-card.v-active {
+  border-color: #ee4d2d;
+  background-color: #fffaf9;
+}
+
+/* Cột bên trái (Màu Cam đặc trưng) */
+.shopee-v-left {
+  width: 100px;
+  background: #ee4d2d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px dashed #e8e8e8;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+/* Cột bên phải (Chứa thông tin) */
+.shopee-v-right {
+  flex-grow: 1;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.v-info-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.v-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #222;
+}
+
+.v-condition {
+  font-size: 13px;
+  color: #555;
+}
+
+.v-max-discount {
+  display: inline-block;
+  color: #ee4d2d;
+  background: #ffefe8;
+  padding: 2px 4px;
+  border-radius: 2px;
+  margin-right: 6px;
+  font-size: 11px;
+}
+
+.v-expiry {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* Nhãn Lựa chọn tốt nhất */
+.v-best-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background: #ee4d2d;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-bottom-left-radius: 6px;
+  z-index: 2;
+  box-shadow: -1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Nút Check hình tròn giống Shopee */
+.shopee-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #dcdcdc;
+  position: relative;
+  transition: 0.2s;
+}
+
+.shopee-radio.checked {
+  border-color: #ee4d2d;
+  background-color: #ee4d2d;
+}
+
+.shopee-radio.checked::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 </style>

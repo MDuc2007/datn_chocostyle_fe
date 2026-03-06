@@ -10,18 +10,21 @@
       </div>
 
       <button class="slider-arrow prev" @click="prevBanner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
       <button class="slider-arrow next" @click="nextBanner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
 
       <div class="slider-dots">
-        <span v-for="(_, index) in banners" :key="index" class="dot" :class="{ active: currentBanner === index }" @click="goToBanner(index)"></span>
+        <span v-for="(_, index) in banners" :key="index" class="dot" :class="{ active: currentBanner === index }"
+          @click="goToBanner(index)"></span>
       </div>
     </section>
 
@@ -46,7 +49,10 @@
 
           <div class="slider-row">
             <button class="arrow left" @click="scrollLeft('bestSellerRef')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
 
             <div class="slider-container" ref="bestSellerRef">
@@ -66,8 +72,10 @@
                         <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                       </p>
                       <p class="price new-price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }}</span>
-                        <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
+                          sp.phanTramGiam)) }}</span>
+                        <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
+                          formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
                       </p>
                     </template>
                     <template v-else>
@@ -78,7 +86,11 @@
                     </template>
                   </div>
                   <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
                     Thêm Nhanh
                   </button>
                 </div>
@@ -86,7 +98,10 @@
             </div>
 
             <button class="arrow right" @click="scrollRight('bestSellerRef')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         </section>
@@ -99,7 +114,10 @@
 
           <div class="slider-row">
             <button class="arrow left" @click="scrollLeft('saleProductRef')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
 
             <div class="slider-container" ref="saleProductRef">
@@ -117,12 +135,19 @@
                       <span v-else>{{ formatPrice(sp.giaGoc || sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                     </p>
                     <p class="price new-price">
-                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }}</span>
-                      <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
+                        sp.phanTramGiam))
+                        }}</span>
+                      <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
+                        formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
                     </p>
                   </div>
                   <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
                     Thêm Nhanh
                   </button>
                 </div>
@@ -130,7 +155,10 @@
             </div>
 
             <button class="arrow right" @click="scrollRight('saleProductRef')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         </section>
@@ -144,7 +172,8 @@
           <div v-if="products.length > 0">
             <div class="product-grid">
               <transition-group name="staggered-fade" tag="div" class="grid-wrapper">
-                <div v-for="(sp, index) in displayedProducts" :key="sp.id" class="product-card" :style="{ '--delay': `${index * 0.05}s` }" @click="goDetail(sp.id)">
+                <div v-for="(sp, index) in displayedProducts" :key="sp.id" class="product-card"
+                  :style="{ '--delay': `${index * 0.05}s` }" @click="goDetail(sp.id)">
                   <div class="image-box">
                     <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
                     <span v-if="sp.phanTramGiam > 0" class="badge badge-sale">-{{ sp.phanTramGiam }}%</span>
@@ -159,8 +188,10 @@
                           <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                         </p>
                         <p class="price new-price">
-                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }}</span>
-                          <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
+                            sp.phanTramGiam)) }}</span>
+                          <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
+                            formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
                         </p>
                       </template>
                       <template v-else>
@@ -171,7 +202,11 @@
                       </template>
                     </div>
                     <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
                       Thêm Nhanh
                     </button>
                   </div>
@@ -198,7 +233,11 @@
 
     <transition name="fade">
       <button v-if="showScrollTop" class="scroll-top-btn" @click="scrollToTop">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
       </button>
     </transition>
 
@@ -234,7 +273,8 @@
             </div>
 
             <div class="modal-right">
-              <span class="modal-tag" v-if="selectedProduct.phanTramGiam > 0">HOT SALE -{{ selectedProduct.phanTramGiam }}%</span>
+              <span class="modal-tag" v-if="selectedProduct.phanTramGiam > 0">HOT SALE -{{ selectedProduct.phanTramGiam
+                }}%</span>
               <h3 class="modal-product-name">{{ selectedProduct.tenSp }}</h3>
 
               <div class="modal-price-box">
@@ -243,24 +283,32 @@
                     {{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}
                   </span>
                   <span class="modal-current-price">
-                    {{ formatPrice(getDiscountedPrice(currentVariant.giaBan || currentVariant.gia, selectedProduct.phanTramGiam)) }}
+                    {{ formatPrice(getDiscountedPrice(currentVariant.giaBan || currentVariant.gia,
+                      selectedProduct.phanTramGiam)) }}
                   </span>
                 </template>
                 <template v-else>
                   <template v-if="selectedProduct.phanTramGiam > 0">
                     <span class="modal-old-price">
-                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
-                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                        }}</span>
                     </span>
                     <span class="modal-current-price">
-                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(getDiscountedPrice(selectedProduct.giaMin, selectedProduct.phanTramGiam)) }}</span>
-                      <span v-else>{{ formatPrice(getDiscountedPrice(selectedProduct.giaMin, selectedProduct.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(selectedProduct.giaMax, selectedProduct.phanTramGiam)) }}</span>
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(getDiscountedPrice(selectedProduct.giaMin, selectedProduct.phanTramGiam)) }}</span>
+                      <span v-else>{{ formatPrice(getDiscountedPrice(selectedProduct.giaMin,
+                        selectedProduct.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(selectedProduct.giaMax,
+                        selectedProduct.phanTramGiam)) }}</span>
                     </span>
                   </template>
                   <template v-else>
                     <span class="modal-current-price">
-                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
-                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                        }}</span>
                     </span>
                   </template>
                 </template>
@@ -269,21 +317,24 @@
               <div class="attribute-group" v-if="availableColors.length > 0">
                 <label>Màu sắc:</label>
                 <div class="btn-group color-group">
-                  <button v-for="color in availableColors" :key="color" :class="{ active: selectedColor === color }" @click="selectedColor = color">{{ color }}</button>
+                  <button v-for="color in availableColors" :key="color" :class="{ active: selectedColor === color }"
+                    @click="selectedColor = color">{{ color }}</button>
                 </div>
               </div>
 
               <div class="attribute-group" v-if="availableSizes.length > 0">
                 <label>Kích cỡ:</label>
                 <div class="btn-group size-group">
-                  <button v-for="size in availableSizes" :key="size" :class="{ active: selectedSize === size }" @click="selectedSize = size">{{ size }}</button>
+                  <button v-for="size in availableSizes" :key="size" :class="{ active: selectedSize === size }"
+                    @click="selectedSize = size">{{ size }}</button>
                 </div>
               </div>
 
               <div class="attribute-group">
                 <label class="qty-label">
                   Số lượng:
-                  <span v-if="currentVariant" class="stock-badge">Kho: {{ currentVariant.soLuongTon || currentVariant.soLuong || 0 }}</span>
+                  <span v-if="currentVariant" class="stock-badge">Kho: {{ currentVariant.soLuongTon ||
+                    currentVariant.soLuong || 0 }}</span>
                 </label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
@@ -294,7 +345,11 @@
 
               <div class="modal-actions">
                 <button class="btn-confirm-add" @click="confirmAddToCart">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon-btn"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon-btn">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
                   Thêm Vào Giỏ
                 </button>
                 <button class="btn-view-detail" @click="goDetail(selectedProduct.id)">Xem Chi Tiết</button>
@@ -350,12 +405,12 @@ const pauseSlide = () => { clearInterval(slideInterval); };
 // ================= LOGIC SẢN PHẨM =================
 const bestSellers = ref([]);
 const products = ref([]);
-const saleProducts = ref([]); 
+const saleProducts = ref([]);
 
 const isLoading = ref(true);
 const errorMsg = ref("");
 const bestSellerRef = ref(null);
-const saleProductRef = ref(null); 
+const saleProductRef = ref(null);
 
 const itemsPerPage = 8;
 const visibleCount = ref(itemsPerPage);
@@ -415,7 +470,7 @@ const fetchData = async () => {
 
     rawData.forEach(item => {
       const percent = item.phanTramGiam || 0;
-      if (percent > 0) { 
+      if (percent > 0) {
         if (!uniqueProductsMap.has(item.maSanPham)) {
           let realProductId = item.sanPham?.id || item.id;
           if (item.maSanPham && item.maSanPham.startsWith('SP')) {
@@ -577,251 +632,1045 @@ onBeforeUnmount(() => {
 }
 
 /* ================= SLIDER BANNER CSS ================= */
-.banner-slider { position: relative; width: 100%; height: 500px; overflow: hidden; background: #000; }
-.slides-wrapper { display: flex; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); }
-.slide { min-width: 100%; height: 100%; position: relative; }
-.slide img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.9; }
-
-.slider-arrow { 
-  position: absolute; top: 50%; transform: translateY(-50%); 
-  background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; 
-  width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-  cursor: pointer; z-index: 10; transition: all 0.3s ease; color: #fff; opacity: 0; 
-}
-.banner-slider:hover .slider-arrow { opacity: 1; }
-.slider-arrow:hover { background: #6b3f1e; color: white; border-color: transparent; box-shadow: 0 8px 20px rgba(107, 63, 30, 0.3); transform: translateY(-50%) scale(1.1); }
-.slider-arrow.prev { left: 30px; }
-.slider-arrow.next { right: 30px; }
-
-.slider-dots { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 10; }
-.dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; cursor: pointer; transition: all 0.4s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.dot:hover { background: rgba(255, 255, 255, 0.9); }
-.dot.active { background: #fff; width: 35px; border-radius: 10px; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-
-/* ================= SECTION & TITLE ================= */
-.section { padding: 80px 4%; max-width: 1536px; margin: 0 auto; width: 100%; }
-.bg-sale { background-color: #fdfaf9; border-radius: 20px; padding: 60px 4%; margin: 20px auto; max-width: 1350px; }
-
-.title-wrapper { text-align: center; margin-bottom: 50px; }
-.styled-title { 
-  font-family: 'Montserrat', sans-serif; font-size: 32px; font-weight: 800; color: #1a1a1a; 
-  text-transform: uppercase; letter-spacing: 1.5px; position: relative; display: inline-block; padding-bottom: 15px; margin: 0;
-}
-.styled-title::after { 
-  content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); 
-  width: 60px; height: 4px; background: linear-gradient(90deg, #6b3f1e, #b88661); border-radius: 2px; 
-}
-.section-subtitle { font-size: 16px; color: #666; margin-top: 15px; font-weight: 600; }
-
-.sale-title { color: #d32f2f; }
-.sale-title::after { background: linear-gradient(90deg, #d32f2f, #ff6b6b); }
-.text-sale { color: #d32f2f; opacity: 0.8; }
-
-/* ================= HORIZONTAL SLIDER ================= */
-.slider-row { display: flex; align-items: center; gap: 20px; position: relative; }
-.slider-container { 
-  display: flex; gap: 25px; overflow-x: auto; scroll-behavior: smooth; 
-  padding: 15px 5px 30px 5px; flex-grow: 1; scroll-snap-type: x mandatory; -ms-overflow-style: none; scrollbar-width: none; 
-}
-.slider-container::-webkit-scrollbar { display: none; }
-
-.arrow { 
-  background: #fff; border: 1px solid #eaeaea; border-radius: 50%; width: 50px; height: 50px; 
-  display: flex; align-items: center; justify-content: center; cursor: pointer; 
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); color: #555; z-index: 2;
-}
-.arrow:hover { background: #6b3f1e; border-color: #6b3f1e; color: #fff; transform: scale(1.1); box-shadow: 0 8px 20px rgba(107, 63, 30, 0.2); }
-
-/* ================= PRODUCT GRID ================= */
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
-.grid-wrapper { display: contents; }
-
-/* ================= PRODUCT CARD ================= */
-.product-card { 
-  width: 100%; background: #fff; border-radius: 16px; overflow: hidden; position: relative; 
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; scroll-snap-align: start;
-  border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column;
-}
-.slider-container .product-card { width: 280px; }
-.product-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(107, 63, 30, 0.1); border-color: rgba(107, 63, 30, 0.1); }
-
-.image-box {
+.banner-slider {
+  position: relative;
   width: 100%;
-  /* Chiều cao 320px cân đối với chiều rộng 280px */
-  height: 320px; 
-  background: #fff;
+  height: 500px;
+  overflow: hidden;
+  background: #000;
+}
+
+.slides-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.9;
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  color: #fff;
+  opacity: 0;
+}
+
+.banner-slider:hover .slider-arrow {
+  opacity: 1;
+}
+
+.slider-arrow:hover {
+  background: #6b3f1e;
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(107, 63, 30, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-arrow.prev {
+  left: 30px;
+}
+
+.slider-arrow.next {
+  right: 30px;
+}
+
+.slider-dots {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.dot.active {
+  background: #fff;
+  width: 35px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* ================= SECTION & TITLE ================= */
+.section {
+  padding: 80px 4%;
+  max-width: 1536px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.bg-sale {
+  background-color: #fdfaf9;
+  border-radius: 20px;
+  padding: 60px 4%;
+  margin: 20px auto;
+  max-width: 1350px;
+}
+
+.title-wrapper {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.styled-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+  margin: 0;
+}
+
+.styled-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #6b3f1e, #b88661);
+  border-radius: 2px;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: #666;
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+.sale-title {
+  color: #d32f2f;
+}
+
+.sale-title::after {
+  background: linear-gradient(90deg, #d32f2f, #ff6b6b);
+}
+
+.text-sale {
+  color: #d32f2f;
+  opacity: 0.8;
+}
+
+/* ================= HORIZONTAL SLIDER ================= */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
+.slider-container {
+  display: flex;
+  gap: 25px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 15px 5px 30px 5px;
+  flex-grow: 1;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.slider-container::-webkit-scrollbar {
+  display: none;
+}
+
+.arrow {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  color: #555;
+  z-index: 2;
+}
+
+.arrow:hover {
+  background: #6b3f1e;
+  border-color: #6b3f1e;
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(107, 63, 30, 0.2);
+}
+
+/* ================= PRODUCT GRID ================= */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.grid-wrapper {
+  display: contents;
+}
+
+/* ================= PRODUCT CARD ================= */
+.product-card {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.slider-container .product-card {
+  width: 280px;
+}
+
+.product-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(107, 63, 30, 0.1);
+  border-color: rgba(107, 63, 30, 0.1);
+}
+
+.card-sale {
+  border: 1px solid rgba(211, 47, 47, 0.05);
+}
+
+.card-sale:hover {
+  box-shadow: 0 20px 40px rgba(211, 47, 47, 0.12);
+  border-color: rgba(211, 47, 47, 0.15);
+}
+
+.image-box {
+  width: 100%;
+  height: 340px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
 }
 
 .image-box img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Giữ nguyên contain để không bị mất góc áo */
-  transition: transform 0.5s ease;
+  object-fit: contain;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  mix-blend-mode: multiply;
 }
 
-/* Các CSS về text, hover, nút thêm vào giỏ giữ nguyên... */
-
 .product-card:hover .image-box img {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 /* BADGES */
-.badge { position: absolute; top: 15px; left: 15px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; font-family: 'Montserrat', sans-serif; color: white; z-index: 2; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-.badge-hot { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
-.badge-sale { background: linear-gradient(135deg, #f53844, #e60023); animation: pulse 2s infinite; }
+.badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  z-index: 2;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
 
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(230, 0, 35, 0); } 100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0); } }
+.badge-hot {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+}
+
+.badge-sale {
+  background: linear-gradient(135deg, #f53844, #e60023);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(230, 0, 35, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0);
+  }
+}
 
 /* INFO */
-.product-info { padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
-.product-name { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #222; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; height: 44px; transition: color 0.3s; cursor: pointer; }
-.product-card:hover .product-name { color: #6b3f1e; }
-.card-sale:hover .product-name { color: #d32f2f; }
+.product-info {
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.product-name {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #222;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  height: 44px;
+  transition: color 0.3s;
+  cursor: pointer;
+}
+
+.product-card:hover .product-name {
+  color: #6b3f1e;
+}
+
+.card-sale:hover .product-name {
+  color: #d32f2f;
+}
 
 /* PRICE */
-.price-wrapper { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 15px; }
-.old-price { text-decoration: line-through; color: #a0aec0; font-size: 14px; margin: 0; font-weight: 600; }
-.price { margin: 0; font-weight: 800; font-size: 18px; font-family: 'Montserrat', sans-serif; color: #1a1a1a; }
-.new-price { color: #d32f2f; }
+.price-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 15px;
+}
+
+.old-price {
+  text-decoration: line-through;
+  color: #a0aec0;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.price {
+  margin: 0;
+  font-weight: 800;
+  font-size: 18px;
+  font-family: 'Montserrat', sans-serif;
+  color: #1a1a1a;
+}
+
+.new-price {
+  color: #d32f2f;
+}
 
 /* Quick Add Button */
-.btn-quick-add { 
-  background: rgba(107, 63, 30, 0.05); color: #6b3f1e; border: none; padding: 12px; border-radius: 10px; font-family: 'Montserrat', sans-serif; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;
-  display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0; transform: translateY(15px);
+.btn-quick-add {
+  background: rgba(107, 63, 30, 0.05);
+  color: #6b3f1e;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(15px);
 }
-.cart-icon { width: 18px; height: 18px; }
-.product-card:hover .btn-quick-add { opacity: 1; transform: translateY(0); }
-.btn-quick-add:hover { background: linear-gradient(90deg, #6b3f1e, #8b5328); color: #fff; box-shadow: 0 8px 15px rgba(107, 63, 30, 0.25); transform: translateY(-2px) !important; }
+
+.cart-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.product-card:hover .btn-quick-add {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-quick-add:hover {
+  background: linear-gradient(90deg, #6b3f1e, #8b5328);
+  color: #fff;
+  box-shadow: 0 8px 15px rgba(107, 63, 30, 0.25);
+  transform: translateY(-2px) !important;
+}
 
 /* Animations for grid */
-.staggered-fade-enter-active, .staggered-fade-leave-active { transition: all 0.5s ease var(--delay); }
-.staggered-fade-enter-from, .staggered-fade-leave-to { opacity: 0; transform: translateY(30px); }
+.staggered-fade-enter-active,
+.staggered-fade-leave-active {
+  transition: all 0.5s ease var(--delay);
+}
+
+.staggered-fade-enter-from,
+.staggered-fade-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
 
 /* ================= LOAD MORE ================= */
-.load-more-container { display: flex; justify-content: center; margin-top: 60px; }
-.btn-load-more { 
-  padding: 14px 45px; background: #fff; color: #6b3f1e; border: 2px solid #6b3f1e; border-radius: 30px; 
-  font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;
 }
-.btn-load-more:hover { background: linear-gradient(90deg, #6b3f1e, #8b5328); border-color: transparent; color: #fff; box-shadow: 0 10px 20px rgba(107, 63, 30, 0.2); transform: translateY(-3px); }
+
+.btn-load-more {
+  padding: 14px 45px;
+  background: #fff;
+  color: #6b3f1e;
+  border: 2px solid #6b3f1e;
+  border-radius: 30px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.btn-load-more:hover {
+  background: linear-gradient(90deg, #6b3f1e, #8b5328);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(107, 63, 30, 0.2);
+  transform: translateY(-3px);
+}
 
 /* ================= LOADING & ERROR ================= */
-.loading-state, .error-state, .empty-state { text-align: center; padding: 100px 0; color: #666; font-size: 16px; font-weight: 600; }
-.modern-spinner { 
-  width: 50px; height: 50px; border: 4px solid rgba(107, 63, 30, 0.1); border-left-color: #6b3f1e; 
-  border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; margin: 0 auto 20px; 
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 100px 0;
+  color: #666;
+  font-size: 16px;
+  font-weight: 600;
 }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.btn-retry { margin-top: 20px; padding: 12px 30px; background: #d32f2f; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-weight: 700; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.2); transition: 0.3s; }
-.btn-retry:hover { background: #b71c1c; transform: translateY(-2px); }
+
+.modern-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(107, 63, 30, 0.1);
+  border-left-color: #6b3f1e;
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-retry {
+  margin-top: 20px;
+  padding: 12px 30px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(211, 47, 47, 0.2);
+  transition: 0.3s;
+}
+
+.btn-retry:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+}
 
 /* ================= TOAST ================= */
-.toast-notification { 
-  position: fixed; top: 30px; right: 30px; z-index: 10001; min-width: 300px; padding: 18px 24px; 
-  border-radius: 12px; display: flex; align-items: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
-  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-left: 5px solid #22C55E; 
+.toast-notification {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 10001;
+  min-width: 300px;
+  padding: 18px 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-left: 5px solid #22C55E;
 }
-.toast-notification.error { border-left-color: #ef4444; }
-.toast-notification.warning { border-left-color: #f59e0b; }
-.toast-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; }
-.success .toast-icon { background: #22C55E; } .error .toast-icon { background: #ef4444; } .warning .toast-icon { background: #f59e0b; }
-.toast-content { margin-left: 15px; font-weight: 600; color: #1a1a1a; font-size: 15px; }
-.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
+
+.toast-notification.error {
+  border-left-color: #ef4444;
+}
+
+.toast-notification.warning {
+  border-left-color: #f59e0b;
+}
+
+.toast-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.success .toast-icon {
+  background: #22C55E;
+}
+
+.error .toast-icon {
+  background: #ef4444;
+}
+
+.warning .toast-icon {
+  background: #f59e0b;
+}
+
+.toast-content {
+  margin-left: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
 
 /* ================= BUTTON SCROLL TOP ================= */
 .scroll-top-btn {
-  position: fixed; bottom: 110px; right: 35px; width: 50px; height: 50px; border-radius: 50%;
-  background: #fff; color: #6b3f1e; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9998;
+  position: fixed;
+  bottom: 110px;
+  right: 35px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #fff;
+  color: #6b3f1e;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9998;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.scroll-top-btn svg { width: 24px; height: 24px; }
-.scroll-top-btn:hover { background: #6b3f1e; color: #fff; transform: translateY(-5px); box-shadow: 0 8px 25px rgba(107, 63, 30, 0.3); }
+
+.scroll-top-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.scroll-top-btn:hover {
+  background: #6b3f1e;
+  color: #fff;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(107, 63, 30, 0.3);
+}
 
 /* ================= CHAT ================= */
-.chat-wrapper { position: fixed; bottom: 35px; right: 30px; z-index: 9999; }
-.chat-toggle-btn { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #6b3f1e, #8b5328); border: none; box-shadow: 0 8px 25px rgba(107, 63, 30, 0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.chat-toggle-btn:hover { transform: scale(1.1) rotate(5deg); }
-.chat-toggle-btn img { width: 28px; height: 28px; filter: invert(1); }
+.chat-wrapper {
+  position: fixed;
+  bottom: 35px;
+  right: 30px;
+  z-index: 9999;
+}
+
+.chat-toggle-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b3f1e, #8b5328);
+  border: none;
+  box-shadow: 0 8px 25px rgba(107, 63, 30, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-toggle-btn:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.chat-toggle-btn img {
+  width: 28px;
+  height: 28px;
+  filter: invert(1);
+}
 
 /* ================= MODAL QUICK ADD (Nâng Cấp VIP) ================= */
-.modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
-.quick-add-modal { background: #fff; width: 900px; max-width: 95%; border-radius: 24px; position: relative; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); overflow: hidden; display: flex; flex-direction: column; }
-.close-btn { position: absolute; top: 20px; right: 20px; background: #f1f5f9; width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 24px; line-height: 1; cursor: pointer; color: #64748b; transition: all 0.3s; z-index: 10; display: flex; align-items: center; justify-content: center; }
-.close-btn:hover { background: #fee2e2; color: #d32f2f; transform: rotate(90deg); }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
 
-.modal-content { display: flex; gap: 0; }
-.modal-left { flex: 1; background: #f8f9fa; display: flex; align-items: center; justify-content: center; padding: 30px; }
-.modal-left img { max-width: 100%; max-height: 450px; object-fit: contain; mix-blend-mode: multiply; filter: drop-shadow(0 20px 20px rgba(0,0,0,0.05)); }
+.quick-add-modal {
+  background: #fff;
+  width: 900px;
+  max-width: 95%;
+  border-radius: 24px;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-.modal-right { flex: 1.2; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
-.modal-tag { display: inline-block; background: #fee2e2; color: #d32f2f; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; font-family: 'Montserrat', sans-serif; letter-spacing: 0.5px; width: fit-content; margin-bottom: 15px; }
-.modal-product-name { font-family: 'Montserrat', sans-serif; font-size: 26px; color: #1a1a1a; font-weight: 800; margin-bottom: 15px; line-height: 1.3; }
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f1f5f9;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.3s;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.modal-price-box { margin-bottom: 25px; border-bottom: 2px dashed #f1f5f9; padding-bottom: 20px; display: flex; align-items: baseline; gap: 15px; }
-.modal-old-price { text-decoration: line-through; color: #94a3b8; font-size: 18px; font-weight: 600; }
-.modal-current-price { color: #d32f2f; font-size: 28px; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+.close-btn:hover {
+  background: #fee2e2;
+  color: #d32f2f;
+  transform: rotate(90deg);
+}
 
-.attribute-group { margin-bottom: 25px; }
-.attribute-group label { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin-bottom: 12px; color: #334155; font-size: 15px; }
-.stock-badge { font-weight: 600; font-size: 13px; color: #059669; background: #dcfce7; padding: 4px 10px; border-radius: 12px; }
+.modal-content {
+  display: flex;
+  gap: 0;
+}
 
-.btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
-.btn-group button { padding: 10px 20px; border: 2px solid #e2e8f0; background: #fff; border-radius: 12px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 14px; font-weight: 600; color: #64748b; }
-.btn-group button:hover { border-color: #cbd5e1; color: #334155; }
-.btn-group button.active { background: #6b3f1e; color: #fff; border-color: #6b3f1e; box-shadow: 0 4px 12px rgba(107, 63, 30, 0.2); }
+.modal-left {
+  flex: 1;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
 
-.quantity-control { display: inline-flex; align-items: center; border: 2px solid #e2e8f0; border-radius: 12px; overflow: hidden; height: 44px; }
-.quantity-control button { width: 44px; height: 100%; background: #f8fafc; border: none; font-size: 20px; color: #475569; cursor: pointer; transition: 0.2s; }
-.quantity-control button:hover { background: #e2e8f0; color: #0f172a; }
-.quantity-control input { width: 50px; height: 100%; text-align: center; border: none; font-weight: 700; font-size: 16px; color: #0f172a; border-left: 2px solid #e2e8f0; border-right: 2px solid #e2e8f0; outline: none; }
+.modal-left img {
+  max-width: 100%;
+  max-height: 450px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.05));
+}
 
-.modal-actions { margin-top: 10px; display: flex; gap: 15px; }
-.btn-confirm-add { flex: 2; background: linear-gradient(135deg, #d32f2f, #ef4444); color: white; border: none; padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; border-radius: 14px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 20px rgba(211, 47, 47, 0.25); text-transform: uppercase; }
-.btn-confirm-add:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(211, 47, 47, 0.35); }
-.cart-icon-btn { width: 20px; height: 20px; }
+.modal-right {
+  flex: 1.2;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-.btn-view-detail { flex: 1; background: #fff; color: #0f172a; border: 2px solid #e2e8f0; padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 700; border-radius: 14px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; }
-.btn-view-detail:hover { border-color: #0f172a; background: #f8fafc; }
+.modal-tag {
+  display: inline-block;
+  background: #fee2e2;
+  color: #d32f2f;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: 0.5px;
+  width: fit-content;
+  margin-bottom: 15px;
+}
 
-.modal-bounce-enter-active { animation: modalBounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.modal-bounce-leave-active { animation: modalBounceOut 0.3s ease forwards; }
-@keyframes modalBounceIn { 0% { transform: scale(0.9) translateY(30px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-@keyframes modalBounceOut { 0% { transform: scale(1) translateY(0); opacity: 1; } 100% { transform: scale(0.95) translateY(20px); opacity: 0; } }
+.modal-product-name {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 26px;
+  color: #1a1a1a;
+  font-weight: 800;
+  margin-bottom: 15px;
+  line-height: 1.3;
+}
+
+.modal-price-box {
+  margin-bottom: 25px;
+  border-bottom: 2px dashed #f1f5f9;
+  padding-bottom: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+.modal-old-price {
+  text-decoration: line-through;
+  color: #94a3b8;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-current-price {
+  color: #d32f2f;
+  font-size: 28px;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.attribute-group {
+  margin-bottom: 25px;
+}
+
+.attribute-group label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #334155;
+  font-size: 15px;
+}
+
+.stock-badge {
+  font-weight: 600;
+  font-size: 13px;
+  color: #059669;
+  background: #dcfce7;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-group button {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.btn-group button:hover {
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.btn-group button.active {
+  background: #6b3f1e;
+  color: #fff;
+  border-color: #6b3f1e;
+  box-shadow: 0 4px 12px rgba(107, 63, 30, 0.2);
+}
+
+.quantity-control {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 44px;
+}
+
+.quantity-control button {
+  width: 44px;
+  height: 100%;
+  background: #f8fafc;
+  border: none;
+  font-size: 20px;
+  color: #475569;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.quantity-control button:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.quantity-control input {
+  width: 50px;
+  height: 100%;
+  text-align: center;
+  border: none;
+  font-weight: 700;
+  font-size: 16px;
+  color: #0f172a;
+  border-left: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
+  outline: none;
+}
+
+.modal-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 15px;
+}
+
+.btn-confirm-add {
+  flex: 2;
+  background: linear-gradient(135deg, #d32f2f, #ef4444);
+  color: white;
+  border: none;
+  padding: 15px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 20px rgba(211, 47, 47, 0.25);
+  text-transform: uppercase;
+}
+
+.btn-confirm-add:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(211, 47, 47, 0.35);
+}
+
+.cart-icon-btn {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-view-detail {
+  flex: 1;
+  background: #fff;
+  color: #0f172a;
+  border: 2px solid #e2e8f0;
+  padding: 15px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+}
+
+.btn-view-detail:hover {
+  border-color: #0f172a;
+  background: #f8fafc;
+}
+
+.modal-bounce-enter-active {
+  animation: modalBounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-bounce-leave-active {
+  animation: modalBounceOut 0.3s ease forwards;
+}
+
+@keyframes modalBounceIn {
+  0% {
+    transform: scale(0.9) translateY(30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes modalBounceOut {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.95) translateY(20px);
+    opacity: 0;
+  }
+}
 
 /* ================= RESPONSIVE ================= */
 @media (max-width: 1024px) {
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-  .slider-container .product-card { width: 250px; }
-  .image-box { height: 280px; }
-  .modal-content { flex-direction: column; }
-  .modal-left { height: 350px; padding: 20px; }
-  .modal-right { padding: 30px; }
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .slider-container .product-card {
+    width: 250px;
+  }
+
+  .image-box {
+    height: 280px;
+  }
+
+  .modal-content {
+    flex-direction: column;
+  }
+
+  .modal-left {
+    height: 350px;
+    padding: 20px;
+  }
+
+  .modal-right {
+    padding: 30px;
+  }
 }
+
 @media (max-width: 768px) {
-  .section { padding: 50px 4%; }
-  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-  .slider-container .product-card { width: 220px; }
-  .image-box { height: 240px; }
-  .banner-slider { height: 350px; }
-  .styled-title { font-size: 24px; }
-  .slider-arrow { width: 40px; height: 40px; }
-  .scroll-top-btn { right: 20px; bottom: 100px; }
-  .chat-wrapper { right: 20px; bottom: 20px; }
-  .modal-actions { flex-direction: column; }
+  .section {
+    padding: 50px 4%;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .slider-container .product-card {
+    width: 220px;
+  }
+
+  .image-box {
+    height: 240px;
+  }
+
+  .banner-slider {
+    height: 350px;
+  }
+
+  .styled-title {
+    font-size: 24px;
+  }
+
+  .slider-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .scroll-top-btn {
+    right: 20px;
+    bottom: 100px;
+  }
+
+  .chat-wrapper {
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
 }
+
 @media (max-width: 480px) {
-  .product-grid { grid-template-columns: 1fr; }
-  .slider-container .product-card { width: 280px; }
-  .image-box { height: 320px; }
-  .banner-slider { height: 220px; }
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .slider-container .product-card {
+    width: 280px;
+  }
+
+  .image-box {
+    height: 320px;
+  }
+
+  .banner-slider {
+    height: 220px;
+  }
 }
 </style>

@@ -20,39 +20,27 @@
 
       <div class="card timeline-section no-print">
         <div class="stepper-wrapper">
-  <div
-    class="stepper-item"
-    v-for="(step, index) in timelineSteps"
-    :key="index"
-    :class="{
-      active: index < timelineSteps.length - 1, 
-      current: index === timelineSteps.length - 1,
-      cancelled: step.status === 5
-    }"
-  >
-    <div class="step-icon-circle">
-      <img :src="step.icon" class="step-icon-img" />
-    </div>
-    
-    <div v-if="index < timelineSteps.length - 1" class="step-line"></div>
-    
-    <div class="step-content">
-      <div class="step-label">{{ step.label }}</div>
-      <div class="step-time">{{ formatDate(step.time) }}</div>
-    </div>
-  </div>
-</div>
+          <div class="stepper-item" v-for="(step, index) in timelineSteps" :key="index" :class="{
+            active: index < timelineSteps.length - 1,
+            current: index === timelineSteps.length - 1,
+            cancelled: step.status === 5
+          }">
+            <div class="step-icon-circle">
+              <img :src="step.icon" class="step-icon-img" />
+            </div>
+
+            <div v-if="index < timelineSteps.length - 1" class="step-line"></div>
+
+            <div class="step-content">
+              <div class="step-label">{{ step.label }}</div>
+              <div class="step-time">{{ formatDate(step.time) }}</div>
+            </div>
+          </div>
+        </div>
 
         <div class="action-bar-bottom">
-          <div
-            class="action-left"
-            v-if="invoice.trangThai < 4 && invoice.trangThai !== 5"
-          >
-            <button
-              v-if="invoice.trangThai > 0"
-              class="btn-outline-orange"
-              @click="confirmAction('prev')"
-            >
+          <div class="action-left" v-if="invoice.trangThai < 4 && invoice.trangThai !== 5">
+            <button v-if="invoice.trangThai > 0" class="btn-outline-orange" @click="confirmAction('prev')">
               <i class="icon-arrow-left">⬅</i> Quay lại
             </button>
 
@@ -61,44 +49,24 @@
               <i class="icon-arrow-right">➡</i>
             </button>
 
-            <button 
-              v-if="invoice.trangThai === 1"
-              class="btn-white-border" 
-              @click="confirmAction('cancel')"
-            >
+            <button v-if="invoice.trangThai === 0" class="btn-white-border" @click="confirmAction('cancel')">
               Xác nhận hủy đơn
             </button>
           </div>
 
           <div class="action-right">
-            <button
-              v-if="invoice.trangThai === 5 && daThanhToan > 0"
-              class="btn-outline-red"
-              @click="openRefundModal"
-            >
+            <button v-if="invoice.trangThai === 5 && daThanhToan > 0" class="btn-outline-red" @click="openRefundModal">
               💸 Xác nhận hoàn tiền
             </button>
 
-            <button
-              v-if="invoice.trangThai !== 5"
-              class="btn-orange"
-              @click="handlePrint"
-            >
-              <i class="icon-print"
-                ><img
-                  src="/src/assets/icon/print-svgrepo-com.svg"
-                  style="width: 24px; height: 24px"
-                  alt=""
-              /></i>
+            <button v-if="invoice.trangThai !== 5" class="btn-orange" @click="handlePrint">
+              <i class="icon-print"><img src="/src/assets/icon/print-svgrepo-com.svg" style="width: 24px; height: 24px"
+                  alt="" /></i>
               In hóa đơn
             </button>
             <button class="btn-orange" @click="openHistoryModal">
-              <i class="icon-history"
-                ><img
-                  src="/src/assets/icon/file-clock-svgrepo-com.svg"
-                  style="width: 24px; height: 24px"
-                  alt=""
-              /></i>
+              <i class="icon-history"><img src="/src/assets/icon/file-clock-svgrepo-com.svg"
+                  style="width: 24px; height: 24px" alt="" /></i>
               Lịch sử hóa đơn
             </button>
           </div>
@@ -120,12 +88,8 @@
 
         <div class="stat-card">
           <div class="stat-icon icon-green">
-            <span
-              ><img
-                src="/src/assets/icon/money-dollar-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-            /></span>
+            <span><img src="/src/assets/icon/money-dollar-svgrepo-com.svg" style="width: 24px; height: 24px"
+                alt="" /></span>
           </div>
           <div class="stat-info">
             <div class="stat-label">Tổng tiền</div>
@@ -137,12 +101,8 @@
 
         <div class="stat-card">
           <div class="stat-icon icon-purple">
-            <span
-              ><img
-                src="/src/assets/icon/shipping-box-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-            /></span>
+            <span><img src="/src/assets/icon/shipping-box-svgrepo-com.svg" style="width: 24px; height: 24px"
+                alt="" /></span>
           </div>
           <div class="stat-info">
             <div class="stat-label">Số lượng sản phẩm</div>
@@ -155,11 +115,7 @@
         <div class="detail-card">
           <div class="card-header-clean">
             <div class="header-icon">
-              <img
-                src="/src/assets/icon/user.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
+              <img src="/src/assets/icon/user.svg" style="width: 24px; height: 24px" alt="" />
             </div>
             <h3>Thông tin khách hàng</h3>
           </div>
@@ -182,11 +138,7 @@
         <div class="detail-card">
           <div class="card-header-clean">
             <div class="header-icon">
-              <img
-                src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
+              <img src="/src/assets/icon/shopping-cart-svgrepo-com.svg" style="width: 24px; height: 24px" alt="" />
             </div>
             <h3>Tóm tắt đơn hàng</h3>
           </div>
@@ -217,11 +169,7 @@
         <div class="detail-card">
           <div class="card-header-clean">
             <div class="header-icon">
-              <img
-                src="/src/assets/icon/credit-card-svgrepo-com.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
+              <img src="/src/assets/icon/credit-card-svgrepo-com.svg" style="width: 24px; height: 24px" alt="" />
             </div>
             <h3>Thông tin thanh toán</h3>
           </div>
@@ -265,36 +213,25 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-if="
-                  !invoice.thanhToanList || invoice.thanhToanList.length === 0
-                "
-              >
+              <tr v-if="
+                !invoice.thanhToanList || invoice.thanhToanList.length === 0
+              ">
                 <td colspan="8" class="text-center empty-cell">
                   Chưa có lịch sử thanh toán
                 </td>
               </tr>
-              <tr
-                v-else
-                v-for="(pay, index) in invoice.thanhToanList"
-                :key="index"
-              >
+              <tr v-else v-for="(pay, index) in invoice.thanhToanList" :key="index">
                 <td>{{ index + 1 }}</td>
                 <td class="font-bold">{{ pay.maGiaoDich || "---" }}</td>
                 <td>
-                  <span v-if="pay.loaiGiaoDich === 2" class="badge-soft-red"
-                    >Hoàn tiền</span
-                  >
+                  <span v-if="pay.loaiGiaoDich === 2" class="badge-soft-red">Hoàn tiền</span>
                   <span v-else class="badge-type">Thanh toán</span>
                 </td>
                 <td>
                   <span class="badge-method">{{ pay.phuongThuc }}</span>
                 </td>
                 <td>
-                  <span
-                    class="badge-status-payment"
-                    :class="pay.trangThai === 1 ? 'completed' : 'pending'"
-                  >
+                  <span class="badge-status-payment" :class="pay.trangThai === 1 ? 'completed' : 'pending'">
                     {{ pay.trangThai === 1 ? "Thành công" : "Chờ xử lý" }}
                   </span>
                 </td>
@@ -314,21 +251,14 @@
         </div>
       </div>
 
-      <div
-        class="card cancelled-section no-print"
-        v-if="invoice.trangThai === 5"
-      >
+      <div class="card cancelled-section no-print" v-if="invoice.trangThai === 5">
         <h3>❌ Đơn hàng đã bị hủy</h3>
         <p>Lý do: {{ invoice.ghiChu || "Không có lý do cụ thể" }}</p>
       </div>
 
       <div class="card product-card no-print">
         <h3 class="card-title">
-          <img
-            src="/src/assets/icon/shopping-cart-svgrepo-com.svg"
-            style="width: 24px; height: 24px"
-            alt=""
-          />
+          <img src="/src/assets/icon/shopping-cart-svgrepo-com.svg" style="width: 24px; height: 24px" alt="" />
           Danh sách sản phẩm
         </h3>
         <div class="table-responsive">
@@ -396,16 +326,10 @@
 
           <div class="modal-input-wrapper">
             <label class="input-label">Ghi chú xác nhận:</label>
-            <textarea
-              v-model="modal.note"
-              rows="3"
-              :placeholder="
-                modal.type === 'cancel'
-                  ? 'Vui lòng nhập lý do hủy đơn...'
-                  : 'Nhập ghi chú cho hệ thống (tùy chọn)...'
-              "
-              class="modern-textarea"
-            ></textarea>
+            <textarea v-model="modal.note" rows="3" :placeholder="modal.type === 'cancel'
+                ? 'Vui lòng nhập lý do hủy đơn...'
+                : 'Nhập ghi chú cho hệ thống (tùy chọn)...'
+              " class="modern-textarea"></textarea>
           </div>
         </div>
 
@@ -413,30 +337,18 @@
           <button class="btn-modern btn-secondary" @click="closeModal">
             Đóng
           </button>
-          <button
-            class="btn-modern"
-            :class="getConfirmButtonClass(modal.type)"
-            @click="handleConfirm"
-          >
+          <button class="btn-modern" :class="getConfirmButtonClass(modal.type)" @click="handleConfirm">
             {{ modal.type === "refund" ? "Hoàn tiền ngay" : "Xác nhận" }}
           </button>
         </div>
       </div>
     </div>
 
-    <div
-      v-if="showHistoryLog"
-      class="modal-overlay"
-      @click.self="showHistoryLog = false"
-    >
+    <div v-if="showHistoryLog" class="modal-overlay" @click.self="showHistoryLog = false">
       <div class="modal-card modal-large">
         <div class="modal-header-flex">
           <h3 class="modal-title-modern">📜 Lịch sử cập nhật trạng thái</h3>
-          <button
-            class="close-icon-btn"
-            @click="showHistoryLog = false"
-            title="Đóng"
-          >
+          <button class="close-icon-btn" @click="showHistoryLog = false" title="Đóng">
             ✕
           </button>
         </div>
@@ -481,10 +393,7 @@
         </div>
 
         <div class="modal-footer-right">
-          <button
-            class="btn-modern btn-secondary"
-            @click="showHistoryLog = false"
-          >
+          <button class="btn-modern btn-secondary" @click="showHistoryLog = false">
             Đóng
           </button>
         </div>
@@ -558,7 +467,7 @@ interface InvoiceDetail {
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
-  
+
 // ===============================================
 // [MỚI] Timeline linh hoạt (Tại quầy chỉ còn Chờ xác nhận và Hoàn thành)
 // ===============================================
@@ -762,7 +671,6 @@ const formatDate = (dateStr: string) => {
 // };
 
 const timelineSteps = computed(() => {
-  // Nếu chưa có lịch sử
   if (!invoice.value?.lichSuList || invoice.value.lichSuList.length === 0) {
     return [
       {
@@ -774,21 +682,29 @@ const timelineSteps = computed(() => {
     ];
   }
 
-  return [...invoice.value.lichSuList]
-    .sort(
-      (a, b) =>
-        new Date(a.thoiGian).getTime() -
-        new Date(b.thoiGian).getTime()
-    )
+  // 1. Sắp xếp lịch sử theo thời gian (cũ -> mới)
+  const sortedLog = [...invoice.value.lichSuList].sort(
+    (a, b) => new Date(a.thoiGian).getTime() - new Date(b.thoiGian).getTime()
+  );
+
+  // 2. Lọc bỏ các trạng thái trùng lặp liền kề nhau
+  // Chỉ lấy lần chuyển sang trạng thái đó đầu tiên (hoặc cuối cùng tùy logic, ở đây lấy lần chuyển cuối cùng cho chuẩn time)
+  const uniqueStepsMap = new Map();
+  sortedLog.forEach((log) => {
+    uniqueStepsMap.set(log.trangThai, log); // Sẽ ghi đè, giữ lại log cuối cùng của trạng thái đó
+  });
+
+  // Chuyển Map thành Array và sort lại theo trạng thái (hoặc thời gian)
+  const finalSteps = Array.from(uniqueStepsMap.values())
+    .sort((a, b) => new Date(a.thoiGian).getTime() - new Date(b.thoiGian).getTime())
     .map((log) => ({
       status: log.trangThai,
       label: getStatusName(log.trangThai),
-      icon:
-        log.trangThai === 5
-          ? cancelIcon
-          : "/src/assets/icon/check-svgrepo-com.svg",
+      icon: log.trangThai === 5 ? cancelIcon : "/src/assets/icon/check-svgrepo-com.svg",
       time: log.thoiGian,
     }));
+
+  return finalSteps;
 });
 const getPaymentMethodName = () => {
   if (
@@ -969,6 +885,7 @@ onMounted(() => {
   font-family: "Inter", "Segoe UI", sans-serif;
   color: #333;
 }
+
 .card {
   background: #fff;
   padding: 20px;
@@ -977,6 +894,7 @@ onMounted(() => {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
   border: 1px solid #f0f0f0;
 }
+
 .card-title {
   font-size: 18px;
   border-bottom: 1px solid #eee;
@@ -993,17 +911,20 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 24px;
 }
+
 .main-title {
   color: #333;
   font-size: 24px;
   font-weight: 700;
   margin: 0;
 }
+
 .subtitle {
   color: #666;
   font-size: 14px;
   margin-top: 4px;
 }
+
 .btn-back {
   background: #e9ecef;
   color: #495057;
@@ -1014,6 +935,7 @@ onMounted(() => {
   font-weight: 600;
   transition: all 0.2s;
 }
+
 .btn-back:hover {
   background: #dee2e6;
 }
@@ -1025,6 +947,7 @@ onMounted(() => {
   gap: 24px;
   margin-bottom: 24px;
 }
+
 .stat-card {
   background: #fff;
   border-radius: 12px;
@@ -1034,6 +957,7 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   border: 1px solid #f1f1f1;
 }
+
 .stat-icon {
   width: 48px;
   height: 48px;
@@ -1045,40 +969,49 @@ onMounted(() => {
   margin-right: 16px;
   flex-shrink: 0;
 }
+
 .stat-icon img {
   width: 24px;
   height: 24px;
 }
+
 .icon-blue {
   background: #e0f2fe;
   color: #0284c7;
 }
+
 .icon-green {
   background: #dcfce7;
   color: #16a34a;
 }
+
 .icon-purple {
   background: #f3e8ff;
   color: #9333ea;
 }
+
 .icon-red {
   background: #fee2e2;
   color: #dc2626;
 }
+
 .stat-info {
   display: flex;
   flex-direction: column;
 }
+
 .stat-label {
   font-size: 13px;
   color: #64748b;
   margin-bottom: 4px;
 }
+
 .stat-value {
   font-size: 16px;
   font-weight: 700;
   color: #1e293b;
 }
+
 .text-money-big {
   color: #d93025;
   font-size: 18px;
@@ -1091,6 +1024,7 @@ onMounted(() => {
   gap: 24px;
   margin-bottom: 24px;
 }
+
 .detail-card {
   background: #fff;
   border-radius: 12px;
@@ -1100,6 +1034,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
 }
+
 .card-header-clean {
   padding: 16px 20px;
   border-bottom: 1px solid #f1f1f1;
@@ -1107,16 +1042,19 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
 }
+
 .header-icon {
   font-size: 16px;
   color: #475569;
 }
+
 .card-header-clean h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: #334155;
 }
+
 .card-body-clean {
   padding: 20px;
   flex: 1;
@@ -1127,6 +1065,7 @@ onMounted(() => {
   align-items: flex-start;
   gap: 15px;
 }
+
 .avatar-placeholder {
   width: 48px;
   height: 48px;
@@ -1140,20 +1079,24 @@ onMounted(() => {
   font-size: 18px;
   flex-shrink: 0;
 }
+
 .profile-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .profile-name {
   font-weight: 700;
   font-size: 15px;
   color: #1e293b;
 }
+
 .profile-sub {
   font-size: 13px;
   color: #64748b;
 }
+
 .email-text {
   font-size: 12px;
   color: #94a3b8;
@@ -1165,20 +1108,24 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
 }
+
 .summary-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .sum-label {
   font-size: 14px;
   color: #64748b;
 }
+
 .sum-val {
   font-size: 15px;
   font-weight: 600;
   color: #1e293b;
 }
+
 .text-red {
   color: #ef4444;
 }
@@ -1190,6 +1137,7 @@ onMounted(() => {
   justify-content: space-between;
   height: 100%;
 }
+
 .pay-method-row {
   display: flex;
   align-items: center;
@@ -1198,6 +1146,7 @@ onMounted(() => {
   padding: 12px;
   border-radius: 8px;
 }
+
 .pay-icon-small {
   width: 36px;
   height: 36px;
@@ -1209,14 +1158,17 @@ onMounted(() => {
   font-size: 16px;
   border: 1px solid #e2e8f0;
 }
+
 .pay-text {
   flex: 1;
 }
+
 .pay-title {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
 }
+
 .pay-sub {
   font-size: 12px;
   color: #64748b;
@@ -1228,10 +1180,12 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 600;
 }
+
 .badge-paid {
   background: #dcfce7;
   color: #16a34a;
 }
+
 .badge-unpaid {
   background: #fee2e2;
   color: #dc2626;
@@ -1243,11 +1197,13 @@ onMounted(() => {
   color: #7e22ce;
   border: 1px solid #d8b4fe;
 }
+
 .badge-warning {
   background: #fef9c3;
   color: #a16207;
   border: 1px solid #fde047;
 }
+
 .badge-cancelled {
   background: #f1f5f9;
   color: #64748b;
@@ -1263,6 +1219,7 @@ onMounted(() => {
   font-size: 14px;
   color: #475569;
 }
+
 .pay-total-val {
   font-size: 18px;
   font-weight: 700;
@@ -1278,11 +1235,13 @@ onMounted(() => {
   padding-top: 20px;
   border-top: 1px dashed #eee;
 }
+
 .action-left,
 .action-right {
   display: flex;
   gap: 15px;
 }
+
 .btn-orange {
   background: linear-gradient(90deg, #c79a63, #8b5e34);
   color: white;
@@ -1311,6 +1270,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 .btn-outline-red:hover {
   background-color: #fef2f2;
 }
@@ -1328,9 +1288,11 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 .btn-outline-orange:hover {
   background-color: #fff5f0;
 }
+
 .btn-white-border {
   background-color: white;
   color: #666;
@@ -1341,6 +1303,7 @@ onMounted(() => {
   font-size: 14px;
   cursor: pointer;
 }
+
 .btn-white-border:hover {
   background-color: #f8f9fa;
   border-color: #ccc;
@@ -1351,8 +1314,10 @@ onMounted(() => {
 .timeline-section {
   padding: 40px 20px;
   background: #fff;
-  overflow: visible; /* Để hiển thị shadow của icon current */
+  overflow: visible;
+  /* Để hiển thị shadow của icon current */
 }
+
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;
@@ -1360,6 +1325,7 @@ onMounted(() => {
   position: relative;
   width: 100%;
 }
+
 .stepper-item {
   position: relative;
   display: flex;
@@ -1367,25 +1333,30 @@ onMounted(() => {
   align-items: center;
   flex: 1;
 }
+
 /* Icon tròn - Điểm nhấn chính */
 .step-icon-circle {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background-color: #fff;
-  border: 2px solid #e2e8f0; /* Màu xám nhạt cho bước chưa tới */
+  border: 2px solid #e2e8f0;
+  /* Màu xám nhạt cho bước chưa tới */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
   transition: all 0.3s ease;
 }
+
 .step-icon-img {
   width: 18px;
   height: 18px;
-  filter: grayscale(1); /* Xám hóa icon nếu chưa active */
+  filter: grayscale(1);
+  /* Xám hóa icon nếu chưa active */
   opacity: 0.5;
 }
+
 .step-bar {
   width: 100%;
   height: 36px;
@@ -1394,13 +1365,16 @@ onMounted(() => {
 }
 
 .stepper-item.current .step-icon-img {
-  filter: brightness(0) invert(1); /* Chuyển icon sang màu trắng */
+  filter: brightness(0) invert(1);
+  /* Chuyển icon sang màu trắng */
   opacity: 1;
 }
+
 .stepper-item.current .step-label {
   color: #8b5e34;
   font-weight: 700;
 }
+
 /* Label & Thời gian */
 .step-content {
   margin-top: 12px;
@@ -1413,6 +1387,7 @@ onMounted(() => {
   color: #64748b;
   margin-bottom: 4px;
 }
+
 .step-time {
   font-size: 12px;
   color: #94a3b8;
@@ -1420,23 +1395,29 @@ onMounted(() => {
 
 /* Nền trắng, viền gradient, chữ màu nâu cam */
 .stepper-item.active .step-icon-circle {
-  border-color: #c79a63; /* Màu nâu Choco của bạn */
+  border-color: #c79a63;
+  /* Màu nâu Choco của bạn */
   background-color: #fff;
 }
+
 .stepper-item.active .step-bar {
   background: linear-gradient(90deg, #c79a63, #8b5e34);
 }
+
 .stepper-item.active .step-label {
   font-weight: 700;
 }
-.stepper-item.active .step-time {
-}
+
+.stepper-item.active .step-time {}
+
 .stepper-item:first-child .step-bar {
   clip-path: polygon(0% 0%, 95% 0%, 100% 50%, 95% 100%, 0% 100%);
 }
+
 .stepper-item:last-child .step-bar {
   clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 5% 50%);
 }
+
 .stepper-item:last-child.active .step-bar {
   background: linear-gradient(90deg, #c79a63, #8b5e34);
 }
@@ -1445,11 +1426,13 @@ onMounted(() => {
 .table-responsive {
   overflow-x: auto;
 }
+
 .payment-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
+
 .payment-table th {
   background-color: #f8f9fa;
   color: #444;
@@ -1459,6 +1442,7 @@ onMounted(() => {
   border-bottom: 2px solid #e9ecef;
   white-space: nowrap;
 }
+
 .payment-table td {
   padding: 12px 15px;
   border-bottom: 1px solid #f1f1f1;
@@ -1470,9 +1454,11 @@ onMounted(() => {
 .text-center-table td {
   text-align: center !important;
 }
+
 .text-left-force {
   text-align: left !important;
 }
+
 .text-right-force {
   text-align: right !important;
 }
@@ -1486,6 +1472,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
 }
+
 .badge-method {
   background: #e0f2fe;
   color: #0284c7;
@@ -1494,6 +1481,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
 }
+
 .badge-status-payment.completed {
   background: #e6f4ff;
   color: #0958d9;
@@ -1502,6 +1490,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
 }
+
 .badge-status-payment.pending {
   background: #fff7ed;
   color: #c2410c;
@@ -1520,10 +1509,12 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
 }
+
 .text-danger {
   color: #dc2626;
   font-weight: 700;
 }
+
 .text-money {
   color: #d93025;
   font-weight: 600;
@@ -1535,6 +1526,7 @@ onMounted(() => {
   border-collapse: separate;
   border-spacing: 0;
 }
+
 .modern-table th {
   background-color: #f8f9fa;
   color: #64748b;
@@ -1545,6 +1537,7 @@ onMounted(() => {
   border-bottom: 2px solid #e2e8f0;
   letter-spacing: 0.5px;
 }
+
 .modern-table td {
   padding: 16px;
   border-bottom: 1px solid #f1f5f9;
@@ -1552,11 +1545,13 @@ onMounted(() => {
   color: #334155;
   font-size: 14px;
 }
+
 .product-cell {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 .product-thumb {
   width: 40px;
   height: 40px;
@@ -1568,35 +1563,42 @@ onMounted(() => {
   font-size: 20px;
   border: 1px solid #e2e8f0;
 }
+
 .product-name {
   font-weight: 600;
   color: #1e293b;
   font-size: 14px;
 }
+
 .variant-tags {
   display: flex;
   gap: 6px;
   justify-content: center;
 }
+
 .variant-badge {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
 }
+
 .color-badge,
 .size-badge {
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #cbd5e1;
 }
+
 .light-text {
   color: #64748b;
 }
+
 .quantity-text {
   font-weight: 600;
   color: #334155;
 }
+
 .total-price-text {
   color: #d93025;
   font-weight: 700;
@@ -1642,14 +1644,17 @@ onMounted(() => {
   justify-content: center;
   font-size: 28px;
 }
+
 .icon-primary {
   background: #e0f2fe;
   color: #0284c7;
 }
+
 .icon-danger {
   background: #fee2e2;
   color: #dc2626;
 }
+
 .icon-warning {
   background: #fef3c7;
   color: #d97706;
@@ -1683,6 +1688,7 @@ onMounted(() => {
   text-align: left;
   margin-bottom: 20px;
 }
+
 .input-label {
   font-size: 12px;
   font-weight: 600;
@@ -1690,6 +1696,7 @@ onMounted(() => {
   margin-bottom: 6px;
   display: block;
 }
+
 .modern-textarea {
   width: 100%;
   padding: 12px 15px;
@@ -1703,6 +1710,7 @@ onMounted(() => {
   resize: none;
   background: #f9fafb;
 }
+
 .modern-textarea:focus {
   outline: none;
   border-color: #0d6efd;
@@ -1730,6 +1738,7 @@ onMounted(() => {
   background: #323335;
   color: #d5d8db;
 }
+
 .btn-secondary:hover {
   background: #e5e7eb;
   color: #1f2937;
@@ -1740,6 +1749,7 @@ onMounted(() => {
   color: white;
   box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.2);
 }
+
 .btn-primary-modern:hover {
   background: #1e293b;
   transform: translateY(-1px);
@@ -1750,6 +1760,7 @@ onMounted(() => {
   color: white;
   box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
 }
+
 .btn-danger-modern:hover {
   background: #b91c1c;
   transform: translateY(-1px);
@@ -1760,15 +1771,18 @@ onMounted(() => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1784,6 +1798,7 @@ onMounted(() => {
   padding-bottom: 10px;
   margin-bottom: 15px;
 }
+
 .close-btn {
   background: none;
   border: none;
@@ -1791,21 +1806,25 @@ onMounted(() => {
   cursor: pointer;
   color: #999;
 }
+
 .modal-body-custom {
   max-height: 400px;
   overflow-y: auto;
 }
+
 .modal-footer-custom {
   margin-top: 15px;
   text-align: right;
   border-top: 1px solid #eee;
   padding-top: 10px;
 }
+
 .history-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
+
 .history-table th {
   background: #f8f9fa;
   padding: 10px 15px;
@@ -1814,11 +1833,13 @@ onMounted(() => {
   font-weight: 600;
   color: #555;
 }
+
 .history-table td {
   padding: 10px 15px;
   border-bottom: 1px solid #f3f4f6;
   color: #444;
 }
+
 .badge-status-log {
   background: #e2e8f0;
   color: #475569;
@@ -1843,6 +1864,7 @@ onMounted(() => {
   z-index: 2000;
   animation: slideIn 0.4s;
 }
+
 .toast-icon {
   width: 24px;
   height: 24px;
@@ -1860,16 +1882,19 @@ onMounted(() => {
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1878,16 +1903,19 @@ onMounted(() => {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
+
   .dashboard-stats-grid,
   .dashboard-info-grid {
     grid-template-columns: 1fr;
   }
 }
+
 @media (max-width: 768px) {
   .stepper-wrapper {
     min-width: 600px;
   }
 }
+
 /* ================= NEW HISTORY MODAL STYLES ================= */
 .modal-large {
   max-width: 850px;
@@ -1935,14 +1963,17 @@ onMounted(() => {
 .modal-body-scroll::-webkit-scrollbar {
   width: 6px;
 }
+
 .modal-body-scroll::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 4px;
 }
+
 .modal-body-scroll::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
+
 .modal-body-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
@@ -2000,28 +2031,34 @@ onMounted(() => {
   font-size: 12px;
   opacity: 0.7;
 }
+
 .stepper-item.current .step-icon-circle {
   background: linear-gradient(135deg, #c79a63, #8b5e34);
   border-color: transparent;
   transform: scale(1.15);
   box-shadow: 0 0 15px rgba(199, 154, 99, 0.4);
 }
+
 /* Xử lý khi bị HỦY */
 .stepper-item.cancelled .step-icon-circle {
   border-color: #ef4444;
   background-color: #fee2e2;
 }
+
 .stepper-item.active .step-line {
   background-color: #c79a63;
 }
+
 .stepper-item.active .step-icon-img {
   filter: none;
   opacity: 1;
 }
+
 /* Đường kẻ nối giữa các bước */
 .step-line {
   position: absolute;
-  top: 18px; /* Bằng 1/2 chiều cao icon */
+  top: 18px;
+  /* Bằng 1/2 chiều cao icon */
   left: 50%;
   width: 100%;
   height: 2px;

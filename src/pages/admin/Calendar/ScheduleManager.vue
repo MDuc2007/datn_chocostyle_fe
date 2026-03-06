@@ -92,8 +92,8 @@ const handleImportExcel = async (event: Event) => {
 
     // Gọi API Batch để lưu
     // await axios.post(`${API_URL}/batch`, payloads);
-    showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
-    refreshData();
+    // showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
+    // refreshData();
 
   } catch (error: any) {
     showToast(error.response?.data?.message || 'Lỗi khi đọc file hoặc import dữ liệu', 'error');
