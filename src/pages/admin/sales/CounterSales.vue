@@ -717,14 +717,16 @@ const fetchProducts = async () => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const activePromotion = promotions.value.find(
-      (p) =>
-        p.ngayBatDau <= today &&
-        (!p.ngayKetThuc || p.ngayKetThuc >= today) &&
-        p.chiTietSanPhamIds?.includes(p.id),
-    );
-
     products.value = rawData.map((p) => {
+      const today = new Date().toISOString().split("T")[0];
+
+      const activePromotion = promotions.value.find(
+        (promo) =>
+          promo.ngayBatDau <= today &&
+          (!promo.ngayKetThuc || promo.ngayKetThuc >= today) &&
+          promo.chiTietSanPhamIds?.includes(p.id),
+      );
+
       let oldPrice = p.giaBan;
       let newPrice = p.giaBan;
       let discountPercent = 0;
@@ -1442,6 +1444,8 @@ const voucherSuggestion = computed(() => {
 
   return best;
 });
+let voucherTimeout = null;
+
 watch(
   [
     () => subTotal.value,
@@ -1449,44 +1453,53 @@ watch(
     () => activeOrderIndex.value,
   ],
   async () => {
-    if (!currentOrder.value) return;
-    if (voucherMode.value === "MANUAL") return;
+    clearTimeout(voucherTimeout);
 
-    await fetchVouchers();
+    voucherTimeout = setTimeout(async () => {
+      if (!currentOrder.value) return;
+      if (voucherMode.value === "MANUAL") return;
 
-    const best = bestVoucherSuggestion.value;
+      await fetchVouchers();
 
-    if (!best) {
-      currentOrder.value.appliedVoucher = null;
-      currentOrder.value.voucherCode = "";
-      return;
-    }
+      // if (!best) {
+      //   currentOrder.value.appliedVoucher = null;
+      //   currentOrder.value.voucherCode = "";
+      //   return;
+      // }
 
-    if (!currentOrder.value.appliedVoucher) {
-      currentOrder.value.voucherCode = best.maPgg;
+      const best = bestVoucherSuggestion.value;
 
-      const isPercent =
-        best.loaiGiam === "PERCENT" ||
-        best.loaiGiam === "PHAN_TRAM" ||
-        best.loaiGiam === 0;
+      if (!best) return;
 
-      currentOrder.value.appliedVoucher = {
-        code: best.maPgg,
-        percent: isPercent ? Number(best.giaTri) : 0,
-        amount: !isPercent ? Number(best.giaTri) : 0,
-        maxValue: best.giaTriToiDa,
-        message: best.tenPgg,
-      };
+      if (!currentOrder.value.appliedVoucher) {
+        currentOrder.value.voucherCode = best.maPgg;
 
-      hasAutoAppliedOnce = true;
-    }
+        const isPercent =
+          best.loaiGiam === "PERCENT" ||
+          best.loaiGiam === "PHAN_TRAM" ||
+          best.loaiGiam === 0;
+
+        currentOrder.value.appliedVoucher = {
+          code: best.maPgg,
+          percent: isPercent ? Number(best.giaTri) : 0,
+          amount: !isPercent ? Number(best.giaTri) : 0,
+          maxValue: best.giaTriToiDa,
+          message: best.tenPgg,
+        };
+
+        hasAutoAppliedOnce = true;
+      }
+    }, 300);
   },
   { immediate: true },
 );
+
 watch(
   () => activeOrderIndex.value,
   () => {
     voucherMode.value = "AUTO";
+    hasAutoAppliedOnce = false;
+    lastSuggestedVoucherCode = null;
   },
 );
 
@@ -1577,6 +1590,17 @@ const increaseQty = async (item) => {
           i.id === latest.id && i.price === latest.price && !i.priceChanged,
       );
 
+      await axios.put(
+        "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+        null,
+        {
+          params: {
+            idSpct: latest.id,
+            soLuongThayDoi: -1,
+          },
+        },
+      );
+
       if (!existNew) {
         currentOrder.value.cart.push({
           id: latest.id,
@@ -1595,10 +1619,6 @@ const increaseQty = async (item) => {
           priceChanged: false,
         });
       }
-
-      hasChanged = true;
-
-      currentOrder.value.cart.push(newLine);
 
       showToast("Sản phẩm đã đổi giá. Đã thêm thành dòng mới.");
       return;
@@ -1666,7 +1686,7 @@ const submitOrder = async () => {
       // 3 cho đơn Ship/Chờ giao, 1 cho đơn tại quầy hoàn thành
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
-      phiShip: shippingFee.value,
+      phiShip: currentOrder.value.shippingFee || 0,
 
       // Ghi chú phương thức thanh toán
       ghiChu:
@@ -1922,11 +1942,18 @@ onMounted(async () => {
   }
   autoRevalidateInterval = setInterval(async () => {
     if (!currentOrder.value) return;
+    if (!currentOrder.value.cart.length) return;
 
     await autoRevalidateSystem();
   }, 10000);
 });
-onBeforeUnmount(() => {
+
+onBeforeUnmount(async () => {
+  if (qrScanner) {
+    await qrScanner.stop();
+    await qrScanner.clear();
+  }
+
   if (autoRevalidateInterval) {
     clearInterval(autoRevalidateInterval);
   }
@@ -2109,8 +2136,9 @@ const shippingFee = computed(() => {
     ? currentOrder.value.shippingFee
     : 0;
 });
-const total = computed(
-  () => subTotal.value - discount.value + shippingFee.value,
+
+const total = computed(() =>
+  Math.max(subTotal.value - discount.value + shippingFee.value, 0),
 );
 
 const calculateShipping = async () => {
@@ -2210,6 +2238,7 @@ const revalidateCartPrice = async () => {
     return false;
   }
 };
+
 const autoRevalidateSystem = async () => {
   if (!currentOrder.value) return;
 
@@ -2222,10 +2251,47 @@ const autoRevalidateSystem = async () => {
 
     if (!best) return;
 
+    if (!currentVoucher) {
+      openConfirmModal(
+        "Gợi ý phiếu giảm giá",
+        `Có mã ${best.maPgg} giúp giảm ${formatPrice(best.discountValue)}. Áp dụng ngay?`,
+        () => {
+          currentOrder.value.voucherCode = best.maPgg;
+
+          const isPercent =
+            best.loaiGiam === "PERCENT" ||
+            best.loaiGiam === "PHAN_TRAM" ||
+            best.loaiGiam === 0;
+
+          currentOrder.value.appliedVoucher = {
+            code: best.maPgg,
+            percent: isPercent ? Number(best.giaTri) : 0,
+            amount: !isPercent ? Number(best.giaTri) : 0,
+            maxValue: best.giaTriToiDa,
+            message: best.tenPgg,
+          };
+        },
+      );
+
+      return;
+    }
+
+    const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
+
+    if (!found || found.trangThai !== 1) {
+      openConfirmModal(
+        "Voucher không còn hợp lệ",
+        "Phiếu giảm giá hiện tại đã bị ngừng hoặc hết hạn.",
+        () => {
+          currentOrder.value.appliedVoucher = null;
+          currentOrder.value.voucherCode = "";
+        },
+      );
+      return;
+    }
+
     if (
       hasAutoAppliedOnce &&
-      currentVoucher &&
-      best &&
       currentVoucher.code !== best.maPgg &&
       lastSuggestedVoucherCode !== best.maPgg
     ) {
@@ -2233,9 +2299,7 @@ const autoRevalidateSystem = async () => {
 
       openConfirmModal(
         "Có voucher tốt hơn",
-        `Hệ thống phát hiện mã ${best.maPgg} giúp giảm ${formatPrice(
-          best.discountValue,
-        )}. Áp dụng ngay?`,
+        `Hệ thống phát hiện mã ${best.maPgg} giúp giảm ${formatPrice(best.discountValue)}. Áp dụng ngay?`,
         () => {
           currentOrder.value.voucherCode = best.maPgg;
 
@@ -2260,15 +2324,13 @@ const autoRevalidateSystem = async () => {
     console.error("Auto revalidate error:", err);
   }
 };
+
 const toggleDelivery = async (e) => {
   const isDelivery = e.target.checked;
   if (!currentOrder.value) return;
 
   currentOrder.value.deliveryType = isDelivery ? "DELIVERY" : "COUNTER";
 
-  currentOrder.value.appliedVoucher = null;
-  currentOrder.value.voucherCode = "";
-  voucherMode.value = "AUTO";
   await fetchVouchers();
 
   if (isDelivery) {
@@ -2280,6 +2342,20 @@ const toggleDelivery = async (e) => {
     currentOrder.value.customer.district = "";
     currentOrder.value.customer.ward = "";
   }
+
+  // kiểm tra lại voucher hiện tại
+  const currentVoucher = currentOrder.value.appliedVoucher;
+
+  if (currentVoucher) {
+    const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
+
+    if (!found) {
+      currentOrder.value.appliedVoucher = null;
+      currentOrder.value.voucherCode = "";
+      voucherError.value = "Phiếu giảm giá không còn hợp lệ";
+    }
+  }
+  await autoRevalidateSystem();
 };
 
 watch(
