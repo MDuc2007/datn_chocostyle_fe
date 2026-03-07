@@ -68,12 +68,14 @@
               <label>Xác nhận Tiền mặt đầu ca</label>
               <div class="input-wrapper">
                 <input
-                  type="number"
-                  v-model="form.tienMat"
+                  type="text"
+                  :value="formatDisplayValue(form.tienMat)"
+                  @input="handleMoneyInput($event, 'tienMat')"
                   class="form-control"
                   placeholder="0"
+                  inputmode="numeric"
                 />
-                <span class="currency-unit">VNĐ</span>
+                <span class="currency-unit">VND</span>
               </div>
             </div>
 
@@ -81,12 +83,14 @@
               <label>Xác nhận Tiền tài khoản đầu ca</label>
               <div class="input-wrapper">
                 <input
-                  type="number"
-                  v-model="form.tienTaiKhoan"
+                  type="text"
+                  :value="formatDisplayValue(form.tienTaiKhoan)"
+                  @input="handleMoneyInput($event, 'tienTaiKhoan')"
                   class="form-control"
                   placeholder="0"
+                  inputmode="numeric"
                 />
-                <span class="currency-unit">VNĐ</span>
+                <span class="currency-unit">VND</span>
               </div>
             </div>
 
@@ -336,6 +340,39 @@
 import axios from "axios";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import Swal from "sweetalert2";
+
+// ==========================================
+// HÀM HELPER FORMAT TIỀN TỆ VND
+// ==========================================
+// Format số thành chuỗi VND có dấu chấm phân cách
+const formatVND = (value) => {
+  if (!value && value !== 0) return '';
+  const numStr = typeof value === 'string' ? value.replace(/[^0-9]/g, '') : String(value);
+  const num = parseInt(numStr || '0');
+  return num.toLocaleString('vi-VN');
+};
+
+// Lọc bỏ ký tự không phải số
+const filterNumbers = (value) => {
+  return value.replace(/[^0-9]/g, '');
+};
+
+// Xử lý input: chỉ cho phép nhập số và tự động format
+const handleMoneyInput = (event, fieldName) => {
+  let value = event.target.value;
+  // Lọc bỏ các ký tự không phải số
+  value = filterNumbers(value);
+  // Chuyển sang số và lưu vào form
+  form.value[fieldName] = value ? parseInt(value) : 0;
+  // Cập nhật giá trị hiển thị với format VND
+  event.target.value = formatVND(value);
+};
+
+// Format giá trị để hiển thị (dùng cho v-model)
+const formatDisplayValue = (value) => {
+  if (!value && value !== 0) return '';
+  return formatVND(value);
+};
 
 const props = defineProps(["ca", "idNv", "tenNv", "token"]);
 const emit = defineEmits(["close"]);
