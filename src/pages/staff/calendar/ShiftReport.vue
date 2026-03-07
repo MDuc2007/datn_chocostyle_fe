@@ -45,12 +45,14 @@
               <label>Tiền mặt đầu ca</label>
               <div class="input-wrapper">
                 <input 
-                  type="number" 
-                  v-model="cashInAmount" 
+                  type="text" 
+                  :value="formatDisplayValue(cashInAmount)"
+                  @input="handleMoneyInput($event, 'cashInAmount')"
                   class="custom-input" 
                   placeholder="0" 
+                  inputmode="numeric"
                 />
-                <span class="currency">VNĐ</span>
+                <span class="currency">VND</span>
               </div>
             </div>
 
@@ -58,12 +60,14 @@
               <label>Tiền tài khoản đầu ca</label>
               <div class="input-wrapper">
                 <input 
-                  type="number" 
-                  v-model="transferInAmount" 
+                  type="text" 
+                  :value="formatDisplayValue(transferInAmount)"
+                  @input="handleMoneyInput($event, 'transferInAmount')"
                   class="custom-input" 
                   placeholder="0" 
+                  inputmode="numeric"
                 />
-                <span class="currency">VNĐ</span>
+                <span class="currency">VND</span>
               </div>
             </div>
             
@@ -79,13 +83,15 @@
               <label>Tiền mặt</label>
               <div class="input-wrapper">
                 <input 
-                  type="number" 
-                  v-model="cashAmount" 
+                  type="text" 
+                  :value="formatDisplayValue(cashAmount)"
+                  @input="handleMoneyInput($event, 'cashAmount')"
                   class="custom-input" 
                   placeholder="0" 
+                  inputmode="numeric"
                   :disabled="isViewOnly"
                 />
-                <span class="currency">VNĐ</span>
+                <span class="currency">VND</span>
               </div>
             </div>
 
@@ -93,13 +99,15 @@
               <label>Chuyển khoản</label>
               <div class="input-wrapper">
                 <input 
-                  type="number" 
-                  v-model="transferAmount" 
+                  type="text" 
+                  :value="formatDisplayValue(transferAmount)"
+                  @input="handleMoneyInput($event, 'transferAmount')"
                   class="custom-input" 
                   placeholder="0" 
+                  inputmode="numeric"
                   :disabled="isViewOnly"
                 />
-                <span class="currency">VNĐ</span>
+                <span class="currency">VND</span>
               </div>
             </div>
 
@@ -169,6 +177,48 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
+
+// ==========================================
+// HÀM HELPER FORMAT TIỀN TỆ VND
+// ==========================================
+// Format số thành chuỗi VND có dấu chấm phân cách
+const formatVND = (value: number | string): string => {
+  if (!value && value !== 0) return '';
+  const numStr = typeof value === 'string' ? value.replace(/[^0-9]/g, '') : String(value);
+  const num = parseInt(numStr || '0');
+  return num.toLocaleString('vi-VN');
+};
+
+// Lọc bỏ ký tự không phải số
+const filterNumbers = (value: string) => {
+  return value.replace(/[^0-9]/g, '');
+};
+
+// Xử lý input: chỉ cho phép nhập số và tự động format
+// refName là tên của ref dưới dạng chuỗi để truy cập qua object
+const handleMoneyInput = (event: Event, refName: string) => {
+  const target = event.target as HTMLInputElement;
+  let value = target.value;
+  // Lọc bỏ các ký tự không phải số
+  value = filterNumbers(value);
+  // Chuyển sang số và lưu vào ref tương ứng
+  const numValue = value ? parseInt(value) : 0;
+  
+  // Cập nhật giá trị theo tên ref
+  if (refName === 'cashInAmount') cashInAmount.value = numValue;
+  else if (refName === 'transferInAmount') transferInAmount.value = numValue;
+  else if (refName === 'cashAmount') cashAmount.value = numValue;
+  else if (refName === 'transferAmount') transferAmount.value = numValue;
+  
+  // Cập nhật giá trị hiển thị với format VND
+  target.value = formatVND(value);
+};
+
+// Format giá trị để hiển thị (dùng cho v-model)
+const formatDisplayValue = (value: number) => {
+  if (!value && value !== 0) return '';
+  return formatVND(value);
+};
 
 // --- TRẠNG THÁI GIAO DIỆN & THÔNG BÁO ---
 const toast = ref({ show: false, message: '', type: 'success' })

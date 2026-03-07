@@ -1932,6 +1932,44 @@ const showToast = (msg, type = "success") => {
     toast.value.show = false;
   }, 2500);
 };
+// ==========================================
+// ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
+// ==========================================
+const dongBoSangMobile = async () => {
+  // 1. Kiểm tra xem có đơn hàng nào đang được mở không
+  const order = currentOrder.value;
+  if (!order || !order.idHoaDon) return;
+
+  // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
+  const payload = {
+    sanPhamList: order.cart.map(item => ({
+      tenSanPham: item.name || 'Sản phẩm', 
+      soLuong: item.quantity,
+      donGia: item.price || 0 
+    })),
+    tongTienHang: subTotal.value || 0,
+    giamGia: discount.value || 0,
+    tongThanhToan: total.value || 0
+  };
+
+  try {
+    // 3. Bắn sang trạm tiếp sóng Spring Boot
+    await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, payload);
+  } catch (error) {
+    console.error("Lỗi đồng bộ màn hình khách hàng:", error);
+  }
+};
+watch(
+  [
+    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
+    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
+    () => total.value                   // Theo dõi khi áp Voucher hoặc đổi phí Ship
+  ],
+  () => {
+    dongBoSangMobile();
+  },
+  { deep: true } // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
+);
 </script>
 
 <style scoped>
