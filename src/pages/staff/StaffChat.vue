@@ -35,7 +35,6 @@
       </div>
     </aside>
 
-
     <main class="chat-window">
       <template v-if="currentConversation">
         <header class="chat-window-header">
@@ -49,7 +48,6 @@
             </div>
           </div>
         </header>
-
 
         <div class="messages-display" ref="msgBox">
           <div
@@ -66,7 +64,6 @@
             </div>
           </div>
         </div>
-
 
         <div class="chat-input-area">
           <div class="input-container">
@@ -94,13 +91,11 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
-
 
 const conversations = ref([]);
 const currentConversation = ref(null);
@@ -110,7 +105,6 @@ const msgBox = ref(null);
 const stompClient = ref(null);
 const staff = JSON.parse(localStorage.getItem("user") || "{}");
 
-
 const formatTime = (t) =>
   t
     ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -119,7 +113,6 @@ const scrollToBottom = () =>
   nextTick(() => {
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
-
 
 const loadConversations = async () => {
   try {
@@ -135,7 +128,6 @@ const loadConversations = async () => {
   }
 };
 
-
 const selectConversation = async (conv) => {
   try {
     if (!conv.nhanVien) {
@@ -148,15 +140,15 @@ const selectConversation = async (conv) => {
       currentConversation.value = conv;
     }
 
-
     // 👇 LƯU ID
-    localStorage.setItem("staffCurrentConversation", currentConversation.value.id);
-
+    localStorage.setItem(
+      "staffCurrentConversation",
+      currentConversation.value.id,
+    );
 
     const msgRes = await axios.get(
       `http://localhost:8080/api/conversations/${currentConversation.value.id}/messages`,
     );
-
 
     messages.value = msgRes.data;
     subscribeToTopic(currentConversation.value.id);
@@ -167,33 +159,27 @@ const selectConversation = async (conv) => {
   }
 };
 
-
 const currentSubscription = ref(null);
-
 
 const subscribeToTopic = (id) => {
   if (!stompClient.value || !stompClient.value.connected) return;
 
-
   if (currentSubscription.value) {
     currentSubscription.value.unsubscribe();
   }
-
 
   currentSubscription.value = stompClient.value.subscribe(
     `/topic/chat/${id}`,
     (tick) => {
       const msg = JSON.parse(tick.body);
 
-
       if (currentConversation.value?.id === msg.conversationId) {
         messages.value.push(msg);
         scrollToBottom();
       }
-    }
+    },
   );
 };
-
 
 const sendChatMessage = () => {
   if (
@@ -215,15 +201,12 @@ const sendChatMessage = () => {
   }
 };
 
-
 onMounted(async () => {
   await loadConversations();
-
 
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
-
 
   stompClient.value.connect({}, async () => {
     stompClient.value.subscribe("/topic/chat/reload-waiting", () =>
@@ -233,25 +216,18 @@ onMounted(async () => {
       loadConversations(),
     );
 
-
     // 👇 LẤY LẠI conversation cũ
     const savedId = localStorage.getItem("staffCurrentConversation");
 
-
     if (savedId) {
-      const conv = conversations.value.find(
-        (c) => c.id == savedId
-      );
-
+      const conv = conversations.value.find((c) => c.id == savedId);
 
       if (conv) {
         currentConversation.value = conv;
 
-
         const msgRes = await axios.get(
           `http://localhost:8080/api/conversations/${savedId}/messages`,
         );
-
 
         messages.value = msgRes.data;
         subscribeToTopic(savedId);
@@ -261,7 +237,6 @@ onMounted(async () => {
   });
 });
 </script>
-
 
 <style scoped>
 .staff-chat-container {
@@ -274,7 +249,6 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-
 /* SIDEBAR */
 .chat-sidebar {
   width: 320px;
@@ -283,19 +257,23 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
 }
+
 .sidebar-header {
   padding: 25px 20px;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .sidebar-header h3 {
   margin: 0;
   color: #6b3f23;
   font-size: 18px;
 }
+
 .conversation-list {
   flex: 1;
   overflow-y: auto;
 }
+
 .conversation-item {
   display: flex;
   padding: 15px 20px;
@@ -305,17 +283,19 @@ onMounted(async () => {
   border-bottom: 1px solid #f9f9f9;
   align-items: center;
 }
+
 .conversation-item:hover {
   background: #fdf8f4;
 }
+
 .conversation-item.active {
   background: #fdf8f4;
   border-right: 4px solid #6b3f23;
 }
+
 .is-waiting {
   background: #fff9f0;
 }
-
 
 .avatar-circle {
   width: 48px;
@@ -329,16 +309,19 @@ onMounted(async () => {
   font-weight: bold;
   font-size: 18px;
 }
+
 .name-box {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
 }
+
 .customer-name {
   font-weight: 600;
   color: #333;
 }
+
 .badge-new {
   background: #ff9800;
   color: white;
@@ -347,12 +330,12 @@ onMounted(async () => {
   border-radius: 10px;
   font-weight: bold;
 }
+
 .last-msg {
   font-size: 13px;
   color: #888;
   margin: 0;
 }
-
 
 /* MAIN WINDOW */
 .chat-window {
@@ -361,16 +344,19 @@ onMounted(async () => {
   flex-direction: column;
   background: #fcfcfc;
 }
+
 .chat-window-header {
   padding: 15px 30px;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .customer-profile {
   display: flex;
   align-items: center;
   gap: 15px;
 }
+
 .header-avatar {
   width: 40px;
   height: 40px;
@@ -381,15 +367,16 @@ onMounted(async () => {
   justify-content: center;
   font-weight: bold;
 }
+
 .header-text h4 {
   margin: 0;
   color: #333;
 }
+
 .header-text span {
   font-size: 12px;
   color: #4caf50;
 }
-
 
 .messages-display {
   flex: 1;
@@ -399,17 +386,19 @@ onMounted(async () => {
   flex-direction: column;
   gap: 20px;
 }
+
 .message-row {
   display: flex;
   width: 100%;
 }
+
 .message-row.mine {
   justify-content: flex-end;
 }
+
 .message-row.theirs {
   justify-content: flex-start;
 }
-
 
 .message-bubble {
   max-width: 60%;
@@ -419,34 +408,38 @@ onMounted(async () => {
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
+
 .mine .message-bubble {
   background: #6b3f23;
   color: white;
   border-bottom-right-radius: 4px;
 }
+
 .theirs .message-bubble {
   background: #fff;
   color: #333;
   border-bottom-left-radius: 4px;
   border: 1px solid #eee;
 }
+
 .msg-time {
   font-size: 11px;
   margin-top: 6px;
   opacity: 0.7;
 }
 
-
 .chat-input-area {
   padding: 25px 30px;
   background: #fff;
   border-top: 1px solid #f0f0f0;
 }
+
 .input-container {
   display: flex;
   gap: 15px;
   align-items: center;
 }
+
 .input-container input {
   flex: 1;
   border: 1px solid #ddd;
@@ -455,10 +448,12 @@ onMounted(async () => {
   outline: none;
   transition: 0.3s;
 }
+
 .input-container input:focus {
   border-color: #6b3f23;
   box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1);
 }
+
 .staff-send-btn {
   background: #6b3f23;
   color: white;
@@ -469,10 +464,10 @@ onMounted(async () => {
   cursor: pointer;
   transition: 0.3s;
 }
+
 .staff-send-btn:hover {
   background: #5a3419;
 }
-
 
 .no-selection {
   flex: 1;
@@ -483,11 +478,9 @@ onMounted(async () => {
   color: #aaa;
   text-align: center;
 }
+
 .empty-icon {
   font-size: 60px;
   margin-bottom: 20px;
 }
 </style>
-
-
-

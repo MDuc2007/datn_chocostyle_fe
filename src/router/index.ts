@@ -17,10 +17,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../pages/views/DetailProductHome.vue"),
   },
   {
-    path: '/change-password',
-    name: 'ChangePassword',
+    path: "/change-password",
+    name: "ChangePassword",
     component: () => import("../pages/views/ChangePassword.vue"),
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true },
   },
   {
     path: "/moi-ve",
@@ -68,6 +68,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/my-orders",
     name: "MyOrders",
     component: () => import("../pages/views/InvoiceList.vue"),
+  },
+  {
+    path: "/order-detail/:id",
+    name: "ClientOrderDetail",
+    component: () => import("../pages/views/InvoiceDetail.vue"),
   },
   {
     path: "/order-detail/:id",
@@ -432,13 +437,16 @@ router.beforeEach((to, from, next) => {
     "/admin/login",
     "/uu-dai",
     "/payment",
-    "/ao-khoac",       // <--- Thêm trang Áo khoác
-    "/tra-cuu",        // <--- Thêm trang Tra cứu đơn hàng
-    "/payment-result"  // <--- Thêm trang Kết quả thanh toán
+    "/ao-khoac", // <--- Thêm trang Áo khoác
+    "/tra-cuu", // <--- Thêm trang Tra cứu đơn hàng
+    "/payment-result", // <--- Thêm trang Kết quả thanh toán
+    "/my-orders"
   ];
 
   const isPublic =
-    publicPages.includes(to.path) || to.path.startsWith("/home/product/");
+    publicPages.includes(to.path) || 
+    to.path.startsWith("/home/product/") ||
+    to.path.startsWith("/order-detail/");
 
   const authRequired = !isPublic;
 

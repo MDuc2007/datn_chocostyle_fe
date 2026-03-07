@@ -10,7 +10,6 @@
       </div>
     </div>
 
-
     <div class="messages-box" ref="msgBox">
       <div
         v-for="msg in messages"
@@ -33,7 +32,6 @@
         </div>
       </div>
     </div>
-
 
     <div class="input-area">
       <div class="input-wrapper">
@@ -60,13 +58,11 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
-
 
 const stompClient = ref(null);
 const connected = ref(false);
@@ -77,7 +73,6 @@ const senderId = ref(null);
 const senderType = ref("KHACH_HANG");
 const conversationId = ref(null);
 const assignedNhanVien = ref("");
-
 
 const formatTime = (time) =>
   time
@@ -91,10 +86,8 @@ const scrollToBottom = () =>
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
 
-
 const messageSubscription = ref(null);
 const takeoverSubscription = ref(null);
-
 
 const connectAndSubscribe = (id) => {
   // Nếu đã có connection thì đóng lại trước
@@ -102,41 +95,44 @@ const connectAndSubscribe = (id) => {
     stompClient.value.disconnect();
   }
 
-
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
 
-
   stompClient.value.connect({}, () => {
     connected.value = true;
-
 
     // Nếu đã từng subscribe thì hủy trước
     if (messageSubscription.value) {
       messageSubscription.value.unsubscribe();
     }
 
-
     if (takeoverSubscription.value) {
       takeoverSubscription.value.unsubscribe();
     }
 
-
     messageSubscription.value = stompClient.value.subscribe(
       `/topic/chat/${id}`,
       (tick) => {
-        messages.value.push(JSON.parse(tick.body));
-        scrollToBottom();
-      }
-    );
+        const incoming = JSON.parse(tick.body);
 
+        // Nếu là tin nhắn của chính mình thì bỏ qua
+        if (
+          incoming.senderId == senderId.value &&
+          incoming.senderType === "KHACH_HANG"
+        ) {
+          return;
+        }
+
+        messages.value.push(incoming);
+        scrollToBottom();
+      },
+    );
 
     takeoverSubscription.value = stompClient.value.subscribe(
       `/topic/chat/takeover/${id}`,
       (tick) => {
         assignedNhanVien.value = tick.body;
-
 
         messages.value.push({
           id: Date.now(),
@@ -146,9 +142,8 @@ const connectAndSubscribe = (id) => {
           sentAt: new Date(),
         });
 
-
         scrollToBottom();
-      }
+      },
     );
   });
 };
@@ -172,35 +167,49 @@ onMounted(async () => {
       messages.value = history.data;
       connectAndSubscribe(response.data.id);
       scrollToBottom();
+      if (messages.value.length === 0) {
+        messages.value.push({
+          id: Date.now(),
+          senderType: "AI",
+          senderName: "ChocoBot",
+          content:
+            "Chào anh/chị. Shop chuyên áo khoác nam. Tôi có thể hỗ trợ thông tin sản phẩm hoặc phiếu giảm giá cho anh/chị.",
+          sentAt: new Date(),
+        });
+      }
     }
   } catch (error) {
     console.log("Khách hàng mới.");
   }
 });
 
-
 const sendMessage = async () => {
   if (!newMessage.value.trim()) return;
 
-
   const content = newMessage.value;
 
-
   newMessage.value = "";
-  scrollToBottom();
 
+  messages.value.push({
+    id: Date.now(),
+    senderId: senderId.value,
+    senderType: senderType.value,
+    senderName: "Bạn",
+    content: content,
+    sentAt: new Date(),
+  });
+
+  scrollToBottom();
 
   if (!conversationId.value) {
     await callAI(content);
     return;
   }
 
-
   if (!assignedNhanVien.value || assignedNhanVien.value.includes("Đang chờ")) {
     await callAI(content);
     return;
   }
-
 
   const attemptSend = () => {
     if (connected.value) {
@@ -219,61 +228,63 @@ const sendMessage = async () => {
     }
   };
 
-
   attemptSend();
 };
 
-
 const isLoading = ref(false); // Thêm dòng này
-
 
 const callAI = async (content) => {
   if (isLoading.value) return;
   isLoading.value = true;
 
-  // 1. Hiển thị tin nhắn của khách hàng lên màn hình ngay lập tức
+  // 1️⃣ Thêm tin nhắn loading trước khi gọi API
   messages.value.push({
-    id: Date.now(),
-    senderId: senderId.value,
-    senderType: "KHACH_HANG",
-    content: content,
+    id: "loading",
+    senderType: "AI",
+    senderName: "ChocoBot",
+    content: "Đang xử lý...",
     sentAt: new Date(),
   });
+
   scrollToBottom();
 
   try {
-    // 2. Gửi kèm ID để Backend biết đường mà lưu vào DB
     const res = await axios.post("http://localhost:8080/api/chat", {
       message: content,
-      khachHangId: senderId.value,         // Thêm dòng này
-      conversationId: conversationId.value // Thêm dòng này
     });
 
-    // 3. Hiển thị phản hồi từ AI
+    // 2️⃣ XÓA loading trước khi thêm câu trả lời thật
+    messages.value = messages.value.filter((m) => m.id !== "loading");
+
     messages.value.push({
-      id: Date.now() + 1,
+      id: Date.now(),
       senderType: "AI",
       senderName: "ChocoBot",
       content: res.data.reply,
       sentAt: new Date(),
     });
 
+    scrollToBottom();
   } catch (e) {
     console.error("AI lỗi:", e);
+
+    // 3️⃣ XÓA loading nếu có lỗi
+    messages.value = messages.value.filter((m) => m.id !== "loading");
+
     messages.value.push({
-      id: Date.now() + 1,
+      id: Date.now(),
       senderType: "AI",
       senderName: "Hệ thống",
-      content: "Kết nối AI thất bại, vui lòng kiểm tra console Backend.",
+      content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
       sentAt: new Date(),
     });
+
+    scrollToBottom();
   } finally {
     isLoading.value = false;
-    scrollToBottom();
   }
 };
 </script>
-
 
 <style scoped>
 .chat-popup-inner {
@@ -282,16 +293,19 @@ const callAI = async (content) => {
   height: 100%;
   background: #fff;
 }
+
 .chat-header {
   padding: 15px;
   background: #6b3f1e;
   color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
 .header-info h4 {
   margin: 0;
   font-size: 16px;
 }
+
 .status {
   font-size: 12px;
   margin: 4px 0 0;
@@ -299,6 +313,7 @@ const callAI = async (content) => {
   align-items: center;
   opacity: 0.9;
 }
+
 .status-dot {
   width: 8px;
   height: 8px;
@@ -306,7 +321,6 @@ const callAI = async (content) => {
   border-radius: 50%;
   margin-right: 6px;
 }
-
 
 .messages-box {
   flex: 1;
@@ -317,17 +331,19 @@ const callAI = async (content) => {
   gap: 12px;
   background: #f9f9f9;
 }
+
 .msg-wrapper {
   display: flex;
   width: 100%;
 }
+
 .msg-wrapper.mine {
   justify-content: flex-end;
 }
+
 .msg-wrapper.theirs {
   justify-content: flex-start;
 }
-
 
 .msg-bubble {
   max-width: 80%;
@@ -337,11 +353,13 @@ const callAI = async (content) => {
   font-size: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
 .mine .msg-bubble {
   background: #6b3f1e;
   color: white;
   border-bottom-right-radius: 4px;
 }
+
 .theirs .msg-bubble {
   background: #fff;
   color: #333;
@@ -349,24 +367,26 @@ const callAI = async (content) => {
   border: 1px solid #eee;
 }
 
-
 .sender-name {
   font-size: 11px;
   font-weight: bold;
   margin-bottom: 4px;
   color: #6b3f1e;
 }
+
 .time {
   font-size: 10px;
   margin-top: 4px;
   opacity: 0.7;
   text-align: right;
 }
+
 .input-area {
   padding: 15px;
   background: #fff;
   border-top: 1px solid #eee;
 }
+
 .input-wrapper {
   display: flex;
   align-items: center;
@@ -374,6 +394,7 @@ const callAI = async (content) => {
   border-radius: 25px;
   padding: 4px 15px;
 }
+
 .input-wrapper input {
   flex: 1;
   background: transparent;
@@ -382,6 +403,7 @@ const callAI = async (content) => {
   outline: none;
   font-size: 14px;
 }
+
 .send-btn {
   background: none;
   border: none;
@@ -390,17 +412,14 @@ const callAI = async (content) => {
   padding: 5px;
   display: flex;
 }
+
 .send-btn:disabled {
   color: #ccc;
 }
+
 .ai .msg-bubble {
   background: #f0e6ff;
   color: #4b0082;
   border-bottom-left-radius: 4px;
 }
 </style>
-
-
-
-
-

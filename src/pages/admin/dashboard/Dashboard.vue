@@ -20,83 +20,92 @@
         <h2>Thống Kê</h2>
       </div>
 
-      <div class="filter-controls">
-        <div class="control-group">
-          <label>Khoảng thời gian thống kê</label>
-          <div class="date-inputs">
-            <input type="date" v-model="filter.startDate" />
-            <span>-</span>
-            <input type="date" v-model="filter.endDate" />
+      <div class="top-actions-container">
+        
+        <div class="filter-controls">
+          <div class="control-group">
+            <label>Khoảng thời gian thống kê</label>
+            <div class="date-inputs">
+              <input type="date" v-model="filter.startDate" />
+              <span>-</span>
+              <input type="date" v-model="filter.endDate" />
+            </div>
           </div>
-        </div>
 
-        <div class="control-group">
-          <label>Loại biểu đồ</label>
-          <div class="btn-group">
-            <button
-              @click="chartType = 'line'"
-              :class="{ active: chartType === 'line' }"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+          <div class="control-group">
+            <label>Loại biểu đồ</label>
+            <div class="btn-group">
+              <button
+                @click="chartType = 'line'"
+                :class="{ active: chartType === 'line' }"
               >
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-              Đường
-            </button>
-            <button
-              @click="chartType = 'bar'"
-              :class="{ active: chartType === 'bar' }"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Đường
+              </button>
+              <button
+                @click="chartType = 'bar'"
+                :class="{ active: chartType === 'bar' }"
               >
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-              </svg>
-              Cột
-            </button>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Cột
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div class="filter-footer">
-        <div class="summary-text">
-          Số đơn hàng: <b>{{ totalOrdersInChart }}</b> &nbsp;|&nbsp; Tổng doanh
-          thu:
-          <b class="highlight">{{ formatCurrency(totalRevenueInChart) }}</b>
         </div>
 
         <div class="action-buttons">
-    <button @click="resetFilter" class="btn btn-secondary"><img src="/src/assets/icon/refresh-white.svg" alt="">Đặt lại bộ lọc</button>
-    
-    <button @click="handleTestSendEmail" class="btn" style="background-color: #10b981; color: white;">
-        🧪 Gửi Thử Mail
-    </button>
+          <button @click="resetFilter" class="btn btn-secondary">
+            <img src="/src/assets/icon/refresh-white.svg" alt="" />Đặt lại bộ lọc
+          </button>
 
-    <button @click="openSettingsModal" class="btn btn-secondary" style="background-color: #4b5563;">
-        ⚙️ Cài đặt tự động
-    </button>
-    
-    <button @click="showExportModal = true" class="btn btn-primary"><img src="/src/assets/icon/dowload-white.svg" alt="">Xuất báo cáo</button>
-</div>
+          <button
+            @click="handleTestSendEmail"
+            class="btn"
+            style="background-color: #10b981; color: white"
+          >
+            🧪 Gửi Thử Mail
+          </button>
+
+          <button
+            @click="openSettingsModal"
+            class="btn btn-secondary"
+            style="background-color: #4b5563"
+          >
+            ⚙️ Cài đặt tự động
+          </button>
+
+          <button @click="showExportModal = true" class="btn btn-primary">
+            <img src="/src/assets/icon/dowload-white.svg" alt="" />Xuất báo cáo
+          </button>
+        </div>
+
+      </div>
+
+      <div class="filter-footer-custom">
+        <div class="revenue-summary-cards">
+          <div class="summary-box">
+            <span class="box-label">Tổng số đơn hàng</span>
+            <span class="box-value text-black">{{ totalOrdersInChart }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="box-label">Tổng doanh thu</span>
+            <span class="box-value text-green">{{ formatCurrency(totalRevenueInChart) }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="box-label">Doanh thu thực tế</span>
+            <span class="box-value text-blue">{{ formatCurrency(totalActualRevenueInChart) }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="box-label">Doanh thu dự kiến</span>
+            <span class="box-value text-yellow">{{ formatCurrency(totalExpectedRevenueInChart) }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -104,17 +113,7 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box blue">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -138,17 +137,7 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box purple">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -172,17 +161,7 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box teal">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -206,17 +185,7 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box orange">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -241,6 +210,7 @@
 
     <div class="main-content-grid">
       <div class="left-panel">
+        
         <div class="card chart-section">
           <div class="card-header border-left-teal">
             <h3>Biểu Đồ Doanh Thu</h3>
@@ -284,11 +254,7 @@
                     <div class="table-img">
                       <img
                         :src="item.idSanPham?.hinhAnh || '/placeholder.png'"
-                        @error="
-                          (e) =>
-                            ((e.target as HTMLImageElement).src =
-                              '/placeholder.png')
-                        "
+                        @error="(e) => ((e.target as HTMLImageElement).src = '/placeholder.png')"
                         alt="img"
                       />
                     </div>
@@ -311,6 +277,40 @@
             </table>
           </div>
         </div>
+
+        <div class="card table-card mt-4">
+          <div class="card-header flex-between">
+            <h3 style="font-size: 16px; font-weight: 600; color: #374151;">Bảng thống kê chi tiết theo thời gian</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="custom-table text-left border-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Doanh thu</th>
+                  <th>Số đơn</th>
+                  <th>Giá trị trung bình/đơn</th>
+                  <th>Tăng trưởng (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in chiTietThoiGianData" :key="index">
+                  <td class="font-medium text-black">{{ item.thoiGian }}</td>
+                  <td class="text-black">{{ formatCurrency(item.doanhThu) }}</td>
+                  <td class="text-black">{{ item.soDonHang }}</td>
+                  <td class="text-black">{{ formatCurrency(item.giaTriTrungBinh) }}</td>
+                  <td :class="item.tangTruong >= 0 ? 'text-green font-medium' : 'text-red font-medium'">
+                    {{ formatGrowth(item.tangTruong) }}
+                  </td>
+                </tr>
+                <tr v-if="!chiTietThoiGianData || chiTietThoiGianData.length === 0">
+                  <td colspan="5" class="text-center text-gray py-4">Chưa có dữ liệu</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <div class="right-panel">
@@ -323,7 +323,6 @@
               v-if="statusChartData"
               :data="statusChartData"
               :options="statusDoughnutOptions as any"
-              :plugins="[donutOutlabelPlugin]"
             />
           </div>
         </div>
@@ -337,7 +336,6 @@
               v-if="channelChartData"
               :data="channelChartData"
               :options="channelDoughnutOptions as any"
-              :plugins="[donutOutlabelPlugin]"
             />
           </div>
         </div>
@@ -345,26 +343,12 @@
         <div class="card top-product-section">
           <div class="card-header border-left-orange flex-between">
             <h3>Sản Phẩm Bán Chạy</h3>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#eab308"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
               <path d="M4 22h16"></path>
-              <path
-                d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"
-              ></path>
-              <path
-                d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"
-              ></path>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
             </svg>
           </div>
@@ -442,10 +426,10 @@
       </div>
     </div>
   </div>
-  <EmailSettingsModal 
-      v-if="showSettingsModal" 
-      @close="showSettingsModal = false" 
-    />
+  <EmailSettingsModal
+    v-if="showSettingsModal"
+    @close="showSettingsModal = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -466,11 +450,13 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Doughnut } from "vue-chartjs";
+
 const showSettingsModal = ref(false);
 const openSettingsModal = () => {
   showSettingsModal.value = true;
 };
-// --- [MỚI] PLUGIN VẼ SỐ TRỰC TIẾP LÊN ĐỈNH BIỂU ĐỒ LINE NHƯ ẢNH ---
+
+// PLUGIN VẼ SỐ TRỰC TIẾP LÊN ĐỈNH BIỂU ĐỒ LINE
 const customDataLabelsPlugin = {
   id: "customDataLabels",
   afterDatasetsDraw(chart: any) {
@@ -497,18 +483,24 @@ const customDataLabelsPlugin = {
     });
   },
 };
+
 const handleTestSendEmail = async () => {
-  // Hiển thị trạng thái đang gửi cho chuyên nghiệp
-  const confirmTest = confirm("Hệ thống sẽ gửi 1 bản báo cáo demo tới email bạn đã cài đặt. Bạn có muốn tiếp tục?");
+  const confirmTest = confirm(
+    "Hệ thống sẽ gửi 1 bản báo cáo demo tới email bạn đã cài đặt. Bạn có muốn tiếp tục?"
+  );
   if (!confirmTest) return;
 
   try {
     const res = await axios.post(`${API_URL}/test-email`);
-    alert(res.data); // Hiện thông báo: Đã gửi email test thành công...
+    alert(res.data);
   } catch (error: any) {
-    alert("❌ Lỗi: " + (error.response?.data || "Không thể kết nối đến máy chủ gửi mail"));
+    alert(
+      "❌ Lỗi: " +
+        (error.response?.data || "Không thể kết nối đến máy chủ gửi mail")
+    );
   }
 };
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -520,71 +512,8 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  customDataLabelsPlugin // Đăng ký plugin hiển thị số tiền
+  customDataLabelsPlugin 
 );
-
-// --- PLUGIN VẼ DÂY VÀ CHỮ RA NGOÀI GIỐNG ẢNH CHO DONUT ---
-const donutOutlabelPlugin = {
-  id: "donutOutlabelPlugin",
-  afterDraw(chart: any) {
-    const ctx = chart.ctx;
-    const width = chart.chartArea.right - chart.chartArea.left;
-    const height = chart.chartArea.bottom - chart.chartArea.top;
-    const centerX = chart.chartArea.left + width / 2;
-    const centerY = chart.chartArea.top + height / 2;
-
-    chart.data.datasets.forEach((dataset: any, i: number) => {
-      const meta = chart.getDatasetMeta(i);
-      if (meta.hidden) return;
-
-      meta.data.forEach((element: any, index: number) => {
-        if (chart.getDataVisibility(index) === false) return;
-        if (!dataset.data[index]) return;
-
-        const labelObj = chart.data.labels[index] || "";
-        const lines = labelObj.split("\n");
-
-        const midAngle =
-          element.startAngle + (element.endAngle - element.startAngle) / 2;
-        const outerRadius = element.outerRadius;
-
-        const cos = Math.cos(midAngle);
-        const sin = Math.sin(midAngle);
-
-        const startX = centerX + cos * outerRadius;
-        const startY = centerY + sin * outerRadius;
-
-        const breakX = centerX + cos * (outerRadius + 15);
-        const breakY = centerY + sin * (outerRadius + 15);
-
-        const isRight = cos > 0;
-        const endX = isRight ? breakX + 20 : breakX - 20;
-        const endY = breakY;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(breakX, breakY);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = dataset.backgroundColor[index] || "#999";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.font = "11px Inter, sans-serif";
-        ctx.textBaseline = "middle";
-        ctx.textAlign = isRight ? "left" : "right";
-        const textX = isRight ? endX + 5 : endX - 5;
-
-        lines.forEach((line: string, idx: number) => {
-          ctx.fillStyle = idx === 0 ? "#6b7280" : "#9ca3af";
-          const textY = endY - (lines.length * 14) / 2 + idx * 14 + 7;
-          ctx.fillText(line, textX, textY);
-        });
-        ctx.restore();
-      });
-    });
-  },
-};
 
 // --- Interface ---
 interface SummaryResponse {
@@ -597,11 +526,23 @@ interface SummaryMap {
   thangNay?: SummaryResponse;
   namNay?: SummaryResponse;
 }
+
 interface ChartResponse {
   thoiGian: string;
   doanhThu: number;
+  doanhThuThucTe: number;
+  doanhThuDuKien: number;
   soLuongDon: number;
 }
+
+interface ThongKeChiTietResponse {
+  thoiGian: string;
+  doanhThu: number;
+  soDonHang: number;
+  giaTriTrungBinh: number;
+  tangTruong: number;
+}
+
 interface TopProductResponse {
   tenSanPham: string;
   anh: string;
@@ -624,10 +565,12 @@ const statusRawData = ref<StatusResponse[]>([]);
 const channelRawData = ref<ChannelResponse[]>([]);
 const lowStockProducts = ref<any[]>([]);
 
+// Khai báo biến lưu dữ liệu bảng chi tiết
+const chiTietThoiGianData = ref<ThongKeChiTietResponse[]>([]);
+
 const chartType = ref<"line" | "bar">("line");
 const today = new Date().toISOString().slice(0, 10);
 
-// Khởi tạo lấy từ mùng 1 đến cuối tháng cho dễ nhìn y chang biểu đồ
 const firstDayOfMonth = new Date();
 firstDayOfMonth.setDate(1);
 const firstDayStr = firstDayOfMonth.toISOString().slice(0, 10);
@@ -650,8 +593,10 @@ const fetchData = async () => {
   try {
     const resSummary = await axios.get(`${API_URL}/tong-quat`);
     summaryData.value = resSummary.data;
+    
     const resTop = await axios.get(`${API_URL}/ban-chay`);
     topProducts.value = resTop.data;
+    
     const resStatus = await axios.get(`${API_URL}/trang-thai`);
     statusRawData.value = resStatus.data;
 
@@ -660,6 +605,10 @@ const fetchData = async () => {
 
     const resLowStock = await axios.get(`${API_URL}/sap-het`);
     lowStockProducts.value = resLowStock.data;
+
+    // GỌI API LẤY BẢNG CHI TIẾT
+    const resChiTiet = await axios.get(`${API_URL}/chi-tiet-thoi-gian`);
+    chiTietThoiGianData.value = resChiTiet.data;
 
     hiddenStatusIndices.value = [];
     hiddenChannelIndices.value = [];
@@ -689,6 +638,7 @@ watch(
     if (filter.value.startDate && filter.value.endDate) fetchChartData();
   }
 );
+
 const resetFilter = () => {
   filter.value.startDate = firstDayStr;
   filter.value.endDate = today;
@@ -730,7 +680,6 @@ const handleExportExcel = async () => {
   }
 };
 
-// --- [SỬA] CONFIG CHART DOANH THU ĐỂ FILL 0 NHƯ HÌNH ---
 const chartData = computed(() => {
   if (!filter.value.startDate || !filter.value.endDate) return null;
 
@@ -740,7 +689,6 @@ const chartData = computed(() => {
   const labels: string[] = [];
   const dataValues: number[] = [];
 
-  // Tạo map tra cứu dữ liệu từ API
   const dataMap: Record<string, number> = {};
   chartRawData.value.forEach((item) => {
     dataMap[item.thoiGian] = item.doanhThu;
@@ -751,8 +699,8 @@ const chartData = computed(() => {
     const dateString = currentDate.toISOString().slice(0, 10);
     const day = currentDate.getDate();
 
-    labels.push(day.toString()); // Hiển thị ngày 1, 2, 3... thay vì full ngày
-    dataValues.push(dataMap[dateString] || 0); // Ngày không có đơn thì là 0
+    labels.push(day.toString());
+    dataValues.push(dataMap[dateString] || 0);
 
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -762,10 +710,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: "Doanh thu",
-        // [SỬA Ở ĐÂY] Kiểm tra nếu là Bar thì tô màu xanh, nếu Line thì trong suốt
-        backgroundColor: chartType.value === 'bar' ? 'rgba(66, 184, 163, 0.8)' : 'transparent',
-        borderColor: "#42b8a3", // Màu xanh ngọc theo ảnh
-        borderWidth: chartType.value === 'bar' ? 0 : 2, // Bar thì không cần viền, Line thì viền 2px
+        backgroundColor:
+          chartType.value === "bar" ? "rgba(66, 184, 163, 0.8)" : "transparent",
+        borderColor: "#42b8a3",
+        borderWidth: chartType.value === "bar" ? 0 : 2,
         pointBackgroundColor: "#fff",
         pointBorderColor: "#42b8a3",
         pointBorderWidth: 2,
@@ -773,7 +721,7 @@ const chartData = computed(() => {
         pointHoverRadius: 5,
         data: dataValues,
         fill: false,
-        tension: 0.4, // Bo lượn sóng
+        tension: 0.4,
       },
     ],
   };
@@ -783,7 +731,7 @@ const chartOptions: any = {
   responsive: true,
   maintainAspectRatio: false,
   layout: {
-    padding: { top: 30 }, // Cách trên để không bị cắt label
+    padding: { top: 30 },
   },
   plugins: {
     legend: { display: false },
@@ -809,7 +757,7 @@ const chartOptions: any = {
       beginAtZero: true,
       min: 0,
       ticks: {
-        stepSize: 500000000, // Nhảy bậc 500M
+        stepSize: 500000000,
         callback: function (value: any) {
           if (value === 0) return "0";
           if (value >= 1000000) return value / 1000000 + "M";
@@ -817,18 +765,18 @@ const chartOptions: any = {
         },
         color: "#9ca3af",
       },
-      grid: { display: false }, // Ẩn hoàn toàn lưới ngang
-      border: { display: false }, // Ẩn trục Y
+      grid: { display: false },
+      border: { display: false },
     },
     x: {
-      grid: { display: false }, // Ẩn lưới dọc
+      grid: { display: false },
       ticks: { color: "#9ca3af" },
-      border: { display: true, color: "#d1d5db" }, // Hiện đường gạch nền dưới cùng
+      border: { display: true, color: "#d1d5db" },
     },
   },
 };
 
-// --- CONFIG DONUT CHARTS (GIỮ NGUYÊN) ---
+// --- CONFIG DONUT CHARTS ---
 const statusChartData = computed(() => {
   const statusMap: Record<number, string> = {
     0: "Chờ xác nhận",
@@ -902,20 +850,20 @@ const channelChartData = computed(() => {
 const donutOptionsBase = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: "60%",
+  cutout: "65%",
   layout: {
-    padding: { left: 40, right: 20, top: 20, bottom: 20 }
+    padding: { top: 10, bottom: 20, left: 10, right: 10 },
   },
   plugins: {
     legend: {
-      position: "bottom",
+      position: "right",
       align: "center",
       labels: {
         usePointStyle: true,
         boxWidth: 8,
-        padding: 15,
-        font: { size: 12, family: "'Inter', sans-serif" },
-        color: "#6b7280",
+        padding: 20,
+        font: { size: 13, family: "'Inter', sans-serif" },
+        color: "#4b5563",
         generateLabels: (chart: any) => {
           const datasets = chart.data.datasets;
           return chart.data.labels.map((label: string, i: number) => {
@@ -933,12 +881,20 @@ const donutOptionsBase = {
       },
     },
     tooltip: {
+      backgroundColor: "rgba(255, 255, 255, 0.95)",
+      titleColor: "#1f2937",
+      bodyColor: "#4b5563",
+      borderColor: "#e5e7eb",
+      borderWidth: 1,
+      padding: 12,
+      boxPadding: 4,
       callbacks: {
         title: function (context: any) {
           return context[0].label.split("\n")[0];
         },
         label: function (context: any) {
-          return ` Số lượng: ${context.raw} đơn`;
+          const labelArr = context.label.split("\n");
+          return ` ${labelArr[1]}`;
         },
       },
     },
@@ -970,17 +926,10 @@ const statusDoughnutOptions = computed(() => ({
 
 const channelDoughnutOptions = computed(() => ({
   ...donutOptionsBase,
-  layout: {
-    padding: { left: 80, right: 80, top: 30, bottom: 30 },
-  },
   plugins: {
     ...donutOptionsBase.plugins,
     legend: {
       ...donutOptionsBase.plugins.legend,
-      labels: {
-        ...donutOptionsBase.plugins.legend.labels,
-        padding: 30,
-      },
       onClick: (e: any, legendItem: any, legend: any) => {
         const index = legendItem.index;
         const chart = legend.chart;
@@ -998,17 +947,32 @@ const channelDoughnutOptions = computed(() => ({
   },
 }));
 
+// TÍNH TOÁN DỮ LIỆU TỪNG Ô SUMMARY
 const totalRevenueInChart = computed(() =>
   chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0)
 );
 const totalOrdersInChart = computed(() =>
   chartRawData.value.reduce((sum, item) => sum + item.soLuongDon, 0)
 );
+const totalActualRevenueInChart = computed(() =>
+  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuThucTe || 0), 0)
+);
+const totalExpectedRevenueInChart = computed(() =>
+  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuDuKien || 0), 0)
+);
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    value
-  );
+
+const formatCurrency = (value: number) => {
+  if (value === undefined || value === null) return "0 ₫";
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+};
+
+// Hàm định dạng phần trăm tăng trưởng (+ / -)
+const formatGrowth = (val: number) => {
+  if (val === undefined || val === null) return "0.00%";
+  return val > 0 ? `+${val.toFixed(2)}%` : `${val.toFixed(2)}%`;
+};
+
 const getRankClass = (rank: number) => {
   if (rank === 1) return "rank-1";
   if (rank === 2) return "rank-2";
@@ -1022,14 +986,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* GIỮ NGUYÊN CSS CŨ */
 .dashboard-container {
   padding: 24px;
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .card {
   background: white;
@@ -1045,31 +1006,34 @@ onMounted(() => {
   margin-bottom: 20px;
   color: #4b5563;
 }
+
+/* ===== [ĐÃ CẬP NHẬT] CSS CHO PHẦN BỘ LỌC + NÚT BẤM NẰM NGANG ===== */
+.top-actions-container {
+  display: flex;
+  justify-content: space-between; /* Đẩy bộ lọc sang trái, nút sang phải */
+  align-items: flex-end;
+  flex-wrap: wrap; /* Cho phép rớt dòng nếu màn hình nhỏ */
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
 .filter-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   align-items: flex-end;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f3f4f6;
 }
-.filter-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-}
-.summary-text {
-  font-size: 15px;
-  color: #4b5563;
-}
-.highlight {
-  color: #0d9488;
-}
+
 .action-buttons {
   display: flex;
-  gap: 10px;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
+/* ================================================================= */
+
 .control-group label {
   display: block;
   font-size: 14px;
@@ -1106,7 +1070,7 @@ onMounted(() => {
   gap: 5px;
 }
 .btn-group button.active {
-  background: linear-gradient(90deg, #c79a63, #8b5e34); 
+  background: linear-gradient(90deg, #c79a63, #8b5e34);
   color: white;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -1121,407 +1085,154 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
 }
-.btn-secondary {
-  background-color: #6b7280;
-}
-.btn-secondary:hover {
-  background-color: #4b5563;
-}
-.btn-primary {
-  background: linear-gradient(90deg, #c79a63, #8b5e34); 
-  color: white;
-  border: none;
-}
-.btn-primary:hover {
-  background: linear-gradient(90deg, #b88d57, #7a502c); 
-}
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
-}
-.stat-card {
+.btn-secondary { background-color: #6b7280; }
+.btn-secondary:hover { background-color: #4b5563; }
+.btn-primary { background: linear-gradient(90deg, #c79a63, #8b5e34); color: white; border: none; }
+.btn-primary:hover { background: linear-gradient(90deg, #b88d57, #7a502c); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
+.stat-card { display: flex; flex-direction: column; justify-content: space-between; height: 140px; margin-bottom: 0; transition: transform 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+.stat-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.icon-box { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.icon-box.blue { background: #dbeafe; color: #2563eb; }
+.icon-box.purple { background: #f3e8ff; color: #9333ea; }
+.icon-box.teal { background: #ccfbf1; color: #0d9488; }
+.icon-box.orange { background: #ffedd5; color: #ea580c; }
+.stat-info { text-align: right; }
+.stat-value { font-size: 20px; font-weight: bold; color: #1f2937; }
+.stat-trend { font-size: 12px; margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.stat-trend.down { color: #ef4444; }
+.stat-bottom { margin-top: 10px; }
+.stat-label { font-weight: 600; color: #374151; }
+.stat-sub { font-size: 12px; color: #6b7280; }
+
+.main-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+@media (max-width: 1024px) { .main-content-grid { grid-template-columns: 1fr; } }
+
+.card-header h3 { font-size: 16px; font-weight: bold; color: #374151; margin: 0; }
+.border-left-teal { border-left: 4px solid #14b8a6; padding-left: 10px; }
+.border-left-orange { border-left: 4px solid #f97316; padding-left: 10px; }
+.border-left-red { border-left: 4px solid #ef4444; padding-left: 10px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+.chart-container { height: 350px; position: relative; width: 100%; margin-top: 20px; }
+.loading-text { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; }
+
+.product-list { margin-top: 15px; max-height: 350px; overflow-y: auto; }
+.product-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+.product-item:last-child { border-bottom: none; }
+.rank-badge { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; flex-shrink: 0; }
+.rank-1 { background-color: #facc15; }
+.rank-2 { background-color: #9ca3af; }
+.rank-3 { background-color: #fb923c; }
+.rank-other { background-color: #ccfbf1; color: #0d9488; }
+.product-info { flex: 1; min-width: 0; }
+.product-name { font-size: 14px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.product-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.product-img { width: 48px; height: 48px; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; flex-shrink: 0; }
+.product-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.right-panel { display: flex; flex-direction: column; gap: 20px; }
+.donut-card { min-height: auto; padding: 15px; display: flex; flex-direction: column; }
+.donut-card .card-header h3 { font-size: 14px; }
+.donut-container { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; height: 360px; margin-top: 10px; }
+
+.left-panel { display: flex; flex-direction: column; gap: 24px; }
+.table-card { overflow: hidden; }
+.mini-action { font-size: 12px; background-color: #f3f4f6; padding: 2px 8px; border-radius: 4px; color: #6b7280; }
+.table-responsive { overflow-x: auto; margin-top: 15px; }
+
+.custom-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.custom-table th { text-align: center; padding: 12px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.custom-table td { text-align: center; padding: 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; color: #4b5563; }
+.custom-table tr:last-child td { border-bottom: none; }
+.table-img { width: 40px; height: 40px; border-radius: 4px; overflow: hidden; border: 1px solid #e5e7eb; margin: 0 auto; }
+.table-img img { width: 100%; height: 100%; object-fit: cover; }
+.text-red { color: #ef4444; }
+.text-gray { color: #9ca3af; }
+.font-bold { font-weight: bold; }
+.font-medium { font-weight: 500; }
+.text-center { text-align: center; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+.modal-content { background: white; width: 400px; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); animation: slideDown 0.3s ease-out; }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-header h3 { margin: 0; font-size: 18px; color: #1f2937; }
+.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; }
+.close-btn:hover { color: #4b5563; }
+.modal-body { margin-bottom: 24px; }
+.modal-desc { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+.form-control { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+.form-control:focus { border-color: #63391f; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* Bố cục Footer chứa 4 box */
+.filter-footer-custom {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 140px;
-  margin-bottom: 0;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.stat-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-.icon-box.blue {
-  background: #dbeafe;
-  color: #2563eb;
-}
-.icon-box.purple {
-  background: #f3e8ff;
-  color: #9333ea;
-}
-.icon-box.teal {
-  background: #ccfbf1;
-  color: #0d9488;
-}
-.icon-box.orange {
-  background: #ffedd5;
-  color: #ea580c;
-}
-.stat-info {
-  text-align: right;
-}
-.stat-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: #1f2937;
-}
-.stat-trend {
-  font-size: 12px;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 2px;
-}
-.stat-trend.down {
-  color: #ef4444;
-}
-.stat-bottom {
-  margin-top: 10px;
-}
-.stat-label {
-  font-weight: 600;
-  color: #374151;
-}
-.stat-sub {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.main-content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-@media (max-width: 1024px) {
-  .main-content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.card-header h3 {
-  font-size: 16px;
-  font-weight: bold;
-  color: #374151;
-  margin: 0;
-}
-.border-left-teal {
-  border-left: 4px solid #14b8a6;
-  padding-left: 10px;
-}
-.border-left-orange {
-  border-left: 4px solid #f97316;
-  padding-left: 10px;
-}
-.flex-between {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.chart-container {
-  height: 350px;
-  position: relative;
-  width: 100%;
+  gap: 16px;
   margin-top: 20px;
 }
-.loading-text {
+
+.revenue-summary-cards {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #9ca3af;
-}
-.product-list {
-  margin-top: 15px;
-  max-height: 350px;
-  overflow-y: auto;
-}
-.product-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f3f4f6;
-}
-.product-item:last-child {
-  border-bottom: none;
-}
-.rank-badge {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
-  color: white;
-  flex-shrink: 0;
-}
-.rank-1 {
-  background-color: #facc15;
-}
-.rank-2 {
-  background-color: #9ca3af;
-}
-.rank-3 {
-  background-color: #fb923c;
-}
-.rank-other {
-  background-color: #ccfbf1;
-  color: #0d9488;
-}
-.product-info {
-  flex: 1;
-  min-width: 0;
-}
-.product-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0;
-}
-.product-meta {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 2px;
-}
-.product-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  flex-shrink: 0;
-}
-.product-img img {
+  gap: 16px;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.donut-card {
-  min-height: auto;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-}
-.donut-card .card-header h3 {
-  font-size: 14px;
-}
-.donut-container {
+.summary-box {
   flex: 1;
-  position: relative;
+  background-color: #f8f9fc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 16px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 360px;
-  margin-top: 10px;
 }
 
-.left-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-.table-card {
-  overflow: hidden;
-}
-.border-left-red {
-  border-left: 4px solid #ef4444;
-  padding-left: 10px;
-}
-.mini-action {
-  font-size: 12px;
-  background-color: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: #6b7280;
-}
-.table-responsive {
-  overflow-x: auto;
-  margin-top: 15px;
-}
-.custom-table {
-  width: 100%;
-  border-collapse: collapse;
+.box-label {
   font-size: 14px;
-}
-.custom-table th {
-  text-align: center;
-  padding: 12px;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
-}
-.custom-table td {
-  text-align: center;
-  padding: 12px;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: middle;
-  color: #4b5563;
-}
-.custom-table tr:last-child td {
-  border-bottom: none;
-}
-.table-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  margin: 0 auto;
-}
-.table-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.text-red {
-  color: #ef4444;
-}
-.text-gray {
-  color: #9ca3af;
-}
-.font-bold {
-  font-weight: bold;
-}
-.font-medium {
+  color: #6b7280;
+  margin-bottom: 8px;
   font-weight: 500;
 }
-.text-right {
-  text-align: right;
-}
-.text-center {
-  text-align: center;
-}
-.py-4 {
-  padding-top: 16px;
-  padding-bottom: 16px;
+
+.box-value {
+  font-size: 22px;
+  font-weight: 700;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Màu chữ cho các thẻ Value giống ảnh thiết kế */
+.text-black { color: #1f2937; }
+.text-green { color: #10b981; }
+.text-blue { color: #3b82f6; }
+.text-yellow { color: #fbbf24; }
+
+
+/* Căn khoảng cách cho Bảng chi tiết */
+.mt-4 { margin-top: 24px; }
+
+/* Ép text sang trái và tạo viền cho bảng chi tiết giống ảnh */
+.border-table th, .border-table td {
+  border: 1px solid #f3f4f6;
 }
-.modal-content {
-  background: white;
-  width: 400px;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  animation: slideDown 0.3s ease-out;
+
+.custom-table.text-left th,
+.custom-table.text-left td {
+  text-align: left;
+  padding: 14px 16px;
 }
-@keyframes slideDown {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
+
+.custom-table.text-left th {
+  background-color: #ffffff;
   color: #1f2937;
-}
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #9ca3af;
-}
-.close-btn:hover {
-  color: #4b5563;
-}
-.modal-body {
-  margin-bottom: 24px;
-}
-.modal-desc {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 16px;
-}
-.form-group {
-  margin-bottom: 16px;
-}
-.form-group label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 6px;
-}
-.form-control {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-.form-control:focus {
-  border-color: #63391f;
-  ring: 2px solid #63391f;
-}
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  font-weight: 600;
 }
 </style>

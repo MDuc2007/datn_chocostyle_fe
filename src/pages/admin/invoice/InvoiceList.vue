@@ -40,6 +40,7 @@
               <option :value="null">Tất cả</option>
               <option :value="1">Tại quầy</option>
               <option :value="0">Online</option>
+              <option :value="3">Tại quầy (Giao hàng)</option>
             </select>
           </div>
 
@@ -102,8 +103,8 @@
               <td class="text-bold">{{ hd.tenKhachHang || "Khách lẻ" }}</td>
               <td>{{ hd.soDienThoai || "---" }}</td>
               <td class="text-center">
-                <span :class="hd.loaiDon === 1 ? 'tag-offline' : 'tag-online'">
-                  {{ hd.loaiDon === 1 ? "Tại quầy" : "Online" }}
+                <span :class="getLoaiDonClass(hd.loaiDon)">
+                  {{ getLoaiDonName(hd.loaiDon) }}
                 </span>
               </td>
               <td>{{ formatDate(hd.ngayTao) }}</td>
@@ -170,15 +171,25 @@ import iconEdit from "../../../assets/icon/edit.svg";
 
 const router = useRouter();
 
+// --- [THÊM MỚI] Hàm lấy ngày hôm nay chuẩn YYYY-MM-DD ---
+const getToday = () => {
+  const d = new Date();
+  // Trừ đi múi giờ để đảm bảo lấy đúng ngày ở VN, không bị lùi ngày
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split('T')[0];
+};
+
 // --- State ---
 const invoices = ref<InvoiceResponse[]>([]);
 const pagination = reactive({ page: 0, size: 8, total: 0, totalPages: 0 });
+
+// --- [ĐÃ SỬA] Cập nhật startDate và endDate gọi hàm getToday() ---
 const filters = reactive({
   keyword: "",
   trangThai: null,
   loaiDon: null,
-  startDate: "",
-  endDate: "",
+  startDate: getToday(), // Mặc định là hôm nay
+  endDate: getToday(),   // Mặc định là hôm nay
 });
 
 let searchTimeout: any = null;
@@ -215,12 +226,13 @@ const changePage = (newPage: number) => {
   fetchInvoices();
 };
 
+// --- [ĐÃ SỬA] Reset lại bộ lọc cũng tự động về ngày hôm nay ---
 const resetFilters = () => {
   filters.keyword = "";
   filters.trangThai = null;
   filters.loaiDon = null;
-  filters.startDate = "";
-  filters.endDate = "";
+  filters.startDate = getToday(); 
+  filters.endDate = getToday();
   pagination.page = 0;
   fetchInvoices();
 };
@@ -278,6 +290,21 @@ const getStatusClass = (stt: number) => {
   if (stt === 0) return "status-text status-orange";
   if (stt === 3) return "status-text status-blue";
   return "status-text status-green";
+};
+
+// --- [THÊM MỚI] Helper cho Loại Đơn ---
+const getLoaiDonName = (type: number) => {
+  if (type === 1) return "Tại quầy";
+  if (type === 0) return "Online";
+  if (type === 3) return "Tại quầy (Giao)";
+  return "Không xác định";
+};
+
+const getLoaiDonClass = (type: number) => {
+  if (type === 1) return "tag-offline";
+  if (type === 0) return "tag-online";
+  if (type === 3) return "tag-delivery"; 
+  return "tag-offline";
 };
 
 onMounted(() => {
@@ -530,7 +557,8 @@ onMounted(() => {
 
 /* Tag Type */
 .tag-offline,
-.tag-online {
+.tag-online,
+.tag-delivery {
   font-size: 11px;
   padding: 4px 10px;
   border-radius: 6px;
@@ -545,6 +573,11 @@ onMounted(() => {
   color: #63391f;
   background: #efebe9;
   border-color: #efebe9;
+}
+.tag-delivery {
+  color: #e67e22; /* Màu cam nổi bật cho giao hàng từ quầy */
+  background: #fdf2e9; 
+  border-color: #fdf2e9;
 }
 
 /* Buttons */

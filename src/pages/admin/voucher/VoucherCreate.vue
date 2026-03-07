@@ -60,10 +60,11 @@
           <label> Giá trị giảm <span class="required">*</span> </label>
           <div class="input-suffix">
             <input
-              type="number"
-              v-model.number="form.giaTri"
+              type="text"
+              v-model="giaTriDisplay"
               :class="{ error: errors.giaTri }"
-              @blur="validateGiaTri"
+              @input="handleGiaTriInput"
+              @blur="blurGiaTri"
             />
             <span class="suffix">
               {{ form.loaiGiam === "PERCENT" ? "%" : "đ" }}
@@ -80,11 +81,12 @@
             <span v-if="form.loaiGiam === 'PERCENT'" class="required">*</span>
           </label>
           <input
-            type="number"
-            v-model.number="form.giaTriToiDa"
+            type="text"
+            v-model="giaTriToiDaDisplay"
             :disabled="form.loaiGiam === 'MONEY'"
             :class="{ error: errors.giaTriToiDa }"
-            @blur="validateGiaTriToiDa"
+            @input="handleGiaTriToiDaInput"
+            @blur="blurGiaTriToiDa"
           />
           <small v-if="errors.giaTriToiDa" class="error-text">
             {{ errors.giaTriToiDa }}
@@ -95,10 +97,11 @@
         <div class="form-group">
           <label> Điều kiện đơn hàng <span class="required">*</span> </label>
           <input
-            type="number"
-            v-model.number="form.dieuKienDonHang"
+            type="text"
+            v-model="dieuKienDisplay"
             :class="{ error: errors.dieuKienDonHang }"
-            @blur="validateDieuKien"
+            @input="handleDieuKienInput"
+            @blur="blurDieuKien"
           />
           <small v-if="errors.dieuKienDonHang" class="error-text">
             {{ errors.dieuKienDonHang }}
@@ -325,6 +328,52 @@ const router = useRouter();
 
 const selectedCustomerIds = ref([]);
 const loading = ref(false);
+
+const formatNumber = (value) => {
+  if (!value) return "";
+  return Number(value).toLocaleString("vi-VN");
+};
+
+const parseNumber = (value) => {
+  return Number(value.replace(/\./g, "")) || 0;
+};
+
+const giaTriDisplay = ref("");
+const giaTriToiDaDisplay = ref("");
+const dieuKienDisplay = ref("");
+
+const handleGiaTriInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.giaTri = Number(raw);
+  giaTriDisplay.value = formatNumber(raw);
+};
+
+const blurGiaTri = () => {
+  giaTriDisplay.value = formatNumber(form.giaTri);
+  validateGiaTri();
+};
+
+const handleGiaTriToiDaInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.giaTriToiDa = Number(raw);
+  giaTriToiDaDisplay.value = formatNumber(raw);
+};
+
+const blurGiaTriToiDa = () => {
+  giaTriToiDaDisplay.value = formatNumber(form.giaTriToiDa);
+  validateGiaTriToiDa();
+};
+
+const handleDieuKienInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  form.dieuKienDonHang = Number(raw);
+  dieuKienDisplay.value = formatNumber(raw);
+};
+
+const blurDieuKien = () => {
+  dieuKienDisplay.value = formatNumber(form.dieuKienDonHang);
+  validateDieuKien();
+};
 
 const filter = reactive({
   minSpend: null,

@@ -2,10 +2,7 @@
   <div class="add-employee-page">
     <div class="main-card form-page-animation">
       <div class="header-simple">
-        <button
-          class="btn-back hover-effect"
-          @click="$router.push('/admin/customer')"
-        >
+        <button class="btn-back hover-effect" @click="$router.push('/admin/customer')">
           <i class="fa fa-arrow-left"></i> Quay lại danh sách
         </button>
       </div>
@@ -21,10 +18,7 @@
 
           <div class="avatar-section">
             <div class="avatar-wrapper">
-              <label
-                class="avatar-circle hover-scale"
-                title="Thay đổi ảnh đại diện"
-              >
+              <label class="avatar-circle hover-scale" title="Thay đổi ảnh đại diện">
                 <img v-if="previewImage" :src="previewImage" alt="Avatar" />
                 <div v-else class="placeholder-text">
                   <i class="fa fa-camera"></i><br />Tải ảnh
@@ -32,12 +26,7 @@
                 <div class="avatar-overlay-edit">
                   <span>Thay đổi</span>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  @change="handleFileUpload"
-                  class="file-input-hidden"
-                />
+                <input type="file" accept="image/*" @change="handleFileUpload" class="file-input-hidden" />
               </label>
               <span class="hint">Định dạng: JPG, PNG (Max 5MB)</span>
             </div>
@@ -45,14 +34,8 @@
 
           <div class="form-group name-group">
             <label>Họ và tên <span class="req">*</span></label>
-            <input
-              type="text"
-              v-model="editForm.tenKhachHang"
-              placeholder="Nhập họ tên khách hàng"
-              class="form-input"
-              :class="{ 'red-border': errors.tenKhachHang }"
-              @input="clearError('tenKhachHang')"
-            />
+            <input type="text" v-model="editForm.tenKhachHang" placeholder="Nhập họ tên khách hàng" class="form-input"
+              :class="{ 'red-border': errors.tenKhachHang }" @input="clearError('tenKhachHang')" />
             <span v-if="errors.tenKhachHang" class="error-msg slide-down">
               {{ errors.tenKhachHang }}
             </span>
@@ -68,13 +51,8 @@
             <div class="row-duo">
               <div class="form-group">
                 <label>Email <span class="req">*</span></label>
-                <input
-                  v-model="editForm.email"
-                  placeholder="example@mail.com"
-                  class="form-input"
-                  :class="{ 'red-border': errors.email }"
-                  @input="clearError('email')"
-                />
+                <input v-model="editForm.email" placeholder="example@mail.com" class="form-input"
+                  :class="{ 'red-border': errors.email }" @input="clearError('email')" />
                 <span v-if="errors.email" class="error-msg slide-down">{{
                   errors.email
                 }}</span>
@@ -82,13 +60,8 @@
 
               <div class="form-group">
                 <label>Ngày sinh <span class="req">*</span></label>
-                <input
-                  type="date"
-                  v-model="editForm.ngaySinh"
-                  class="form-input"
-                  :class="{ 'red-border': errors.ngaySinh }"
-                  @change="clearError('ngaySinh')"
-                />
+                <input type="date" v-model="editForm.ngaySinh" class="form-input"
+                  :class="{ 'red-border': errors.ngaySinh }" @change="clearError('ngaySinh')" />
                 <span v-if="errors.ngaySinh" class="error-msg slide-down">{{
                   errors.ngaySinh
                 }}</span>
@@ -98,13 +71,8 @@
             <div class="row-duo">
               <div class="form-group">
                 <label>Số điện thoại <span class="req">*</span></label>
-                <input
-                  v-model="editForm.soDienThoai"
-                  placeholder="09xxxxxxxx"
-                  class="form-input"
-                  :class="{ 'red-border': errors.soDienThoai }"
-                  @input="clearError('soDienThoai')"
-                />
+                <input v-model="editForm.soDienThoai" placeholder="09xxxxxxxx" class="form-input"
+                  :class="{ 'red-border': errors.soDienThoai }" @input="clearError('soDienThoai')" />
                 <span v-if="errors.soDienThoai" class="error-msg slide-down">{{
                   errors.soDienThoai
                 }}</span>
@@ -114,19 +82,11 @@
                 <label>Giới tính</label>
                 <div class="radio-group">
                   <label class="radio-item">
-                    <input
-                      type="radio"
-                      :value="true"
-                      v-model="editForm.gioiTinh"
-                    />
+                    <input type="radio" :value="true" v-model="editForm.gioiTinh" />
                     <span>Nam</span>
                   </label>
                   <label class="radio-item">
-                    <input
-                      type="radio"
-                      :value="false"
-                      v-model="editForm.gioiTinh"
-                    />
+                    <input type="radio" :value="false" v-model="editForm.gioiTinh" />
                     <span>Nữ</span>
                   </label>
                 </div>
@@ -136,102 +96,60 @@
             <div class="address-section-wrapper">
               <div class="section-header-row">
                 <h3 class="section-label-v3">Địa chỉ nhận hàng</h3>
-                <button
-                  class="btn-add-address-dashed hover-effect"
-                  @click="addAddressField"
-                >
+                <button class="btn-add-address-dashed hover-effect" @click="addAddressField">
                   + Thêm địa chỉ mới
                 </button>
               </div>
 
               <div class="address-list-container">
                 <transition-group name="list-anim">
-                  <div
-                    v-for="(addr, index) in editForm.listDiaChi"
-                    :key="'addr-' + index"
-                    class="address-card-v3"
-                  >
+                  <div v-for="(addr, index) in editForm.listDiaChi" :key="'addr-' + index" class="address-card-v3">
                     <div class="address-main-row">
                       <div class="addr-col">
-                        <select
-                          :id="'select-prov-' + index"
-                          style="width: 100%"
-                          class="form-input"
-                        >
-                          <option :value="null">Chọn Tỉnh/Thành phố</option>
-                          <option
-                            v-for="p in listProvinces"
-                            :key="p.code"
-                            :value="p.code"
-                          >
+                        <select :id="'select-prov-' + index" style="width: 100%" class="form-input">
+                          <option value="">Chọn Tỉnh/Thành phố</option>
+                          <option v-for="p in listProvinces" :key="p.code" :value="p.code">
                             {{ p.name }}
                           </option>
                         </select>
                       </div>
 
                       <div class="addr-col">
-                        <select
-                          :id="'select-dist-' + index"
-                          style="width: 100%"
-                          class="form-input"
-                          :disabled="!addr.provinceId"
-                        >
-                          <option :value="null">Chọn Quận/Huyện</option>
-                          <option
-                            v-for="d in addr.districtOptions"
-                            :key="d.code"
-                            :value="d.code"
-                          >
+                        <select :id="'select-dist-' + index" style="width: 100%" class="form-input"
+                          :disabled="!addr.provinceId">
+                          <option value="">Chọn Quận/Huyện</option>
+                          <option v-for="d in addr.districtOptions" :key="d.code" :value="d.code">
                             {{ d.name }}
                           </option>
                         </select>
                       </div>
 
                       <div class="addr-col">
-                        <select
-                          :id="'select-ward-' + index"
-                          style="width: 100%"
-                          class="form-input"
-                          :disabled="!addr.districtId"
-                        >
-                          <option :value="null">Chọn Phường/Xã</option>
-                          <option
-                            v-for="w in addr.wardOptions"
-                            :key="w.code"
-                            :value="w.code"
-                          >
+                        <select :id="'select-ward-' + index" style="width: 100%" class="form-input"
+                          :disabled="!addr.districtId">
+                          <option value="">Chọn Phường/Xã</option>
+                          <option v-for="w in addr.wardOptions" :key="w.code" :value="w.code">
                             {{ w.name }}
                           </option>
                         </select>
                       </div>
 
                       <div class="addr-col addr-detail-input">
-                        <input
-                          v-model="addr.detail"
-                          class="form-input"
-                          placeholder="Nhập địa chỉ chi tiết..."
-                          @input="clearError('address')"
-                        />
+                        <input v-model="addr.detail" class="form-input" placeholder="Nhập địa chỉ chi tiết..."
+                          @input="clearError('address')" />
                       </div>
 
                       <div class="addr-action-col">
-                        <button
-                          v-if="editForm.listDiaChi.length > 1"
-                          class="btn-remove-circle hover-effect"
-                          @click="removeAddressField(index)"
-                        >
+                        <button v-if="editForm.listDiaChi.length > 1" class="btn-remove-circle hover-effect"
+                          @click="removeAddressField(index)">
                           ✕
                         </button>
                       </div>
                     </div>
 
                     <div class="address-footer-row">
-                      <button
-                        @click="setAsDefault(index)"
-                        class="btn-default-pill hover-effect"
-                        :class="{ 'is-active': addr.macDinh }"
-                        :disabled="addr.macDinh"
-                      >
+                      <button @click="setAsDefault(index)" class="btn-default-pill hover-effect"
+                        :class="{ 'is-active': addr.macDinh }" :disabled="addr.macDinh">
                         <span v-if="addr.macDinh">Đang mặc định</span>
                         <span v-else>Đặt mặc định</span>
                       </button>
@@ -239,32 +157,19 @@
                   </div>
                 </transition-group>
               </div>
-              <span
-                v-if="errors.address"
-                class="error-msg slide-down"
-                style="display: block; margin-top: 5px"
-              >
+              <span v-if="errors.address" class="error-msg slide-down" style="display: block; margin-top: 5px">
                 {{ errors.address }}
               </span>
             </div>
           </div>
 
           <div class="footer-actions">
-            <button
-              class="btn-cancel-clean hover-effect"
-              @click="$router.push('/admin/customer')"
-            >
+            <button class="btn-cancel-clean hover-effect" @click="$router.push('/admin/customer')">
               Hủy bỏ
             </button>
-            <button
-              class="btn-orange hover-effect"
-              @click="handleUpdateClick"
-              :disabled="isLoading"
-              :class="{ 'btn-loading': isLoading }"
-            >
-              <span v-if="isLoading"
-                ><i class="fa fa-spinner fa-spin"></i> Đang xử lý...</span
-              >
+            <button class="btn-orange hover-effect" @click="handleUpdateClick" :disabled="isLoading"
+              :class="{ 'btn-loading': isLoading }">
+              <span v-if="isLoading"><i class="fa fa-spinner fa-spin"></i> Đang xử lý...</span>
               <span v-else>Lưu Khách Hàng</span>
             </button>
           </div>
@@ -283,17 +188,8 @@
       <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12l3 3 5-5"></path>
             </svg>
@@ -304,10 +200,7 @@
             <button class="btn-cancel hover-effect" @click="closeModal">
               Hủy
             </button>
-            <button
-              class="btn-confirm hover-effect"
-              @click="confirmUpdateAction"
-            >
+            <button class="btn-confirm hover-effect" @click="confirmUpdateAction">
               Đồng ý
             </button>
           </div>
@@ -318,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
@@ -326,9 +219,6 @@ import { customerService } from "../../../services/customerService";
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
-
-// Dùng API v1 chuẩn để chống giật lag
-const PROVINCE_API_URL = "https://provinces.open-api.vn/api/v1";
 
 // --- STATE ---
 const loadingData = ref(true);
@@ -424,16 +314,21 @@ onMounted(async () => {
   await fetchProvinces();
   if (customerId) {
     await fetchCustomerDetail();
+    // Đợi Vue vẽ xong rồi init Select2
+    await nextTick();
+    editForm.value.listDiaChi.forEach((_, idx) => initSelect2ForAddress(idx));
   } else {
+    // THÊM MỚI: Tắt loading trước để Vue vẽ Form HTML ra
     loadingData.value = false;
-    addAddressField(); 
+    await nextTick(); // Chờ 1 nhịp render
+    addAddressField(); // Hàm này sẽ tự gọi initSelect2ForAddress
   }
 });
 
 // --- FETCH DATA ---
 const fetchProvinces = async () => {
   try {
-    const res = await axios.get(`${PROVINCE_API_URL}/p/`);
+    const res = await axios.get("https://provinces.open-api.vn/api/?depth=1");
     listProvinces.value = res.data;
   } catch (e) {
     console.error(e);
@@ -458,13 +353,12 @@ const fetchCustomerDetail = async () => {
   }
 };
 
-// --- ADDRESS LOGIC (DÙNG CHUẨN VUE) ---
-const onProvinceChange = async (addr) => {
+// --- ADDRESS LOGIC ---
+const onProvinceChange = async (addr, index) => {
   addr.districtId = null;
   addr.wardCode = null;
   addr.districtOptions = [];
   addr.wardOptions = [];
-
 
   // Clear giao diện Quận, Phường của dòng hiện tại
   window.$(`#select-dist-${index}`).val(null).trigger("change.select2");
@@ -473,30 +367,23 @@ const onProvinceChange = async (addr) => {
   addr.provinceName =
     listProvinces.value.find((p) => p.code == addr.provinceId)?.name || "";
 
-
   if (addr.provinceId) {
-    addr.provinceName = listProvinces.value.find((p) => String(p.code) === String(addr.provinceId))?.name || "";
     try {
-
       const res = await axios.get(
         `https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`,
       );
       addr.districtOptions = res.data.districts;
       await nextTick();
       initSelect2ForAddress(index);
-
     } catch (error) {
       console.error(error);
     }
-  } else {
-    addr.provinceName = "";
   }
 };
 
-const onDistrictChange = async (addr) => {
+const onDistrictChange = async (addr, index) => {
   addr.wardCode = null;
   addr.wardOptions = [];
-
 
   window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
 
@@ -504,28 +391,25 @@ const onDistrictChange = async (addr) => {
     addr.districtOptions.find((d) => d.code == addr.districtId)?.name || "";
 
   if (addr.districtId) {
-    addr.districtName = addr.districtOptions.find((d) => String(d.code) === String(addr.districtId))?.name || "";
     try {
-
       const res = await axios.get(
         `https://provinces.open-api.vn/api/d/${addr.districtId}?depth=2`,
       );
       addr.wardOptions = res.data.wards;
+      await nextTick();
+      initSelect2ForAddress(index);
     } catch (error) {
       console.error(error);
     }
-  } else {
-    addr.districtName = "";
   }
 };
 
 const onWardChange = (addr) => {
-
   addr.wardName =
     addr.wardOptions.find((w) => w.code == addr.wardCode)?.name || "";
 };
 
-const addAddressField = () => {
+const addAddressField = async () => {
   editForm.value.listDiaChi.push({
     provinceId: null,
     districtId: null,
@@ -538,11 +422,14 @@ const addAddressField = () => {
     wardOptions: [],
     macDinh: editForm.value.listDiaChi.length === 0,
   });
+
+  // Render DOM xong thì init jquery
+  await nextTick();
+  initSelect2ForAddress(editForm.value.listDiaChi.length - 1);
 };
 
-const removeAddressField = (i) => {
+const removeAddressField = async (i) => {
   if (editForm.value.listDiaChi.length > 1) {
-
     // Dọn dẹp select2 để chống lỗi ghost element
     window.$(`#select-prov-${i}`).select2("destroy");
     window.$(`#select-dist-${i}`).select2("destroy");
@@ -551,8 +438,10 @@ const removeAddressField = (i) => {
     const wasDefault = editForm.value.listDiaChi[i].macDinh;
     editForm.value.listDiaChi.splice(i, 1);
 
-
     if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
+
+    // Load lại select2 cho mảng mới vì index bị thay đổi
+    await initAllSelect2();
   }
 };
 
@@ -743,6 +632,7 @@ const showToast = (msg, type = "success") => {
 .header-simple {
   margin-bottom: 25px;
 }
+
 .btn-back {
   border: none;
   background: none;
@@ -754,6 +644,7 @@ const showToast = (msg, type = "success") => {
   gap: 6px;
   font-size: 14px;
 }
+
 .btn-back:hover {
   color: var(--primary-brown);
 }
@@ -762,14 +653,17 @@ const showToast = (msg, type = "success") => {
   display: flex;
   gap: 60px;
 }
+
 .left-panel {
   flex: 0 0 300px;
   display: flex;
   flex-direction: column;
 }
+
 .right-panel {
   flex: 1;
 }
+
 .panel-heading {
   font-size: 16px;
   font-weight: 700;
@@ -785,11 +679,13 @@ const showToast = (msg, type = "success") => {
   justify-content: center;
   margin-bottom: 30px;
 }
+
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 .avatar-circle {
   width: 120px;
   height: 120px;
@@ -804,29 +700,35 @@ const showToast = (msg, type = "success") => {
   position: relative;
   transition: all 0.3s ease;
 }
+
 .avatar-circle:hover {
   box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.15);
   transform: scale(1.02);
 }
+
 .avatar-circle img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .placeholder-text {
   color: var(--primary-brown);
   font-size: 13px;
   opacity: 0.7;
   text-align: center;
 }
+
 .file-input-hidden {
   display: none;
 }
+
 .hint {
   font-size: 11px;
   color: #777;
   margin-top: 8px;
 }
+
 .name-group {
   width: 100%;
 }
@@ -841,11 +743,13 @@ const showToast = (msg, type = "success") => {
   opacity: 0;
   transition: 0.3s;
 }
+
 .avatar-overlay-edit span {
   color: #fff;
   font-size: 12px;
   font-weight: 600;
 }
+
 .avatar-circle:hover .avatar-overlay-edit {
   opacity: 1;
 }
@@ -861,31 +765,35 @@ const showToast = (msg, type = "success") => {
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
 }
+
 .form-grid-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .row-duo {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 30px;
 }
+
 .form-group {
   display: flex;
   flex-direction: column;
 }
+
 .form-group label {
   margin-bottom: 6px;
   font-weight: 600;
   font-size: 13px;
   color: var(--primary-brown);
 }
+
 .req {
   color: #c0392b;
   margin-left: 3px;
 }
-
 
 .form-input {
   padding: 10px 15px;
@@ -899,14 +807,17 @@ const showToast = (msg, type = "success") => {
   box-sizing: border-box;
   width: 100%;
 }
+
 .form-input:focus {
   border-color: var(--primary-brown);
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
+
 .red-border {
   border-color: #c0392b !important;
   background-color: #fff5f5;
 }
+
 .error-msg {
   color: #c0392b;
   font-size: 12px;
@@ -919,6 +830,7 @@ const showToast = (msg, type = "success") => {
   gap: 20px;
   margin-top: 8px;
 }
+
 .radio-item {
   display: flex;
   align-items: center;
@@ -927,6 +839,7 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   color: var(--primary-brown);
 }
+
 .radio-item input {
   accent-color: var(--primary-brown);
   width: 16px;
@@ -934,25 +847,28 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
-   5. ADDRESS SECTION 
+   5. ADDRESS SECTION (GIỐNG ẢNH 3 - NẰM NGANG)
    ========================================= */
 .address-section-wrapper {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px dashed #ddd;
 }
+
 .section-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
+
 .section-label-v3 {
   font-size: 16px;
   font-weight: 700;
   color: var(--primary-brown);
   margin: 0;
 }
+
 .btn-add-address-dashed {
   background: transparent;
   border: 1.5px dashed var(--primary-brown);
@@ -964,6 +880,7 @@ const showToast = (msg, type = "success") => {
   transition: 0.2s;
   font-size: 13px;
 }
+
 .btn-add-address-dashed:hover {
   background: var(--primary-brown);
   color: #fff;
@@ -977,34 +894,36 @@ const showToast = (msg, type = "success") => {
   border: 1px solid #e0e0e0;
   transition: all 0.3s ease;
 }
+
 .address-card-v3:hover {
   border-color: #d1d5db;
 }
 
 /* Cột Layout Ngang */
-
 .address-main-row {
   display: flex;
   gap: 12px;
   align-items: center;
   margin-bottom: 10px;
-  flex-wrap: nowrap; /* Bắt buộc 1 dòng */
-
+  flex-wrap: nowrap;
+  /* Bắt buộc 1 dòng */
 }
+
 .addr-col {
   flex: 1;
   min-width: 140px;
 }
+
 .addr-detail-input {
   flex: 1;
   min-width: 150px;
 }
+
 .addr-action-col {
   flex: 0 0 35px;
   display: flex;
   justify-content: center;
 }
-
 
 /* Nút xóa viền mỏng đỏ */
 .btn-remove-circle {
@@ -1021,6 +940,7 @@ const showToast = (msg, type = "success") => {
   transition: 0.2s;
   font-size: 12px;
 }
+
 .btn-remove-circle:hover {
   background: #fff1f0;
 }
@@ -1037,9 +957,11 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-default-pill:hover:not(:disabled) {
   background: #fdf8f6;
 }
+
 .btn-default-pill.is-active {
   background: #63391f;
   color: #ffffff;
@@ -1047,14 +969,15 @@ const showToast = (msg, type = "success") => {
 }
 
 /* =========================================
-
    GHI ĐÈ CSS CHO JQUERY SELECT2 (FIX LỖI CẮT)
    ========================================= */
 :deep(.select2-container) {
   width: 100% !important;
 }
+
 :deep(.select2-container .select2-selection--single) {
-  height: 42px; /* Chiều cao đồng bộ với input */
+  height: 42px;
+  /* Chiều cao đồng bộ với input */
   border-radius: 8px;
   border: 1px solid #ddd;
   background: #fff;
@@ -1063,32 +986,32 @@ const showToast = (msg, type = "success") => {
   padding: 0 10px;
   transition: all 0.2s;
 }
-:deep(
-  .select2-container--default.select2-container--focus
-    .select2-selection--single
-),
-:deep(
-  .select2-container--default.select2-container--open .select2-selection--single
-) {
+
+:deep(.select2-container--default.select2-container--focus .select2-selection--single),
+:deep(.select2-container--default.select2-container--open .select2-selection--single) {
   border-color: #63391f !important;
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1) !important;
   outline: none;
 }
+
 :deep(.select2-selection__rendered) {
   font-size: 14px;
   color: #484848 !important;
   padding-left: 0 !important;
   line-height: normal !important;
 }
+
 :deep(.select2-selection__placeholder) {
   color: #9ca3af !important;
 }
+
 :deep(.select2-selection__arrow) {
   height: 100% !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   right: 10px !important;
 }
+
 :deep(.select2-dropdown) {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -1096,31 +1019,30 @@ const showToast = (msg, type = "success") => {
   margin-top: 4px;
   z-index: 1000;
 }
+
 :deep(.select2-search__field) {
   border: 1px solid #ddd !important;
   border-radius: 6px !important;
   outline: none !important;
   padding: 8px !important;
 }
+
 :deep(.select2-search__field:focus) {
   border-color: #63391f !important;
 }
+
 :deep(.select2-results__option--highlighted) {
   background-color: #63391f !important;
   color: white !important;
 }
-:deep(
-  .select2-container--default.select2-container--disabled
-    .select2-selection--single
-) {
+
+:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
   background-color: #f9fafb;
   cursor: not-allowed;
   border-style: dashed;
 }
 
 /* =========================================
-=======
->>>>>>> 
    6. FOOTER & MISC
    ========================================= */
 .footer-actions {
@@ -1131,6 +1053,7 @@ const showToast = (msg, type = "success") => {
   padding-top: 20px;
   gap: 15px;
 }
+
 .btn-cancel-clean {
   padding: 10px 24px;
   border: 1px solid #cbd5e1;
@@ -1141,10 +1064,12 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-cancel-clean:hover {
   background: #f1f5f9;
   color: #334155;
 }
+
 .btn-orange {
   background: linear-gradient(135deg, #5a3420, #b8895d);
   color: #fff;
@@ -1155,10 +1080,12 @@ const showToast = (msg, type = "success") => {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-orange:hover:not(:disabled) {
   background-color: #4e2c17;
   box-shadow: 0 4px 10px rgba(99, 57, 31, 0.25);
 }
+
 .btn-orange:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -1169,6 +1096,7 @@ const showToast = (msg, type = "success") => {
   padding: 50px;
   color: #666;
 }
+
 .spinner {
   border: 4px solid #f3f3f3;
   border-top: 4px solid var(--primary-brown);
@@ -1195,6 +1123,7 @@ const showToast = (msg, type = "success") => {
   background: #f0fdf4;
   color: #374151;
 }
+
 .toast-indicator {
   width: 6px;
   height: 100%;
@@ -1205,13 +1134,16 @@ const showToast = (msg, type = "success") => {
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
+
 .toast-content {
   margin-left: 10px;
 }
+
 .toast-notification.error {
   background: #fef2f2;
   color: #991b1b;
 }
+
 .toast-notification.error .toast-indicator {
   background-color: #ef4444;
 }
@@ -1226,6 +1158,7 @@ const showToast = (msg, type = "success") => {
   z-index: 1000;
   backdrop-filter: blur(2px);
 }
+
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -1235,6 +1168,7 @@ const showToast = (msg, type = "success") => {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   animation: zoomIn 0.3s ease-out;
 }
+
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
@@ -1246,22 +1180,26 @@ const showToast = (msg, type = "success") => {
   align-items: center;
   justify-content: center;
 }
+
 .confirm-title {
   color: var(--primary-brown);
   margin-bottom: 10px;
   font-size: 20px;
   font-weight: 700;
 }
+
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
   font-size: 14px;
 }
+
 .confirm-actions {
   display: flex;
   gap: 15px;
 }
+
 .confirm-actions button {
   flex: 1;
   height: 42px;
@@ -1271,13 +1209,16 @@ const showToast = (msg, type = "success") => {
   border: none;
   font-size: 14px;
 }
+
 .btn-confirm {
   background-color: #a88164;
   color: #fff;
 }
+
 .btn-confirm:hover {
   background-color: var(--primary-brown);
 }
+
 .btn-cancel {
   background: #f1f5f9;
   color: #475569;
@@ -1288,38 +1229,46 @@ const showToast = (msg, type = "success") => {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
+
 .slide-down {
   animation: slideDown 0.2s ease-out;
 }
+
 @keyframes slideDown {
   from {
     transform: translateY(-5px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
+
 .form-page-animation {
   opacity: 0;
   animation: fadeInUp 0.5s forwards;
 }
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1331,18 +1280,22 @@ const showToast = (msg, type = "success") => {
     flex-direction: column;
     gap: 30px;
   }
+
   .left-panel {
     flex: none;
     align-items: center;
     width: 100%;
   }
+
   .name-group {
     max-width: 400px;
     margin: 0 auto;
   }
+
   .address-main-row {
     flex-wrap: wrap;
   }
+
   .addr-action-col {
     width: 100%;
     justify-content: flex-end;

@@ -19,30 +19,31 @@
       </div>
 
       <section class="section shop-layout">
-        
+
         <aside class="sidebar-wrapper">
           <JacketFilter @on-filter="handleAdvancedFilter" />
         </aside>
 
         <div class="main-product-area">
-          
+
           <div class="toolbar">
             <div class="search-wrapper">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input 
-                type="text" 
-                v-model="searchKeyword" 
-                @input="applyFilters" 
-                placeholder="Tìm kiếm áo khoác..." 
-                class="search-input"
-              />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" v-model="searchKeyword" @input="applyFilters" placeholder="Tìm kiếm áo khoác..."
+                class="search-input" />
               <button v-if="searchKeyword" @click="clearSearch" class="clear-btn">✕</button>
             </div>
 
             <div class="toolbar-right">
               <div class="sort-box">
                 <span class="toolbar-icon ms-3">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
                 </span>
                 <span class="sort-label">Sắp xếp:</span>
                 <select v-model="selectedSort" @change="applyFilters" class="sort-select">
@@ -60,8 +61,6 @@
           </div>
 
           <div v-else-if="errorMsg" class="error-state">
-            <div class="error-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
-            <p>{{ errorMsg }}</p>
             <button @click="fetchFilteredData" class="btn-retry">Thử lại</button>
           </div>
 
@@ -72,18 +71,40 @@
                   <div v-for="sp in displayedProducts" :key="sp.id" class="product-card">
                     <div class="image-box" @click="goDetail(sp.id)">
                       <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
-                      <span v-if="isNew(sp.ngayTao)" class="badge badge-new">Mới</span>
+                      <span v-if="sp.phanTramGiam > 0" class="badge badge-sale">-{{ sp.phanTramGiam }}%</span>
+                      <span v-else-if="isNew(sp.ngayTao)" class="badge badge-new">Mới</span>
                     </div>
 
                     <div class="product-info">
                       <h3 class="product-name" @click="goDetail(sp.id)" :title="sp.tenSp">{{ sp.tenSp }}</h3>
-                      <p class="price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
-                        <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
-                      </p>
-                      
+
+                      <div class="price-wrapper">
+                        <template v-if="sp.phanTramGiam > 0">
+                          <p class="old-price">
+                            <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                            <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
+                          </p>
+                          <p class="price new-price">
+                            <span v-if="sp.giaMinSauGiam === sp.giaMaxSauGiam">{{ formatPrice(sp.giaMinSauGiam)
+                            }}</span>
+                            <span v-else>{{ formatPrice(sp.giaMinSauGiam) }} ~ {{ formatPrice(sp.giaMaxSauGiam)
+                            }}</span>
+                          </p>
+                        </template>
+                        <template v-else>
+                          <p class="price current-price">
+                            <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                            <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
+                          </p>
+                        </template>
+                      </div>
+
                       <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
+                          <circle cx="9" cy="21" r="1"></circle>
+                          <circle cx="20" cy="21" r="1"></circle>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
                         Thêm nhanh
                       </button>
                     </div>
@@ -119,39 +140,70 @@
       <div v-if="isQuickAddModalOpen" class="modal-overlay" @click.self="closeQuickAddModal">
         <div class="quick-add-modal">
           <button class="close-btn" @click="closeQuickAddModal">×</button>
-          
+
           <div class="modal-content" v-if="selectedProduct">
             <div class="modal-left">
               <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
             </div>
-            
+
             <div class="modal-right">
               <h3 class="modal-product-name">{{ selectedProduct.tenSp }}</h3>
-              
+
               <p class="modal-price">
-                <span v-if="currentVariant">{{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}</span>
-                <span v-else>
-                  <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
-                  <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
-                </span>
+                <template v-if="currentVariant">
+                  <span v-if="currentVariant.phanTramGiam > 0" class="modal-old-price">
+                    {{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan) }}
+                  </span>
+                  <span class="modal-current-price">
+                    {{ formatPrice(currentVariant.giaSauGiam || currentVariant.giaBan) }}
+                  </span>
+                </template>
+
+                <template v-else>
+                  <template v-if="selectedProduct.phanTramGiam > 0">
+                    <span class="modal-old-price">
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                      }}</span>
+                    </span>
+                    <span class="modal-current-price">
+                      <span v-if="selectedProduct.giaMinSauGiam === selectedProduct.giaMaxSauGiam">{{
+                        formatPrice(selectedProduct.giaMinSauGiam) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMinSauGiam) }} ~ {{
+                        formatPrice(selectedProduct.giaMaxSauGiam) }}</span>
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="modal-current-price">
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                      }}</span>
+                    </span>
+                  </template>
+                </template>
               </p>
 
               <div class="attribute-group" v-if="availableColors.length > 0">
                 <label>Màu sắc:</label>
                 <div class="btn-group">
-                  <button v-for="color in availableColors" :key="color" :class="{ active: selectedColor === color }" @click="selectedColor = color">{{ color }}</button>
+                  <button v-for="color in availableColors" :key="color" :class="{ active: selectedColor === color }"
+                    @click="selectedColor = color">{{ color }}</button>
                 </div>
               </div>
 
               <div class="attribute-group" v-if="availableSizes.length > 0">
                 <label>Kích cỡ:</label>
                 <div class="btn-group">
-                  <button v-for="size in availableSizes" :key="size" :class="{ active: selectedSize === size }" @click="selectedSize = size">{{ size }}</button>
+                  <button v-for="size in availableSizes" :key="size" :class="{ active: selectedSize === size }"
+                    @click="selectedSize = size">{{ size }}</button>
                 </div>
               </div>
 
               <div class="attribute-group">
-                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0 }})</span></label>
+                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
+                    }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
                   <input type="number" v-model="quantity" min="1" readonly />
@@ -187,7 +239,7 @@ const isLoading = ref(true);
 const errorMsg = ref("");
 
 // --- Trạng thái Lọc & Sắp xếp ---
-const searchKeyword = ref(""); 
+const searchKeyword = ref("");
 const selectedSort = ref("newest");
 const advancedFilters = ref({ minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] });
 
@@ -212,18 +264,18 @@ const showToast = (msg, type = "success") => {
 
 // --- Helper ---
 const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(v) + " đ";
-const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png"; 
+const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png";
 
 // HÀM CHUYỂN TRANG
 const goDetail = (id) => {
-  if(!id) {
+  if (!id) {
     console.error("Lỗi: Không tìm thấy ID sản phẩm để chuyển trang!");
     return;
   }
   router.push(`/home/product/${id}`);
 };
 
-const isNew = () => Math.random() > 0.8; 
+const isNew = () => Math.random() > 0.8;
 
 const clearSearch = () => {
   searchKeyword.value = "";
@@ -238,8 +290,8 @@ const handleAdvancedFilter = (filters) => {
 };
 
 const applyFilters = () => {
-   currentPage.value = 0;
-   fetchFilteredData();
+  currentPage.value = 0;
+  fetchFilteredData();
 }
 
 // ================= LOGIC GỌI API LỌC TỪ BACKEND & XỬ LÝ ID =================
@@ -248,7 +300,7 @@ const fetchFilteredData = async (isAppend = false) => {
   errorMsg.value = "";
 
   try {
-    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`; 
+    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
 
     if (searchKeyword.value.trim()) {
       url += `&keyword=${encodeURIComponent(searchKeyword.value.trim())}`;
@@ -263,7 +315,7 @@ const fetchFilteredData = async (isAppend = false) => {
 
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
-    
+
     rawData.forEach(item => {
       let passFilter = true;
       if (adv.types.length > 0 && !adv.types.includes(item.tenLoaiAo)) passFilter = false;
@@ -272,46 +324,58 @@ const fetchFilteredData = async (isAppend = false) => {
 
       if (passFilter) {
         if (!uniqueProductsMap.has(item.maSanPham)) {
-          
-          // ================= LOGIC LẤY ID SẢN PHẨM GỐC =================
-          let realProductId = item.sanPham?.id; 
-          
-          // NẾU BE KHÔNG TRẢ ID GỐC MÀ CHỈ TRẢ CHỮ (VD: "SP02"), TA CẮT LẤY SỐ 2
-          if (!realProductId && item.maSanPham && item.maSanPham.startsWith('SP')) {
-             realProductId = parseInt(item.maSanPham.replace('SP', ''), 10); 
-          }
-          
-          if(!realProductId) realProductId = item.id; // Dự phòng cuối
 
+          let realProductId = item.sanPham?.id;
+          if (!realProductId && item.maSanPham && item.maSanPham.startsWith('SP')) {
+            realProductId = parseInt(item.maSanPham.replace('SP', ''), 10);
+          }
+          if (!realProductId) realProductId = item.id;
+
+          // MỚI THÊM: Map luôn thông tin giá gốc và giá sau giảm
           uniqueProductsMap.set(item.maSanPham, {
-            id: realProductId,         // <--- Lưu ID số chuẩn để dùng cho URL
-            maSanPham: item.maSanPham, // <--- Giữ mã chữ để gọi Modal Thêm Nhanh
+            id: realProductId,
+            maSanPham: item.maSanPham,
             tenSp: item.tenSanPham,
             hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
-            giaMin: item.giaBan,
-            giaMax: item.giaBan,
+            giaMin: item.giaGoc || item.giaBan,
+            giaMax: item.giaGoc || item.giaBan,
+            giaMinSauGiam: item.giaSauGiam || item.giaBan,
+            giaMaxSauGiam: item.giaSauGiam || item.giaBan,
+            phanTramGiam: item.phanTramGiam || 0,
             ngayTao: item.ngayTao
           });
         } else {
           const existing = uniqueProductsMap.get(item.maSanPham);
-          if (item.giaBan < existing.giaMin) existing.giaMin = item.giaBan;
-          if (item.giaBan > existing.giaMax) existing.giaMax = item.giaBan;
+          const currentGia = item.giaGoc || item.giaBan;
+          const currentGiaSauGiam = item.giaSauGiam || item.giaBan;
+
+          // Cập nhật giá Min/Max cho Giá Gốc
+          if (currentGia < existing.giaMin) existing.giaMin = currentGia;
+          if (currentGia > existing.giaMax) existing.giaMax = currentGia;
+
+          // Cập nhật giá Min/Max cho Giá Đã Giảm
+          if (currentGiaSauGiam < existing.giaMinSauGiam) existing.giaMinSauGiam = currentGiaSauGiam;
+          if (currentGiaSauGiam > existing.giaMaxSauGiam) existing.giaMaxSauGiam = currentGiaSauGiam;
+
+          // Lấy phầm trăm giảm lớn nhất nếu có nhiều biến thể sale khác nhau
+          if (item.phanTramGiam > existing.phanTramGiam) existing.phanTramGiam = item.phanTramGiam;
         }
       }
     });
 
     let uniqueProducts = Array.from(uniqueProductsMap.values());
 
-    if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMin - b.giaMin);
-    else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMin - a.giaMin);
-    else uniqueProducts.sort((a, b) => b.id - a.id); 
+    // MỚI THÊM: Sắp xếp theo giá trị thực tế sau khi đã giảm
+    if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMinSauGiam - b.giaMinSauGiam);
+    else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMinSauGiam - a.giaMinSauGiam);
+    else uniqueProducts.sort((a, b) => b.id - a.id);
 
     if (isAppend) {
       filteredProducts.value = [...filteredProducts.value, ...uniqueProducts];
     } else {
       filteredProducts.value = uniqueProducts;
     }
-    
+
     visibleCount.value = itemsPerPage;
     totalPages.value = data.totalPages || 1;
 
@@ -347,10 +411,9 @@ const openQuickAddModal = async (sp) => {
   quantity.value = 1;
   isQuickAddModalOpen.value = true;
   try {
-    // Để lấy ds Màu/Size trong Modal: Dùng maSanPham gọi xuống BE.
     const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?keyword=${sp.maSanPham}&size=100`);
     productVariants.value = res.data.content || res.data || [];
-    
+
     if (productVariants.value.length > 0) {
       availableColors.value = [...new Set(productVariants.value.map(v => v.tenMauSac || v.mauSac?.tenMauSac))].filter(Boolean);
       availableSizes.value = [...new Set(productVariants.value.map(v => v.tenKichCo || v.kichCo?.tenKichCo))].filter(Boolean);
@@ -376,21 +439,25 @@ const confirmAddToCart = () => {
   if (quantity.value > tk) return showToast(`Kho chỉ còn ${tk} sản phẩm!`, "error");
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  // MỚI THÊM: Ưu tiên lấy giá sau giảm (nếu có) để đưa vào giỏ hàng
+  const giaDuaVaoGioHang = currentVariant.value.giaSauGiam || currentVariant.value.giaBan || currentVariant.value.gia || 0;
+
   const newItem = {
-    productId: selectedProduct.value.id, // SỬ DỤNG ID SỐ LƯU VÀO GIỎ HÀNG
-    variantId: currentVariant.value.id, 
+    productId: selectedProduct.value.id,
+    variantId: currentVariant.value.id,
     tenSp: selectedProduct.value.tenSp,
     hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
     mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
     kichCo: selectedSize.value,
-    giaBan: currentVariant.value.giaBan || currentVariant.value.gia || 0,
+    giaBan: giaDuaVaoGioHang, // Giá thực tế KH trả tiền
     soLuong: quantity.value,
     tonKho: tk
   };
 
   const existingIndex = cart.findIndex(item => item.variantId === newItem.variantId);
   if (existingIndex !== -1) {
-    if(cart[existingIndex].soLuong + newItem.soLuong > tk) return showToast(`Vượt quá tồn kho (${tk})!`, "error");
+    if (cart[existingIndex].soLuong + newItem.soLuong > tk) return showToast(`Vượt quá tồn kho (${tk})!`, "error");
     cart[existingIndex].soLuong += newItem.soLuong;
   } else {
     cart.push(newItem);
@@ -415,13 +482,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.app-container { min-height: 100vh; background-color: #FFF; font-family: 'Inter', sans-serif;}
+.app-container {
+  min-height: 100vh;
+  background-color: #FFF;
+  font-family: 'Inter', sans-serif;
+}
 
 /* Banner Full Width */
 .sub-banner {
   width: 100%;
-  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/src/assets/logo/banner 1.png') center/cover;
-  background-color: #63391F; 
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/src/assets/logo/banner 1.png') center/cover;
+  background-color: #63391F;
   height: 280px;
   display: flex;
   align-items: center;
@@ -429,99 +500,646 @@ onMounted(() => {
   text-align: center;
   color: white;
 }
-.sub-banner h1 { margin: 0 0 10px 0; letter-spacing: 5px; font-size: 42px; font-weight: 800; text-transform: uppercase;}
-.sub-banner p { margin: 0; font-size: 16px; opacity: 0.9; }
+
+.sub-banner h1 {
+  margin: 0 0 10px 0;
+  letter-spacing: 5px;
+  font-size: 42px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sub-banner p {
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
 
 /* Breadcrumb */
-.breadcrumb-container { max-width: 1400px; margin: 20px auto 0; padding: 0 4%; }
-.breadcrumb { font-size: 14px; color: #888; }
-.home-link { font-weight: 700; color: #333; cursor: pointer; transition: 0.2s;}
-.home-link:hover { color: #63391F; }
-.separator { margin: 0 10px; }
-.current { color: #888; cursor: default; }
+.breadcrumb-container {
+  max-width: 1536px;
+  margin: 20px auto 0;
+  padding: 0 4%;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: #888;
+}
+
+.home-link {
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.home-link:hover {
+  color: #63391F;
+}
+
+.separator {
+  margin: 0 10px;
+}
+
+.current {
+  color: #888;
+  cursor: default;
+}
 
 /* Layout Chia Cột */
-.shop-layout { display: flex; align-items: flex-start; gap: 40px; padding: 30px 4% 60px; max-width: 1400px; margin: 0 auto;}
-.sidebar-wrapper { flex: 0 0 250px; position: sticky; top: 20px;}
-.main-product-area { flex: 1; min-width: 0; }
+.shop-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  padding: 30px 4% 60px;
+  max-width: 1536px;
+  margin: 0 auto;
+}
+
+.sidebar-wrapper {
+  flex: 0 0 250px;
+  position: sticky;
+  top: 20px;
+}
+
+.main-product-area {
+  flex: 1;
+  min-width: 0;
+}
 
 /* Toolbar */
-.toolbar { display: flex; justify-content: space-between; align-items: center; background: #FFF; padding: 16px 0; margin-bottom: 25px;}
-.search-wrapper { position: relative; display: flex; align-items: center; }
-.search-icon { position: absolute; left: 14px; width: 16px; color: #888; }
-.search-input { width: 350px; padding: 10px 35px 10px 40px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; outline: none; background: #FFF; transition: all 0.3s;}
-.search-input:focus { border-color: #63391F; box-shadow: 0 0 0 2px rgba(99,57,31,0.1);}
-.clear-btn { position: absolute; right: 10px; background: none; border: none; color: #999; cursor: pointer; font-size: 16px;}
-.clear-btn:hover { color: #333; }
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFF;
+  padding: 16px 0;
+  margin-bottom: 25px;
+}
 
-.toolbar-right { display: flex; align-items: center; gap: 20px; }
-.sort-box { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #333;}
-.toolbar-icon { width: 16px; height: 16px; color: #666; display: flex;}
-.sort-select { padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; outline: none; background: #FFF; font-family: inherit; font-size: 14px; cursor: pointer; transition: 0.2s;}
-.sort-select:hover, .sort-select:focus { border-color: #63391F;}
-.ms-3 { margin-left: 15px;}
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  width: 16px;
+  color: #888;
+}
+
+.search-input {
+  width: 350px;
+  padding: 10px 35px 10px 40px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  background: #FFF;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  border-color: #63391F;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.clear-btn:hover {
+  color: #333;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sort-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.toolbar-icon {
+  width: 16px;
+  height: 16px;
+  color: #666;
+  display: flex;
+}
+
+.sort-select {
+  padding: 8px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  outline: none;
+  background: #FFF;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sort-select:hover,
+.sort-select:focus {
+  border-color: #63391F;
+}
+
+.ms-3 {
+  margin-left: 15px;
+}
 
 /* Product Grid */
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-.product-card { background: #FFF; border-radius: 8px; border: 1px solid #F0F0F0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; position: relative;}
-.product-card:hover { transform: translateY(-8px); border-color: #DDD; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
 
-.image-box { width: 100%; height: 280px; background: #F9F9F9; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; position: relative;}
-.image-box img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.product-card:hover .image-box img { transform: scale(1.05); }
+.product-card {
+  background: #FFF;
+  border-radius: 8px;
+  border: 1px solid #F0F0F0;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
 
-.badge { position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white; background: #10B981;} 
+.product-card:hover {
+  transform: translateY(-8px);
+  border-color: #DDD;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
 
-.product-info { padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; background: #FFF;}
-.product-name { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 10px; cursor: pointer; transition: color 0.3s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 42px;}
-.product-card:hover .product-name { color: #63391F; }
-.price { color: #d32f2f; font-weight: 800; font-size: 16px; margin-bottom: 15px; }
+.image-box {
+  width: 100%;
+  height: 280px;
+  background: #F9F9F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
 
-.btn-quick-add { width: 100%; background: #FFF; border: 1px solid #63391F; color: #63391F; padding: 10px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.4s; display: flex; align-items: center; justify-content: center; gap: 6px; opacity: 0; transform: translateY(10px);}
-.cart-icon { width: 16px; height: 16px; }
-.product-card:hover .btn-quick-add { opacity: 1; transform: translateY(0); }
-.btn-quick-add:hover { background: #63391F; color: #FFF; }
+.image-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-.load-more-container { display: flex; justify-content: center; margin-top: 40px; }
-.btn-load-more { background: transparent; border: 1px solid #63391F; color: #63391F; padding: 12px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-.btn-load-more:hover { background: #63391F; color: #FFF; }
-.empty-state { text-align: center; padding: 50px; color: #888; }
-.btn-retry { margin-top: 15px; background: #63391F; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
+.product-card:hover .image-box img {
+  transform: scale(1.05);
+}
+
+/* MỚI THÊM: CSS CHO BADGE SALE/MỚI */
+.badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  z-index: 2;
+}
+
+.badge-new {
+  background: #10B981;
+}
+
+.badge-sale {
+  background: #d32f2f;
+  box-shadow: 0 4px 6px rgba(211, 47, 47, 0.3);
+}
+
+.product-info {
+  padding: 15px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  background: #FFF;
+}
+
+.product-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: color 0.3s;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 42px;
+}
+
+.product-card:hover .product-name {
+  color: #63391F;
+}
+
+/* MỚI THÊM: CSS CHO GIÁ CŨ VÀ MỚI ĐÚNG THEO ẢNH YÊU CẦU */
+.price-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 15px;
+}
+
+.old-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 13px;
+  margin: 0;
+}
+
+.price {
+  margin: 0;
+  font-weight: 800;
+  color: #d32f2f;
+  font-size: 16px;
+}
+
+.btn-quick-add {
+  width: 100%;
+  background: #FFF;
+  border: 1px solid #63391F;
+  color: #63391F;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.cart-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.product-card:hover .btn-quick-add {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-quick-add:hover {
+  background: #63391F;
+  color: #FFF;
+}
+
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.btn-load-more {
+  background: transparent;
+  border: 1px solid #63391F;
+  color: #63391F;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-load-more:hover {
+  background: #63391F;
+  color: #FFF;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 50px;
+  color: #888;
+}
+
+.btn-retry {
+  margin-top: 15px;
+  background: #63391F;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
 
 /* Modal Quick Add */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center; }
-.quick-add-modal { background: #FFF; padding: 30px; border-radius: 12px; width: 800px; max-width: 95%; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.15);}
-.close-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; transition: 0.2s;}
-.close-btn:hover { color: #d32f2f; transform: rotate(90deg);}
-.modal-content { display: flex; gap: 30px; }
-.modal-left { flex: 1; background: #F9F9F9; border-radius: 8px; display: flex; justify-content: center; align-items: center; height: 350px;}
-.modal-left img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.modal-right { flex: 1.2; display: flex; flex-direction: column; justify-content: center;}
-.modal-product-name { font-size: 22px; color: #333; font-weight: 700; margin-bottom: 10px; }
-.modal-price { font-size: 20px; font-weight: 800; color: #d32f2f; margin-bottom: 20px; border-bottom: 1px solid #EEE; padding-bottom: 15px; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.attribute-group { margin-bottom: 20px; }
-.attribute-group label { display: block; font-weight: 600; margin-bottom: 10px; color: #555; }
-.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-group button { padding: 8px 16px; border: 1px solid #DDD; background: #FFF; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s;}
-.btn-group button:hover { border-color: #63391F; color: #63391F; }
-.btn-group button.active { background: #63391F; color: #FFF; border-color: #63391F; }
-.quantity-control { display: inline-flex; align-items: center; border: 1px solid #DDD; border-radius: 6px; overflow: hidden; background: #FFF;}
-.quantity-control button { width: 35px; height: 35px; background: #F9F9F9; border: none; font-size: 18px; cursor: pointer; transition: 0.3s; color: #555;}
-.quantity-control button:hover { background: #EEE; color: #d0021b;}
-.quantity-control input { width: 50px; height: 35px; text-align: center; border: none; font-weight: bold; border-left: 1px solid #DDD; border-right: 1px solid #DDD;}
-.modal-actions { display: flex; gap: 15px; margin-top: 20px; }
-.btn-confirm-add { flex: 2; background: #63391F; color: #FFF; border: none; padding: 14px; font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-.btn-confirm-add:hover { background: #4A2A17;}
-.btn-view-detail { flex: 1; background: transparent; border: 1px solid #63391F; color: #63391F; padding: 14px; font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.3s;}
-.btn-view-detail:hover { background: #F9F9F9; }
+.quick-add-modal {
+  background: #FFF;
+  padding: 30px;
+  border-radius: 12px;
+  width: 800px;
+  max-width: 95%;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
 
-@keyframes slideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #888;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  color: #d32f2f;
+  transform: rotate(90deg);
+}
+
+.modal-content {
+  display: flex;
+  gap: 30px;
+}
+
+.modal-left {
+  flex: 1;
+  background: #F9F9F9;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 350px;
+}
+
+.modal-left img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.modal-right {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.modal-product-name {
+  font-size: 22px;
+  color: #333;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.modal-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: #d32f2f;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #EEE;
+  padding-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* MỚI THÊM: CSS CHO GIÁ TRONG MODAL */
+.modal-old-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.modal-current-price {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.attribute-group {
+  margin-bottom: 20px;
+}
+
+.attribute-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-group button {
+  padding: 8px 16px;
+  border: 1px solid #DDD;
+  background: #FFF;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.btn-group button:hover {
+  border-color: #63391F;
+  color: #63391F;
+}
+
+.btn-group button.active {
+  background: #63391F;
+  color: #FFF;
+  border-color: #63391F;
+}
+
+.quantity-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #DDD;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #FFF;
+}
+
+.quantity-control button {
+  width: 35px;
+  height: 35px;
+  background: #F9F9F9;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #555;
+}
+
+.quantity-control button:hover {
+  background: #EEE;
+  color: #d0021b;
+}
+
+.quantity-control input {
+  width: 50px;
+  height: 35px;
+  text-align: center;
+  border: none;
+  font-weight: bold;
+  border-left: 1px solid #DDD;
+  border-right: 1px solid #DDD;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-confirm-add {
+  flex: 2;
+  background: #63391F;
+  color: #FFF;
+  border: none;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-confirm-add:hover {
+  background: #4A2A17;
+}
+
+.btn-view-detail {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #63391F;
+  color: #63391F;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-view-detail:hover {
+  background: #F9F9F9;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(40px) scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
 
 /* Toast */
-.toast-notification { position: fixed; top: 20px; right: 20px; background: #22C55E; color: #FFF; padding: 15px 25px; border-radius: 8px; z-index: 10001; font-weight: 500;}
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+  padding: 15px 25px;
+  border-radius: 8px;
+  z-index: 10001;
+  font-weight: 500;
+}
 
-@media (max-width: 992px) { .shop-layout { flex-direction: column; } .sidebar-wrapper { flex: none; width: 100%; position: static;} }
-@media (max-width: 768px) { .toolbar { flex-direction: column; align-items: flex-start; gap: 15px;} .search-input { width: 100%;} .toolbar-right { width: 100%; justify-content: space-between; flex-wrap: wrap;} .modal-content { flex-direction: column; gap: 20px;} .modal-left{ height: 300px;} .modal-actions { flex-direction: column;} }
-@media (max-width: 480px) { .product-grid { grid-template-columns: 1fr; } }
+@media (max-width: 992px) {
+  .shop-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-wrapper {
+    flex: none;
+    width: 100%;
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .modal-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .modal-left {
+    height: 300px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
