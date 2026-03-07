@@ -453,20 +453,21 @@ const addToCart = () => {
   window.dispatchEvent(new Event("cartUpdated"));
 };
 
-const buyNow = () => {
-  if (!checkValidation()) return;
-  
-  localStorage.removeItem("checkout_items");
-  
-  router.push({
-    path: "/payment",
-    query: {
-      productId: product.value.id,
-      variantId: selectedVariant.value.id,
-      quantity: quantity.value.toString(),
-    },
-  });
-};
+  const buyNow = () => {
+    if (!checkValidation()) return;
+    
+    // 👉 SỬA Ở ĐÂY: Xóa sạch dữ liệu "mua từ giỏ hàng" cũ trước khi chuyển trang
+    localStorage.removeItem("checkout_items");
+    
+    router.push({
+      path: "/payment",
+      query: {
+        productId: product.value.id,
+        variantId: selectedVariant.value.id,
+        quantity: quantity.value.toString(),
+      },
+    });
+  };
 
 // ================= GỌI API LẤY KHUYẾN MÃI (FIX ĐỂ TÌM ĐÚNG BIẾN THỂ) =================
 const fetchPromotions = async () => {
