@@ -74,6 +74,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "ClientOrderDetail",
     component: () => import("../pages/views/InvoiceDetail.vue"),
   },
+  {
+    path: "/order-detail/:id",
+    name: "ClientOrderDetail",
+    component: () => import("../pages/views/InvoiceDetail.vue"),
+  },
 
   {
     path: "/profile",

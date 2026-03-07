@@ -68,14 +68,13 @@
                   <div class="price-wrapper">
                     <template v-if="sp.phanTramGiam > 0">
                       <p class="old-price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
-                        <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
+                        <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
+                        <span v-else-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }}</span>
+                        <span v-else>{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }} ~ {{ formatPrice(sp.giaMax / (1 - sp.phanTramGiam / 100)) }}</span>
                       </p>
                       <p class="price new-price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
-                          sp.phanTramGiam)) }}</span>
-                        <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
-                          formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                        <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                       </p>
                     </template>
                     <template v-else>
@@ -131,15 +130,11 @@
                   <h3 class="product-name" :title="sp.tenSp">{{ sp.tenSp }}</h3>
                   <div class="price-wrapper">
                     <p class="old-price">
-                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaGoc || sp.giaMin) }}</span>
-                      <span v-else>{{ formatPrice(sp.giaGoc || sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
+                      <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
                     </p>
                     <p class="price new-price">
-                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
-                        sp.phanTramGiam))
-                        }}</span>
-                      <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
-                        formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                     </p>
                   </div>
                   <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
@@ -184,14 +179,13 @@
                     <div class="price-wrapper">
                       <template v-if="sp.phanTramGiam > 0">
                         <p class="old-price">
-                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
-                          <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
+                          <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
+                          <span v-else-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }}</span>
+                          <span v-else>{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }} ~ {{ formatPrice(sp.giaMax / (1 - sp.phanTramGiam / 100)) }}</span>
                         </p>
                         <p class="price new-price">
-                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(getDiscountedPrice(sp.giaMin,
-                            sp.phanTramGiam)) }}</span>
-                          <span v-else>{{ formatPrice(getDiscountedPrice(sp.giaMin, sp.phanTramGiam)) }} ~ {{
-                            formatPrice(getDiscountedPrice(sp.giaMax, sp.phanTramGiam)) }}</span>
+                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                          <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                         </p>
                       </template>
                       <template v-else>
@@ -290,17 +284,16 @@
                 <template v-else>
                   <template v-if="selectedProduct.phanTramGiam > 0">
                     <span class="modal-old-price">
-                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
-                        formatPrice(selectedProduct.giaMin) }}</span>
-                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                      <span v-if="selectedProduct.giaGoc">{{ formatPrice(selectedProduct.giaGoc) }}</span>
+                      <span v-else-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
+                        formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }} ~ {{ formatPrice(selectedProduct.giaMax / (1 - selectedProduct.phanTramGiam / 100))
                         }}</span>
                     </span>
                     <span class="modal-current-price">
                       <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
-                        formatPrice(getDiscountedPrice(selectedProduct.giaMin, selectedProduct.phanTramGiam)) }}</span>
-                      <span v-else>{{ formatPrice(getDiscountedPrice(selectedProduct.giaMin,
-                        selectedProduct.phanTramGiam)) }} ~ {{ formatPrice(getDiscountedPrice(selectedProduct.giaMax,
-                        selectedProduct.phanTramGiam)) }}</span>
+                        formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
                     </span>
                   </template>
                   <template v-else>
@@ -430,9 +423,10 @@ const goDetail = (id) => { router.push(`/home/product/${id}`); };
 
 const formatPrice = (v) => {
   if (v == null) return "0 đ";
-  return new Intl.NumberFormat("vi-VN").format(v) + " đ";
+  return new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " đ";
 };
 
+// Vẫn giữ getDiscountedPrice cho Modal, vì trong Modal biến thể chỉ có giá gốc (giaBan)
 const getDiscountedPrice = (price, discountPercent) => {
   if (!discountPercent || discountPercent <= 0) return price;
   return price - (price * discountPercent / 100);
@@ -580,9 +574,9 @@ const confirmAddToCart = () => {
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-      mauSac: { tenMau: selectedColor.value, rgb: '#6b3f1e' },
+      mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
       kichCo: selectedSize.value,
-      giaBan: giaSauGiam,
+      giaBan: giaSauGiam, // Lưu giá ĐÃ GIẢM vào giỏ hàng
       soLuong: quantity.value,
       tonKho: tonKhoThucTe
     };
@@ -943,17 +937,9 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4);
-  }
-
-  70% {
-    box-shadow: 0 0 0 10px rgba(230, 0, 35, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0);
-  }
+  0% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(230, 0, 35, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0); }
 }
 
 /* INFO */
@@ -1122,9 +1108,7 @@ onBeforeUnmount(() => {
 }
 
 @keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
+  100% { transform: rotate(360deg); }
 }
 
 .btn-retry {
@@ -1502,7 +1486,7 @@ onBeforeUnmount(() => {
 
 .btn-confirm-add {
   flex: 2;
-  background: linear-gradient(135deg, #d32f2f, #ef4444);
+background: linear-gradient(135deg, #63391F, #8B5A2B);
   color: white;
   border: none;
   padding: 15px;
@@ -1563,7 +1547,6 @@ onBeforeUnmount(() => {
     transform: scale(0.9) translateY(30px);
     opacity: 0;
   }
-
   100% {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -1575,7 +1558,6 @@ onBeforeUnmount(() => {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
-
   100% {
     transform: scale(0.95) translateY(20px);
     opacity: 0;
@@ -1587,24 +1569,19 @@ onBeforeUnmount(() => {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
-
   .slider-container .product-card {
     width: 250px;
   }
-
   .image-box {
     height: 280px;
   }
-
   .modal-content {
     flex-direction: column;
   }
-
   .modal-left {
     height: 350px;
     padding: 20px;
   }
-
   .modal-right {
     padding: 30px;
   }
@@ -1614,43 +1591,34 @@ onBeforeUnmount(() => {
   .section {
     padding: 50px 4%;
   }
-
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
   }
-
   .slider-container .product-card {
     width: 220px;
   }
-
   .image-box {
     height: 240px;
   }
-
   .banner-slider {
     height: 350px;
   }
-
   .styled-title {
     font-size: 24px;
   }
-
   .slider-arrow {
     width: 40px;
     height: 40px;
   }
-
   .scroll-top-btn {
     right: 20px;
     bottom: 100px;
   }
-
   .chat-wrapper {
     right: 20px;
     bottom: 20px;
   }
-
   .modal-actions {
     flex-direction: column;
   }
@@ -1660,15 +1628,12 @@ onBeforeUnmount(() => {
   .product-grid {
     grid-template-columns: 1fr;
   }
-
   .slider-container .product-card {
     width: 280px;
   }
-
   .image-box {
     height: 320px;
   }
-
   .banner-slider {
     height: 220px;
   }

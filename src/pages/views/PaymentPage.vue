@@ -531,7 +531,7 @@ const handleWardChange = async () => {
   }
 };
 
-// ================== 2. LOGIC SẢN PHẨM & KHUYẾN MÃI (SỬA ĐỔI) ==================
+// ================== 2. LOGIC SẢN PHẨM & KHUYẾN MÃI ==================
 
 // Hàm lấy giá sau giảm (Helper cho template)
 const getDiscountedPrice = (item) => {
@@ -599,7 +599,7 @@ const fetchVouchers = async (khId) => {
   }
 };
 
-// ================== 3. TÍNH TOÁN TIỀN (SỬA ĐỔI) ==================
+// ================== 3. TÍNH TOÁN TIỀN ==================
 
 // Tổng tiền hàng gốc (chưa trừ KM sản phẩm)
 const totalOriginalPrice = computed(() => {
@@ -683,7 +683,6 @@ const processedVouchers = computed(() => {
   return list;
 });
 
-// Giữ nguyên logic báo lỗi gốc của bạn
 const selectVoucher = (v) => {
   const basePrice = subTotal.value;
   const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
@@ -699,7 +698,7 @@ const selectVoucher = (v) => {
   showVoucherModal.value = false;
 };
 
-// ================== 4. XỬ LÝ ĐẶT HÀNG (SỬA ĐỔI) ==================
+// ================== 4. XỬ LÝ ĐẶT HÀNG ==================
 const handleCheckout = async () => {
   if (
     !form.value.tenKhachHang ||
@@ -793,17 +792,17 @@ const updateOriginalCartAfterPurchase = () => {
 
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("cartUpdated")); // Update header count
-
-    // Xóa luôn temp storage
-    localStorage.removeItem("checkout_items");
   }
+  
+  // 👉 ĐÃ SỬA: Luôn luôn xóa bộ nhớ tạm để tránh bị dính sản phẩm cũ ở lần mua sau
+  localStorage.removeItem("checkout_items");
 };
+
 // ================== 5. KHỞI TẠO DỮ LIỆU ==================
 const fetchCustomer = async () => {
   const userStr = localStorage.getItem("user");
   if (!userStr) return;
 
-  // 👉 SỬA LẠI: Lấy 'id' thay vì 'username'
   const user = JSON.parse(userStr);
   const userId = user.id;
   const token = user.accessToken || localStorage.getItem("token");
@@ -811,7 +810,6 @@ const fetchCustomer = async () => {
   if (!userId) return;
 
   try {
-    // 👉 SỬA LẠI: Gọi API theo ID (chuẩn giống trang Profile)
     const res = await axios.get(
       `http://localhost:8080/api/khach-hang/${userId}`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -883,9 +881,7 @@ onMounted(async () => {
     console.log("Chế độ mua hàng không đăng nhập (Guest Checkout)");
   }
 
-  // --- Giữ nguyên các logic check giỏ hàng và mua ngay phía dưới ---
-
-  // CHECK 1: Dữ liệu từ Giỏ hàng (localStorage: checkout_items)
+  // --- CHECK 1: Dữ liệu từ Giỏ hàng (localStorage: checkout_items) ---
   const checkoutData = localStorage.getItem("checkout_items");
   if (checkoutData) {
     try {
@@ -904,7 +900,7 @@ onMounted(async () => {
     }
   }
 
-  // CHECK 2: Nếu không có dữ liệu từ Giỏ hàng, kiểm tra Mua Ngay (Query Params)
+  // --- CHECK 2: Nếu không có dữ liệu từ Giỏ hàng, kiểm tra Mua Ngay (Query Params) ---
   if (checkoutItems.value.length === 0) {
     const { productId, variantId, quantity } = route.query;
     if (productId && variantId) {

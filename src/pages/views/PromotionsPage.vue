@@ -61,12 +61,7 @@
             <p>Đang tải dữ liệu khuyến mãi...</p>
           </div>
 
-          <div v-else-if="errorMsg" class="error-state">
-            <div class="error-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg></div>
+          <div v-else-if="errorMsg" class="error-state">  
             <p>{{ errorMsg }}</p>
             <button @click="fetchFilteredData" class="btn-retry">Thử lại</button>
           </div>
@@ -151,15 +146,15 @@
 
               <div class="modal-price-container">
                 <p class="modal-old-price">
-                  {{ formatPrice(getOldPrice(selectedProduct)) }}
-                </p>
-                <p class="modal-price">
                   <span v-if="currentVariant">{{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}</span>
+                  <span v-else>{{ formatPrice(getOldPrice(selectedProduct)) }}</span>
+                </p>
+                
+                <p class="modal-price">
+                  <span v-if="currentVariant">{{ formatPrice(currentVariantDiscountedPrice) }}</span>
                   <span v-else>
-                    <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
-                      formatPrice(selectedProduct.giaMin) }}</span>
-                    <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
-                    }}</span>
+                    <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
+                    <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
                   </span>
                 </p>
               </div>
@@ -181,8 +176,7 @@
               </div>
 
               <div class="attribute-group">
-                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
-                }})</span></label>
+                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0 }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
                   <input type="number" v-model="quantity" min="1" readonly />
@@ -256,12 +250,10 @@ const goDetail = (id) => {
 
 // LẤY DỮ LIỆU SALE THẬT TỪ BACKEND
 const getDiscountPercent = (sp) => {
-  // Trả về phần trăm giảm giá từ Backend, nếu không có thì mặc định là 0
   return sp.phanTramGiam || 0;
 };
 
 const getOldPrice = (sp) => {
-  // Trả về giá gốc (trước khi giảm)
   return sp.giaGoc || sp.giaMin;
 };
 
@@ -278,7 +270,6 @@ const handleAdvancedFilter = (filters) => {
 };
 
 const applyFilters = () => {
-  // Khi người dùng gõ tìm kiếm hoặc đổi select, reset phân trang và gọi lại API
   currentPage.value = 0;
   fetchFilteredData();
 }
@@ -328,23 +319,18 @@ const fetchFilteredData = async (isAppend = false) => {
               maSanPham: item.maSanPham,
               tenSp: item.tenSanPham,
               hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
-
-              // 👉 NHẬN DỮ LIỆU THẬT TỪ BACKEND
               giaMin: item.giaSauGiam || item.giaBan,
               giaMax: item.giaSauGiam || item.giaBan,
               giaGoc: item.giaGoc || item.giaBan,
               phanTramGiam: percent,
-
               ngayTao: item.ngayTao
             });
           } else {
-            // Cập nhật min/max price cho các biến thể khác nhau
             const existing = uniqueProductsMap.get(item.maSanPham);
             const currentGia = item.giaSauGiam || item.giaBan;
             if (currentGia < existing.giaMin) existing.giaMin = currentGia;
             if (currentGia > existing.giaMax) existing.giaMax = currentGia;
 
-            // 👉 CẬP NHẬT LẤY % GIẢM GIÁ CAO NHẤT (MAX)
             if (percent > existing.phanTramGiam) {
               existing.phanTramGiam = percent;
             }
@@ -354,11 +340,8 @@ const fetchFilteredData = async (isAppend = false) => {
     });
 
     let uniqueProducts = Array.from(uniqueProductsMap.values());
-
-    // Vì là Trang Sale, nên giới hạn lại hiển thị khoảng 20-30 sản phẩm để giả lập "Top Sale" (Tuỳ chỉnh)
     uniqueProducts = uniqueProducts.slice(0, 30);
 
-    // Sắp xếp
     if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMin - b.giaMin);
     else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMin - a.giaMin);
     else if (selectedSort.value === "bestSale") {
@@ -402,12 +385,19 @@ const currentVariant = computed(() => {
   });
 });
 
+// ĐÃ THÊM: Tính giá đã giảm cho biến thể trong Modal Quick Add
+const currentVariantDiscountedPrice = computed(() => {
+  if (!currentVariant.value) return 0;
+  const rawPrice = currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const discountPercent = selectedProduct.value?.phanTramGiam || 0;
+  return Math.round(rawPrice * (1 - discountPercent / 100));
+});
+
 const openQuickAddModal = async (sp) => {
   selectedProduct.value = sp;
   quantity.value = 1;
   isQuickAddModalOpen.value = true;
   try {
-    // Dùng maSanPham để API Back-End lọc ra list màu, size của áo này
     const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?keyword=${sp.maSanPham}&size=100`);
     productVariants.value = res.data.content || res.data || [];
 
@@ -437,13 +427,13 @@ const confirmAddToCart = () => {
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
   const newItem = {
-    productId: selectedProduct.value.id, // Dùng ID để click từ giỏ hàng nhảy sang trang chi tiết
+    productId: selectedProduct.value.id,
     variantId: currentVariant.value.id,
     tenSp: selectedProduct.value.tenSp,
     hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
     mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
     kichCo: selectedSize.value,
-    giaBan: currentVariant.value.giaBan || currentVariant.value.gia || 0,
+    giaBan: currentVariant.value.giaBan || currentVariant.value.gia || 0, // Vẫn lưu giá gốc để Cart.vue tự tính lại
     soLuong: quantity.value,
     tonKho: tk
   };
@@ -521,7 +511,7 @@ onMounted(() => {
 }
 
 .home-link:hover {
-  color: #d0021b;
+  color: #63391F;
 }
 
 .separator {
@@ -589,8 +579,8 @@ onMounted(() => {
 }
 
 .search-input:focus {
-  border-color: #d0021b;
-  box-shadow: 0 0 0 2px rgba(208, 2, 27, 0.1);
+  border-color: #63391F;
+  box-shadow: 0 0 0 2px rgba(99, 57, 31, 0.1);
 }
 
 .clear-btn {
@@ -651,7 +641,7 @@ onMounted(() => {
 
 .sort-select:hover,
 .sort-select:focus {
-  border-color: #d0021b;
+  border-color: #63391F;
 }
 
 .ms-3 {
@@ -742,7 +732,7 @@ onMounted(() => {
 }
 
 .product-card:hover .product-name {
-  color: #d0021b;
+  color: #63391F;
 }
 
 /* CSS Hiển Thị Giá Cũ / Mới */
@@ -768,23 +758,23 @@ onMounted(() => {
   margin: 0;
 }
 
-.btn-quick-add {
-  width: 100%;
-  background: #FFF;
-  border: 1px solid #d0021b;
-  color: #d0021b;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.4s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  opacity: 0;
-  transform: translateY(10px);
+.btn-quick-add{
+    width: 100%;
+    background: #FFF;
+    border: 1px solid #63391F;
+    color: #63391F;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.4s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(10px);
 }
 
 .cart-icon {
@@ -798,10 +788,9 @@ onMounted(() => {
 }
 
 .btn-quick-add:hover {
-  background: #d0021b;
+  background: #63391F;
   color: #FFF;
 }
-
 .load-more-container {
   display: flex;
   justify-content: center;
@@ -810,8 +799,8 @@ onMounted(() => {
 
 .btn-load-more {
   background: transparent;
-  border: 1px solid #d0021b;
-  color: #d0021b;
+  border: 1px solid #63391F;
+  color: #63391F;
   padding: 12px 30px;
   border-radius: 6px;
   font-weight: bold;
@@ -820,7 +809,7 @@ onMounted(() => {
 }
 
 .btn-load-more:hover {
-  background: #d0021b;
+  background: #63391F;
   color: #FFF;
 }
 
@@ -965,17 +954,18 @@ onMounted(() => {
   transition: 0.2s;
 }
 
+
 .btn-group button:hover {
-  border-color: #d0021b;
-  color: #d0021b;
+  border-color: #63391F;
+  color: #63391F;
 }
+
 
 .btn-group button.active {
-  background: #d0021b;
+  background: #63391F;
   color: #FFF;
-  border-color: #d0021b;
+  border-color: #63391F;
 }
-
 .quantity-control {
   display: inline-flex;
   align-items: center;
@@ -1017,28 +1007,29 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.btn-confirm-add {
-  flex: 2;
-  background: #d0021b;
-  color: #FFF;
-  border: none;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
+.btn-confirm-add{
+    flex: 2;
+    background: #63391F;
+    color: #FFF;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
+
 .btn-confirm-add:hover {
-  background: #991b1b;
+  background: #4A2A17;
 }
 
 .btn-view-detail {
   flex: 1;
   background: transparent;
-  border: 1px solid #d0021b;
-  color: #d0021b;
+  border: 1px solid #63391F;
+  color: #63391F;
   padding: 14px;
   font-size: 16px;
   font-weight: 700;
