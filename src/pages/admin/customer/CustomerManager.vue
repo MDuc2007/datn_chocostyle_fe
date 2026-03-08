@@ -409,8 +409,7 @@
     </transition>
 
     <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast-notification', toast.type]">
-        <div class="toast-indicator"></div>
+      <div v-if="toast.show" :class="['toast', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
@@ -1176,12 +1175,43 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 .input-error { border-bottom-color: #ef4444 !important; }
 
-/* TOAST */
-.toast-notification { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 15px; border-radius: 6px; display: flex; align-items: center; background: #F0FDF4; color: #374151; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.toast-indicator { width: 6px; height: 100%; background-color: #22C55E; position: absolute; left: 0; top: 0; border-radius: 6px 0 0 6px; }
+/* =========================================
+   TOAST NOTIFICATION (NEW CSS)
+   ========================================= */
+.toast {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 10001;
+  min-width: 280px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
 .toast-content { margin-left: 10px; }
-.toast-notification.error { background: #FEF2F2; color: #991b1b; }
-.toast-notification.error .toast-indicator { background-color: #ef4444; }
 .fade-modal-enter-active, .fade-modal-leave-active { transition: opacity 0.3s; }
 .fade-modal-enter-from, .fade-modal-leave-to { opacity: 0; }
 .toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s; }

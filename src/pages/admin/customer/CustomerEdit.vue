@@ -177,8 +177,7 @@
     </div>
 
     <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast-notification', toast.type]">
-        <div class="toast-indicator"></div>
+      <div v-if="toast.show" :class="['toast', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
@@ -1120,51 +1119,52 @@ const showToast = (msg, type = "success") => {
   animation: spin 1s linear infinite;
   margin: 0 auto 15px;
 }
-
 /* =========================================
-   7. TOAST NOTIFICATION STYLES
+   7. TOAST NOTIFICATION STYLES (NEW)
    ========================================= */
-.toast-notification {
+.toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  min-width: 250px;
-  padding: 12px 15px;
-  border-radius: 6px;
+  top: 30px;
+  right: 30px;
+  z-index: 10001;
+  min-width: 280px;
+  padding: 16px 20px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-size: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   font-weight: 500;
-  background: #f0fdf4;
-  color: #374151;
+  font-size: 15px;
 }
 
-.toast-indicator {
-  width: 6px;
-  height: 100%;
-  background-color: #22c55e;
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
-.toast-content {
-  margin-left: 10px;
+.toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
-.toast-notification.error {
-  background: #fef2f2;
-  color: #991b1b;
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
-.toast-notification.error .toast-indicator {
-  background-color: #ef4444;
+/* Giữ lại Animation */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
 /* =========================================
    8. MODAL CONFIRMATION STYLES 
    ========================================= */

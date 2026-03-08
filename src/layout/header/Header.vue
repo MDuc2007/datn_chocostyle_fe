@@ -1,5 +1,7 @@
 <template>
-  <header class="header">
+  <div class="header-placeholder" :class="{ 'is-scrolled': isScrolled }"></div>
+  
+  <header class="header" :class="{ 'is-scrolled': isScrolled }">
     <div class="header-container">
       
       <div class="logo" @click="$router.push('/')">
@@ -89,6 +91,7 @@ const isUserMenuOpen = ref(false);
 const cartTotal = ref(0);
 const currentUser = ref(null);
 const userMenuRef = ref(null);
+const isScrolled = ref(false); 
 
 const updateCartTotal = () => {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -183,6 +186,10 @@ const handleClickOutside = (event) => {
   }
 };
 
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 10; 
+};
+
 const goToLogin = () => {
   isUserMenuOpen.value = false;
   router.push("/login");
@@ -215,27 +222,57 @@ onMounted(() => {
   window.addEventListener("cartUpdated", updateCartTotal);
   window.addEventListener("userLoggedIn", checkLoginStatus);
   document.addEventListener("click", handleClickOutside);
+  window.addEventListener("scroll", handleScroll); 
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("cartUpdated", updateCartTotal);
   window.removeEventListener("userLoggedIn", checkLoginStatus);
   document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("scroll", handleScroll); 
 });
 </script>
 
 <style scoped>
-/* ================= THIẾT LẬP CHUNG ================= */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ================= THIẾT LẬP HEADER CỐ ĐỊNH ================= */
+/* BẢN SỬA LỖI TRÔI HEADER: 
+  Sử dụng position: fixed để ép nó ghim lên cùng màn hình, 
+  không phụ thuộc vào parent có bị overflow hay không.
+*/
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px); /* Hỗ trợ Safari */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 99999; /* Đẩy index lên cực đại để đè lên mọi element */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Do dùng position: fixed, ta cần 1 cái div giả lót ở dưới 
+   để nội dung trang web không bị chui tuột vào trong Header lúc đầu */
+.header-placeholder {
+  height: 80px; 
+  width: 100%;
+  transition: height 0.4s ease;
+}
+
+.header-placeholder.is-scrolled {
+  height: 65px; 
+}
+
+/* Hiệu ứng khi cuộn trang */
+.header.is-scrolled {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #f3f4f6;
-  z-index: 1000;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(99, 57, 31, 0.08);
+  border-bottom-color: transparent;
 }
 
 .header-container {
@@ -246,6 +283,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: height 0.4s ease;
+}
+
+/* Thu nhỏ header lại một chút khi cuộn */
+.header.is-scrolled .header-container {
+  height: 65px;
 }
 
 /* ================= LOGO ================= */
@@ -256,37 +299,43 @@ onBeforeUnmount(() => {
 }
 
 .logo img {
-  height: 60px;
+  height: 65px;
   object-fit: contain;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), height 0.4s ease;
+}
+
+.header.is-scrolled .logo img {
+  height: 50px;
 }
 
 .logo:hover img {
-  transform: scale(1.08) rotate(-2deg);
+  transform: scale(1.05) rotate(-2deg);
 }
 
 /* ================= NAV MENU ================= */
 .nav {
   display: flex;
-  gap: 35px;
+  gap: 40px;
 }
 
 .nav a {
+  font-family: 'Montserrat', sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #4b5563;
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   position: relative;
-  padding: 8px 0;
+  padding: 10px 0;
   transition: color 0.3s ease;
 }
 
 .nav a:hover {
-  color: #6b3f1e;
+  color: #63391F; 
 }
 
+/* Hiệu ứng gạch dưới hiện đại */
 .nav a::after {
   content: '';
   position: absolute;
@@ -294,18 +343,22 @@ onBeforeUnmount(() => {
   left: 50%;
   transform: translateX(-50%);
   width: 0%;
-  height: 2px;
-  background-color: #6b3f1e;
-  transition: width 0.3s ease;
-  border-radius: 2px;
+  height: 3px;
+  background: linear-gradient(90deg, #63391F, #8b5328);
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 4px;
 }
 
 .nav a.active {
-  color: #111827;
+  color: #63391F;
 }
 
 .nav a.active::after {
   width: 100%;
+}
+
+.nav a:hover::after {
+  width: 70%;
 }
 
 /* ================= ACTIONS (ICONS) ================= */
@@ -316,43 +369,44 @@ onBeforeUnmount(() => {
 }
 
 .action-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: #374151;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   position: relative;
   background-color: transparent;
 }
 
 .action-btn svg {
-  width: 22px;
-  height: 22px;
-  transition: transform 0.2s ease;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .action-btn:hover {
-  background-color: #f3f4f6;
-  color: #6b3f1e;
+  background-color: #fdfaf8;
+  color: #63391F;
 }
 
 .action-btn:hover svg {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 /* Giỏ hàng */
 .cart-badge {
   position: absolute;
-  top: 0px;
-  right: 0px;
-  background-color: #ef4444;
+  top: 2px;
+  right: 2px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #fff;
   font-size: 11px;
-  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
   width: 20px;
   height: 20px;
   display: flex;
@@ -364,66 +418,74 @@ onBeforeUnmount(() => {
 }
 
 .action-btn:hover .cart-badge {
-  transform: scale(1.15);
+  transform: scale(1.2) translateY(-2px);
 }
 
 /* ================= USER AVATAR ================= */
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #e5e7eb;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .user-icon-wrapper:hover .user-avatar {
-  border-color: #6b3f1e;
+  border-color: #63391F;
+  box-shadow: 0 4px 10px rgba(99, 57, 31, 0.2);
 }
 
 .user-initial {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #fdf6f0, #f3e8df);
-  color: #6b3f1e;
+  background: linear-gradient(135deg, #63391F, #8b5328);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 15px;
-  border: 1px solid #e5e7eb;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  box-shadow: 0 4px 10px rgba(99, 57, 31, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.user-icon-wrapper:hover .user-initial {
+  transform: scale(1.05);
 }
 
 /* ================= DROPDOWN MENU ================= */
 .user-menu {
   position: absolute;
-  top: 55px;
+  top: 60px;
   right: 0;
   background: #ffffff;
-  border: 1px solid #f3f4f6;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  padding: 8px;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  padding: 10px;
   z-index: 1000;
-  min-width: 240px;
+  min-width: 250px;
 }
 
 .user-welcome {
-  padding: 16px 12px 12px;
+  padding: 16px 16px 12px;
 }
 
 .welcome-text {
   margin: 0;
   font-size: 13px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .user-name {
   margin: 4px 0 0 0;
   font-size: 16px;
-  font-weight: 700;
-  color: #111827;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  color: #1e293b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -431,48 +493,48 @@ onBeforeUnmount(() => {
 
 .menu-divider {
   height: 1px;
-  background-color: #f3f4f6;
+  background-color: #f1f5f9;
   margin: 8px 0;
 }
 
 .menu-item {
-  margin: 0;
-  padding: 12px 14px;
+  margin: 2px 0;
+  padding: 12px 16px;
   text-align: left;
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
-  color: #4b5563;
+  font-weight: 700;
+  color: #475569;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   transition: all 0.2s ease;
   box-sizing: border-box; 
 }
 
 .menu-item svg {
-  width: 18px;
-  height: 18px;
-  color: #9ca3af;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
   transition: color 0.2s;
 }
 
 .menu-item:hover {
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: #f8fafc;
+  color: #1e293b;
   transform: translateX(4px);
 }
 
 .menu-item:hover svg {
-  color: #6b3f1e;
+  color: #63391F;
 }
 
 .login-btn {
-  color: #111827;
+  color: #1e293b;
 }
 
 .logout {
@@ -492,12 +554,12 @@ onBeforeUnmount(() => {
 /* Animations Dropdown */
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .dropdown-fade-enter-from,
 .dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(15px) scale(0.95);
+  transform: translateY(20px) scale(0.95);
 }
 
 /* ================= RESPONSIVE ================= */

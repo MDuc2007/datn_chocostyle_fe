@@ -69,9 +69,7 @@
                     <template v-if="sp.phanTramGiam > 0">
                       <p class="old-price">
                         <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
-                        <span v-else-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }}</span>
-                        <span v-else>{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }} ~ {{ formatPrice(sp.giaMax / (1 - sp.phanTramGiam / 100)) }}</span>
-                      </p>
+                        <span v-else>{{ formatPrice(sp.giaMin) }}</span> </p>
                       <p class="price new-price">
                         <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
                         <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
@@ -180,8 +178,7 @@
                       <template v-if="sp.phanTramGiam > 0">
                         <p class="old-price">
                           <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
-                          <span v-else-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }}</span>
-                          <span v-else>{{ formatPrice(sp.giaMin / (1 - sp.phanTramGiam / 100)) }} ~ {{ formatPrice(sp.giaMax / (1 - sp.phanTramGiam / 100)) }}</span>
+                          <span v-else>{{ formatPrice(sp.giaMin) }}</span> 
                         </p>
                         <p class="price new-price">
                           <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
@@ -455,44 +452,70 @@ const fetchData = async () => {
       axios.get("http://localhost:8080/api/san-pham/home").catch(() => ({ data: { content: [] } }))
     ]);
 
-    bestSellers.value = bsRes.data || [];
-    products.value = allRes.data.content || allRes.data || [];
+    // Gán dữ liệu tạm để xử lý logic thêm Khuyến Mãi
+    let tempBestSellers = bsRes.data || [];
+    let tempProducts = allRes.data.content || allRes.data || [];
 
+    // Gọi API chi tiết để lấy chính xác giá gốc / giá min / giá max và phần trăm giảm
     const saleRes = await axios.get("http://localhost:8080/api/chi-tiet-san-pham?page=0&size=100").catch(() => ({ data: { content: [] } }));
     const rawData = saleRes.data.content || [];
     const uniqueProductsMap = new Map();
 
     rawData.forEach(item => {
       const percent = item.phanTramGiam || 0;
-      if (percent > 0) {
-        if (!uniqueProductsMap.has(item.maSanPham)) {
-          let realProductId = item.sanPham?.id || item.id;
-          if (item.maSanPham && item.maSanPham.startsWith('SP')) {
-            realProductId = parseInt(item.maSanPham.replace('SP', ''), 10);
-          }
-          uniqueProductsMap.set(item.maSanPham, {
-            id: realProductId,
-            maSanPham: item.maSanPham,
-            tenSp: item.tenSanPham,
-            hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
-            giaMin: item.giaSauGiam || item.giaBan,
-            giaMax: item.giaSauGiam || item.giaBan,
-            giaGoc: item.giaGoc || item.giaBan,
-            phanTramGiam: percent
-          });
-        } else {
-          const existing = uniqueProductsMap.get(item.maSanPham);
-          const currentGia = item.giaSauGiam || item.giaBan;
-          if (currentGia < existing.giaMin) existing.giaMin = currentGia;
-          if (currentGia > existing.giaMax) existing.giaMax = currentGia;
-          if (percent > existing.phanTramGiam) existing.phanTramGiam = percent;
+      
+      let realProductId = item.sanPham?.id || item.id;
+      if (item.maSanPham && item.maSanPham.startsWith('SP')) {
+        realProductId = parseInt(item.maSanPham.replace('SP', ''), 10);
+      }
+
+      if (!uniqueProductsMap.has(item.maSanPham)) {
+        uniqueProductsMap.set(item.maSanPham, {
+          id: realProductId,
+          maSanPham: item.maSanPham,
+          tenSp: item.tenSanPham,
+          hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
+          giaMin: item.giaSauGiam || item.giaBan,
+          giaMax: item.giaSauGiam || item.giaBan,
+          giaGoc: item.giaGoc || item.giaBan,
+          phanTramGiam: percent
+        });
+      } else {
+        const existing = uniqueProductsMap.get(item.maSanPham);
+        const currentGia = item.giaSauGiam || item.giaBan;
+        if (currentGia < existing.giaMin) existing.giaMin = currentGia;
+        if (currentGia > existing.giaMax) existing.giaMax = currentGia;
+        if (percent > existing.phanTramGiam) existing.phanTramGiam = percent;
+        // Luôn cập nhật giá gốc lớn nhất
+        if ((item.giaGoc || item.giaBan) > existing.giaGoc) {
+           existing.giaGoc = item.giaGoc || item.giaBan;
         }
       }
     });
 
     let uniqueSaleProducts = Array.from(uniqueProductsMap.values());
-    uniqueSaleProducts.sort((a, b) => b.phanTramGiam - a.phanTramGiam);
-    saleProducts.value = uniqueSaleProducts.slice(0, 10);
+    
+    // ĐỒNG BỘ: Cập nhật thông tin Giá + Khuyến mãi vào Best Sellers và Products
+    bestSellers.value = tempBestSellers.map(sp => {
+      const mappedSp = uniqueSaleProducts.find(m => m.id === sp.id);
+      if (mappedSp) {
+        return { ...sp, ...mappedSp }; // Lấy đè dữ liệu giá chuẩn từ Map
+      }
+      return sp;
+    });
+
+    products.value = tempProducts.map(sp => {
+      const mappedSp = uniqueSaleProducts.find(m => m.id === sp.id);
+      if (mappedSp) {
+        return { ...sp, ...mappedSp }; // Lấy đè dữ liệu giá chuẩn từ Map
+      }
+      return sp;
+    });
+
+    // Lọc ra các sản phẩm sale cho mục riêng
+    let onlySaleItems = uniqueSaleProducts.filter(sp => sp.phanTramGiam > 0);
+    onlySaleItems.sort((a, b) => b.phanTramGiam - a.phanTramGiam);
+    saleProducts.value = onlySaleItems.slice(0, 10);
 
   } catch (error) {
     console.error("Lỗi khi gọi API:", error);
@@ -1486,7 +1509,7 @@ onBeforeUnmount(() => {
 
 .btn-confirm-add {
   flex: 2;
-background: linear-gradient(135deg, #63391F, #8B5A2B);
+  background: linear-gradient(135deg, #d32f2f, #ef4444);
   color: white;
   border: none;
   padding: 15px;
