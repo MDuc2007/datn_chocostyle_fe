@@ -34,7 +34,7 @@
 
         <div class="action-buttons">
           <button class="btn-primary" @click="goToHome">Về trang chủ</button>
-          
+
           <button v-if="orderId || vnpRef" class="btn-outline" @click="goToDetail">
             Xem chi tiết đơn hàng
           </button>
@@ -63,15 +63,19 @@ const orderId = ref(null);
 onMounted(() => {
   const params = route.query;
 
-  // Kiểm tra mã phản hồi (00 là thành công)
-  if (params.vnp_ResponseCode === "00") {
+  if (params.vnp_ResponseCode === "00" || params.status === "success") {
     isSuccess.value = true;
   } else {
     isSuccess.value = false;
   }
 
-  vnpRef.value = params.vnp_TxnRef || "";
-  amount.value = params.vnp_Amount ? Number(params.vnp_Amount) / 100 : 0;
+  vnpRef.value = params.vnp_TxnRef || params.orderRef || "";
+
+  if (params.method === "COD") {
+    amount.value = params.amount ? Number(params.amount) : 0;
+  } else {
+    amount.value = params.vnp_Amount ? Number(params.vnp_Amount) / 100 : 0;
+  }
 
   if (params.hoaDonId) {
     orderId.value = params.hoaDonId;
@@ -118,12 +122,16 @@ const goToDetail = () => {
 
 /* --- PHẦN CĂN GIỮA CHÍNH --- */
 .content-wrapper {
-  flex: 1; /* Chiếm toàn bộ khoảng trống còn lại giữa Header và Footer */
+  flex: 1;
+  /* Chiếm toàn bộ khoảng trống còn lại giữa Header và Footer */
   display: flex;
-  justify-content: center; /* Căn giữa Ngang */
-  align-items: center; /* Căn giữa Dọc */
+  justify-content: center;
+  /* Căn giữa Ngang */
+  align-items: center;
+  /* Căn giữa Dọc */
   background: #f7f9fa;
-  min-height: 500px; /* Đảm bảo chiều cao tối thiểu */
+  min-height: 500px;
+  /* Đảm bảo chiều cao tối thiểu */
 }
 
 .result-card {
@@ -143,6 +151,7 @@ const goToDetail = () => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -160,10 +169,13 @@ const goToDetail = () => {
   color: white;
   margin: 0 auto 24px;
 }
+
 .success {
-  background: #22c55e; /* Màu xanh lá hiện đại */
+  background: #22c55e;
+  /* Màu xanh lá hiện đại */
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
+
 .error {
   background: #ef4444;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
@@ -199,22 +211,26 @@ const goToDetail = () => {
   font-size: 14px;
   color: #475569;
 }
+
 .info-row:last-child {
   margin-bottom: 0;
 }
+
 .info-row strong {
   color: #1e293b;
 }
 
 .action-buttons {
   display: flex;
-  flex-direction: column; /* Nút xếp dọc trên mobile */
+  flex-direction: column;
+  /* Nút xếp dọc trên mobile */
   gap: 12px;
 }
 
 @media (min-width: 480px) {
   .action-buttons {
-    flex-direction: row; /* Nút xếp ngang trên desktop */
+    flex-direction: row;
+    /* Nút xếp ngang trên desktop */
     justify-content: center;
   }
 }
@@ -230,6 +246,7 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
+
 .btn-primary:hover {
   background: #5a3218;
 }
@@ -245,6 +262,7 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
+
 .btn-outline:hover {
   border-color: #6b3f1e;
   color: #6b3f1e;

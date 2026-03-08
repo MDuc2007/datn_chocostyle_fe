@@ -63,7 +63,7 @@
         <router-link to="/staff/chat" class="menu-item">
           <div class="invoice">
             <img
-              src="https://cdn-icons-png.flaticon.com/512/134/134914.png"
+              src="/src/assets/icon/chat-round-line-svgrepo-com.svg"
               style="width: 30px; height: 30px"
             />
             <div>Tin nhắn hỗ trợ</div>

@@ -3,12 +3,7 @@
     <h2 class="title">SỬA BIẾN THỂ</h2>
 
     <div class="toast-container">
-      <div
-        v-for="notif in notifications"
-        :key="notif.id"
-        class="toast"
-        :class="notif.type"
-      >
+      <div v-for="notif in notifications" :key="notif.id" class="toast" :class="notif.type">
         {{ notif.message }}
       </div>
     </div>
@@ -25,11 +20,7 @@
             <div class="select-box">
               <select v-model="selectedMauSacList" disabled>
                 <option value="">Chọn màu sắc</option>
-                <option
-                  v-for="item in mauSacList"
-                  :key="item.id"
-                  :value="item.id"
-                >
+                <option v-for="item in mauSacList" :key="item.id" :value="item.id">
                   {{ item.tenMauSac }}
                 </option>
               </select>
@@ -41,11 +32,7 @@
             <div class="select-box">
               <select v-model="selectedKichCoList" disabled>
                 <option value="">Chọn kích cỡ</option>
-                <option
-                  v-for="item in kichCoList"
-                  :key="item.id"
-                  :value="item.id"
-                >
+                <option v-for="item in kichCoList" :key="item.id" :value="item.id">
                   {{ item.tenKichCo }}
                 </option>
               </select>
@@ -56,11 +43,7 @@
             <div class="select-box">
               <select v-model="selectedLoaiAo" disabled>
                 <option value="">Chọn loại áo</option>
-                <option
-                  v-for="item in loaiAoList"
-                  :key="item.id"
-                  :value="item.id"
-                >
+                <option v-for="item in loaiAoList" :key="item.id" :value="item.id">
                   {{ item.tenLoai }}
                 </option>
               </select>
@@ -72,11 +55,7 @@
             <div class="select-box">
               <select v-model="selectedKieuDang" disabled>
                 <option value="">Chọn kiểu dáng</option>
-                <option
-                  v-for="item in kieuDangList"
-                  :key="item.id"
-                  :value="item.id"
-                >
+                <option v-for="item in kieuDangList" :key="item.id" :value="item.id">
                   {{ item.tenKieuDang }}
                 </option>
               </select>
@@ -88,11 +67,7 @@
             <div class="select-box">
               <select v-model="selectedPhongCach" disabled>
                 <option value="">Chọn phong cách</option>
-                <option
-                  v-for="item in phongCachList"
-                  :key="item.id"
-                  :value="item.id"
-                >
+                <option v-for="item in phongCachList" :key="item.id" :value="item.id">
                   {{ item.tenPhongCach }}
                 </option>
               </select>
@@ -105,11 +80,18 @@
           </div>
           <div class="col">
             <label>Giá bán:</label>
-            <input type="number" v-model.number="giaBan" />
+            <div class="money-input">
+              <input type="text" :value="formatVNDInput(giaBan)" @input="handlePriceInput($event, 'giaBan')" />
+              <span class="currency">đ</span>
+            </div>
           </div>
+
           <div class="col">
             <label>Giá nhập:</label>
-            <input type="number" v-model.number="giaNhap" />
+            <div class="money-input">
+              <input type="text" :value="formatVNDInput(giaNhap)" @input="handlePriceInput($event, 'giaNhap')" />
+              <span class="currency">đ</span>
+            </div>
           </div>
         </div>
         <div class="qr-form-section" v-if="qrImageUrl">
@@ -121,24 +103,14 @@
 
           <div class="qr-actions">
             <button type="button" class="btn-download-qr" @click="downloadQR">
-              <img
-                src="/src/assets/icon/dowload-white.svg"
-                style="width: 20px; height: 20px"
-                alt=""
-              />
+              <img src="/src/assets/icon/dowload-white.svg" style="width: 20px; height: 20px" alt="" />
               Tải mã QR
             </button>
           </div>
         </div>
       </div>
       <div class="right">
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          @change="onFileChange"
-          style="display: none"
-        />
+        <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" style="display: none" />
         <div class="image-box" @click="triggerUpload">
           <img v-if="imageUrl" :src="imageUrl" />
           <div v-else class="plus">+</div>
@@ -153,24 +125,11 @@
     </div>
   </div>
   <transition name="fade-modal">
-    <div
-      v-if="modal.show"
-      class="modal-confirm"
-      @click.self="closeConfirmModal"
-    >
+    <div v-if="modal.show" class="modal-confirm" @click.self="closeConfirmModal">
       <div class="confirm-box">
         <div class="confirm-icon-wrapper">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="36"
-            height="36"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M8 12l3 3 5-5"></path>
           </svg>
@@ -194,6 +153,31 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+
+const priceInput = ref("");
+const priceValue = ref(null);
+
+const handlePriceInput = (e, field) => {
+  const raw = e.target.value.replace(/\D/g, "");
+  const value = raw ? parseInt(raw) : 0;
+
+  if (field === "giaBan") {
+    giaBan.value = value;
+  }
+
+  if (field === "giaNhap") {
+    giaNhap.value = value;
+  }
+
+  e.target.value = formatVNDInput(value);
+};
+
+const formatVNDInput = (value) => {
+  if (!value) return "";
+
+  const number = value.toString().replace(/\D/g, "");
+  return new Intl.NumberFormat("vi-VN").format(number);
+};
 
 /* ===== ROUTER ===== */
 const route = useRoute();
@@ -595,6 +579,7 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
 }
@@ -747,6 +732,7 @@ input[type="number"] {
     transform: translateX(300px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -814,6 +800,7 @@ input[type="number"] {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
+
 .modal-confirm {
   position: fixed;
   inset: 0;
@@ -822,6 +809,7 @@ input[type="number"] {
   align-items: center;
   z-index: 999;
 }
+
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -833,6 +821,7 @@ input[type="number"] {
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
+
 /* Tìm đoạn này trong phần 8. MODAL & TOAST */
 /* Sửa lại đoạn này */
 .confirm-icon-wrapper {
@@ -861,17 +850,21 @@ input[type="number"] {
 .confirm-icon-wrapper i,
 .confirm-icon-wrapper svg,
 .confirm-icon-wrapper span {
-  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0; /* Xóa margin mặc định nếu có */
+  display: block;
+  /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0;
+  /* Xóa margin mặc định nếu có */
 
   /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
   /* transform: translateY(2px); */
 }
+
 .confirm-title {
   color: #63391f;
   margin-bottom: 10px;
   font-size: 20px;
 }
+
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
@@ -890,10 +883,12 @@ input[type="number"] {
   flex: 1;
   height: 42px;
 }
+
 .btn-confirm:hover {
   background: #4e2c17;
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
+
 .confirm-actions {
   display: flex;
   gap: 20px;
@@ -911,15 +906,39 @@ input[type="number"] {
   flex: 1;
   height: 42px;
 }
+
 .btn-cancel:hover {
   background: #e5e7eb;
 }
+
 .fade-modal-enter-active,
 .fade-modal-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
+}
+
+.money-input {
+  position: relative;
+  width: 100%;
+  display: flex;
+}
+
+.money-input input {
+  width: 100%;
+  padding-right: 35px;
+}
+
+.currency {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 14px;
+  pointer-events: none;
 }
 </style>

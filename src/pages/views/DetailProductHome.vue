@@ -440,7 +440,7 @@ const addToCart = () => {
   if (existingItemIndex !== -1) {
     const newQty = cart[existingItemIndex].soLuong + cartItem.soLuong;
     if (newQty > cartItem.tonKho) {
-      showToast(`Rất tiếc, kho chỉ còn ${cartItem.tonKho} sản phẩm!`, "error");
+      showToast(`Không đủ số lượng sản phẩm!`, "error");
       return;
     }
     cart[existingItemIndex].soLuong = newQty;
