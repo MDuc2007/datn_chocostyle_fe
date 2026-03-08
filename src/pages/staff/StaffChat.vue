@@ -5,18 +5,13 @@
         <h3>Inbox Hỗ Trợ</h3>
       </div>
       <div class="conversation-list">
-        <div
-          v-for="conv in conversations"
-          :key="conv.id"
-          :class="[
-            'conversation-item',
-            {
-              active: currentConversation?.id === conv.id,
-              'is-waiting': !conv.nhanVien,
-            },
-          ]"
-          @click="selectConversation(conv)"
-        >
+        <div v-for="conv in conversations" :key="conv.id" :class="[
+          'conversation-item',
+          {
+            active: currentConversation?.id === conv.id,
+            'is-waiting': !conv.nhanVien,
+          },
+        ]" @click="selectConversation(conv)">
           <div class="avatar-circle">
             {{ conv.khachHang.tenKhachHang.charAt(0) }}
           </div>
@@ -35,6 +30,7 @@
       </div>
     </aside>
 
+
     <main class="chat-window">
       <template v-if="currentConversation">
         <header class="chat-window-header">
@@ -49,15 +45,12 @@
           </div>
         </header>
 
+
         <div class="messages-display" ref="msgBox">
-          <div
-            v-for="msg in messages"
-            :key="msg.id"
-            :class="[
-              'message-row',
-              msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
-            ]"
-          >
+          <div v-for="msg in messages" :key="msg.id" :class="[
+            'message-row',
+            msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
+          ]">
             <div class="message-bubble">
               <div class="content">{{ msg.content }}</div>
               <div class="msg-time">{{ formatTime(msg.sentAt) }}</div>
@@ -65,18 +58,12 @@
           </div>
         </div>
 
+
         <div class="chat-input-area">
           <div class="input-container">
-            <input
-              v-model="newMessage"
-              @keyup.enter="sendChatMessage"
-              placeholder="Nhập câu trả lời cho khách hàng..."
-            />
-            <button
-              @click="sendChatMessage"
-              :disabled="!newMessage.trim()"
-              class="staff-send-btn"
-            >
+            <input v-model="newMessage" @keyup.enter="sendChatMessage"
+              placeholder="Nhập câu trả lời cho khách hàng..." />
+            <button @click="sendChatMessage" :disabled="!newMessage.trim()" class="staff-send-btn">
               Gửi tin nhắn
             </button>
           </div>
@@ -91,11 +78,13 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
+
 
 const conversations = ref([]);
 const currentConversation = ref(null);
@@ -105,6 +94,7 @@ const msgBox = ref(null);
 const stompClient = ref(null);
 const staff = JSON.parse(localStorage.getItem("user") || "{}");
 
+
 const formatTime = (t) =>
   t
     ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -113,6 +103,7 @@ const scrollToBottom = () =>
   nextTick(() => {
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
+
 
 const loadConversations = async () => {
   try {
@@ -128,6 +119,7 @@ const loadConversations = async () => {
   }
 };
 
+
 const selectConversation = async (conv) => {
   try {
     if (!conv.nhanVien) {
@@ -140,15 +132,15 @@ const selectConversation = async (conv) => {
       currentConversation.value = conv;
     }
 
+
     // 👇 LƯU ID
-    localStorage.setItem(
-      "staffCurrentConversation",
-      currentConversation.value.id,
-    );
+    localStorage.setItem("staffCurrentConversation", currentConversation.value.id);
+
 
     const msgRes = await axios.get(
       `http://localhost:8080/api/conversations/${currentConversation.value.id}/messages`,
     );
+
 
     messages.value = msgRes.data;
     subscribeToTopic(currentConversation.value.id);
@@ -159,27 +151,33 @@ const selectConversation = async (conv) => {
   }
 };
 
+
 const currentSubscription = ref(null);
+
 
 const subscribeToTopic = (id) => {
   if (!stompClient.value || !stompClient.value.connected) return;
 
+
   if (currentSubscription.value) {
     currentSubscription.value.unsubscribe();
   }
+
 
   currentSubscription.value = stompClient.value.subscribe(
     `/topic/chat/${id}`,
     (tick) => {
       const msg = JSON.parse(tick.body);
 
+
       if (currentConversation.value?.id === msg.conversationId) {
         messages.value.push(msg);
         scrollToBottom();
       }
-    },
+    }
   );
 };
+
 
 const sendChatMessage = () => {
   if (
@@ -201,12 +199,15 @@ const sendChatMessage = () => {
   }
 };
 
+
 onMounted(async () => {
   await loadConversations();
+
 
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
+
 
   stompClient.value.connect({}, async () => {
     stompClient.value.subscribe("/topic/chat/reload-waiting", () =>
@@ -216,18 +217,25 @@ onMounted(async () => {
       loadConversations(),
     );
 
+
     // 👇 LẤY LẠI conversation cũ
     const savedId = localStorage.getItem("staffCurrentConversation");
 
+
     if (savedId) {
-      const conv = conversations.value.find((c) => c.id == savedId);
+      const conv = conversations.value.find(
+        (c) => c.id == savedId
+      );
+
 
       if (conv) {
         currentConversation.value = conv;
 
+
         const msgRes = await axios.get(
           `http://localhost:8080/api/conversations/${savedId}/messages`,
         );
+
 
         messages.value = msgRes.data;
         subscribeToTopic(savedId);
@@ -237,6 +245,7 @@ onMounted(async () => {
   });
 });
 </script>
+
 
 <style scoped>
 .staff-chat-container {
@@ -248,6 +257,7 @@ onMounted(async () => {
   margin: 10px;
   overflow: hidden;
 }
+
 
 /* SIDEBAR */
 .chat-sidebar {
@@ -297,6 +307,7 @@ onMounted(async () => {
   background: #fff9f0;
 }
 
+
 .avatar-circle {
   width: 48px;
   height: 48px;
@@ -336,6 +347,7 @@ onMounted(async () => {
   color: #888;
   margin: 0;
 }
+
 
 /* MAIN WINDOW */
 .chat-window {
@@ -378,6 +390,7 @@ onMounted(async () => {
   color: #4caf50;
 }
 
+
 .messages-display {
   flex: 1;
   padding: 30px;
@@ -399,6 +412,7 @@ onMounted(async () => {
 .message-row.theirs {
   justify-content: flex-start;
 }
+
 
 .message-bubble {
   max-width: 60%;
@@ -427,6 +441,7 @@ onMounted(async () => {
   margin-top: 6px;
   opacity: 0.7;
 }
+
 
 .chat-input-area {
   padding: 25px 30px;
@@ -468,6 +483,7 @@ onMounted(async () => {
 .staff-send-btn:hover {
   background: #5a3419;
 }
+
 
 .no-selection {
   flex: 1;

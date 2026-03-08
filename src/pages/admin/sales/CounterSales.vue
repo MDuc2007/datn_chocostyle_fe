@@ -7,13 +7,8 @@
 
     <div v-if="orders.length" class="pos-card">
       <div class="order-tabs">
-        <div
-          v-for="(o, index) in orders"
-          :key="o.id"
-          class="order-tab"
-          :class="{ active: index === activeOrderIndex }"
-          @click="activeOrderIndex = index"
-        >
+        <div v-for="(o, index) in orders" :key="o.id" class="order-tab" :class="{ active: index === activeOrderIndex }"
+          @click="activeOrderIndex = index">
           <span>
             Đơn {{ index + 1 }}
             <span class="order-code">
@@ -25,11 +20,7 @@
         </div>
       </div>
 
-      <div
-        v-if="currentOrder"
-        class="main-layout"
-        :class="{ 'full-product': !currentOrder.cart.length }"
-      >
+      <div v-if="currentOrder" class="main-layout" :class="{ 'full-product': !currentOrder.cart.length }">
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
@@ -59,11 +50,7 @@
               <div class="text-right">Thành tiền</div>
               <div></div>
             </div>
-            <div
-              v-for="(item, index) in currentOrder.cart"
-              :key="item.id + '-' + item.price"
-              class="product-row"
-            >
+            <div v-for="(item, index) in currentOrder.cart" :key="item.id + '-' + item.price" class="product-row">
               <div class="product-cell-info">
                 <div class="img-wrap">
                   <img :src="item.image" class="product-img" />
@@ -97,25 +84,12 @@
               </div>
 
               <div class="qty text-center">
-                <button
-                  @click="decreaseQty(item)"
-                  :disabled="item.quantity <= 1"
-                >
+                <button @click="decreaseQty(item)" :disabled="item.quantity <= 1">
                   −
                 </button>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                  v-model.number="item.quantity"
-                  @keyup.enter="checkQuantity(item)"
-                  @blur="checkQuantity(item)"
-                />
-                <button
-                  @click="increaseQty(item)"
-                  :disabled="item.priceChanged"
-                >
+                <input type="number" min="1" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                  v-model.number="item.quantity" @keyup.enter="checkQuantity(item)" @blur="checkQuantity(item)" />
+                <button @click="increaseQty(item)" :disabled="item.priceChanged">
                   +
                 </button>
               </div>
@@ -125,11 +99,7 @@
               </div>
 
               <div class="action-delete">
-                <button
-                  class="btn-danger"
-                  @click="removeItem(index)"
-                  title="Xóa"
-                >
+                <button class="btn-danger" @click="removeItem(index)" title="Xóa">
                   ✕
                 </button>
               </div>
@@ -142,19 +112,12 @@
             <div class="section-header column">
               <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
 
-              <div
-                class="customer-actions-row"
-                :class="{ 'single-btn': !currentOrder.customer.id }"
-              >
+              <div class="customer-actions-row" :class="{ 'single-btn': !currentOrder.customer.id }">
                 <button class="btn-outline" @click="openCustomerPopup">
                   Chọn khách hàng
                 </button>
 
-                <button
-                  v-if="currentOrder.customer.id"
-                  class="btn-outline"
-                  @click="resetToGuest"
-                >
+                <button v-if="currentOrder.customer.id" class="btn-outline" @click="resetToGuest">
                   Khách lẻ
                 </button>
               </div>
@@ -163,19 +126,13 @@
             <div class="customer-form">
               <div class="form-row">
                 <div class="form-item">
-                  <input
-                    v-model="currentOrder.customer.name"
-                    placeholder="Tên khách hàng *"
-                  />
+                  <input v-model="currentOrder.customer.name" placeholder="Tên khách hàng *" />
                   <div v-if="customerErrors.name" class="field-error">
                     {{ customerErrors.name }}
                   </div>
                 </div>
                 <div class="form-item">
-                  <input
-                    v-model="currentOrder.customer.phone"
-                    placeholder="Số điện thoại *"
-                  />
+                  <input v-model="currentOrder.customer.phone" placeholder="Số điện thoại *" />
                   <div v-if="customerErrors.phone" class="field-error">
                     {{ customerErrors.phone }}
                   </div>
@@ -183,55 +140,34 @@
               </div>
 
               <div class="delivery-toggle-wrap mt-2">
-                <span
-                  class="toggle-label"
-                  :class="{
-                    'active-brown': currentOrder.deliveryType === 'DELIVERY',
-                  }"
-                  >Giao hàng tận nơi</span
-                >
+                <span class="toggle-label" :class="{
+                  'active-brown': currentOrder.deliveryType === 'DELIVERY',
+                }">Giao hàng tận nơi</span>
                 <label class="switch">
-                  <input
-                    type="checkbox"
-                    :checked="currentOrder.deliveryType === 'DELIVERY'"
-                    @change="toggleDelivery"
-                  />
+                  <input type="checkbox" :checked="currentOrder.deliveryType === 'DELIVERY'" @change="toggleDelivery" />
                   <span class="slider"></span>
                 </label>
               </div>
 
-              <div
-                v-if="currentOrder.deliveryType === 'DELIVERY'"
-                class="delivery-form"
-              >
+              <div v-if="currentOrder.deliveryType === 'DELIVERY'" class="delivery-form">
                 <div class="form-item mt-2">
-                  <input
-                    v-model="currentOrder.customer.email"
-                    placeholder="Email (Tùy chọn)"
-                  />
+                  <input v-model="currentOrder.customer.email" placeholder="Email (Tùy chọn)" />
                   <div v-if="customerErrors.email" class="field-error">
                     {{ customerErrors.email }}
                   </div>
                 </div>
                 <div class="form-item mt-2">
-                  <input
-                    v-model="currentOrder.customer.address"
-                    placeholder="Địa chỉ cụ thể (Số nhà, đường) *"
-                  />
+                  <input v-model="currentOrder.customer.address" placeholder="Địa chỉ cụ thể (Số nhà, đường) *" />
                   <div v-if="customerErrors.address" class="field-error">
                     {{ customerErrors.address }}
                   </div>
                 </div>
                 <div class="form-row mt-2">
                   <div class="form-item">
-                    <select v-model="currentOrder.customer.province">
-                      <option value="">Tỉnh/Thành phố *</option>
-                      <option
-                        v-for="p in provinces"
-                        :key="p.code"
-                        :value="p.code"
-                      >
-                        {{ p.name }}
+                    <select id="select-province" class="form-control">
+                      <option value="">Chọn Tỉnh/Thành phố</option>
+                      <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
+                        {{ p.ProvinceName }}
                       </option>
                     </select>
                     <div v-if="customerErrors.province" class="field-error">
@@ -239,14 +175,10 @@
                     </div>
                   </div>
                   <div class="form-item">
-                    <select v-model="currentOrder.customer.district">
-                      <option value="">Quận/Huyện *</option>
-                      <option
-                        v-for="d in currentOrder.districts"
-                        :key="d.code"
-                        :value="d.code"
-                      >
-                        {{ d.name }}
+                    <select id="select-district" class="form-control" :disabled="!currentOrder.customer.province">
+                      <option value="">Chọn Quận/Huyện</option>
+                      <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
+                        {{ d.DistrictName }}
                       </option>
                     </select>
                     <div v-if="customerErrors.district" class="field-error">
@@ -256,14 +188,10 @@
                 </div>
                 <div class="form-row mt-2">
                   <div class="form-item">
-                    <select v-model="currentOrder.customer.ward">
-                      <option value="">Xã/Phường *</option>
-                      <option
-                        v-for="w in currentOrder.wards"
-                        :key="w.code"
-                        :value="w.code"
-                      >
-                        {{ w.name }}
+                    <select id="select-ward" class="form-control" :disabled="!currentOrder.customer.district">
+                      <option value="">Chọn Phường/Xã</option>
+                      <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
+                        {{ w.WardName }}
                       </option>
                     </select>
                     <div v-if="customerErrors.ward" class="field-error">
@@ -281,10 +209,7 @@
             </div>
 
             <div class="voucher-row">
-              <input
-                v-model="currentOrder.voucherCode"
-                placeholder="Mã giảm giá..."
-              />
+              <input v-model="currentOrder.voucherCode" placeholder="Mã giảm giá..." />
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
               <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
                 <span v-if="voucherMode === 'AUTO'">
@@ -320,16 +245,14 @@
                 <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
 
-              <div
-                class="payment-row shipping-row"
-                v-if="currentOrder.deliveryType === 'DELIVERY'"
-              >
+              <div class="payment-row shipping-row" v-if="currentOrder.deliveryType === 'DELIVERY'">
                 <span class="text-muted shipping-label">
                   Phí vận chuyển
                   <img :src="ghnLogo" class="ghn-icon" />
                 </span>
 
-                <span class="fw-600">{{ formatPrice(shippingFee) }}</span>
+                <span class="fw-600" style="display: flex;
+    align-items: center;">{{ formatPrice(shippingFee) }}</span>
               </div>
 
               <div class="payment-row" v-if="discount > 0">
@@ -356,19 +279,12 @@
               </div>
             </div>
 
-            <div
-              v-if="currentOrder.paymentMethod === 'CASH'"
-              class="payment-row mt-2 text-red fw-600"
-            >
+            <div v-if="currentOrder.paymentMethod === 'CASH'" class="payment-row mt-2 text-red fw-600">
               <span>Tiền thừa</span>
               <span>{{ formatPrice(changeMoney) }}</span>
             </div>
 
-            <button
-              class="btn-submit big mt-4"
-              @click="confirmSubmitOrder"
-              :disabled="!currentOrder.cart.length"
-            >
+            <button class="btn-submit big mt-4" @click="confirmSubmitOrder" :disabled="!currentOrder.cart.length">
               XÁC NHẬN ĐẶT HÀNG
             </button>
           </div>
@@ -387,11 +303,7 @@
             </button>
           </div>
           <div class="modal-body">
-            <input
-              v-model="customerSearch"
-              class="search-input"
-              placeholder="Tìm theo tên, email, số điện thoại..."
-            />
+            <input v-model="customerSearch" class="search-input" placeholder="Tìm theo tên, email, số điện thoại..." />
             <div class="table-responsive">
               <table class="table">
                 <thead>
@@ -435,10 +347,7 @@
           </div>
           <div class="modal-body">
             <div class="filter-row">
-              <input
-                v-model="searchText"
-                placeholder=" Tìm mã, tên sản phẩm..."
-              />
+              <input v-model="searchText" placeholder=" Tìm mã, tên sản phẩm..." />
               <select v-model="filterColor">
                 <option value="">Tất cả màu</option>
                 <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
@@ -467,11 +376,7 @@
                     <td>
                       <div class="img-wrap small">
                         <img :src="p.image" class="thumb" />
-                        <span
-                          v-if="p.discountPercent > 0"
-                          class="sale-badge small"
-                          >-{{ p.discountPercent }}%</span
-                        >
+                        <span v-if="p.discountPercent > 0" class="sale-badge small">-{{ p.discountPercent }}%</span>
                       </div>
                     </td>
                     <td>
@@ -480,11 +385,7 @@
                     </td>
                     <td>{{ p.color }} - {{ p.size }}</td>
                     <td class="text-center">
-                      <span
-                        class="badge-stock"
-                        :class="{ 'out-of-stock': p.stock <= 0 }"
-                        >{{ p.stock }}</span
-                      >
+                      <span class="badge-stock" :class="{ 'out-of-stock': p.stock <= 0 }">{{ p.stock }}</span>
                     </td>
 
                     <td class="price-cell">
@@ -504,11 +405,7 @@
                       </template>
                     </td>
                     <td>
-                      <button
-                        class="btn-primary"
-                        :disabled="p.stock <= 0"
-                        @click="addToCart(p)"
-                      >
+                      <button class="btn-primary" :disabled="p.stock <= 0" @click="addToCart(p)">
                         Chọn
                       </button>
                     </td>
@@ -530,23 +427,14 @@
           </div>
           <div class="modal-body payment-popup">
             <div class="pay-type-tabs">
-              <button
-                :class="{ active: paymentMethod === 'CASH' }"
-                @click="paymentMethod = 'CASH'"
-              >
+              <button :class="{ active: paymentMethod === 'CASH' }" @click="paymentMethod = 'CASH'">
                 💵 Tiền mặt
               </button>
-              <button
-                :class="{ active: paymentMethod === 'BANK' }"
-                @click="paymentMethod = 'BANK'"
-              >
+              <button :class="{ active: paymentMethod === 'BANK' }" @click="paymentMethod = 'BANK'">
                 🏦 Chuyển khoản
               </button>
-              <button
-                v-if="currentOrder.deliveryType === 'DELIVERY'"
-                :class="{ active: paymentMethod === 'COD' }"
-                @click="paymentMethod = 'COD'"
-              >
+              <button v-if="currentOrder.deliveryType === 'DELIVERY'" :class="{ active: paymentMethod === 'COD' }"
+                @click="paymentMethod = 'COD'">
                 🚚 Trả sau (COD)
               </button>
             </div>
@@ -555,27 +443,18 @@
               <label class="input-label">Số tiền khách đưa:</label>
 
               <div class="money-input-wrapper">
-                <input
-                  type="text"
-                  :value="cashDisplay"
-                  @input="handleCashInput"
-                  @focus="cashDisplay = ''"
-                  placeholder="0"
-                  class="input-money-lg"
-                />
+                <input type="text" :value="cashDisplay" @input="handleCashInput" @focus="cashDisplay = ''"
+                  placeholder="0" class="input-money-lg" />
                 <span class="currency-unit">₫</span>
               </div>
 
               <div class="quick-money mt-2">
-                <button
-                  class="btn-quick-money"
-                  @click="
-                    () => {
-                      cashInput = total;
-                      cashDisplay = formatCurrencyInput(total);
-                    }
-                  "
-                >
+                <button class="btn-quick-money" @click="
+                  () => {
+                    cashInput = total;
+                    cashDisplay = formatCurrencyInput(total);
+                  }
+                ">
                   Đúng số tiền
                 </button>
               </div>
@@ -590,10 +469,7 @@
               </div>
             </div>
 
-            <div
-              v-if="paymentMethod === 'COD'"
-              class="mt-3 text-center text-muted"
-            >
+            <div v-if="paymentMethod === 'COD'" class="mt-3 text-center text-muted">
               <p>
                 Khách hàng sẽ thanh toán
                 <strong class="text-red">{{ formatPrice(total) }}</strong> khi
@@ -610,24 +486,11 @@
     </div>
 
     <transition name="fade-modal">
-      <div
-        v-if="modal.show"
-        class="modal-confirm"
-        @click.self="closeConfirmModal"
-      >
+      <div v-if="modal.show" class="modal-confirm" @click.self="closeConfirmModal">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="36"
-              height="36"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12l3 3 5-5"></path>
             </svg>
@@ -680,6 +543,12 @@ import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 import { Html5Qrcode } from "html5-qrcode";
 import ghnLogo from "../../../assets/logo/ghn.png";
 
+// ================== CẤU HÌNH GIAO HÀNG NHANH ==================
+const GHN_TOKEN = "31476b34-15db-11f1-9cf9-9efb715b9957";
+const GHN_SHOP_ID = 6296816;
+const SHOP_DISTRICT_ID = 1488;
+const GHN_API_BASE = "https://online-gateway.ghn.vn/shiip/public-api";
+
 const showProductPopup = ref(false);
 const showCustomerPopup = ref(false);
 const orders = ref([]);
@@ -693,6 +562,11 @@ const STORAGE_KEY = "POS_COUNTER_ORDERS";
 let autoRevalidateInterval = null;
 let lastSuggestedVoucherCode = null;
 let hasAutoAppliedOnce = false;
+
+// Trạng thái địa chỉ của Giao Hàng Nhanh
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
 
 const fetchCustomers = async () => {
   const res = await axios.get("http://localhost:8080/api/khach-hang");
@@ -718,14 +592,16 @@ const fetchProducts = async () => {
     const today = new Date().toISOString().split("T")[0];
 
     products.value = rawData.map((p) => {
-      const today = new Date().toISOString().split("T")[0];
-
-      const activePromotion = promotions.value.find(
+      const validPromos = promotions.value.filter(
         (promo) =>
           promo.ngayBatDau <= today &&
           (!promo.ngayKetThuc || promo.ngayKetThuc >= today) &&
           promo.chiTietSanPhamIds?.includes(p.id),
       );
+
+      const activePromotion = validPromos.sort(
+        (a, b) => b.giaTriGiam - a.giaTriGiam
+      )[0];
 
       let oldPrice = p.giaBan;
       let newPrice = p.giaBan;
@@ -875,7 +751,7 @@ const validateCustomer = () => {
 
   if (email) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
+    if (email && !emailRegex.test(email)) {
       customerErrors.value.email = "Email không hợp lệ";
       isValid = false;
     }
@@ -907,37 +783,6 @@ const validateCustomer = () => {
   return isValid;
 };
 
-const validateDelivery = () => {
-  const order = currentOrder.value;
-  const c = order.customer;
-  if (order.deliveryType === "DELIVERY") {
-    let isValid = true;
-    if (!c.phone) {
-      customerErrors.value.phone = "Giao hàng cần số điện thoại";
-      isValid = false;
-    }
-    if (!c.address) {
-      customerErrors.value.address = "Vui lòng nhập địa chỉ cụ thể";
-      isValid = false;
-    }
-    if (!c.province) {
-      customerErrors.value.province = "Vui lòng chọn tỉnh/thành";
-      isValid = false;
-    }
-    if (!c.district) {
-      customerErrors.value.district = "Vui lòng chọn quận/huyện";
-      isValid = false;
-    }
-    if (!c.ward) {
-      customerErrors.value.ward = "Vui lòng chọn xã/phường";
-      isValid = false;
-    }
-    return isValid;
-  }
-  return true;
-};
-
-// Cập nhật validatePayment kết hợp từ Code B để xử lý đúng null/undefined
 const validatePayment = () => {
   const order = currentOrder.value;
   if (!order.paymentMethod) {
@@ -967,6 +812,7 @@ const confirmSubmitOrder = async () => {
 
   openPaymentPopup();
 };
+
 const removeItem = async (index) => {
   const item = currentOrder.value.cart[index];
 
@@ -997,7 +843,6 @@ const removeItem = async (index) => {
 const fetchPromotions = async () => {
   const res = await axios.get("http://localhost:8080/api/promotions");
   promotions.value = res.data.filter((p) => p.trangThai === 1);
-  console.log("PROMOTIONS:", promotions.value);
 };
 
 const customerErrors = ref({
@@ -1012,6 +857,212 @@ const customerErrors = ref({
 const voucherError = ref("");
 const voucherSuccess = ref("");
 const isSettingAddress = ref(false);
+
+
+// ================== LOGIC CHỌN ĐỊA CHỈ & SELECT2 VỚI GHN ==================
+const initSelect2 = () => {
+  const $prov = window.$("#select-province");
+  if ($prov.length) {
+    $prov.select2({ width: "100%", placeholder: "Chọn Tỉnh/Thành phố" });
+    $prov.off("select2:select").on("select2:select", async (e) => {
+      const val = Number(e.params.data.id);
+      if (currentOrder.value && currentOrder.value.customer.province !== val) {
+        currentOrder.value.customer.province = val;
+        await handleProvinceChange();
+      }
+    });
+  }
+
+  const $dist = window.$("#select-district");
+  if ($dist.length) {
+    $dist.select2({ width: "100%", placeholder: "Chọn Quận/Huyện" });
+    $dist.off("select2:select").on("select2:select", async (e) => {
+      const val = Number(e.params.data.id);
+      if (currentOrder.value && currentOrder.value.customer.district !== val) {
+        currentOrder.value.customer.district = val;
+        await handleDistrictChange();
+      }
+    });
+  }
+
+  const $ward = window.$("#select-ward");
+  if ($ward.length) {
+    $ward.select2({ width: "100%", placeholder: "Chọn Phường/Xã" });
+    $ward.off("select2:select").on("select2:select", async (e) => {
+      const val = e.params.data.id;
+      if (currentOrder.value && currentOrder.value.customer.ward !== val) {
+        currentOrder.value.customer.ward = val;
+        await handleWardChange();
+      }
+    });
+  }
+};
+
+const setSelect2Value = (idSelector, value) => {
+  const $el = window.$(idSelector);
+  if ($el.length) {
+    $el.val(String(value)).trigger("change");
+  }
+};
+
+const getProvinces = async () => {
+  try {
+    const res = await axios.get(`${GHN_API_BASE}/master-data/province`, {
+      headers: { token: GHN_TOKEN },
+    });
+    provinces.value = res.data.data;
+  } catch (error) {
+    console.error("Lỗi lấy tỉnh:", error);
+  }
+};
+
+const getDistricts = async (provinceId) => {
+  try {
+    const res = await axios.get(`${GHN_API_BASE}/master-data/district`, {
+      headers: { token: GHN_TOKEN },
+      params: { province_id: provinceId },
+    });
+    districts.value = res.data.data;
+    await nextTick();
+    setSelect2Value("#select-district", currentOrder.value?.customer.district || "");
+  } catch (error) {
+    console.error("Lỗi lấy quận:", error);
+  }
+};
+
+const getWards = async (districtId) => {
+  try {
+    const res = await axios.get(`${GHN_API_BASE}/master-data/ward`, {
+      headers: { token: GHN_TOKEN },
+      params: { district_id: districtId },
+    });
+    wards.value = res.data.data;
+    await nextTick();
+    setSelect2Value("#select-ward", currentOrder.value?.customer.ward || "");
+  } catch (error) {
+    console.error("Lỗi lấy phường:", error);
+  }
+};
+
+const handleProvinceChange = async () => {
+  districts.value = [];
+  wards.value = [];
+  if (currentOrder.value) {
+    currentOrder.value.customer.district = "";
+    currentOrder.value.customer.ward = "";
+    currentOrder.value.shippingFee = 0;
+    setSelect2Value("#select-district", "");
+    setSelect2Value("#select-ward", "");
+
+    if (currentOrder.value.customer.province) {
+      await getDistricts(currentOrder.value.customer.province);
+    }
+  }
+};
+
+const handleDistrictChange = async () => {
+  wards.value = [];
+  if (currentOrder.value) {
+    currentOrder.value.customer.ward = "";
+    currentOrder.value.shippingFee = 0;
+    setSelect2Value("#select-ward", "");
+
+    if (currentOrder.value.customer.district) {
+      await getWards(currentOrder.value.customer.district);
+    }
+  }
+};
+
+const handleWardChange = async () => {
+  if (currentOrder.value && currentOrder.value.customer.ward) {
+    await calculateShippingFee();
+  }
+};
+
+const mapAddressFromText = async (cityName, districtName, wardName) => {
+  if (!cityName || !districtName || !wardName || !currentOrder.value) return;
+  try {
+    if (provinces.value.length === 0) await getProvinces();
+
+    const foundProvince = provinces.value.find(
+      (p) =>
+        p.ProvinceName.toLowerCase().trim() === cityName.toLowerCase().trim() ||
+        p.NameExtension?.some(
+          (ext) => ext.toLowerCase() === cityName.toLowerCase().trim(),
+        ),
+    );
+
+    if (foundProvince) {
+      currentOrder.value.customer.province = foundProvince.ProvinceID;
+      setSelect2Value("#select-province", foundProvince.ProvinceID);
+      await getDistricts(foundProvince.ProvinceID);
+
+      const foundDistrict = districts.value.find(
+        (d) =>
+          d.DistrictName.toLowerCase().trim() === districtName.toLowerCase().trim() ||
+          d.NameExtension?.some(
+            (ext) => ext.toLowerCase() === districtName.toLowerCase().trim(),
+          ),
+      );
+
+      if (foundDistrict) {
+        currentOrder.value.customer.district = foundDistrict.DistrictID;
+        await nextTick();
+        setSelect2Value("#select-district", foundDistrict.DistrictID);
+        await getWards(foundDistrict.DistrictID);
+
+        const foundWard = wards.value.find(
+          (w) =>
+            w.WardName.toLowerCase().trim() === wardName.toLowerCase().trim() ||
+            w.NameExtension?.some(
+              (ext) => ext.toLowerCase() === wardName.toLowerCase().trim(),
+            ),
+        );
+
+        if (foundWard) {
+          currentOrder.value.customer.ward = foundWard.WardCode;
+          await nextTick();
+          setSelect2Value("#select-ward", foundWard.WardCode);
+          await calculateShippingFee();
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Lỗi map địa chỉ:", e);
+  }
+};
+
+const calculateShippingFee = async () => {
+  const order = currentOrder.value;
+  if (!order || !order.customer.district || !order.customer.ward) return;
+  try {
+    const insurance = subTotal.value > 5000000 ? 5000000 : subTotal.value;
+
+    const res = await axios.post(
+      `${GHN_API_BASE}/v2/shipping-order/fee`,
+      {
+        service_type_id: 2,
+        insurance_value: insurance,
+        coupon: null,
+        from_district_id: SHOP_DISTRICT_ID,
+        to_district_id: order.customer.district,
+        to_ward_code: order.customer.ward,
+        height: 15,
+        length: 15,
+        width: 15,
+        weight: 1000,
+      },
+      { headers: { token: GHN_TOKEN, ShopId: GHN_SHOP_ID } },
+    );
+    order.shippingFee = res.data.data.total;
+  } catch (error) {
+    console.error("Lỗi tính phí ship GHN:", error);
+    order.shippingFee = 30000; // Fallback
+  }
+};
+
+
+// ================== CÁC LOGIC KHÁC ==================
 
 const selectCustomer = async (c) => {
   const res = await axios.get(`http://localhost:8080/api/khach-hang/${c.id}`);
@@ -1028,52 +1079,12 @@ const selectCustomer = async (c) => {
     return;
   }
 
-  if (!provinces.value.length) await fetchProvinces();
-
   isSettingAddress.value = true;
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
-  const province = provinces.value.find((p) =>
-    p.name.toLowerCase().includes(diaChi.thanhPho.toLowerCase()),
-  );
-
-  if (!province) {
-    showCustomerPopup.value = false;
-    return;
+  if (currentOrder.value.deliveryType === 'DELIVERY') {
+    await mapAddressFromText(diaChi.thanhPho, diaChi.quan, diaChi.phuong);
   }
-
-  currentOrder.value.customer.province = province.code;
-
-  const resDistrict = await axios.get(
-    `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
-  );
-
-  currentOrder.value.districts = resDistrict.data.districts;
-
-  const district = currentOrder.value.districts.find((d) =>
-    d.name.toLowerCase().includes(diaChi.quan.toLowerCase()),
-  );
-
-  if (!district) {
-    showCustomerPopup.value = false;
-    return;
-  }
-  currentOrder.value.customer.district = district.code;
-  const resWard = await axios.get(
-    `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
-  );
-  currentOrder.value.wards = resWard.data.wards;
-
-  const ward = currentOrder.value.wards.find((w) =>
-    w.name.toLowerCase().includes(diaChi.phuong.toLowerCase()),
-  );
-
-  if (!ward) {
-    showCustomerPopup.value = false;
-    return;
-  }
-
-  currentOrder.value.customer.ward = ward.code;
 
   setTimeout(() => {
     isSettingAddress.value = false;
@@ -1100,10 +1111,15 @@ const resetToGuest = async () => {
   currentOrder.value.voucherCode = "";
   currentOrder.value.shippingFee = 0;
 
+  if (currentOrder.value.deliveryType === 'DELIVERY') {
+    setSelect2Value("#select-province", "");
+    setSelect2Value("#select-district", "");
+    setSelect2Value("#select-ward", "");
+  }
+
   voucherMode.value = "AUTO";
 
   await fetchVouchers();
-
   showToast("Đã chuyển về khách lẻ");
 };
 
@@ -1112,7 +1128,7 @@ const paymentMethod = ref("CASH");
 const cashInput = ref(0);
 const openPaymentPopup = () => {
   paymentMethod.value = "CASH";
-  cashInput.value = total.value; // Code B mặc định điền số tiền tổng
+  cashInput.value = total.value;
   cashDisplay.value = formatCurrencyInput(total.value);
   showPaymentPopup.value = true;
 };
@@ -1165,7 +1181,6 @@ const handleCashInput = (e) => {
   cashDisplay.value = formatCurrencyInput(raw);
 };
 
-// Cập nhật confirmPayment thêm logic xử lý COD
 const confirmPayment = async () => {
   if (!currentOrder.value) return;
 
@@ -1176,7 +1191,7 @@ const confirmPayment = async () => {
   } else if (paymentMethod.value === "BANK") {
     currentOrder.value.paidAmount = total.value;
   } else if (paymentMethod.value === "COD") {
-    currentOrder.value.paidAmount = 0; // Trả sau nên paidAmount = 0
+    currentOrder.value.paidAmount = 0;
   }
 
   if (!validatePayment()) return;
@@ -1259,7 +1274,7 @@ const openQrScanner = async () => {
         showQrPopup.value = false;
       }
     },
-    () => {},
+    () => { },
   );
 };
 
@@ -1294,55 +1309,11 @@ const handleQrResult = async (decodedText) => {
 
   await addToCart(product);
 };
+
 const changeMoney = computed(() => {
   if (!currentOrder.value) return 0;
   return Math.max((currentOrder.value.paidAmount || 0) - total.value, 0);
 });
-
-const provinces = ref([]);
-
-const fetchProvinces = async () => {
-  const res = await axios.get("https://provinces.open-api.vn/api/p/");
-  provinces.value = res.data;
-};
-
-watch(
-  () => currentOrder.value?.customer.province,
-  async (newCode) => {
-    if (!currentOrder.value || isSettingAddress.value) return;
-
-    currentOrder.value.districts = [];
-    currentOrder.value.wards = [];
-    currentOrder.value.customer.district = "";
-    currentOrder.value.customer.ward = "";
-
-    if (!newCode) return;
-
-    const res = await axios.get(
-      `https://provinces.open-api.vn/api/p/${newCode}?depth=2`,
-    );
-
-    currentOrder.value.districts = res.data.districts;
-  },
-);
-
-watch(
-  () => currentOrder.value?.customer.district,
-  async (newCode) => {
-    if (!currentOrder.value || isSettingAddress.value) return;
-
-    currentOrder.value.wards = [];
-    currentOrder.value.customer.ward = "";
-
-    if (!newCode) return;
-
-    const res = await axios.get(
-      `https://provinces.open-api.vn/api/d/${newCode}?depth=2`,
-    );
-
-    currentOrder.value.wards = res.data.wards;
-  },
-);
 
 const subTotal = computed(() =>
   currentOrder.value
@@ -1450,7 +1421,6 @@ watch(
   [
     () => subTotal.value,
     () => currentOrder.value?.customer?.id,
-    () => activeOrderIndex.value,
   ],
   async () => {
     clearTimeout(voucherTimeout);
@@ -1460,12 +1430,6 @@ watch(
       if (voucherMode.value === "MANUAL") return;
 
       await fetchVouchers();
-
-      // if (!best) {
-      //   currentOrder.value.appliedVoucher = null;
-      //   currentOrder.value.voucherCode = "";
-      //   return;
-      // }
 
       const best = bestVoucherSuggestion.value;
 
@@ -1496,10 +1460,30 @@ watch(
 
 watch(
   () => activeOrderIndex.value,
-  () => {
+  async (newIdx) => {
     voucherMode.value = "AUTO";
     hasAutoAppliedOnce = false;
     lastSuggestedVoucherCode = null;
+
+    if (newIdx !== -1 && currentOrder.value) {
+      await fetchVouchers();
+
+      // Load lại Select2 nếu tab này đang chọn giao hàng
+      if (currentOrder.value.deliveryType === 'DELIVERY') {
+        await nextTick();
+        initSelect2();
+
+        // Gọi lại data quận/huyện cho tab này nếu có province
+        if (currentOrder.value.customer.province) {
+          await getDistricts(currentOrder.value.customer.province);
+        }
+        if (currentOrder.value.customer.district) {
+          await getWards(currentOrder.value.customer.district);
+        }
+
+        setSelect2Value("#select-province", currentOrder.value.customer.province);
+      }
+    }
   },
 );
 
@@ -1529,8 +1513,6 @@ const createOrder = async () => {
 
     const draftOrder = res.data;
 
-    await fetchProvinces();
-
     const newOrder = {
       idHoaDon: draftOrder.id,
       maHoaDon: draftOrder.maHoaDon,
@@ -1546,8 +1528,6 @@ const createOrder = async () => {
         district: "",
         province: "",
       },
-      districts: [],
-      wards: [],
       paidAmount: 0,
       paymentMethod: "CASH",
       voucherCode: "",
@@ -1645,7 +1625,6 @@ const increaseQty = async (item) => {
   }
 };
 
-// Cập nhật submitOrder (Ghép loaiDon, ghiChu, và địa chỉ gửi backend)
 const submitOrder = async () => {
   if (!currentOrder.value) return;
   if (subTotal.value <= 0) {
@@ -1664,31 +1643,23 @@ const submitOrder = async () => {
   try {
     const order = currentOrder.value;
 
-    // Xây dựng địa chỉ giao hàng an toàn hơn
-    const provinceName =
-      provinces.value.find((p) => p.code === order.customer.province)?.name ||
-      "";
-    const districtName =
-      order.districts?.find((d) => d.code === order.customer.district)?.name ||
-      "";
-    const wardName =
-      order.wards?.find((w) => w.code === order.customer.ward)?.name || "";
+    // Xây dựng địa chỉ gửi cho GHN -> Name
+    const provinceName = provinces.value.find((p) => p.ProvinceID === order.customer.province)?.ProvinceName || "";
+    const districtName = districts.value.find((d) => d.DistrictID === order.customer.district)?.DistrictName || "";
+    const wardName = wards.value.find((w) => w.WardCode === order.customer.ward)?.WardName || "";
 
     const fullAddress =
       order.deliveryType === "DELIVERY"
         ? [order.customer.address, wardName, districtName, provinceName]
-            .filter(Boolean)
-            .join(", ")
+          .filter(Boolean)
+          .join(", ")
         : "";
 
-    // Xây dựng payload để gọi api
     const payload = {
-      // 3 cho đơn Ship/Chờ giao, 1 cho đơn tại quầy hoàn thành
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
       phiShip: currentOrder.value.shippingFee || 0,
 
-      // Ghi chú phương thức thanh toán
       ghiChu:
         order.paymentMethod === "CASH"
           ? "Thanh toán tiền mặt"
@@ -1865,6 +1836,7 @@ const validateOrdersWithServer = async () => {
     activeOrderIndex.value = orders.value.length - 1;
   }
 };
+
 const saveOrdersToStorage = () => {
   localStorage.setItem(
     STORAGE_KEY,
@@ -1874,6 +1846,7 @@ const saveOrdersToStorage = () => {
     }),
   );
 };
+
 watch(
   [orders, activeOrderIndex],
   () => {
@@ -1881,8 +1854,10 @@ watch(
   },
   { deep: true },
 );
+
 onMounted(async () => {
   isSettingAddress.value = true;
+  await getProvinces(); // Gọi Tỉnh/Thành từ GHN thay vì OpenAPI
 
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -1899,25 +1874,17 @@ onMounted(async () => {
       activeOrderIndex: activeOrderIndex.value,
     }),
   );
-  await fetchProvinces();
 
-  for (const order of orders.value) {
-    const provinceCode = order.customer.province;
-    const districtCode = order.customer.district;
-
-    if (provinceCode) {
-      const resDistrict = await axios.get(
-        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`,
-      );
-      order.districts = resDistrict.data.districts;
+  // Restore danh sách quận/phường từ GHN cho tab hiện tại nếu đang là DELIVERY
+  if (currentOrder.value && currentOrder.value.deliveryType === 'DELIVERY') {
+    if (currentOrder.value.customer.province) {
+      await getDistricts(currentOrder.value.customer.province);
     }
-
-    if (districtCode) {
-      const resWard = await axios.get(
-        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`,
-      );
-      order.wards = resWard.data.wards;
+    if (currentOrder.value.customer.district) {
+      await getWards(currentOrder.value.customer.district);
     }
+    await nextTick();
+    initSelect2();
   }
 
   await fetchVouchers();
@@ -1925,21 +1892,6 @@ onMounted(async () => {
   isSettingAddress.value = false;
   isReady.value = true;
 
-  for (const order of orders.value) {
-    if (order.deliveryType === "DELIVERY" && order.customer?.district) {
-      const districtObj = order.districts?.find(
-        (d) => d.code === order.customer.district,
-      );
-
-      if (districtObj) {
-        const res = await axios.get("http://localhost:8080/api/shipping", {
-          params: { district: districtObj.name },
-        });
-
-        order.shippingFee = res.data;
-      }
-    }
-  }
   autoRevalidateInterval = setInterval(async () => {
     if (!currentOrder.value) return;
     if (!currentOrder.value.cart.length) return;
@@ -1989,28 +1941,6 @@ const fetchVouchers = async () => {
     vouchers.value = [];
   }
 };
-
-watch(
-  () => activeOrderIndex.value,
-  async () => {
-    if (!currentOrder.value) return;
-    await fetchVouchers();
-  },
-);
-
-watch(
-  () => currentOrder.value?.customer?.id,
-  async () => {
-    if (!currentOrder.value) return;
-
-    currentOrder.value.appliedVoucher = null;
-    currentOrder.value.voucherCode = "";
-    currentOrder.value.shippingFee = 0;
-    voucherMode.value = "AUTO";
-
-    await fetchVouchers();
-  },
-);
 
 const bankQR = computed(() => {
   if (!currentOrder.value) return "";
@@ -2141,24 +2071,6 @@ const total = computed(() =>
   Math.max(subTotal.value - discount.value + shippingFee.value, 0),
 );
 
-const calculateShipping = async () => {
-  if (!currentOrder.value) return;
-
-  const districtCode = currentOrder.value.customer.district;
-  if (!districtCode) return;
-
-  const districtObj = currentOrder.value.districts?.find(
-    (d) => d.code === districtCode,
-  );
-
-  if (!districtObj) return;
-
-  const res = await axios.get("http://localhost:8080/api/shipping", {
-    params: { district: districtObj.name },
-  });
-
-  currentOrder.value.shippingFee = res.data;
-};
 const updateQuantity = async (item) => {
   const cartItem = currentOrder.value.cart.find((i) => i.id === item.id);
   if (!cartItem) return;
@@ -2184,6 +2096,7 @@ const updateQuantity = async (item) => {
     showToast("Không thể cập nhật số lượng", "error");
   }
 };
+
 const checkQuantity = async (item) => {
   await fetchProducts();
 
@@ -2204,12 +2117,12 @@ const checkQuantity = async (item) => {
 
   await updateQuantity(item);
 };
+
 const revalidateCartPrice = async () => {
   if (!currentOrder.value) return true;
 
   try {
     await fetchPromotions();
-
     await fetchProducts();
 
     let hasChanged = false;
@@ -2334,7 +2247,8 @@ const toggleDelivery = async (e) => {
   await fetchVouchers();
 
   if (isDelivery) {
-    await calculateShipping();
+    await nextTick();
+    initSelect2();
   } else {
     currentOrder.value.shippingFee = 0;
     currentOrder.value.customer.address = "";
@@ -2343,7 +2257,6 @@ const toggleDelivery = async (e) => {
     currentOrder.value.customer.ward = "";
   }
 
-  // kiểm tra lại voucher hiện tại
   const currentVoucher = currentOrder.value.appliedVoucher;
 
   if (currentVoucher) {
@@ -2358,15 +2271,6 @@ const toggleDelivery = async (e) => {
   await autoRevalidateSystem();
 };
 
-watch(
-  () => currentOrder.value?.customer?.district,
-  async () => {
-    if (!currentOrder.value) return;
-    if (currentOrder.value.deliveryType === "DELIVERY") {
-      await calculateShipping();
-    }
-  },
-);
 
 const modal = ref({ show: false, title: "", message: "", onConfirm: null });
 const openConfirmModal = (title, message, cb) => {
@@ -2389,44 +2293,6 @@ const showToast = (msg, type = "success") => {
     toast.value.show = false;
   }, 2500);
 };
-// ==========================================
-// ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
-// ==========================================
-const dongBoSangMobile = async () => {
-  // 1. Kiểm tra xem có đơn hàng nào đang được mở không
-  const order = currentOrder.value;
-  if (!order || !order.idHoaDon) return;
-
-  // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
-  const payload = {
-    sanPhamList: order.cart.map(item => ({
-      tenSanPham: item.name || 'Sản phẩm', 
-      soLuong: item.quantity,
-      donGia: item.price || 0 
-    })),
-    tongTienHang: subTotal.value || 0,
-    giamGia: discount.value || 0,
-    tongThanhToan: total.value || 0
-  };
-
-  try {
-    // 3. Bắn sang trạm tiếp sóng Spring Boot
-    await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, payload);
-  } catch (error) {
-    console.error("Lỗi đồng bộ màn hình khách hàng:", error);
-  }
-};
-watch(
-  [
-    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
-    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
-    () => total.value                   // Theo dõi khi áp Voucher hoặc đổi phí Ship
-  ],
-  () => {
-    dongBoSangMobile();
-  },
-  { deep: true } // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
-);
 </script>
 
 <style scoped>
@@ -2777,8 +2643,8 @@ input[type="number"] {
   grid-template-columns: minmax(0, 2fr) 150px 130px 130px 50px;
 }
 
-.product-header > div:first-child,
-.product-row > div:first-child {
+.product-header>div:first-child,
+.product-row>div:first-child {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2997,11 +2863,11 @@ select:focus {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-.switch input:checked + .slider {
+.switch input:checked+.slider {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
 }
 
-.switch input:checked + .slider::before {
+.switch input:checked+.slider::before {
   transform: translateX(20px);
 }
 
@@ -3583,6 +3449,7 @@ select:focus {
 }
 
 @media (max-width: 1400px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.8fr) 100px 120px 110px 45px;
@@ -3590,6 +3457,7 @@ select:focus {
 }
 
 @media (max-width: 1200px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.5fr) 90px 110px 100px 40px;
@@ -3598,6 +3466,7 @@ select:focus {
 }
 
 @media (max-width: 1024px) {
+
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.2fr) 80px 100px 90px 35px;
@@ -3657,5 +3526,68 @@ select:focus {
 
 .pos-page {
   zoom: 0.9;
+}
+
+/* ================== SELECT2 CUSTOM STYLES (GHN) ================== */
+:deep(.select2-container) {
+  width: 100% !important;
+}
+
+:deep(.select2-container .select2-selection--single) {
+  height: 40px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #e0d6cc;
+  border-radius: 10px;
+  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+}
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__arrow) {
+  height: 100%;
+  right: 15px;
+}
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__rendered) {
+  padding-left: 0;
+  color: #333;
+  line-height: normal;
+}
+
+:deep(.select2-container--default .select2-selection--single .select2-selection__placeholder) {
+  color: #6c757d;
+}
+
+:deep(.select2-dropdown) {
+  border: 1px solid #c89b6d;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+}
+
+:deep(.select2-search__field) {
+  border-radius: 6px !important;
+  padding: 8px !important;
+  border: 1px solid #ddd !important;
+}
+
+:deep(.select2-results__option--highlighted) {
+  background-color: #c89b6d !important;
+  color: white !important;
+}
+
+/* Trạng thái focus */
+:deep(.select2-container--default.select2-container--open .select2-selection--single) {
+  border-color: #c89b6d;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
+}
+
+/* Trạng thái disabled */
+:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
+  background-color: #e9ecef;
+  border-color: #e9ecef;
+  cursor: not-allowed;
 }
 </style>

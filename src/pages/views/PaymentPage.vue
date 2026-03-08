@@ -755,13 +755,24 @@ const handleCheckout = async () => {
     if (paymentMethod.value === "COD") {
       updateOriginalCartAfterPurchase();
       addNotification("Đặt hàng thành công!", "success");
-      modal.show = false;
-      setTimeout(() => router.push("/"), 2000);
+      setTimeout(() => {
+        router.push({
+          path: "/payment-result",
+          query: {
+            method: "COD",
+            status: "success",
+            orderRef: "COD-" + (hoaDonId || Date.now()),
+            amount: finalTotal.value,
+            hoaDonId: hoaDonId
+          }
+        });
+      }, 1000);
     } else {
-      if (!hoaDonId) throw new Error("Không lấy được mã đơn hàng để tạo link VNPAY");
-      const paymentRes = await axios.post("http://localhost:8080/api/vnpay/create-payment", null, {
-        params: { hoaDonId: hoaDonId }
-      });
+      const paymentRes = await axios.post(
+        "http://localhost:8080/api/vnpay/create-payment",
+        null,
+        { params: { hoaDonId } },
+      );
       if (paymentRes.data) {
         updateOriginalCartAfterPurchase();
         window.location.href = paymentRes.data;

@@ -69,7 +69,8 @@
                     <template v-if="sp.phanTramGiam > 0">
                       <p class="old-price">
                         <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
-                        <span v-else>{{ formatPrice(sp.giaMin) }}</span> </p>
+                        <span v-else>{{ formatPrice(sp.giaMin) }}</span>
+                      </p>
                       <p class="price new-price">
                         <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
                         <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
@@ -178,7 +179,7 @@
                       <template v-if="sp.phanTramGiam > 0">
                         <p class="old-price">
                           <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
-                          <span v-else>{{ formatPrice(sp.giaMin) }}</span> 
+                          <span v-else>{{ formatPrice(sp.giaMin) }}</span>
                         </p>
                         <p class="price new-price">
                           <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
@@ -234,8 +235,10 @@
 
     <div class="chat-wrapper">
       <button class="chat-toggle-btn" @click="toggleChat">
-        <img src="https://cdn-icons-png.flaticon.com/512/134/134914.png" alt="Chat Icon" />
-        <span class="chat-badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
+     <img
+              src="/src/assets/icon/chat-round-line-svgrepo-com.svg"
+              style="width: 30px; height: 30px"
+            />        <span class="chat-badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
       </button>
       <div v-if="isChatOpen" class="chat-popup">
         <Chat />
@@ -265,7 +268,7 @@
 
             <div class="modal-right">
               <span class="modal-tag" v-if="selectedProduct.phanTramGiam > 0">HOT SALE -{{ selectedProduct.phanTramGiam
-                }}%</span>
+              }}%</span>
               <h3 class="modal-product-name">{{ selectedProduct.tenSp }}</h3>
 
               <div class="modal-price-box">
@@ -284,13 +287,15 @@
                       <span v-if="selectedProduct.giaGoc">{{ formatPrice(selectedProduct.giaGoc) }}</span>
                       <span v-else-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
                         formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }}</span>
-                      <span v-else>{{ formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }} ~ {{ formatPrice(selectedProduct.giaMax / (1 - selectedProduct.phanTramGiam / 100))
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }}
+                        ~ {{ formatPrice(selectedProduct.giaMax / (1 - selectedProduct.phanTramGiam / 100))
                         }}</span>
                     </span>
                     <span class="modal-current-price">
                       <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
                         formatPrice(selectedProduct.giaMin) }}</span>
-                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
+                      }}</span>
                     </span>
                   </template>
                   <template v-else>
@@ -298,7 +303,7 @@
                       <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{
                         formatPrice(selectedProduct.giaMin) }}</span>
                       <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax)
-                        }}</span>
+                      }}</span>
                     </span>
                   </template>
                 </template>
@@ -463,7 +468,7 @@ const fetchData = async () => {
 
     rawData.forEach(item => {
       const percent = item.phanTramGiam || 0;
-      
+
       let realProductId = item.sanPham?.id || item.id;
       if (item.maSanPham && item.maSanPham.startsWith('SP')) {
         realProductId = parseInt(item.maSanPham.replace('SP', ''), 10);
@@ -488,13 +493,13 @@ const fetchData = async () => {
         if (percent > existing.phanTramGiam) existing.phanTramGiam = percent;
         // Luôn cập nhật giá gốc lớn nhất
         if ((item.giaGoc || item.giaBan) > existing.giaGoc) {
-           existing.giaGoc = item.giaGoc || item.giaBan;
+          existing.giaGoc = item.giaGoc || item.giaBan;
         }
       }
     });
 
     let uniqueSaleProducts = Array.from(uniqueProductsMap.values());
-    
+
     // ĐỒNG BỘ: Cập nhật thông tin Giá + Khuyến mãi vào Best Sellers và Products
     bestSellers.value = tempBestSellers.map(sp => {
       const mappedSp = uniqueSaleProducts.find(m => m.id === sp.id);
@@ -960,9 +965,17 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(230, 0, 35, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(230, 0, 35, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 0, 35, 0);
+  }
 }
 
 /* INFO */
@@ -1131,7 +1144,9 @@ onBeforeUnmount(() => {
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-retry {
@@ -1252,7 +1267,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 25px rgba(107, 63, 30, 0.3);
 }
 
-/* ================= CHAT ================= */
 .chat-wrapper {
   position: fixed;
   bottom: 35px;
@@ -1271,17 +1285,41 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.chat-toggle-btn:hover {
-  transform: scale(1.1) rotate(5deg);
 }
 
 .chat-toggle-btn img {
   width: 28px;
   height: 28px;
   filter: invert(1);
+}
+
+/* ===== CLASS MỚI ĐỂ HIỂN THỊ MODAL CHAT CHUẨN ===== */
+.chat-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 350px;
+  height: 450px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10000;
+  transform-origin: bottom right;
+}
+
+/* Animation mượt mà cho chat */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
 }
 
 /* ================= MODAL QUICK ADD (Nâng Cấp VIP) ================= */
@@ -1570,6 +1608,7 @@ onBeforeUnmount(() => {
     transform: scale(0.9) translateY(30px);
     opacity: 0;
   }
+
   100% {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -1581,6 +1620,7 @@ onBeforeUnmount(() => {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+
   100% {
     transform: scale(0.95) translateY(20px);
     opacity: 0;
@@ -1592,19 +1632,24 @@ onBeforeUnmount(() => {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
+
   .slider-container .product-card {
     width: 250px;
   }
+
   .image-box {
     height: 280px;
   }
+
   .modal-content {
     flex-direction: column;
   }
+
   .modal-left {
     height: 350px;
     padding: 20px;
   }
+
   .modal-right {
     padding: 30px;
   }
@@ -1614,34 +1659,43 @@ onBeforeUnmount(() => {
   .section {
     padding: 50px 4%;
   }
+
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
   }
+
   .slider-container .product-card {
     width: 220px;
   }
+
   .image-box {
     height: 240px;
   }
+
   .banner-slider {
     height: 350px;
   }
+
   .styled-title {
     font-size: 24px;
   }
+
   .slider-arrow {
     width: 40px;
     height: 40px;
   }
+
   .scroll-top-btn {
     right: 20px;
     bottom: 100px;
   }
+
   .chat-wrapper {
     right: 20px;
     bottom: 20px;
   }
+
   .modal-actions {
     flex-direction: column;
   }
@@ -1651,12 +1705,15 @@ onBeforeUnmount(() => {
   .product-grid {
     grid-template-columns: 1fr;
   }
+
   .slider-container .product-card {
     width: 280px;
   }
+
   .image-box {
     height: 320px;
   }
+
   .banner-slider {
     height: 220px;
   }

@@ -52,16 +52,18 @@
                   </div>
                 </div>
               </div>
-
               <div class="action-bar-bottom">
-                <div class="action-left" v-if="invoice.trangThai < 4 && invoice.trangThai !== 5">
+                <div class="action-left">
+                  <button v-if="invoice.trangThai === 0" class="btn-outline-red" @click="confirmAction('cancel')"
+                    style="margin-right: 10px;">
+                    Xác nhận hủy đơn
+                  </button>
 
-                  <button v-if="canEditOrder" class="btn-outline-red" @click="confirmAction('cancel')">
-                    ❌ Xác nhận hủy đơn
+                  <button v-if="invoice.trangThai === 5 && isChuyenKhoan && daThanhToan > 0" class="btn-outline-red"
+                    @click="openRefundModal">
+                    Xác nhận hoàn phí
                   </button>
                 </div>
-
-
               </div>
             </div>
 
@@ -113,7 +115,7 @@
                     <h3 style="margin: 0;">Thông tin khách hàng</h3>
                   </div>
 
-                  <button v-if="canEditOrder" @click="openEditCustomerModal" class="text-primary-btn">
+                  <button v-if="canEditCustomerInfo" @click="openEditCustomerModal" class="text-primary-btn">
                     Sửa
                   </button>
                 </div>
@@ -304,7 +306,7 @@
                       </td>
 
                       <td class="quantity-text">
-                        <div v-if="canEditOrder" class="qty-control-wrapper">
+                        <div v-if="canEditProducts" class="qty-control-wrapper">
                           <button class="btn-qty" @click="updateProductQuantity(p, p.soLuong - 1)"
                             :disabled="p.soLuong <= 1">-</button>
                           <span class="qty-val">{{ p.soLuong }}</span>
@@ -1064,6 +1066,34 @@ const showToast = (message: string) => {
 const handlePrint = () => {
   window.print();
 };
+
+// ===============================================
+// KIỂM TRA PHƯƠNG THỨC THANH TOÁN (THÊM MỚI)
+// ===============================================
+const isChuyenKhoan = computed(() => {
+  if (!invoice.value) return false;
+  const paymentMethod = getPaymentMethodName().toLowerCase();
+  return paymentMethod.includes('chuyển khoản') ||
+    paymentMethod.includes('vnpay') ||
+    paymentMethod.includes('bank');
+});
+
+// ===============================================
+// ĐIỀU KIỆN SỬA SẢN PHẨM: Tiền mặt + Chờ xác nhận
+// ===============================================
+const canEditProducts = computed(() => {
+  if (!invoice.value) return false;
+  // Chuyển khoản -> KHÔNG cho phép sửa thông tin sản phẩm
+  return invoice.value.trangThai === 0 && !isChuyenKhoan.value;
+});
+
+// ===============================================
+// ĐIỀU KIỆN SỬA ĐỊA CHỈ: Chờ xác nhận (Cả CK và Tiền mặt đều sửa được)
+// ===============================================
+const canEditCustomerInfo = computed(() => {
+  if (!invoice.value) return false;
+  return invoice.value.trangThai === 0;
+});
 
 onMounted(() => {
   fetchDetail();
