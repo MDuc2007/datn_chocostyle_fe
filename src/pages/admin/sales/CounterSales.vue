@@ -7,8 +7,13 @@
 
     <div v-if="orders.length" class="pos-card">
       <div class="order-tabs">
-        <div v-for="(o, index) in orders" :key="o.id" class="order-tab" :class="{ active: index === activeOrderIndex }"
-          @click="activeOrderIndex = index">
+        <div
+          v-for="(o, index) in orders"
+          :key="o.id"
+          class="order-tab"
+          :class="{ active: index === activeOrderIndex }"
+          @click="activeOrderIndex = index"
+        >
           <span>
             Đơn {{ index + 1 }}
             <span class="order-code">
@@ -20,7 +25,11 @@
         </div>
       </div>
 
-      <div v-if="currentOrder" class="main-layout" :class="{ 'full-product': !currentOrder.cart.length }">
+      <div
+        v-if="currentOrder"
+        class="main-layout"
+        :class="{ 'full-product': !currentOrder.cart.length }"
+      >
         <div class="product-section">
           <div class="section-header">
             <span class="section-title">SẢN PHẨM</span>
@@ -50,7 +59,11 @@
               <div class="text-right">Thành tiền</div>
               <div></div>
             </div>
-            <div v-for="(item, index) in currentOrder.cart" :key="item.id + '-' + item.price" class="product-row">
+            <div
+              v-for="(item, index) in currentOrder.cart"
+              :key="item.id + '-' + item.price"
+              class="product-row"
+            >
               <div class="product-cell-info">
                 <div class="img-wrap">
                   <img :src="item.image" class="product-img" />
@@ -60,6 +73,9 @@
                 </div>
                 <div class="product-info">
                   <div class="name" :title="item.name">{{ item.name }}</div>
+
+                  <div class="meta">Mã: {{ item.code }}</div>
+
                   <div class="meta">
                     Màu: {{ item.color }} | Size: {{ item.size || "L" }}
                   </div>
@@ -84,12 +100,27 @@
               </div>
 
               <div class="qty text-center">
-                <button @click="decreaseQty(item)" :disabled="item.quantity <= 1">
+                <button
+                  @click="decreaseQty(item)"
+                  :disabled="item.quantity <= 1"
+                >
                   −
                 </button>
-                <input type="number" min="1" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                  v-model.number="item.quantity" @keyup.enter="checkQuantity(item)" @blur="checkQuantity(item)" />
-                <button @click="increaseQty(item)" :disabled="item.priceChanged">
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                  v-model.number="item.quantity"
+                  @focus="item.oldQty = item.quantity"
+                  @keyup.enter="checkQuantity(item)"
+                  @blur="checkQuantity(item)"
+                  :disabled="item.priceChanged"
+                />
+                <button
+                  @click="increaseQty(item)"
+                  :disabled="item.priceChanged"
+                >
                   +
                 </button>
               </div>
@@ -99,7 +130,11 @@
               </div>
 
               <div class="action-delete">
-                <button class="btn-danger" @click="removeItem(index)" title="Xóa">
+                <button
+                  class="btn-danger"
+                  @click="removeItem(index)"
+                  title="Xóa"
+                >
                   ✕
                 </button>
               </div>
@@ -112,12 +147,19 @@
             <div class="section-header column">
               <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
 
-              <div class="customer-actions-row" :class="{ 'single-btn': !currentOrder.customer.id }">
+              <div
+                class="customer-actions-row"
+                :class="{ 'single-btn': !currentOrder.customer.id }"
+              >
                 <button class="btn-outline" @click="openCustomerPopup">
                   Chọn khách hàng
                 </button>
 
-                <button v-if="currentOrder.customer.id" class="btn-outline" @click="resetToGuest">
+                <button
+                  v-if="currentOrder.customer.id"
+                  class="btn-outline"
+                  @click="resetToGuest"
+                >
                   Khách lẻ
                 </button>
               </div>
@@ -126,13 +168,19 @@
             <div class="customer-form">
               <div class="form-row">
                 <div class="form-item">
-                  <input v-model="currentOrder.customer.name" placeholder="Tên khách hàng *" />
+                  <input
+                    v-model="currentOrder.customer.name"
+                    placeholder="Tên khách hàng *"
+                  />
                   <div v-if="customerErrors.name" class="field-error">
                     {{ customerErrors.name }}
                   </div>
                 </div>
                 <div class="form-item">
-                  <input v-model="currentOrder.customer.phone" placeholder="Số điện thoại *" />
+                  <input
+                    v-model="currentOrder.customer.phone"
+                    placeholder="Số điện thoại *"
+                  />
                   <div v-if="customerErrors.phone" class="field-error">
                     {{ customerErrors.phone }}
                   </div>
@@ -140,24 +188,41 @@
               </div>
 
               <div class="delivery-toggle-wrap mt-2">
-                <span class="toggle-label" :class="{
-                  'active-brown': currentOrder.deliveryType === 'DELIVERY',
-                }">Giao hàng tận nơi</span>
+                <span
+                  class="toggle-label"
+                  :class="{
+                    'active-brown': currentOrder.deliveryType === 'DELIVERY',
+                  }"
+                  >Giao hàng tận nơi</span
+                >
                 <label class="switch">
-                  <input type="checkbox" :checked="currentOrder.deliveryType === 'DELIVERY'" @change="toggleDelivery" />
+                  <input
+                    type="checkbox"
+                    :checked="currentOrder.deliveryType === 'DELIVERY'"
+                    @change="toggleDelivery"
+                  />
                   <span class="slider"></span>
                 </label>
               </div>
 
-              <div v-if="currentOrder.deliveryType === 'DELIVERY'" class="delivery-form">
+              <div
+                v-if="currentOrder.deliveryType === 'DELIVERY'"
+                class="delivery-form"
+              >
                 <div class="form-item mt-2">
-                  <input v-model="currentOrder.customer.email" placeholder="Email (Tùy chọn)" />
+                  <input
+                    v-model="currentOrder.customer.email"
+                    placeholder="Email (Tùy chọn)"
+                  />
                   <div v-if="customerErrors.email" class="field-error">
                     {{ customerErrors.email }}
                   </div>
                 </div>
                 <div class="form-item mt-2">
-                  <input v-model="currentOrder.customer.address" placeholder="Địa chỉ cụ thể (Số nhà, đường) *" />
+                  <input
+                    v-model="currentOrder.customer.address"
+                    placeholder="Địa chỉ cụ thể (Số nhà, đường) *"
+                  />
                   <div v-if="customerErrors.address" class="field-error">
                     {{ customerErrors.address }}
                   </div>
@@ -166,7 +231,11 @@
                   <div class="form-item">
                     <select id="select-province" class="form-control">
                       <option value="">Chọn Tỉnh/Thành phố</option>
-                      <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
+                      <option
+                        v-for="p in provinces"
+                        :key="p.ProvinceID"
+                        :value="p.ProvinceID"
+                      >
                         {{ p.ProvinceName }}
                       </option>
                     </select>
@@ -175,9 +244,17 @@
                     </div>
                   </div>
                   <div class="form-item">
-                    <select id="select-district" class="form-control" :disabled="!currentOrder.customer.province">
+                    <select
+                      id="select-district"
+                      class="form-control"
+                      :disabled="!currentOrder.customer.province"
+                    >
                       <option value="">Chọn Quận/Huyện</option>
-                      <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
+                      <option
+                        v-for="d in districts"
+                        :key="d.DistrictID"
+                        :value="d.DistrictID"
+                      >
                         {{ d.DistrictName }}
                       </option>
                     </select>
@@ -188,9 +265,17 @@
                 </div>
                 <div class="form-row mt-2">
                   <div class="form-item">
-                    <select id="select-ward" class="form-control" :disabled="!currentOrder.customer.district">
+                    <select
+                      id="select-ward"
+                      class="form-control"
+                      :disabled="!currentOrder.customer.district"
+                    >
                       <option value="">Chọn Phường/Xã</option>
-                      <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
+                      <option
+                        v-for="w in wards"
+                        :key="w.WardCode"
+                        :value="w.WardCode"
+                      >
                         {{ w.WardName }}
                       </option>
                     </select>
@@ -209,7 +294,10 @@
             </div>
 
             <div class="voucher-row">
-              <input v-model="currentOrder.voucherCode" placeholder="Mã giảm giá..." />
+              <input
+                v-model="currentOrder.voucherCode"
+                placeholder="Mã giảm giá..."
+              />
               <button class="btn-outline" @click="applyVoucher">Áp dụng</button>
               <div v-if="currentOrder?.appliedVoucher" class="voucher-success">
                 <span v-if="voucherMode === 'AUTO'">
@@ -245,14 +333,20 @@
                 <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
 
-              <div class="payment-row shipping-row" v-if="currentOrder.deliveryType === 'DELIVERY'">
+              <div
+                class="payment-row shipping-row"
+                v-if="currentOrder.deliveryType === 'DELIVERY'"
+              >
                 <span class="text-muted shipping-label">
                   Phí vận chuyển
                   <img :src="ghnLogo" class="ghn-icon" />
                 </span>
 
-                <span class="fw-600" style="display: flex;
-    align-items: center;">{{ formatPrice(shippingFee) }}</span>
+                <span
+                  class="fw-600"
+                  style="display: flex; align-items: center"
+                  >{{ formatPrice(shippingFee) }}</span
+                >
               </div>
 
               <div class="payment-row" v-if="discount > 0">
@@ -279,12 +373,19 @@
               </div>
             </div>
 
-            <div v-if="currentOrder.paymentMethod === 'CASH'" class="payment-row mt-2 text-red fw-600">
+            <div
+              v-if="currentOrder.paymentMethod === 'CASH'"
+              class="payment-row mt-2 text-red fw-600"
+            >
               <span>Tiền thừa</span>
               <span>{{ formatPrice(changeMoney) }}</span>
             </div>
 
-            <button class="btn-submit big mt-4" @click="confirmSubmitOrder" :disabled="!currentOrder.cart.length">
+            <button
+              class="btn-submit big mt-4"
+              @click="confirmSubmitOrder"
+              :disabled="!currentOrder.cart.length"
+            >
               XÁC NHẬN ĐẶT HÀNG
             </button>
           </div>
@@ -303,7 +404,11 @@
             </button>
           </div>
           <div class="modal-body">
-            <input v-model="customerSearch" class="search-input" placeholder="Tìm theo tên, email, số điện thoại..." />
+            <input
+              v-model="customerSearch"
+              class="search-input"
+              placeholder="Tìm theo tên, email, số điện thoại..."
+            />
             <div class="table-responsive">
               <table class="table">
                 <thead>
@@ -347,7 +452,10 @@
           </div>
           <div class="modal-body">
             <div class="filter-row">
-              <input v-model="searchText" placeholder=" Tìm mã, tên sản phẩm..." />
+              <input
+                v-model="searchText"
+                placeholder=" Tìm mã, tên sản phẩm..."
+              />
               <select v-model="filterColor">
                 <option value="">Tất cả màu</option>
                 <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
@@ -376,7 +484,11 @@
                     <td>
                       <div class="img-wrap small">
                         <img :src="p.image" class="thumb" />
-                        <span v-if="p.discountPercent > 0" class="sale-badge small">-{{ p.discountPercent }}%</span>
+                        <span
+                          v-if="p.discountPercent > 0"
+                          class="sale-badge small"
+                          >-{{ p.discountPercent }}%</span
+                        >
                       </div>
                     </td>
                     <td>
@@ -385,7 +497,11 @@
                     </td>
                     <td>{{ p.color }} - {{ p.size }}</td>
                     <td class="text-center">
-                      <span class="badge-stock" :class="{ 'out-of-stock': p.stock <= 0 }">{{ p.stock }}</span>
+                      <span
+                        class="badge-stock"
+                        :class="{ 'out-of-stock': p.stock <= 0 }"
+                        >{{ p.stock }}</span
+                      >
                     </td>
 
                     <td class="price-cell">
@@ -405,7 +521,11 @@
                       </template>
                     </td>
                     <td>
-                      <button class="btn-primary" :disabled="p.stock <= 0" @click="addToCart(p)">
+                      <button
+                        class="btn-primary"
+                        :disabled="p.stock <= 0"
+                        @click="addToCart(p)"
+                      >
                         Chọn
                       </button>
                     </td>
@@ -427,14 +547,23 @@
           </div>
           <div class="modal-body payment-popup">
             <div class="pay-type-tabs">
-              <button :class="{ active: paymentMethod === 'CASH' }" @click="paymentMethod = 'CASH'">
+              <button
+                :class="{ active: paymentMethod === 'CASH' }"
+                @click="paymentMethod = 'CASH'"
+              >
                 💵 Tiền mặt
               </button>
-              <button :class="{ active: paymentMethod === 'BANK' }" @click="paymentMethod = 'BANK'">
+              <button
+                :class="{ active: paymentMethod === 'BANK' }"
+                @click="paymentMethod = 'BANK'"
+              >
                 🏦 Chuyển khoản
               </button>
-              <button v-if="currentOrder.deliveryType === 'DELIVERY'" :class="{ active: paymentMethod === 'COD' }"
-                @click="paymentMethod = 'COD'">
+              <button
+                v-if="currentOrder.deliveryType === 'DELIVERY'"
+                :class="{ active: paymentMethod === 'COD' }"
+                @click="paymentMethod = 'COD'"
+              >
                 🚚 Trả sau (COD)
               </button>
             </div>
@@ -443,18 +572,27 @@
               <label class="input-label">Số tiền khách đưa:</label>
 
               <div class="money-input-wrapper">
-                <input type="text" :value="cashDisplay" @input="handleCashInput" @focus="cashDisplay = ''"
-                  placeholder="0" class="input-money-lg" />
+                <input
+                  type="text"
+                  :value="cashDisplay"
+                  @input="handleCashInput"
+                  @focus="cashDisplay = ''"
+                  placeholder="0"
+                  class="input-money-lg"
+                />
                 <span class="currency-unit">₫</span>
               </div>
 
               <div class="quick-money mt-2">
-                <button class="btn-quick-money" @click="
-                  () => {
-                    cashInput = total;
-                    cashDisplay = formatCurrencyInput(total);
-                  }
-                ">
+                <button
+                  class="btn-quick-money"
+                  @click="
+                    () => {
+                      cashInput = total;
+                      cashDisplay = formatCurrencyInput(total);
+                    }
+                  "
+                >
                   Đúng số tiền
                 </button>
               </div>
@@ -469,7 +607,10 @@
               </div>
             </div>
 
-            <div v-if="paymentMethod === 'COD'" class="mt-3 text-center text-muted">
+            <div
+              v-if="paymentMethod === 'COD'"
+              class="mt-3 text-center text-muted"
+            >
               <p>
                 Khách hàng sẽ thanh toán
                 <strong class="text-red">{{ formatPrice(total) }}</strong> khi
@@ -486,11 +627,24 @@
     </div>
 
     <transition name="fade-modal">
-      <div v-if="modal.show" class="modal-confirm" @click.self="closeConfirmModal">
+      <div
+        v-if="modal.show"
+        class="modal-confirm"
+        @click.self="closeConfirmModal"
+      >
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
-              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="36"
+              height="36"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12l3 3 5-5"></path>
             </svg>
@@ -543,7 +697,6 @@ import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 import { Html5Qrcode } from "html5-qrcode";
 import ghnLogo from "../../../assets/logo/ghn.png";
 
-// ================== CẤU HÌNH GIAO HÀNG NHANH ==================
 const GHN_TOKEN = "31476b34-15db-11f1-9cf9-9efb715b9957";
 const GHN_SHOP_ID = 6296816;
 const SHOP_DISTRICT_ID = 1488;
@@ -600,7 +753,7 @@ const fetchProducts = async () => {
       );
 
       const activePromotion = validPromos.sort(
-        (a, b) => b.giaTriGiam - a.giaTriGiam
+        (a, b) => b.giaTriGiam - a.giaTriGiam,
       )[0];
 
       let oldPrice = p.giaBan;
@@ -670,7 +823,7 @@ const addToCart = async (product) => {
   const cart = currentOrder.value.cart;
 
   const exist = cart.find(
-    (i) => i.id === product.id && i.price === product.price,
+    (i) => i.id === product.id && i.price === product.price && !i.priceChanged,
   );
 
   try {
@@ -692,6 +845,8 @@ const addToCart = async (product) => {
         ...product,
         quantity: 1,
         priceChanged: false,
+        originalStock: product.stock,
+        oldQty: 1,
       });
     }
   } catch (err) {
@@ -858,7 +1013,6 @@ const voucherError = ref("");
 const voucherSuccess = ref("");
 const isSettingAddress = ref(false);
 
-
 // ================== LOGIC CHỌN ĐỊA CHỈ & SELECT2 VỚI GHN ==================
 const initSelect2 = () => {
   const $prov = window.$("#select-province");
@@ -924,7 +1078,10 @@ const getDistricts = async (provinceId) => {
     });
     districts.value = res.data.data;
     await nextTick();
-    setSelect2Value("#select-district", currentOrder.value?.customer.district || "");
+    setSelect2Value(
+      "#select-district",
+      currentOrder.value?.customer.district || "",
+    );
   } catch (error) {
     console.error("Lỗi lấy quận:", error);
   }
@@ -999,7 +1156,8 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
 
       const foundDistrict = districts.value.find(
         (d) =>
-          d.DistrictName.toLowerCase().trim() === districtName.toLowerCase().trim() ||
+          d.DistrictName.toLowerCase().trim() ===
+            districtName.toLowerCase().trim() ||
           d.NameExtension?.some(
             (ext) => ext.toLowerCase() === districtName.toLowerCase().trim(),
           ),
@@ -1061,7 +1219,6 @@ const calculateShippingFee = async () => {
   }
 };
 
-
 // ================== CÁC LOGIC KHÁC ==================
 
 const selectCustomer = async (c) => {
@@ -1082,7 +1239,7 @@ const selectCustomer = async (c) => {
   isSettingAddress.value = true;
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
-  if (currentOrder.value.deliveryType === 'DELIVERY') {
+  if (currentOrder.value.deliveryType === "DELIVERY") {
     await mapAddressFromText(diaChi.thanhPho, diaChi.quan, diaChi.phuong);
   }
 
@@ -1111,7 +1268,7 @@ const resetToGuest = async () => {
   currentOrder.value.voucherCode = "";
   currentOrder.value.shippingFee = 0;
 
-  if (currentOrder.value.deliveryType === 'DELIVERY') {
+  if (currentOrder.value.deliveryType === "DELIVERY") {
     setSelect2Value("#select-province", "");
     setSelect2Value("#select-district", "");
     setSelect2Value("#select-ward", "");
@@ -1274,7 +1431,7 @@ const openQrScanner = async () => {
         showQrPopup.value = false;
       }
     },
-    () => { },
+    () => {},
   );
 };
 
@@ -1418,10 +1575,7 @@ const voucherSuggestion = computed(() => {
 let voucherTimeout = null;
 
 watch(
-  [
-    () => subTotal.value,
-    () => currentOrder.value?.customer?.id,
-  ],
+  [() => subTotal.value, () => currentOrder.value?.customer?.id],
   async () => {
     clearTimeout(voucherTimeout);
 
@@ -1469,7 +1623,7 @@ watch(
       await fetchVouchers();
 
       // Load lại Select2 nếu tab này đang chọn giao hàng
-      if (currentOrder.value.deliveryType === 'DELIVERY') {
+      if (currentOrder.value.deliveryType === "DELIVERY") {
         await nextTick();
         initSelect2();
 
@@ -1481,7 +1635,10 @@ watch(
           await getWards(currentOrder.value.customer.district);
         }
 
-        setSelect2Value("#select-province", currentOrder.value.customer.province);
+        setSelect2Value(
+          "#select-province",
+          currentOrder.value.customer.province,
+        );
       }
     }
   },
@@ -1562,13 +1719,9 @@ const increaseQty = async (item) => {
       showToast("Sản phẩm không còn tồn tại", "error");
       return;
     }
+
     if (latest.price !== item.price) {
       item.priceChanged = true;
-
-      const existNew = currentOrder.value.cart.find(
-        (i) =>
-          i.id === latest.id && i.price === latest.price && !i.priceChanged,
-      );
 
       await axios.put(
         "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
@@ -1581,20 +1734,16 @@ const increaseQty = async (item) => {
         },
       );
 
-      if (!existNew) {
+      const existNew = currentOrder.value.cart.find(
+        (i) =>
+          i.id === latest.id && i.price === latest.price && !i.priceChanged,
+      );
+
+      if (existNew) {
+        existNew.quantity++;
+      } else {
         currentOrder.value.cart.push({
-          id: latest.id,
-          maCtsp: latest.maCtsp,
-          code: latest.code,
-          name: latest.name,
-          image: latest.image,
-          stock: latest.stock,
-          color: latest.color,
-          size: latest.size,
-          oldPrice: latest.oldPrice,
-          price: latest.price,
-          discountPercent: latest.discountPercent,
-          trangThai: latest.trangThai,
+          ...latest,
           quantity: 1,
           priceChanged: false,
         });
@@ -1603,7 +1752,7 @@ const increaseQty = async (item) => {
       showToast("Sản phẩm đã đổi giá. Đã thêm thành dòng mới.");
       return;
     }
-    if (item.quantity >= latest.stock) {
+    if (latest.stock <= 0) {
       showToast("Đã đạt số lượng tồn kho tối đa", "error");
       return;
     }
@@ -1644,15 +1793,21 @@ const submitOrder = async () => {
     const order = currentOrder.value;
 
     // Xây dựng địa chỉ gửi cho GHN -> Name
-    const provinceName = provinces.value.find((p) => p.ProvinceID === order.customer.province)?.ProvinceName || "";
-    const districtName = districts.value.find((d) => d.DistrictID === order.customer.district)?.DistrictName || "";
-    const wardName = wards.value.find((w) => w.WardCode === order.customer.ward)?.WardName || "";
+    const provinceName =
+      provinces.value.find((p) => p.ProvinceID === order.customer.province)
+        ?.ProvinceName || "";
+    const districtName =
+      districts.value.find((d) => d.DistrictID === order.customer.district)
+        ?.DistrictName || "";
+    const wardName =
+      wards.value.find((w) => w.WardCode === order.customer.ward)?.WardName ||
+      "";
 
     const fullAddress =
       order.deliveryType === "DELIVERY"
         ? [order.customer.address, wardName, districtName, provinceName]
-          .filter(Boolean)
-          .join(", ")
+            .filter(Boolean)
+            .join(", ")
         : "";
 
     const payload = {
@@ -1740,16 +1895,18 @@ const removeOrder = (index) => {
       try {
         if (targetOrder.idHoaDon) {
           for (const item of targetOrder.cart) {
-            await axios.put(
-              "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
-              null,
-              {
-                params: {
-                  idSpct: item.id,
-                  soLuongThayDoi: item.quantity,
+            if (!item.priceChanged) {
+              await axios.put(
+                "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
+                null,
+                {
+                  params: {
+                    idSpct: item.id,
+                    soLuongThayDoi: item.quantity,
+                  },
                 },
-              },
-            );
+              );
+            }
           }
 
           await axios.delete(
@@ -1876,7 +2033,7 @@ onMounted(async () => {
   );
 
   // Restore danh sách quận/phường từ GHN cho tab hiện tại nếu đang là DELIVERY
-  if (currentOrder.value && currentOrder.value.deliveryType === 'DELIVERY') {
+  if (currentOrder.value && currentOrder.value.deliveryType === "DELIVERY") {
     if (currentOrder.value.customer.province) {
       await getDistricts(currentOrder.value.customer.province);
     }
@@ -1897,7 +2054,7 @@ onMounted(async () => {
     if (!currentOrder.value.cart.length) return;
 
     await autoRevalidateSystem();
-  }, 10000);
+  }, 1000);
 });
 
 onBeforeUnmount(async () => {
@@ -2071,11 +2228,8 @@ const total = computed(() =>
   Math.max(subTotal.value - discount.value + shippingFee.value, 0),
 );
 
-const updateQuantity = async (item) => {
-  const cartItem = currentOrder.value.cart.find((i) => i.id === item.id);
-  if (!cartItem) return;
-
-  const diff = item.quantity - cartItem.quantity;
+const updateQuantity = async (item, oldQty) => {
+  const diff = item.quantity - oldQty;
 
   if (diff === 0) return;
 
@@ -2086,36 +2240,30 @@ const updateQuantity = async (item) => {
       {
         params: {
           idSpct: item.id,
-          soLuongThayDoi: -diff,
+          soLuongThayDoi: diff > 0 ? -diff : Math.abs(diff),
         },
       },
     );
-
-    cartItem.quantity = item.quantity;
   } catch (err) {
     showToast("Không thể cập nhật số lượng", "error");
   }
 };
 
 const checkQuantity = async (item) => {
-  await fetchProducts();
-
-  const latest = products.value.find((p) => p.id === item.id);
-  if (!latest) return;
-
-  if (item.quantity < 1) {
-    item.quantity = 1;
+  const oldQty = item.oldQty ?? item.quantity;
+  const maxQty = item.originalStock;
+  if (!item.quantity || item.quantity < 1) {
     showToast("Số lượng tối thiểu là 1", "error");
-    return;
+    item.quantity = 1;
+  }
+  if (item.quantity > maxQty) {
+    item.quantity = maxQty;
+    showToast(`Chỉ còn ${maxQty} sản phẩm`, "error");
   }
 
-  if (item.quantity > latest.stock) {
-    item.quantity = latest.stock;
-    showToast(`Chỉ còn ${latest.stock} sản phẩm trong kho`, "error");
-    return;
-  }
+  await updateQuantity(item, oldQty);
 
-  await updateQuantity(item);
+  item.oldQty = item.quantity;
 };
 
 const revalidateCartPrice = async () => {
@@ -2160,10 +2308,29 @@ const autoRevalidateSystem = async () => {
     await fetchVouchers();
 
     const currentVoucher = currentOrder.value.appliedVoucher;
+
+    // kiểm tra voucher hiện tại trước
+    if (currentVoucher) {
+      const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
+
+      if (!found || found.trangThai !== 1) {
+        openConfirmModal(
+          "Voucher không còn hợp lệ",
+          "Phiếu giảm giá hiện tại đã bị ngừng hoặc hết hạn.",
+          () => {
+            currentOrder.value.appliedVoucher = null;
+            currentOrder.value.voucherCode = "";
+          },
+        );
+        return;
+      }
+    }
+
     const best = bestVoucherSuggestion.value;
 
     if (!best) return;
 
+    // nếu chưa áp dụng voucher nào
     if (!currentVoucher) {
       openConfirmModal(
         "Gợi ý phiếu giảm giá",
@@ -2189,20 +2356,7 @@ const autoRevalidateSystem = async () => {
       return;
     }
 
-    const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
-
-    if (!found || found.trangThai !== 1) {
-      openConfirmModal(
-        "Voucher không còn hợp lệ",
-        "Phiếu giảm giá hiện tại đã bị ngừng hoặc hết hạn.",
-        () => {
-          currentOrder.value.appliedVoucher = null;
-          currentOrder.value.voucherCode = "";
-        },
-      );
-      return;
-    }
-
+    // nếu có voucher tốt hơn
     if (
       hasAutoAppliedOnce &&
       currentVoucher.code !== best.maPgg &&
@@ -2270,7 +2424,6 @@ const toggleDelivery = async (e) => {
   }
   await autoRevalidateSystem();
 };
-
 
 const modal = ref({ show: false, title: "", message: "", onConfirm: null });
 const openConfirmModal = (title, message, cb) => {
@@ -2643,8 +2796,8 @@ input[type="number"] {
   grid-template-columns: minmax(0, 2fr) 150px 130px 130px 50px;
 }
 
-.product-header>div:first-child,
-.product-row>div:first-child {
+.product-header > div:first-child,
+.product-row > div:first-child {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2754,7 +2907,6 @@ input[type="number"] {
 .qty input {
   width: 45px;
   text-align: center;
-  border: none;
   font-size: 14px;
   font-weight: 600;
   outline: none;
@@ -2863,11 +3015,11 @@ select:focus {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-.switch input:checked+.slider {
+.switch input:checked + .slider {
   background: linear-gradient(90deg, #c89b6d, #6b3f23);
 }
 
-.switch input:checked+.slider::before {
+.switch input:checked + .slider::before {
   transform: translateX(20px);
 }
 
@@ -3449,7 +3601,6 @@ select:focus {
 }
 
 @media (max-width: 1400px) {
-
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.8fr) 100px 120px 110px 45px;
@@ -3457,7 +3608,6 @@ select:focus {
 }
 
 @media (max-width: 1200px) {
-
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.5fr) 90px 110px 100px 40px;
@@ -3466,7 +3616,6 @@ select:focus {
 }
 
 @media (max-width: 1024px) {
-
   .product-header,
   .product-row {
     grid-template-columns: minmax(0, 1.2fr) 80px 100px 90px 35px;
@@ -3544,18 +3693,30 @@ select:focus {
   align-items: center;
 }
 
-:deep(.select2-container--default .select2-selection--single .select2-selection__arrow) {
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow
+) {
   height: 100%;
   right: 15px;
 }
 
-:deep(.select2-container--default .select2-selection--single .select2-selection__rendered) {
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered
+) {
   padding-left: 0;
   color: #333;
   line-height: normal;
 }
 
-:deep(.select2-container--default .select2-selection--single .select2-selection__placeholder) {
+:deep(
+  .select2-container--default
+    .select2-selection--single
+    .select2-selection__placeholder
+) {
   color: #6c757d;
 }
 
@@ -3578,14 +3739,19 @@ select:focus {
 }
 
 /* Trạng thái focus */
-:deep(.select2-container--default.select2-container--open .select2-selection--single) {
+:deep(
+  .select2-container--default.select2-container--open .select2-selection--single
+) {
   border-color: #c89b6d;
   background-color: #fff;
   box-shadow: 0 0 0 3px rgba(200, 155, 109, 0.15);
 }
 
 /* Trạng thái disabled */
-:deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
+:deep(
+  .select2-container--default.select2-container--disabled
+    .select2-selection--single
+) {
   background-color: #e9ecef;
   border-color: #e9ecef;
   cursor: not-allowed;

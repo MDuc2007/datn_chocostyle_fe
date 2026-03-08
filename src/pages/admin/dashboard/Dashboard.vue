@@ -21,7 +21,6 @@
       </div>
 
       <div class="top-actions-container">
-        
         <div class="filter-controls">
           <div class="control-group">
             <label>Khoảng thời gian thống kê</label>
@@ -39,7 +38,17 @@
                 @click="chartType = 'line'"
                 :class="{ active: chartType === 'line' }"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                 </svg>
                 Đường
@@ -48,7 +57,17 @@
                 @click="chartType = 'bar'"
                 :class="{ active: chartType === 'bar' }"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <line x1="18" y1="20" x2="18" y2="10"></line>
                   <line x1="12" y1="20" x2="12" y2="4"></line>
                   <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -61,7 +80,8 @@
 
         <div class="action-buttons">
           <button @click="resetFilter" class="btn btn-secondary">
-            <img src="/src/assets/icon/refresh-white.svg" alt="" />Đặt lại bộ lọc
+            <img src="/src/assets/icon/refresh-white.svg" alt="" />Đặt lại bộ
+            lọc
           </button>
 
           <button
@@ -84,7 +104,6 @@
             <img src="/src/assets/icon/dowload-white.svg" alt="" />Xuất báo cáo
           </button>
         </div>
-
       </div>
 
       <div class="filter-footer-custom">
@@ -95,15 +114,21 @@
           </div>
           <div class="summary-box">
             <span class="box-label">Tổng doanh thu</span>
-            <span class="box-value text-green">{{ formatCurrency(totalRevenueInChart) }}</span>
+            <span class="box-value text-green">{{
+              formatCurrency(totalRevenueInChart)
+            }}</span>
           </div>
           <div class="summary-box">
             <span class="box-label">Doanh thu thực tế</span>
-            <span class="box-value text-blue">{{ formatCurrency(totalActualRevenueInChart) }}</span>
+            <span class="box-value text-blue">{{
+              formatCurrency(totalActualRevenueInChart)
+            }}</span>
           </div>
           <div class="summary-box">
             <span class="box-label">Doanh thu dự kiến</span>
-            <span class="box-value text-yellow">{{ formatCurrency(totalExpectedRevenueInChart) }}</span>
+            <span class="box-value text-yellow">{{
+              formatCurrency(totalExpectedRevenueInChart)
+            }}</span>
           </div>
         </div>
       </div>
@@ -113,7 +138,17 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box blue">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -137,7 +172,17 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box purple">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -161,7 +206,17 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box teal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -185,7 +240,17 @@
       <div class="card stat-card">
         <div class="stat-top">
           <div class="icon-box orange">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -210,7 +275,6 @@
 
     <div class="main-content-grid">
       <div class="left-panel">
-        
         <div class="card chart-section">
           <div class="card-header border-left-teal">
             <h3>Biểu Đồ Doanh Thu</h3>
@@ -254,7 +318,11 @@
                     <div class="table-img">
                       <img
                         :src="item.idSanPham?.hinhAnh || '/placeholder.png'"
-                        @error="(e) => ((e.target as HTMLImageElement).src = '/placeholder.png')"
+                        @error="
+                          (e) =>
+                            ((e.target as HTMLImageElement).src =
+                              '/placeholder.png')
+                        "
                         alt="img"
                       />
                     </div>
@@ -280,7 +348,9 @@
 
         <div class="card table-card mt-4">
           <div class="card-header flex-between">
-            <h3 style="font-size: 16px; font-weight: 600; color: #374151;">Bảng thống kê chi tiết theo thời gian</h3>
+            <h3 style="font-size: 16px; font-weight: 600; color: #374151">
+              Bảng thống kê chi tiết theo thời gian
+            </h3>
           </div>
           <div class="table-responsive">
             <table class="custom-table text-left border-table">
@@ -296,21 +366,36 @@
               <tbody>
                 <tr v-for="(item, index) in chiTietThoiGianData" :key="index">
                   <td class="font-medium text-black">{{ item.thoiGian }}</td>
-                  <td class="text-black">{{ formatCurrency(item.doanhThu) }}</td>
+                  <td class="text-black">
+                    {{ formatCurrency(item.doanhThu) }}
+                  </td>
                   <td class="text-black">{{ item.soDonHang }}</td>
-                  <td class="text-black">{{ formatCurrency(item.giaTriTrungBinh) }}</td>
-                  <td :class="item.tangTruong >= 0 ? 'text-green font-medium' : 'text-red font-medium'">
+                  <td class="text-black">
+                    {{ formatCurrency(item.giaTriTrungBinh) }}
+                  </td>
+                  <td
+                    :class="
+                      item.tangTruong >= 0
+                        ? 'text-green font-medium'
+                        : 'text-red font-medium'
+                    "
+                  >
                     {{ formatGrowth(item.tangTruong) }}
                   </td>
                 </tr>
-                <tr v-if="!chiTietThoiGianData || chiTietThoiGianData.length === 0">
-                  <td colspan="5" class="text-center text-gray py-4">Chưa có dữ liệu</td>
+                <tr
+                  v-if="
+                    !chiTietThoiGianData || chiTietThoiGianData.length === 0
+                  "
+                >
+                  <td colspan="5" class="text-center text-gray py-4">
+                    Chưa có dữ liệu
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
 
       <div class="right-panel">
@@ -343,12 +428,26 @@
         <div class="card top-product-section">
           <div class="card-header border-left-orange flex-between">
             <h3>Sản Phẩm Bán Chạy</h3>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#eab308"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
               <path d="M4 22h16"></path>
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+              <path
+                d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"
+              ></path>
+              <path
+                d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"
+              ></path>
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
             </svg>
           </div>
@@ -425,6 +524,16 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="toast.show"
+      :class="[
+        'custom-toast',
+        toast.type === 'success' ? 'toast-success' : 'toast-error',
+      ]"
+    >
+      <div class="toast-text">{{ toast.message }}</div>
+    </div>
   </div>
   <EmailSettingsModal
     v-if="showSettingsModal"
@@ -433,7 +542,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, reactive } from "vue";
 import axios from "axios";
 import EmailSettingsModal from "./EmailSettingsModal.vue";
 import {
@@ -454,6 +563,18 @@ import { Line, Bar, Doughnut } from "vue-chartjs";
 const showSettingsModal = ref(false);
 const openSettingsModal = () => {
   showSettingsModal.value = true;
+};
+
+// TOAST STATE & FUNCTION
+const toast = reactive({ show: false, message: "", type: "success" });
+
+const showToast = (message: string, type: "success" | "error" = "success") => {
+  toast.message = message;
+  toast.type = type;
+  toast.show = true;
+  setTimeout(() => {
+    toast.show = false;
+  }, 3000);
 };
 
 // PLUGIN VẼ SỐ TRỰC TIẾP LÊN ĐỈNH BIỂU ĐỒ LINE
@@ -486,17 +607,18 @@ const customDataLabelsPlugin = {
 
 const handleTestSendEmail = async () => {
   const confirmTest = confirm(
-    "Hệ thống sẽ gửi 1 bản báo cáo demo tới email bạn đã cài đặt. Bạn có muốn tiếp tục?"
+    "Hệ thống sẽ gửi 1 bản báo cáo demo tới email bạn đã cài đặt. Bạn có muốn tiếp tục?",
   );
   if (!confirmTest) return;
 
   try {
     const res = await axios.post(`${API_URL}/test-email`);
-    alert(res.data);
+    showToast(res.data, "success");
   } catch (error: any) {
-    alert(
-      "❌ Lỗi: " +
-        (error.response?.data || "Không thể kết nối đến máy chủ gửi mail")
+    showToast(
+      "Lỗi: " +
+        (error.response?.data || "Không thể kết nối đến máy chủ gửi mail"),
+      "error",
     );
   }
 };
@@ -512,7 +634,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  customDataLabelsPlugin 
+  customDataLabelsPlugin,
 );
 
 // --- Interface ---
@@ -593,10 +715,10 @@ const fetchData = async () => {
   try {
     const resSummary = await axios.get(`${API_URL}/tong-quat`);
     summaryData.value = resSummary.data;
-    
+
     const resTop = await axios.get(`${API_URL}/ban-chay`);
     topProducts.value = resTop.data;
-    
+
     const resStatus = await axios.get(`${API_URL}/trang-thai`);
     statusRawData.value = resStatus.data;
 
@@ -636,7 +758,7 @@ watch(
   () => [filter.value.startDate, filter.value.endDate],
   () => {
     if (filter.value.startDate && filter.value.endDate) fetchChartData();
-  }
+  },
 );
 
 const resetFilter = () => {
@@ -646,7 +768,7 @@ const resetFilter = () => {
 
 const handleExportExcel = async () => {
   if (!exportForm.value.startDate || !exportForm.value.endDate) {
-    alert("Vui lòng chọn đầy đủ ngày tháng!");
+    showToast("Vui lòng chọn đầy đủ ngày tháng!", "error");
     return;
   }
 
@@ -665,16 +787,17 @@ const handleExportExcel = async () => {
     link.href = url;
     link.setAttribute(
       "download",
-      `BaoCaoDoanhThu_${exportForm.value.startDate}_${exportForm.value.endDate}.xlsx`
+      `BaoCaoDoanhThu_${exportForm.value.startDate}_${exportForm.value.endDate}.xlsx`,
     );
     document.body.appendChild(link);
     link.click();
 
     document.body.removeChild(link);
     showExportModal.value = false;
+    showToast("Xuất báo cáo thành công!", "success");
   } catch (error) {
     console.error("Lỗi xuất file:", error);
-    alert("Có lỗi xảy ra khi xuất file!");
+    showToast("Có lỗi xảy ra khi xuất file!", "error");
   } finally {
     isExporting.value = false;
   }
@@ -798,7 +921,7 @@ const statusChartData = computed(() => {
 
   const total = statusRawData.value.reduce(
     (sum, item) => sum + item.soLuong,
-    0
+    0,
   );
 
   const labels = statusRawData.value.map((i) => {
@@ -813,7 +936,7 @@ const statusChartData = computed(() => {
       {
         data: statusRawData.value.map((i) => i.soLuong),
         backgroundColor: statusRawData.value.map(
-          (i) => colors[i.trangThai] || "#cbd5e1"
+          (i) => colors[i.trangThai] || "#cbd5e1",
         ),
         borderWidth: 2,
         borderColor: "#ffffff",
@@ -826,7 +949,7 @@ const channelChartData = computed(() => {
   const colors = ["#14b8a6", "#fb7185", "#38bdf8"];
   const total = channelRawData.value.reduce(
     (sum, item) => sum + item.soLuong,
-    0
+    0,
   );
 
   const labels = channelRawData.value.map((i) => {
@@ -914,7 +1037,7 @@ const statusDoughnutOptions = computed(() => ({
         chart.update();
         if (hiddenStatusIndices.value.includes(index)) {
           hiddenStatusIndices.value = hiddenStatusIndices.value.filter(
-            (i) => i !== index
+            (i) => i !== index,
           );
         } else {
           hiddenStatusIndices.value = [...hiddenStatusIndices.value, index];
@@ -937,7 +1060,7 @@ const channelDoughnutOptions = computed(() => ({
         chart.update();
         if (hiddenChannelIndices.value.includes(index)) {
           hiddenChannelIndices.value = hiddenChannelIndices.value.filter(
-            (i) => i !== index
+            (i) => i !== index,
           );
         } else {
           hiddenChannelIndices.value = [...hiddenChannelIndices.value, index];
@@ -949,22 +1072,24 @@ const channelDoughnutOptions = computed(() => ({
 
 // TÍNH TOÁN DỮ LIỆU TỪNG Ô SUMMARY
 const totalRevenueInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0)
+  chartRawData.value.reduce((sum, item) => sum + item.doanhThu, 0),
 );
 const totalOrdersInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + item.soLuongDon, 0)
+  chartRawData.value.reduce((sum, item) => sum + item.soLuongDon, 0),
 );
 const totalActualRevenueInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuThucTe || 0), 0)
+  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuThucTe || 0), 0),
 );
 const totalExpectedRevenueInChart = computed(() =>
-  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuDuKien || 0), 0)
+  chartRawData.value.reduce((sum, item) => sum + (item.doanhThuDuKien || 0), 0),
 );
-
 
 const formatCurrency = (value: number) => {
   if (value === undefined || value === null) return "0 ₫";
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value);
 };
 
 // Hàm định dạng phần trăm tăng trưởng (+ / -)
@@ -990,7 +1115,9 @@ onMounted(() => {
   padding: 24px;
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 .card {
   background: white;
@@ -1007,12 +1134,12 @@ onMounted(() => {
   color: #4b5563;
 }
 
-/* ===== [ĐÃ CẬP NHẬT] CSS CHO PHẦN BỘ LỌC + NÚT BẤM NẰM NGANG ===== */
+/* ===== CSS CHO PHẦN BỘ LỌC + NÚT BẤM NẰM NGANG ===== */
 .top-actions-container {
   display: flex;
-  justify-content: space-between; /* Đẩy bộ lọc sang trái, nút sang phải */
+  justify-content: space-between;
   align-items: flex-end;
-  flex-wrap: wrap; /* Cho phép rớt dòng nếu màn hình nhỏ */
+  flex-wrap: wrap;
   gap: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f3f4f6;
@@ -1085,91 +1212,410 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
 }
-.btn-secondary { background-color: #6b7280; }
-.btn-secondary:hover { background-color: #4b5563; }
-.btn-primary { background: linear-gradient(90deg, #c79a63, #8b5e34); color: white; border: none; }
-.btn-primary:hover { background: linear-gradient(90deg, #b88d57, #7a502c); }
+.btn-secondary {
+  background-color: #6b7280;
+}
+.btn-secondary:hover {
+  background-color: #4b5563;
+}
+.btn-primary {
+  background: linear-gradient(90deg, #c79a63, #8b5e34);
+  color: white;
+  border: none;
+}
+.btn-primary:hover {
+  background: linear-gradient(90deg, #b88d57, #7a502c);
+}
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
-.stat-card { display: flex; flex-direction: column; justify-content: space-between; height: 140px; margin-bottom: 0; transition: transform 0.2s, box-shadow 0.2s; }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-.stat-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.icon-box { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-.icon-box.blue { background: #dbeafe; color: #2563eb; }
-.icon-box.purple { background: #f3e8ff; color: #9333ea; }
-.icon-box.teal { background: #ccfbf1; color: #0d9488; }
-.icon-box.orange { background: #ffedd5; color: #ea580c; }
-.stat-info { text-align: right; }
-.stat-value { font-size: 20px; font-weight: bold; color: #1f2937; }
-.stat-trend { font-size: 12px; margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
-.stat-trend.down { color: #ef4444; }
-.stat-bottom { margin-top: 10px; }
-.stat-label { font-weight: 600; color: #374151; }
-.stat-sub { font-size: 12px; color: #6b7280; }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 140px;
+  margin-bottom: 0;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.icon-box.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.icon-box.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+.icon-box.teal {
+  background: #ccfbf1;
+  color: #0d9488;
+}
+.icon-box.orange {
+  background: #ffedd5;
+  color: #ea580c;
+}
+.stat-info {
+  text-align: right;
+}
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #1f2937;
+}
+.stat-trend {
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.stat-trend.down {
+  color: #ef4444;
+}
+.stat-bottom {
+  margin-top: 10px;
+}
+.stat-label {
+  font-weight: 600;
+  color: #374151;
+}
+.stat-sub {
+  font-size: 12px;
+  color: #6b7280;
+}
 
-.main-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-@media (max-width: 1024px) { .main-content-grid { grid-template-columns: 1fr; } }
+.main-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 1024px) {
+  .main-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-.card-header h3 { font-size: 16px; font-weight: bold; color: #374151; margin: 0; }
-.border-left-teal { border-left: 4px solid #14b8a6; padding-left: 10px; }
-.border-left-orange { border-left: 4px solid #f97316; padding-left: 10px; }
-.border-left-red { border-left: 4px solid #ef4444; padding-left: 10px; }
-.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.card-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #374151;
+  margin: 0;
+}
+.border-left-teal {
+  border-left: 4px solid #14b8a6;
+  padding-left: 10px;
+}
+.border-left-orange {
+  border-left: 4px solid #f97316;
+  padding-left: 10px;
+}
+.border-left-red {
+  border-left: 4px solid #ef4444;
+  padding-left: 10px;
+}
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-.chart-container { height: 350px; position: relative; width: 100%; margin-top: 20px; }
-.loading-text { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; }
+.chart-container {
+  height: 350px;
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+}
+.loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+}
 
-.product-list { margin-top: 15px; max-height: 350px; overflow-y: auto; }
-.product-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
-.product-item:last-child { border-bottom: none; }
-.rank-badge { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; flex-shrink: 0; }
-.rank-1 { background-color: #facc15; }
-.rank-2 { background-color: #9ca3af; }
-.rank-3 { background-color: #fb923c; }
-.rank-other { background-color: #ccfbf1; color: #0d9488; }
-.product-info { flex: 1; min-width: 0; }
-.product-name { font-size: 14px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
-.product-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
-.product-img { width: 48px; height: 48px; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; flex-shrink: 0; }
-.product-img img { width: 100%; height: 100%; object-fit: cover; }
+.product-list {
+  margin-top: 15px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+.product-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.product-item:last-child {
+  border-bottom: none;
+}
+.rank-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+.rank-1 {
+  background-color: #facc15;
+}
+.rank-2 {
+  background-color: #9ca3af;
+}
+.rank-3 {
+  background-color: #fb923c;
+}
+.rank-other {
+  background-color: #ccfbf1;
+  color: #0d9488;
+}
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+.product-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+.product-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+.product-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+.product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-.right-panel { display: flex; flex-direction: column; gap: 20px; }
-.donut-card { min-height: auto; padding: 15px; display: flex; flex-direction: column; }
-.donut-card .card-header h3 { font-size: 14px; }
-.donut-container { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; height: 360px; margin-top: 10px; }
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.donut-card {
+  min-height: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+.donut-card .card-header h3 {
+  font-size: 14px;
+}
+.donut-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 360px;
+  margin-top: 10px;
+}
 
-.left-panel { display: flex; flex-direction: column; gap: 24px; }
-.table-card { overflow: hidden; }
-.mini-action { font-size: 12px; background-color: #f3f4f6; padding: 2px 8px; border-radius: 4px; color: #6b7280; }
-.table-responsive { overflow-x: auto; margin-top: 15px; }
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.table-card {
+  overflow: hidden;
+}
+.mini-action {
+  font-size: 12px;
+  background-color: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #6b7280;
+}
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 15px;
+}
 
-.custom-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.custom-table th { text-align: center; padding: 12px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-.custom-table td { text-align: center; padding: 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; color: #4b5563; }
-.custom-table tr:last-child td { border-bottom: none; }
-.table-img { width: 40px; height: 40px; border-radius: 4px; overflow: hidden; border: 1px solid #e5e7eb; margin: 0 auto; }
-.table-img img { width: 100%; height: 100%; object-fit: cover; }
-.text-red { color: #ef4444; }
-.text-gray { color: #9ca3af; }
-.font-bold { font-weight: bold; }
-.font-medium { font-weight: 500; }
-.text-center { text-align: center; }
-.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.custom-table th {
+  text-align: center;
+  padding: 12px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.custom-table td {
+  text-align: center;
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  color: #4b5563;
+}
+.custom-table tr:last-child td {
+  border-bottom: none;
+}
+.table-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  margin: 0 auto;
+}
+.table-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.text-red {
+  color: #ef4444;
+}
+.text-gray {
+  color: #9ca3af;
+}
+.font-bold {
+  font-weight: bold;
+}
+.font-medium {
+  font-weight: 500;
+}
+.text-center {
+  text-align: center;
+}
+.py-4 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
 
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-.modal-content { background: white; width: 400px; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); animation: slideDown 0.3s ease-out; }
-@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.modal-header h3 { margin: 0; font-size: 18px; color: #1f2937; }
-.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; }
-.close-btn:hover { color: #4b5563; }
-.modal-body { margin-bottom: 24px; }
-.modal-desc { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
-.form-control { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
-.form-control:focus { border-color: #63391f; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: white;
+  width: 400px;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #1f2937;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #9ca3af;
+}
+.close-btn:hover {
+  color: #4b5563;
+}
+.modal-body {
+  margin-bottom: 24px;
+}
+.modal-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.form-control:focus {
+  border-color: #63391f;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 /* Bố cục Footer chứa 4 box */
 .filter-footer-custom {
@@ -1209,18 +1655,28 @@ onMounted(() => {
   font-weight: 700;
 }
 
-/* Màu chữ cho các thẻ Value giống ảnh thiết kế */
-.text-black { color: #1f2937; }
-.text-green { color: #10b981; }
-.text-blue { color: #3b82f6; }
-.text-yellow { color: #fbbf24; }
-
+/* Màu chữ cho các thẻ Value */
+.text-black {
+  color: #1f2937;
+}
+.text-green {
+  color: #10b981;
+}
+.text-blue {
+  color: #3b82f6;
+}
+.text-yellow {
+  color: #fbbf24;
+}
 
 /* Căn khoảng cách cho Bảng chi tiết */
-.mt-4 { margin-top: 24px; }
+.mt-4 {
+  margin-top: 24px;
+}
 
-/* Ép text sang trái và tạo viền cho bảng chi tiết giống ảnh */
-.border-table th, .border-table td {
+/* Ép text sang trái và tạo viền cho bảng chi tiết */
+.border-table th,
+.border-table td {
   border: 1px solid #f3f4f6;
 }
 
@@ -1234,5 +1690,44 @@ onMounted(() => {
   background-color: #ffffff;
   color: #1f2937;
   font-weight: 600;
+}
+
+/* === CUSTOM TOAST THAY THẾ ALERT === */
+.custom-toast {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  animation: slideInRight 0.3s ease forwards;
+}
+
+.toast-success {
+  background-color: #d1e7dd; /* Nền xanh nhạt */
+  color: #0f5132; /* Chữ xanh đậm */
+  border-left: 4px solid #198754; /* Viền trái xanh lá */
+}
+
+.toast-error {
+  background-color: #f8d7da; /* Nền đỏ nhạt */
+  color: #842029; /* Chữ đỏ đậm */
+  border-left: 4px solid #dc3545; /* Viền trái đỏ */
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

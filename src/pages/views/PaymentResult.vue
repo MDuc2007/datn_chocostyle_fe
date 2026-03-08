@@ -16,26 +16,87 @@
         <p class="message">
           {{
             isSuccess
-              ? "Cảm ơn bạn đã mua hàng. Đơn hàng đã được thanh toán và đang xử lý."
-              : "Giao dịch bị hủy hoặc xảy ra lỗi trong quá trình thanh toán."
+              ? "Cảm ơn bạn đã mua hàng. Đơn hàng đã được xác nhận và đang trong quá trình xử lý."
+              : "Giao dịch bị hủy hoặc xảy ra lỗi trong quá trình thanh toán. Vui lòng thử lại."
           }}
         </p>
 
-        <div class="info-box" v-if="vnpRef">
-          <div class="info-row">
-            <span>Mã giao dịch:</span>
-            <strong>{{ vnpRef }}</strong>
+        <div v-if="isLoading" class="loading-box">
+          <span class="loader"></span> Đang tải thông tin đơn hàng...
+        </div>
+
+        <div v-else>
+          <div class="info-box" v-if="orderDetails">
+            <h3 class="box-title">Chi tiết giao dịch</h3>
+            <div class="info-row">
+              <span>Mã đơn hàng:</span>
+              <strong>{{ orderDetails.maHoaDon }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Người nhận:</span>
+              <strong>{{ orderDetails.tenKhachHang }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Số điện thoại:</span>
+              <strong>{{ orderDetails.soDienThoai }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Địa chỉ giao:</span>
+              <strong class="text-right">{{ orderDetails.diaChi }}</strong>
+            </div>
+            <div
+              class="info-row"
+              v-if="
+                orderDetails.thanhToanList &&
+                orderDetails.thanhToanList.length > 0
+              "
+            >
+              <span>Phương thức:</span>
+              <strong>{{ orderDetails.thanhToanList[0].phuongThuc }}</strong>
+            </div>
+            <div
+              class="info-row"
+              v-if="
+                vnpRef &&
+                vnpRef !== orderDetails.maHoaDon &&
+                !vnpRef.includes('COD')
+              "
+            >
+              <span>Mã tham chiếu (VNPAY):</span>
+              <strong>{{ vnpRef }}</strong>
+            </div>
+
+            <div class="divider dashed"></div>
+
+            <div class="info-row total-row">
+              <span>Tổng thanh toán:</span>
+              <strong class="highlight-price">{{
+                formatPrice(orderDetails.tongThanhToan)
+              }}</strong>
+            </div>
           </div>
-          <div class="info-row">
-            <span>Số tiền:</span>
-            <strong>{{ formatPrice(amount) }}</strong>
+
+          <div class="info-box" v-else-if="vnpRef || amount > 0">
+            <h3 class="box-title">Chi tiết giao dịch</h3>
+            <div class="info-row" v-if="vnpRef">
+              <span>Mã giao dịch:</span>
+              <strong>{{ vnpRef }}</strong>
+            </div>
+            <div class="info-row" v-if="amount">
+              <span>Số tiền:</span>
+              <strong class="highlight-price">{{ formatPrice(amount) }}</strong>
+            </div>
           </div>
         </div>
 
         <div class="action-buttons">
           <button class="btn-primary" @click="goToHome">Về trang chủ</button>
 
-          <button v-if="orderId || vnpRef" class="btn-outline" @click="goToDetail">
+          <button
+            v-if="orderId || vnpRef"
+            class="btn-outline"
+            @click="goToDetail"
+          >
             Xem chi tiết đơn hàng
           </button>
         </div>
@@ -49,6 +110,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import axios from "axios"; // Đã import thêm axios
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 
@@ -60,9 +122,14 @@ const vnpRef = ref("");
 const amount = ref(0);
 const orderId = ref(null);
 
-onMounted(() => {
+// State mới để lưu chi tiết order
+const orderDetails = ref(null);
+const isLoading = ref(true);
+
+onMounted(async () => {
   const params = route.query;
 
+  // Xác định trạng thái thành công
   if (params.vnp_ResponseCode === "00" || params.status === "success") {
     isSuccess.value = true;
   } else {
@@ -80,6 +147,22 @@ onMounted(() => {
   if (params.hoaDonId) {
     orderId.value = params.hoaDonId;
   }
+
+  // Gọi API lấy thông tin chi tiết đơn hàng
+  if (orderId.value) {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axios.get(
+        `http://localhost:8080/api/hoa-don/${orderId.value}`,
+        { headers },
+      );
+      orderDetails.value = res.data;
+    } catch (error) {
+      console.error("Lỗi lấy thông tin đơn hàng:", error);
+    }
+  }
+  isLoading.value = false;
 });
 
 const formatPrice = (value) => {
@@ -102,10 +185,11 @@ const goToDetail = () => {
       router.push("/my-orders");
     }
   } else {
-    // NẾU KHÁCH LẺ -> Đẩy sang trang tra cứu đơn hàng (mang theo mã vnpRef nếu có)
-    if (vnpRef.value) {
-      // Gửi mã giao dịch qua query để trang Tra Cứu có thể tự động điền (tùy chỉnh thêm ở trang Tra cứu nếu cần)
-      router.push({ path: "/tra-cuu", query: { code: vnpRef.value } });
+    // NẾU KHÁCH LẺ -> Đẩy sang trang tra cứu đơn hàng
+    // Ưu tiên dùng mã đơn hàng lấy từ API, nếu không có thì dùng vnpRef
+    const maDon = orderDetails.value?.maHoaDon || vnpRef.value;
+    if (maDon) {
+      router.push({ path: "/tra-cuu", query: { code: maDon } });
     } else {
       router.push("/tra-cuu");
     }
@@ -120,18 +204,14 @@ const goToDetail = () => {
   min-height: 100vh;
 }
 
-/* --- PHẦN CĂN GIỮA CHÍNH --- */
 .content-wrapper {
   flex: 1;
-  /* Chiếm toàn bộ khoảng trống còn lại giữa Header và Footer */
   display: flex;
   justify-content: center;
-  /* Căn giữa Ngang */
   align-items: center;
-  /* Căn giữa Dọc */
   background: #f7f9fa;
   min-height: 500px;
-  /* Đảm bảo chiều cao tối thiểu */
+  padding: 40px 20px;
 }
 
 .result-card {
@@ -139,10 +219,9 @@ const goToDetail = () => {
   padding: 50px 40px;
   border-radius: 16px;
   text-align: center;
-  max-width: 480px;
+  max-width: 520px; /* Nới rộng một chút cho bảng thông tin đẹp hơn */
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  /* Hiệu ứng trượt lên nhẹ khi xuất hiện */
   animation: slideUp 0.5s ease-out;
 }
 
@@ -151,7 +230,6 @@ const goToDetail = () => {
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -172,7 +250,6 @@ const goToDetail = () => {
 
 .success {
   background: #22c55e;
-  /* Màu xanh lá hiện đại */
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
 
@@ -195,19 +272,31 @@ const goToDetail = () => {
   font-size: 15px;
 }
 
+/* BOX THÔNG TIN ĐƠN HÀNG */
 .info-box {
   background: #f8fafc;
-  padding: 20px;
+  padding: 24px;
   border-radius: 12px;
   margin-bottom: 30px;
   text-align: left;
   border: 1px solid #e2e8f0;
 }
 
+.box-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: center;
+}
+
 .info-row {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
   font-size: 14px;
   color: #475569;
 }
@@ -216,21 +305,86 @@ const goToDetail = () => {
   margin-bottom: 0;
 }
 
+.info-row span {
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
 .info-row strong {
   color: #1e293b;
 }
 
+.text-right {
+  text-align: right;
+  line-height: 1.5;
+}
+
+.highlight-price {
+  color: #d32f2f !important;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.divider {
+  border-top: 1px solid #e2e8f0;
+  margin: 15px 0;
+}
+
+.divider.dashed {
+  border-top-style: dashed;
+}
+
+.total-row {
+  margin-top: 10px;
+  align-items: center;
+}
+
+.total-row span {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 15px;
+}
+
+/* LOADING STATE */
+.loading-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.loader {
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #6b3f1e;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* BUTTONS */
 .action-buttons {
   display: flex;
   flex-direction: column;
-  /* Nút xếp dọc trên mobile */
   gap: 12px;
 }
 
 @media (min-width: 480px) {
   .action-buttons {
     flex-direction: row;
-    /* Nút xếp ngang trên desktop */
     justify-content: center;
   }
 }
