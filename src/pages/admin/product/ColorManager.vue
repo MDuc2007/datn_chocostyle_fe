@@ -50,8 +50,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in colors" :key="item.id">
-              <td>{{ index + 1 }}</td>
+            <tr v-for="(item, index) in paginatedColors" :key="item.id">
+              <td>{{ index + 1 + currentPage * pageSize }}</td>
               <td>{{ item.code }}</td>
               <td>{{ item.rgb }}</td>
               <td>{{ item.name }}</td>
@@ -69,32 +69,32 @@
               <td>
                 <div class="action-inner">
                   <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
-                  <span class="icon view" @click="editColor(item)">
-                    <img
-                      src="/src/assets/icon/eye.svg"
-                      style="width: 20px; height: 20px"
-                    />
-                  </span>
-                </div>
-                <div
-                  class="tooltip-wrapper"
-                  :data-tooltip="
-                    item.trangThai === 1
-                      ? 'Ngừng hoạt động'
-                      : item.trangThai === 0
-                        ? 'Hoạt động'
-                        : 'Không khả dụng'
-                  "
-                >
-                  <label class="switch">
-                    <input
-                      type="checkbox"
-                      :checked="item.trangThai === 1"
-                      @click.prevent="toggleStatus(item)"
-                    />
-                    <span class="slider"></span>
-                  </label>
-                </div>
+                    <span class="icon view" @click="editColor(item)">
+                      <img
+                        src="/src/assets/icon/eye.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
+                  <div
+                    class="tooltip-wrapper"
+                    :data-tooltip="
+                      item.trangThai === 1
+                        ? 'Ngừng hoạt động'
+                        : item.trangThai === 0
+                          ? 'Hoạt động'
+                          : 'Không khả dụng'
+                    "
+                  >
+                    <label class="switch">
+                      <input
+                        type="checkbox"
+                        :checked="item.trangThai === 1"
+                        @click.prevent="toggleStatus(item)"
+                      />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -111,7 +111,15 @@
           &lt;
         </button>
         <div class="page-numbers">
-          <button class="page-btn">1</button>
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page - 1 === currentPage }"
+            @click="currentPage = page - 1"
+          >
+            {{ page }}
+          </button>
         </div>
         <button
           class="nav-btn"
@@ -195,7 +203,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
 const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -215,6 +223,31 @@ const showNotification = (message, type = "success") => {
 const colors = ref([]);
 const allColors = ref([]);
 const selectedStatus = ref("");
+
+const currentPage = ref(0);
+const pageSize = ref(8);
+
+const totalPages = computed(() => {
+  return Math.ceil(colors.value.length / pageSize.value);
+});
+
+const paginatedColors = computed(() => {
+  const start = currentPage.value * pageSize.value;
+  const end = start + pageSize.value;
+  return colors.value.slice(start, end);
+});
+
+const previousPage = () => {
+  if (currentPage.value > 0) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value - 1) {
+    currentPage.value++;
+  }
+};
 
 const modal = ref({
   show: false,
@@ -275,6 +308,8 @@ function closeConfirmModal() {
 }
 
 const handleFilterChange = () => {
+  currentPage.value = 0;
+
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
@@ -282,7 +317,6 @@ const handleFilterChange = () => {
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
 };
-
 const fetchColors = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/mau-sac", {
@@ -301,6 +335,7 @@ const fetchColors = async () => {
     }));
 
     colors.value = [...allColors.value];
+    currentPage.value = 0;
   } catch (error) {
     showNotification("Không thể tải danh sách màu sắc", "error");
   }
@@ -648,6 +683,10 @@ input:checked + .slider::before {
 }
 .pagination button {
   padding: 6px 12px;
+}
+.page-numbers {
+  display: flex;
+  gap: 10px;
 }
 .page-btn {
   min-width: 34px;

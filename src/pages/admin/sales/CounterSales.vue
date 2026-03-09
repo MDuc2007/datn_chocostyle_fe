@@ -4,7 +4,6 @@
       <h3 class="page-title">BÁN HÀNG TẠI QUẦY</h3>
       <button class="btn-create" @click="createOrder">+ Tạo đơn hàng</button>
     </div>
-
     <div v-if="orders.length" class="pos-card">
       <div class="order-tabs">
         <div
@@ -24,7 +23,6 @@
           <span class="tab-close" @click.stop="removeOrder(index)">✕</span>
         </div>
       </div>
-
       <div
         v-if="currentOrder"
         class="main-layout"
@@ -42,7 +40,6 @@
               </button>
             </div>
           </div>
-
           <div v-if="!currentOrder.cart.length" class="empty-cart">
             <div class="empty-icon">📦</div>
             <p>Chưa có sản phẩm nào trong đơn hàng</p>
@@ -50,13 +47,12 @@
               Thêm sản phẩm ngay
             </button>
           </div>
-
           <div v-else class="product-list">
             <div class="product-header">
               <div>Sản phẩm</div>
               <div class="text-center">Đơn giá</div>
               <div class="text-center">Số lượng</div>
-              <div class="text-right">Thành tiền</div>
+              <div class="th-total">Thành tiền</div>
               <div></div>
             </div>
             <div
@@ -73,32 +69,21 @@
                 </div>
                 <div class="product-info">
                   <div class="name" :title="item.name">{{ item.name }}</div>
-
                   <div class="meta">Mã: {{ item.code }}</div>
-
                   <div class="meta">
                     Màu: {{ item.color }} | Size: {{ item.size || "L" }}
                   </div>
                 </div>
               </div>
-
               <div class="price-cell">
                 <template v-if="item.discountPercent > 0">
-                  <div class="old-price">
-                    {{ formatPrice(item.oldPrice) }}
-                  </div>
-                  <div class="new-price">
-                    {{ formatPrice(item.price) }}
-                  </div>
+                  <div class="old-price">{{ formatPrice(item.oldPrice) }}</div>
+                  <div class="new-price">{{ formatPrice(item.price) }}</div>
                 </template>
-
                 <template v-else>
-                  <div class="normal-price">
-                    {{ formatPrice(item.price) }}
-                  </div>
+                  <div class="normal-price">{{ formatPrice(item.price) }}</div>
                 </template>
               </div>
-
               <div class="qty text-center">
                 <button
                   @click="decreaseQty(item)"
@@ -124,11 +109,17 @@
                   +
                 </button>
               </div>
+              <div class="product-total">
+                <div>{{ formatPrice(item.price * item.quantity) }}</div>
 
-              <div class="total text-right">
-                {{ formatPrice(item.price * item.quantity) }}
+                <div v-if="item.priceChanged" class="price-change-note">
+                  Giá gốc đã thay đổi:
+                  <div>
+                    {{ formatPrice(item.oldPriceBeforeChange) }} →
+                    {{ formatPrice(item.newPriceAfterChange) }}
+                  </div>
+                </div>
               </div>
-
               <div class="action-delete">
                 <button
                   class="btn-danger"
@@ -141,12 +132,10 @@
             </div>
           </div>
         </div>
-
         <div v-if="currentOrder.cart.length" class="right-panel">
           <div class="info-box">
             <div class="section-header column">
               <span class="section-title center"> THÔNG TIN KHÁCH HÀNG </span>
-
               <div
                 class="customer-actions-row"
                 :class="{ 'single-btn': !currentOrder.customer.id }"
@@ -154,7 +143,6 @@
                 <button class="btn-outline" @click="openCustomerPopup">
                   Chọn khách hàng
                 </button>
-
                 <button
                   v-if="currentOrder.customer.id"
                   class="btn-outline"
@@ -164,7 +152,6 @@
                 </button>
               </div>
             </div>
-
             <div class="customer-form">
               <div class="form-row">
                 <div class="form-item">
@@ -186,7 +173,6 @@
                   </div>
                 </div>
               </div>
-
               <div class="delivery-toggle-wrap mt-2">
                 <span
                   class="toggle-label"
@@ -204,7 +190,6 @@
                   <span class="slider"></span>
                 </label>
               </div>
-
               <div
                 v-if="currentOrder.deliveryType === 'DELIVERY'"
                 class="delivery-form"
@@ -287,12 +272,10 @@
               </div>
             </div>
           </div>
-
           <div class="info-box payment-box">
             <div class="section-header">
               <span class="section-title">THÔNG TIN THANH TOÁN</span>
             </div>
-
             <div class="voucher-row">
               <input
                 v-model="currentOrder.voucherCode"
@@ -314,41 +297,33 @@
               <div v-if="voucherSuggestion" class="voucher-suggestion">
                 Mua thêm
                 <strong>{{ formatPrice(voucherSuggestion.needMore) }}</strong>
-                để áp mã
-                <strong>{{ voucherSuggestion.code }}</strong>
-                giảm
+                để áp mã <strong>{{ voucherSuggestion.code }}</strong> giảm
                 <span class="text-red">
                   {{ formatPrice(voucherSuggestion.discountValue) }}
                 </span>
               </div>
             </div>
-
             <div v-if="voucherError" class="voucher-errors">
               {{ voucherError }}
             </div>
-
             <div class="payment-summary">
               <div class="payment-row">
                 <span class="text-muted">Tổng tiền hàng</span>
                 <span class="fw-600">{{ formatPrice(subTotal) }}</span>
               </div>
-
               <div
                 class="payment-row shipping-row"
                 v-if="currentOrder.deliveryType === 'DELIVERY'"
               >
                 <span class="text-muted shipping-label">
-                  Phí vận chuyển
-                  <img :src="ghnLogo" class="ghn-icon" />
+                  Phí vận chuyển <img :src="ghnLogo" class="ghn-icon" />
                 </span>
-
                 <span
                   class="fw-600"
                   style="display: flex; align-items: center"
                   >{{ formatPrice(shippingFee) }}</span
                 >
               </div>
-
               <div class="payment-row" v-if="discount > 0">
                 <span class="text-muted">Giảm giá voucher</span>
                 <span class="text-red fw-600">
@@ -356,14 +331,12 @@
                 </span>
               </div>
             </div>
-
             <div class="payment-total-wrap">
               <div class="payment-row total">
                 <span>Tổng số tiền</span>
                 <span class="total-amount">{{ formatPrice(total) }}</span>
               </div>
             </div>
-
             <div class="payment-method-row">
               <span>Khách thanh toán</span>
               <div class="pay-action-right">
@@ -372,15 +345,12 @@
                 </span>
               </div>
             </div>
-
             <div
               v-if="currentOrder.paymentMethod === 'CASH'"
               class="payment-row mt-2 text-red fw-600"
             >
-              <span>Tiền thừa</span>
-              <span>{{ formatPrice(changeMoney) }}</span>
+              <span>Tiền thừa</span> <span>{{ formatPrice(changeMoney) }}</span>
             </div>
-
             <button
               class="btn-submit big mt-4"
               @click="confirmSubmitOrder"
@@ -394,7 +364,6 @@
       <div v-else class="empty-state-global">
         <p>Vui lòng tạo đơn hàng mới để bắt đầu.</p>
       </div>
-
       <div class="modal-overlay" v-if="showCustomerPopup">
         <div class="modal">
           <div class="modal-header">
@@ -441,7 +410,6 @@
           </div>
         </div>
       </div>
-
       <div class="modal-overlay" v-if="showProductPopup">
         <div class="modal large">
           <div class="modal-header">
@@ -503,17 +471,13 @@
                         >{{ p.stock }}</span
                       >
                     </td>
-
                     <td class="price-cell">
                       <template v-if="p.discountPercent > 0">
                         <div class="old-price">
                           {{ formatPrice(p.oldPrice) }}
                         </div>
-                        <div class="new-price">
-                          {{ formatPrice(p.price) }}
-                        </div>
+                        <div class="new-price">{{ formatPrice(p.price) }}</div>
                       </template>
-
                       <template v-else>
                         <div class="normal-price">
                           {{ formatPrice(p.price) }}
@@ -536,7 +500,6 @@
           </div>
         </div>
       </div>
-
       <div class="modal-overlay" v-if="showPaymentPopup">
         <div class="modal small">
           <div class="modal-header">
@@ -567,10 +530,8 @@
                 🚚 Trả sau (COD)
               </button>
             </div>
-
             <div v-if="paymentMethod === 'CASH'" class="cash-input-box mt-3">
               <label class="input-label">Số tiền khách đưa:</label>
-
               <div class="money-input-wrapper">
                 <input
                   type="text"
@@ -582,7 +543,6 @@
                 />
                 <span class="currency-unit">₫</span>
               </div>
-
               <div class="quick-money mt-2">
                 <button
                   class="btn-quick-money"
@@ -597,7 +557,6 @@
                 </button>
               </div>
             </div>
-
             <div v-if="paymentMethod === 'BANK'" class="bank-box mt-3">
               <img :src="bankQR" class="qr-img" />
               <div class="bank-info mt-2">
@@ -606,7 +565,6 @@
                 <p class="m-0"><strong>TPBank</strong> - 00000674626</p>
               </div>
             </div>
-
             <div
               v-if="paymentMethod === 'COD'"
               class="mt-3 text-center text-muted"
@@ -617,7 +575,6 @@
                 nhận hàng.
               </p>
             </div>
-
             <button class="btn-submit big mt-4" @click="confirmPayment">
               XÁC NHẬN
             </button>
@@ -625,7 +582,6 @@
         </div>
       </div>
     </div>
-
     <transition name="fade-modal">
       <div
         v-if="modal.show"
@@ -662,7 +618,6 @@
         </div>
       </div>
     </transition>
-
     <div class="toast-container">
       <transition name="toast-slide">
         <div v-if="toast.show" :class="['toast', toast.type]">
@@ -670,11 +625,9 @@
         </div>
       </transition>
     </div>
-
     <Teleport to="body">
       <InvoicePrintTemplate v-if="invoiceToPrint" :invoice="invoiceToPrint" />
     </Teleport>
-
     <div class="modal-overlay" v-if="showQrPopup">
       <div class="modal small">
         <div class="modal-header">
@@ -845,8 +798,12 @@ const addToCart = async (product) => {
         ...product,
         quantity: 1,
         priceChanged: false,
+
         originalStock: product.stock,
         oldQty: 1,
+
+        originalPrice: product.oldPrice, // GIÁ GỐC
+        originalDiscount: product.discountPercent, // % giảm lúc thêm
       });
     }
   } catch (err) {
@@ -1720,8 +1677,17 @@ const increaseQty = async (item) => {
       return;
     }
 
-    if (latest.price !== item.price) {
+    if (latest.oldPrice !== item.originalPrice) {
       item.priceChanged = true;
+
+      item.oldPriceBeforeChange = item.originalPrice;
+      item.newPriceAfterChange = latest.oldPrice;
+
+      item.oldDiscountPrice =
+        item.originalPrice - (item.originalPrice * item.originalDiscount) / 100;
+
+      item.newDiscountPrice =
+        latest.oldPrice - (latest.oldPrice * latest.discountPercent) / 100;
 
       await axios.put(
         "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
@@ -1851,7 +1817,23 @@ const submitOrder = async () => {
     );
 
     showToast(`Đặt hàng/Thanh toán thành công ${order.maHoaDon}!`);
-
+    // ==========================================
+    // 👉 THÊM ĐOẠN NÀY ĐỂ BÁO CHO APP FLUTTER BIẾT
+    // ==========================================
+    try {
+      await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, {
+        maHoaDon: order.maHoaDon,
+        isPaid: true, // 👈 Cờ báo hiệu Đơn hàng đã chốt xong
+        sanPhamList: [],
+        tongTienHang: 0,
+        giamGia: 0,
+        tongThanhToan: 0
+      });
+    } catch (syncErr) {
+      console.error("Lỗi báo thanh toán sang App:", syncErr);
+    }
+    // ==========================================
+      
     try {
       const resInvoice = await axios.get(
         `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
@@ -2287,8 +2269,19 @@ const revalidateCartPrice = async () => {
         hasChanged = true;
         return;
       }
-      if (latest.price !== item.price) {
+      if (latest.oldPrice !== item.originalPrice) {
         item.priceChanged = true;
+
+        item.oldPriceBeforeChange = item.originalPrice;
+        item.newPriceAfterChange = latest.oldPrice;
+
+        item.oldDiscountPrice =
+          item.originalPrice -
+          (item.originalPrice * item.originalDiscount) / 100;
+
+        item.newDiscountPrice =
+          latest.oldPrice - (latest.oldPrice * latest.discountPercent) / 100;
+
         hasChanged = true;
       }
     });
@@ -2446,6 +2439,51 @@ const showToast = (msg, type = "success") => {
     toast.value.show = false;
   }, 2500);
 };
+// ==========================================
+// ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
+// ==========================================
+const dongBoSangMobile = async () => {
+  // 1. Kiểm tra xem có đơn hàng nào đang được mở không
+  const order = currentOrder.value;
+  if (!order || !order.idHoaDon) return;
+
+  // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
+  const payload = {
+    maHoaDon: order.maHoaDon, 
+    sanPhamList: order.cart.map(item => ({
+      tenSanPham: item.name || 'Sản phẩm', 
+      soLuong: item.quantity,
+      donGia: item.price || 0,
+      
+      // 👉 THÊM 4 DÒNG NÀY ĐỂ GỬI ẢNH VÀ PHÂN LOẠI SANG APP
+      hinhAnh: item.image || '',
+      maSanPham: item.code || '',
+      mauSac: item.color || '',
+      kichCo: item.size || ''
+    })),
+    tongTienHang: subTotal.value || 0,
+    giamGia: discount.value || 0,
+    tongThanhToan: total.value || 0
+  };
+
+  try {
+    // 3. Bắn sang trạm tiếp sóng Spring Boot
+    await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, payload);
+  } catch (error) {
+    console.error("Lỗi đồng bộ màn hình khách hàng:", error);
+  }
+};
+watch(
+  [
+    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
+    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
+    () => total.value                   // Theo dõi khi áp Voucher hoặc đổi phí Ship
+  ],
+  () => {
+    dongBoSangMobile();
+  },
+  { deep: true } // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
+);
 </script>
 
 <style scoped>
@@ -2476,6 +2514,11 @@ input[type="number"] {
 
 .text-right {
   text-align: right;
+}
+
+.th-total {
+  text-align: center;
+  padding-right: 10px;
 }
 
 .text-muted {
@@ -2793,7 +2836,7 @@ input[type="number"] {
 
 .product-header,
 .product-row {
-  grid-template-columns: minmax(0, 2fr) 150px 130px 130px 50px;
+  grid-template-columns: minmax(0, 2fr) 150px 130px 200px 50px;
 }
 
 .product-header > div:first-child,
@@ -2913,10 +2956,16 @@ input[type="number"] {
   background: transparent;
 }
 
-.total {
+.product-total {
   font-weight: 600;
   color: red;
   white-space: nowrap;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
 }
 
 /* ================= CỘT PHẢI: KHÁCH & THANH TOÁN ================= */
@@ -3755,5 +3804,16 @@ select:focus {
   background-color: #e9ecef;
   border-color: #e9ecef;
   cursor: not-allowed;
+}
+
+.price-change-note {
+  font-size: 12px;
+  color: #d97706;
+  background: #fff7ed;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
 }
 </style>

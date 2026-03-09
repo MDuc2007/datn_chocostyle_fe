@@ -38,7 +38,7 @@
           <div v-if="msg.senderType != 'KHACH_HANG'" class="sender-name">
             {{ msg.senderName }}
           </div>
-          <div class="content">{{ msg.content }}</div>
+          <div class="content" v-html="msg.content"></div>
           <div class="time">{{ formatTime(msg.sentAt) }}</div>
         </div>
       </div>
@@ -156,6 +156,7 @@ const connectAndSubscribe = (id) => {
 
         messages.value.push(incoming);
         lastActivity.value = Date.now();
+        lastActivity.value = Date.now();
         scrollToBottom();
       },
     );
@@ -164,12 +165,16 @@ const connectAndSubscribe = (id) => {
 
 const requestStaff = async () => {
   try {
+    // 🔴 Xóa tin nhắn "Đang xử lý..." của AI nếu khách ấn chuyển nhân viên ngay lúc AI đang load
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/request-staff`,
     );
     chatStatus.value = "WAITING";
 
-    // Gửi tin nhắn thông báo chờ giả lập lên màn hình khách hàng
     messages.value.push({
       id: Date.now(),
       senderType: "SYSTEM",
@@ -180,6 +185,69 @@ const requestStaff = async () => {
     scrollToBottom();
   } catch (error) {
     console.error("Lỗi khi gọi nhân viên:", error);
+  }
+};
+
+const callAI = async (content) => {
+  lastActivity.value = Date.now();
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+  messages.value.push({
+    id: "loading-" + Date.now(),
+    senderType: "AI",
+    senderName: "ChocoBot",
+    content: "Đang xử lý...",
+    sentAt: new Date(),
+  });
+  scrollToBottom();
+
+  try {
+    const res = await axios.post("http://localhost:8080/api/chat", {
+      message: content,
+      conversationId: conversationId.value,
+      senderId: senderId.value,
+    });
+
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
+    // 🔴 FIX 2: Nếu khách đã chuyển sang ĐỢI NHÂN VIÊN thì BỎ QUA tin nhắn của AI trả về
+    if (chatStatus.value !== "BOT") return;
+
+    // 🔴 Tự động chuyển nhân viên nếu AI không giải quyết được
+    if (res.data.reply === "CHUYEN_NHAN_VIEN") {
+      requestStaff();
+      return;
+    }
+
+    messages.value.push({
+      id: Date.now(),
+      senderType: "AI",
+      senderName: "ChocoBot",
+      content: res.data.reply,
+      sentAt: new Date(),
+    });
+    scrollToBottom();
+  } catch (e) {
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
+    // Chỉ báo lỗi nếu khách vẫn đang chat với BOT
+    if (chatStatus.value === "BOT") {
+      messages.value.push({
+        id: Date.now(),
+        senderType: "SYSTEM",
+        senderName: "Hệ thống",
+        content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
+        sentAt: new Date(),
+      });
+      scrollToBottom();
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -226,6 +294,24 @@ onMounted(async () => {
   } catch (error) {
     console.log("Khách hàng mới hoặc chưa đăng nhập.");
   }
+  setInterval(() => {
+    const now = Date.now();
+
+    if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
+      messages.value.push({
+        id: Date.now(),
+        senderType: "SYSTEM",
+        senderName: "Hệ thống",
+        content:
+          "Phiên chat đã tạm dừng do không có tương tác. Anh/chị có thể tiếp tục nhắn tin bất cứ lúc nào.",
+        sentAt: new Date(),
+      });
+
+      conversationId.value = null;
+
+      scrollToBottom();
+    }
+  }, 60000);
 });
 
 const sendMessage = async () => {
@@ -266,55 +352,6 @@ const attemptSend = (content) => {
     );
   } else {
     setTimeout(() => attemptSend(content), 200);
-  }
-};
-
-const callAI = async (content) => {
-  if (isLoading.value) return;
-  isLoading.value = true;
-
-  messages.value.push({
-    id: "loading-" + Date.now(),
-    senderType: "AI",
-    senderName: "ChocoBot",
-    content: "Đang xử lý...",
-    sentAt: new Date(),
-  });
-  scrollToBottom();
-
-  try {
-    const res = await axios.post("http://localhost:8080/api/chat", {
-      message: content,
-      conversationId: conversationId.value,
-      senderId: senderId.value,
-    });
-
-    messages.value = messages.value.filter(
-      (m) => !String(m.id).startsWith("loading"),
-    );
-
-    messages.value.push({
-      id: Date.now(),
-      senderType: "AI",
-      senderName: "ChocoBot",
-      content: res.data.reply,
-      sentAt: new Date(),
-    });
-    scrollToBottom();
-  } catch (e) {
-    messages.value = messages.value.filter(
-      (m) => !String(m.id).startsWith("loading"),
-    );
-    messages.value.push({
-      id: Date.now(),
-      senderType: "SYSTEM",
-      senderName: "Hệ thống",
-      content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
-      sentAt: new Date(),
-    });
-    scrollToBottom();
-  } finally {
-    isLoading.value = false;
   }
 };
 </script>
