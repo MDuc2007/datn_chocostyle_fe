@@ -1200,14 +1200,49 @@ onMounted(() => {
   position: fixed;
   top: 20px;
   right: 20px;
-  background: #d4edda;
-  color: #155724;
-  border-left: 4px solid #28a745;
   padding: 15px 25px;
   border-radius: 8px;
   z-index: 10001;
   font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
+
+.toast-notification.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.toast-notification.error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.toast-notification.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
+}
+
+.toast-content {
+  font-weight: 600;
+  color: inherit;
+  font-size: 15px;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
+
 
 @media (max-width: 992px) {
   .shop-layout {
