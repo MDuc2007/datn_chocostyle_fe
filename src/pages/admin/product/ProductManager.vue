@@ -439,7 +439,6 @@ const modal = ref({
   newStatus: null,
 });
 
-
 const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/promotions");
@@ -489,17 +488,38 @@ const formatDiscountRange = (range, productId) => {
 };
 
 function toggleStatus(item) {
-  const newStatus = item.trangThai === 1 ? 2 : 1;
+  const oldStatus = item.trangThai;
+  const newStatus = oldStatus === 1 ? 2 : 1;
 
   modal.value = {
     show: true,
-    title: "Xác nhận thay đổi trạng thái",
+    title: newStatus === 1 ? "Xác nhận bán lại" : "Xác nhận ngừng bán",
     message:
-      newStatus === 2
-        ? "Bạn có chắc muốn ngừng bán sản phẩm này?"
-        : "Bạn có chắc muốn bán lại sản phẩm này?",
-    item,
-    newStatus,
+      newStatus === 1
+        ? "Bạn có chắc muốn bán lại sản phẩm này?"
+        : "Bạn có chắc muốn ngừng bán sản phẩm này?",
+    onConfirm: async () => {
+      try {
+        await axios.put(
+          `http://localhost:8080/api/chi-tiet-san-pham/${item.id}/change-status`,
+          null,
+          {
+            params: {
+              trangThai: newStatus,
+              nguoiCapNhat: "admin",
+            },
+          },
+        );
+
+        showNotification("Cập nhật trạng thái thành công", "success");
+        // 🔴 FIX 1: Tải lại biến thể thay vì gán thủ công để đồng bộ logic = 0 (hết hàng) từ Backend
+        fetchVariants();
+      } catch (error) {
+        showNotification(error.response?.data?.message || "Lỗi cập nhật trạng thái!", "error");
+      }
+
+      modal.value.show = false;
+    },
   };
 }
 
@@ -518,10 +538,21 @@ async function handleModalConfirm() {
       },
     );
 
-    item.trangThai = newStatus;
     showNotification("Cập nhật trạng thái thành công", "success");
+    // 🔴 FIX 1: Tải lại danh sách để lấy trạng thái chuẩn xác được tính toán bởi Backend
+    fetchProducts(
+      currentPage.value,
+      pageSize.value,
+      keyword.value,
+      selectedStatus.value,
+      selectedOrigin.value,
+      selectedMaterial.value,
+    );
   } catch (error) {
-    showNotification("Lỗi cập nhật trạng thái!", "error");
+    showNotification(
+      error.response?.data?.message || "Lỗi cập nhật trạng thái!",
+      "error",
+    );
   }
 
   modal.value.show = false;

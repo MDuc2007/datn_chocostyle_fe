@@ -115,8 +115,8 @@
                 <div v-if="item.priceChanged" class="price-change-note">
                   Giá gốc đã thay đổi:
                   <div>
-                  {{ formatPrice(item.oldPriceBeforeChange) }} →
-                  {{ formatPrice(item.newPriceAfterChange) }}
+                    {{ formatPrice(item.oldPriceBeforeChange) }} →
+                    {{ formatPrice(item.newPriceAfterChange) }}
                   </div>
                 </div>
               </div>
