@@ -156,6 +156,7 @@ const connectAndSubscribe = (id) => {
 
         messages.value.push(incoming);
         lastActivity.value = Date.now();
+        lastActivity.value = Date.now();
         scrollToBottom();
       },
     );
@@ -226,6 +227,24 @@ onMounted(async () => {
   } catch (error) {
     console.log("Khách hàng mới hoặc chưa đăng nhập.");
   }
+  setInterval(() => {
+    const now = Date.now();
+
+    if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
+      messages.value.push({
+        id: Date.now(),
+        senderType: "SYSTEM",
+        senderName: "Hệ thống",
+        content:
+          "Phiên chat đã tạm dừng do không có tương tác. Anh/chị có thể tiếp tục nhắn tin bất cứ lúc nào.",
+        sentAt: new Date(),
+      });
+
+      conversationId.value = null;
+
+      scrollToBottom();
+    }
+  }, 60000);
 });
 
 const sendMessage = async () => {
@@ -270,6 +289,7 @@ const attemptSend = (content) => {
 };
 
 const callAI = async (content) => {
+  lastActivity.value = Date.now();
   if (isLoading.value) return;
   isLoading.value = true;
 
