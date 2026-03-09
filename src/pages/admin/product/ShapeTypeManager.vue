@@ -206,7 +206,7 @@ const allColors = ref([]);
 const selectedStatus = ref("");
 
 const currentPage = ref(0);
-const pageSize = ref(5);
+const pageSize = ref(8);
 
 const totalPages = computed(() => {
   return Math.ceil(colors.value.length / pageSize.value);

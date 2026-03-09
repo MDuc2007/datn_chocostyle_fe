@@ -216,7 +216,7 @@ const showNotification = (message, type = "success") => {
 };
 
 const currentPage = ref(0);
-const pageSize = ref(5);
+const pageSize = ref(8);
 
 const totalPages = computed(() => {
   return Math.ceil(colors.value.length / pageSize.value);
