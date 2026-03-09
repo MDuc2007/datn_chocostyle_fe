@@ -1817,7 +1817,23 @@ const submitOrder = async () => {
     );
 
     showToast(`Đặt hàng/Thanh toán thành công ${order.maHoaDon}!`);
-
+    // ==========================================
+    // 👉 THÊM ĐOẠN NÀY ĐỂ BÁO CHO APP FLUTTER BIẾT
+    // ==========================================
+    try {
+      await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, {
+        maHoaDon: order.maHoaDon,
+        isPaid: true, // 👈 Cờ báo hiệu Đơn hàng đã chốt xong
+        sanPhamList: [],
+        tongTienHang: 0,
+        giamGia: 0,
+        tongThanhToan: 0
+      });
+    } catch (syncErr) {
+      console.error("Lỗi báo thanh toán sang App:", syncErr);
+    }
+    // ==========================================
+      
     try {
       const resInvoice = await axios.get(
         `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
@@ -2423,6 +2439,51 @@ const showToast = (msg, type = "success") => {
     toast.value.show = false;
   }, 2500);
 };
+// ==========================================
+// ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
+// ==========================================
+const dongBoSangMobile = async () => {
+  // 1. Kiểm tra xem có đơn hàng nào đang được mở không
+  const order = currentOrder.value;
+  if (!order || !order.idHoaDon) return;
+
+  // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
+  const payload = {
+    maHoaDon: order.maHoaDon, 
+    sanPhamList: order.cart.map(item => ({
+      tenSanPham: item.name || 'Sản phẩm', 
+      soLuong: item.quantity,
+      donGia: item.price || 0,
+      
+      // 👉 THÊM 4 DÒNG NÀY ĐỂ GỬI ẢNH VÀ PHÂN LOẠI SANG APP
+      hinhAnh: item.image || '',
+      maSanPham: item.code || '',
+      mauSac: item.color || '',
+      kichCo: item.size || ''
+    })),
+    tongTienHang: subTotal.value || 0,
+    giamGia: discount.value || 0,
+    tongThanhToan: total.value || 0
+  };
+
+  try {
+    // 3. Bắn sang trạm tiếp sóng Spring Boot
+    await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, payload);
+  } catch (error) {
+    console.error("Lỗi đồng bộ màn hình khách hàng:", error);
+  }
+};
+watch(
+  [
+    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
+    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
+    () => total.value                   // Theo dõi khi áp Voucher hoặc đổi phí Ship
+  ],
+  () => {
+    dongBoSangMobile();
+  },
+  { deep: true } // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
+);
 </script>
 
 <style scoped>
