@@ -439,6 +439,7 @@ const modal = ref({
   newStatus: null,
 });
 
+
 const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/promotions");
