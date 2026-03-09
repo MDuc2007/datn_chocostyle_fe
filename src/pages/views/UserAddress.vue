@@ -68,17 +68,6 @@
                 </div>
 
                 <div class="address-card-footer">
-                  <div class="action-links">
-                    <button class="btn-text text-primary">Cập nhật</button>
-                    <button
-                      v-if="!addr.macDinh"
-                      class="btn-text text-danger"
-                      @click="deleteAddress(addr.id)"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                  
                   <button
                     class="btn-outline"
                     :class="{ 'btn-disabled': addr.macDinh }"
@@ -107,52 +96,58 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Tỉnh/Thành phố <span class="req">*</span></label>
-                <select
-                  v-model="form.provinceId"
-                  @change="onProvinceChange"
-                  class="form-input custom-select"
-                  :class="{ 'red-border': errors.provinceId }"
-                >
-                  <option value="" disabled>Chọn Tỉnh/Thành phố</option>
-                  <option v-for="p in listProvinces" :key="p.code" :value="p.code">
-                    {{ p.name }}
-                  </option>
-                </select>
+                <div class="select-wrapper">
+                  <select
+                    v-model="form.provinceId"
+                    @change="onProvinceChange"
+                    class="form-input custom-select"
+                    :class="{ 'red-border': errors.provinceId }"
+                  >
+                    <option value="" disabled>Chọn Tỉnh/Thành phố</option>
+                    <option v-for="p in listProvinces" :key="p.code" :value="p.code">
+                      {{ p.name }}
+                    </option>
+                  </select>
+                </div>
                 <span v-if="errors.provinceId" class="error-msg slide-down">{{ errors.provinceId }}</span>
               </div>
               
               <div class="form-group">
                 <label>Quận/Huyện <span class="req">*</span></label>
-                <select
-                  v-model="form.districtId"
-                  @change="onDistrictChange"
-                  class="form-input custom-select"
-                  :disabled="!form.provinceId"
-                  :class="{ 'red-border': errors.districtId }"
-                >
-                  <option value="" disabled>Chọn Quận/Huyện</option>
-                  <option v-for="d in districtOptions" :key="d.code" :value="d.code">
-                    {{ d.name }}
-                  </option>
-                </select>
+                <div class="select-wrapper">
+                  <select
+                    v-model="form.districtId"
+                    @change="onDistrictChange"
+                    class="form-input custom-select"
+                    :disabled="!form.provinceId"
+                    :class="{ 'red-border': errors.districtId }"
+                  >
+                    <option value="" disabled>Chọn Quận/Huyện</option>
+                    <option v-for="d in districtOptions" :key="d.code" :value="d.code">
+                      {{ d.name }}
+                    </option>
+                  </select>
+                </div>
                 <span v-if="errors.districtId" class="error-msg slide-down">{{ errors.districtId }}</span>
               </div>
             </div>
 
             <div class="form-group">
               <label>Phường/Xã <span class="req">*</span></label>
-              <select
-                v-model="form.wardCode"
-                @change="onWardChange"
-                class="form-input custom-select"
-                :disabled="!form.districtId"
-                :class="{ 'red-border': errors.wardCode }"
-              >
-                <option value="" disabled>Chọn Phường/Xã</option>
-                <option v-for="w in wardOptions" :key="w.code" :value="w.code">
-                  {{ w.name }}
-                </option>
-              </select>
+              <div class="select-wrapper">
+                <select
+                  v-model="form.wardCode"
+                  @change="onWardChange"
+                  class="form-input custom-select"
+                  :disabled="!form.districtId"
+                  :class="{ 'red-border': errors.wardCode }"
+                >
+                  <option value="" disabled>Chọn Phường/Xã</option>
+                  <option v-for="w in wardOptions" :key="w.code" :value="w.code">
+                    {{ w.name }}
+                  </option>
+                </select>
+              </div>
               <span v-if="errors.wardCode" class="error-msg slide-down">{{ errors.wardCode }}</span>
             </div>
 
@@ -161,7 +156,7 @@
               <textarea
                 v-model="form.diaChiCuThe"
                 class="form-input form-textarea"
-                placeholder="Số nhà, ngõ, tên đường..."
+                placeholder="VD: Số 12, Ngõ 34, Đường ABC..."
                 rows="3"
                 :class="{ 'red-border': errors.diaChiCuThe }"
                 @input="clearError('diaChiCuThe')"
@@ -334,7 +329,9 @@ const saveAddress = async () => {
       quan: form.districtName,
       phuong: form.wardName,
       diaChiCuThe: form.diaChiCuThe,
-      idKhachHang: currentUser.value.id,
+      khachHangId: currentUser.value.id, 
+      tenDiaChi: currentUser.value.tenKhachHang || "Khách hàng",
+      sdt: currentUser.value.soDienThoai || "",
       macDinh: addresses.value.length === 0, // Nếu chưa có địa chỉ nào thì cái đầu tiên là mặc định
     };
 
@@ -364,12 +361,7 @@ const setDefault = async (idDiaChi) => {
   }
 };
 
-// 5. Xóa địa chỉ (Placeholder)
-const deleteAddress = async (id) => {
-  if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
-  // NOTE: Thêm logic gọi API xóa thực tế ở đây
-  showToast("Chức năng xóa cần bổ sung API backend", "warning");
-};
+// ĐÃ BỎ HÀM DELETE THEO YÊU CẦU
 
 const openModal = () => {
   resetForm();
@@ -461,12 +453,15 @@ onMounted(() => {
   color: #fff; 
   border: none; 
   padding: 10px 20px; 
-  border-radius: 6px; 
+  border-radius: 8px; 
   font-weight: 600; 
   cursor: pointer; 
-  transition: 0.2s; 
+  transition: all 0.3s ease; 
 }
-.btn-orange:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(107, 63, 30, 0.3); transform: translateY(-1px);}
+.btn-orange:hover:not(:disabled) { 
+  box-shadow: 0 6px 12px rgba(107, 63, 30, 0.25); 
+  transform: translateY(-2px);
+}
 .btn-orange:disabled { opacity: 0.7; cursor: not-allowed; }
 
 .flex-center { display: flex; align-items: center; gap: 8px; font-size: 14px;}
@@ -534,7 +529,6 @@ onMounted(() => {
 .btn-text { background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 600; padding: 0; transition: opacity 0.2s; }
 .btn-text:hover { opacity: 0.7; }
 .text-primary { color: #0284c7; }
-.text-danger { color: #dc2626; }
 
 .btn-outline {
   background: #fff;
@@ -558,38 +552,75 @@ onMounted(() => {
 .empty-state { background: #fafafa; border-radius: 8px; border: 1px dashed #e5e7eb; }
 .empty-icon { width: 48px; height: 48px; color: #d1d5db; margin-bottom: 15px; }
 
-/* ================== MODAL THÊM ĐỊA CHỈ ================== */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(17, 24, 39, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.modal-card { background: #fff; width: 100%; max-width: 550px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; }
+/* ================== MODAL THÊM ĐỊA CHỈ (NÂNG CẤP GIAO DIỆN) ================== */
+.modal-overlay { 
+  position: fixed; 
+  top: 0; left: 0; width: 100vw; height: 100vh; 
+  background: rgba(17, 24, 39, 0.6); 
+  backdrop-filter: blur(4px); 
+  display: flex; align-items: center; justify-content: center; z-index: 9999; 
+}
+.modal-card { 
+  background: #fff; 
+  width: 100%; max-width: 550px; 
+  border-radius: 16px; 
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+  overflow: hidden; 
+}
 
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #f3f4f6; }
+.modal-header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 20px 24px; border-bottom: 1px solid #f3f4f6; 
+  background: #fafafa;
+}
 .modal-title { margin: 0; font-size: 18px; font-weight: 700; color: #111827; }
-.btn-close { background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
-.btn-close:hover { color: #111827; }
+.btn-close { 
+  background: #e2e8f0; border: none; 
+  font-size: 20px; color: #64748b; cursor: pointer; 
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; 
+}
+.btn-close:hover { background: #fef2f2; color: #ef4444; transform: rotate(90deg); }
 
 .modal-body { padding: 24px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-group { margin-bottom: 18px; }
-.form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #4b5563; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #4b5563; }
 .req { color: #dc2626; margin-left: 2px; }
 
-.form-input { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #111827; transition: all 0.2s; box-sizing: border-box; }
+.select-wrapper { position: relative; }
+.form-input { 
+  width: 100%; padding: 12px 14px; 
+  border: 1px solid #d1d5db; border-radius: 8px; 
+  font-size: 14px; color: #111827; 
+  transition: all 0.2s; box-sizing: border-box; 
+}
 .form-input::placeholder { color: #9ca3af; }
 .form-input:focus { outline: none; border-color: #6b3f1e; box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1); }
-.form-textarea { resize: vertical; min-height: 80px; }
+.form-textarea { resize: vertical; min-height: 90px; }
 
 select.custom-select {
   appearance: none;
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 10px auto; cursor: pointer;
+  padding-right: 35px;
 }
-select.custom-select:disabled { background-color: #f9fafb; cursor: not-allowed; border-style: dashed; color: #9ca3af; }
+select.custom-select:disabled { background-color: #f9fafb; cursor: not-allowed; border-color: #e5e7eb; color: #9ca3af; }
 .red-border { border-color: #dc2626 !important; background-color: #fef2f2; }
-.error-msg { color: #dc2626; font-size: 12px; font-style: italic; margin-top: 6px; display: block;}
+.error-msg { color: #dc2626; font-size: 13px; font-weight: 500; margin-top: 6px; display: block;}
 
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; }
-.btn-cancel-clean { padding: 10px 20px; border: 1px solid #d1d5db; background: #fff; color: #4b5563; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.btn-cancel-clean:hover { background: #f3f4f6; }
+.modal-actions { 
+  display: flex; justify-content: flex-end; gap: 12px; 
+  margin-top: 10px; border-top: 1px solid #f3f4f6; 
+  padding-top: 20px; 
+}
+.btn-cancel-clean { 
+  padding: 10px 20px; border: 1px solid transparent; 
+  background: #f1f5f9; color: #475569; border-radius: 8px; 
+  font-weight: 600; cursor: pointer; transition: 0.2s; 
+}
+.btn-cancel-clean:hover { background: #e2e8f0; color: #1e293b; }
 
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: translateY(-20px) scale(0.98); }
@@ -613,5 +644,7 @@ select.custom-select:disabled { background-color: #f9fafb; cursor: not-allowed; 
   .btn-orange { width: 100%; justify-content: center; }
   .address-card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
+  .modal-actions { flex-direction: column; }
+  .btn-cancel-clean, .btn-orange { width: 100%; }
 }
 </style>

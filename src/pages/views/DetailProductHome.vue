@@ -555,7 +555,6 @@ onUnmounted(() => {
   stopAutoPlay();
 });
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -1193,7 +1192,7 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
-/* TOAST */
+/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) KHÔNG ICON ================= */
 .modern-toast {
   position: fixed;
   top: 30px;
@@ -1201,44 +1200,35 @@ onUnmounted(() => {
   z-index: 10001;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   min-width: 300px;
-  border-left: 5px solid #10b981;
+  transition: all 0.3s ease;
 }
 
-.toast-icon-wrap {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
+.modern-toast.toast-success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
-.toast-success { border-left-color: #10b981; }
-.toast-success .toast-icon-wrap { background: #10b981 !important; }
+.modern-toast.toast-error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
 
-.toast-error { border-left-color: #ef4444; }
-.toast-error .toast-icon-wrap { background: #ef4444 !important; }
-
-.toast-warning { border-left-color: #f59e0b; }
-.toast-warning .toast-icon-wrap { background: #f59e0b !important; }
-
-.toast-icon-wrap svg {
-  width: 16px;
-  height: 16px;
+.modern-toast.toast-warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
 .toast-text {
   font-size: 15px;
   font-weight: 600;
-  color: #111827 !important;
+  color: inherit; /* Chữ tự động lấy màu đúng theo khung cảnh báo */
 }
 
 .toast-slide-enter-active,
