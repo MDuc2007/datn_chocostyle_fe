@@ -91,15 +91,9 @@ const handleImportExcel = async (event: Event) => {
     }
 
     // Gọi API Batch để lưu
-<<<<<<< HEAD
     await axios.post(`${API_URL}/batch`, payloads);
     showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
     refreshData();
-=======
-    // await axios.post(`${API_URL}/batch`, payloads);
-    // showToast(`Đã import thành công ${payloads.length} lịch phân ca!`, 'success');
-    // refreshData();
->>>>>>> d346681693e9856cfa5e567db877b99fef8f3cb2
 
   } catch (error: any) {
     showToast(error.response?.data?.message || 'Lỗi khi đọc file hoặc import dữ liệu', 'error');
@@ -109,48 +103,66 @@ const handleImportExcel = async (event: Event) => {
 };
 const downloadTemplate = async () => {
   const workbook = new ExcelJS.Workbook();
+  
+  // Tính toán trước dữ liệu
+  const totalEmp = employees.value.length > 0 ? employees.value.length : 1;
+  const shiftNames = shifts.value.map(s => s.tenCa).join(',');
+  const shiftFormula = `"${shiftNames}"`;
+  const maNvFormula = `=Data_NV!$A$1:$A$${totalEmp}`;
+
+  // ==============================================================
+  // 1. TẠO SHEET CHÍNH TRƯỚC (ĐỂ LÀM SHEET MẶC ĐỊNH KHI MỞ FILE)
+  // ==============================================================
   const worksheet = workbook.addWorksheet('Template_PhanCa');
 
-  // Căn chỉnh độ rộng cột (A -> F)
+  // Thiết lập độ rộng các cột (từ A đến F)
   worksheet.columns = [
-    { width: 10 }, // A: STT
-    { width: 20 }, // B: Ngày
-    { width: 15 }, // C: Mã NV
-    { width: 30 }, // D: Tên NV
-    { width: 20 }, // E: Tên Ca
-    { width: 30 }  // F: Ghi chú
+    { key: "stt", width: 10 },          // A
+    { key: "ngayLamViec", width: 15 },  // B
+    { key: "maNv", width: 15 },         // C
+    { key: "hoTen", width: 30 },        // D
+    { key: "tenCa", width: 20 },        // E
+    { key: "ghiChu", width: 30 }        // F
   ];
 
   // Dòng 1: Tiêu đề
-  worksheet.mergeCells('A1:F1');
-  const titleCell = worksheet.getCell('A1');
-  titleCell.value = 'MẪU NHẬP LỊCH LÀM VIỆC (Không sửa 2 dòng đầu)';
-  titleCell.font = { 
-    name: "Times New Roman", 
-    size: 16, 
-    bold: true, 
-    color: { argb: 'FF000000' } 
+  worksheet.mergeCells("A1:F1");
+  const titleCell = worksheet.getCell("A1");
+  titleCell.value = "MẪU NHẬP LỊCH LÀM VIỆC";
+  titleCell.font = {
+    name: "Times New Roman",
+    size: 16,
+    bold: true,
+    color: { argb: "FF000000" },
   };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  worksheet.getRow(1).height = 30;
+  titleCell.alignment = { vertical: "middle", horizontal: "center" };
 
-  // Dòng 2: Header (Đồng bộ màu xám FFD9D9D9 và Font Times New Roman)
-  const headerRow = worksheet.getRow(2);
-  headerRow.values = [
-    'STT', 
-    'Ngày (YYYY-MM-DD)', 
-    'Mã NV', 
-    'Tên Nhân Viên', 
-    'Tên Ca', 
-    'Ghi chú'
-  ];
-  headerRow.height = 25;
+  // Dòng 2: Lưu ý
+  worksheet.mergeCells("A2:F2");
+  const subTitleCell = worksheet.getCell("A2");
+  subTitleCell.value = "Lưu ý: Không sửa cấu trúc 4 dòng đầu, bắt đầu nhập từ dòng 5";
+  subTitleCell.font = { name: "Times New Roman", size: 11, italic: true, color: { argb: "FFFF0000" } };
+  subTitleCell.alignment = { vertical: "middle", horizontal: "center" };
+
+  // Dòng 3: Dòng trống
+  worksheet.addRow([]);
+
+  // Dòng 4: Header
+  const headerRow = worksheet.addRow([
+    "STT",
+    "Ngày",
+    "Mã NV",
+    "Họ và tên",
+    "Ca",
+    "Ghi chú",
+  ]);
+
   headerRow.eachCell((cell) => {
     cell.font = { name: "Times New Roman", bold: true };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FFD9D9D9" },
+      fgColor: { argb: "FFD9D9D9" }, 
     };
     cell.alignment = { vertical: "middle", horizontal: "center" };
     cell.border = {
@@ -161,35 +173,54 @@ const downloadTemplate = async () => {
     };
   });
 
-  // Lấy danh sách Tên Ca từ DB để làm Dropdown trong Excel
-  const shiftNames = shifts.value.map(s => s.tenCa).join(',');
-  const listFormula = `"${shiftNames}"`;
+  // Dòng 5: Data mẫu đầu tiên
+  worksheet.addRow([
+    1, 
+    '2026-03-01', 
+    employees.value[0]?.maNv || 'NV001', 
+    '', 
+    shifts.value[0]?.tenCa || 'Ca Sáng', 
+    'Test import'
+  ]);
 
-  // Dòng 3: Data mẫu
-  const sampleRow = worksheet.getRow(3);
-  sampleRow.values = [1, '2026-03-01', 'NV001', 'Nguyễn Văn A', shifts.value[0]?.tenCa || 'Ca Sáng', 'Test import'];
+  const startRow = 5; 
+  const totalRows = 50; // Tạo sẵn 50 dòng để điền
 
-  // Định dạng viền, Font chữ, Căn lề và Dropdown cho các dòng nhập liệu (Làm sẵn 50 dòng)
-  for (let i = 3; i <= 52; i++) {
-    // Thêm Dropdown cho cột Tên Ca (E)
-    const cellE = worksheet.getCell(`E${i}`);
-    cellE.dataValidation = {
+  // Thiết lập Dropdown, VLOOKUP và Kẻ bảng cho 50 dòng
+  for (let i = startRow; i < startRow + totalRows; i++) {
+    
+    // Dropdown Cột C: Mã NV
+    worksheet.getCell(`C${i}`).dataValidation = {
       type: 'list',
       allowBlank: true,
-      formulae: [listFormula]
+      formulae: [maNvFormula]
     };
 
-    // Kẻ viền và định dạng dữ liệu từng ô
+    // Công thức VLOOKUP Cột D: Tên NV
+    worksheet.getCell(`D${i}`).value = {
+      formula: `IF(C${i}="","",VLOOKUP(C${i},Data_NV!A:B,2,FALSE))`,
+      result: i === startRow ? String(employees.value[0]?.hoTen || "") : ""
+    };
+
+    // Dropdown Cột E: Tên Ca
+    worksheet.getCell(`E${i}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [shiftFormula]
+    };
+
+    // Định dạng lề và viền
     const row = worksheet.getRow(i);
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       if (colNumber <= 6) {
         cell.font = { name: "Times New Roman" };
         cell.border = {
-          top: { style: "thin" }, left: { style: "thin" },
-          bottom: { style: "thin" }, right: { style: "thin" }
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
         
-        // Căn trái cho cột 4 (Tên NV) và cột 6 (Ghi chú), các cột khác căn giữa
         if (colNumber !== 4 && colNumber !== 6) {
           cell.alignment = { vertical: "middle", horizontal: "center" };
         } else {
@@ -199,9 +230,31 @@ const downloadTemplate = async () => {
     });
   }
 
-  // Xuất file
+  // ==============================================================
+  // 2. TẠO SHEET ẨN CHỨA DỮ LIỆU Ở SAU CÙNG
+  // ==============================================================
+  const dataSheet = workbook.addWorksheet('Data_NV', { state: 'hidden' });
+  employees.value.forEach(emp => {
+    dataSheet.addRow([emp.maNv, emp.hoTen]);
+  });
+
+  // Ép buộc Excel khi mở file phải focus vào Sheet đầu tiên (Template_PhanCa)
+ // Ép buộc Excel khi mở file phải focus vào Sheet đầu tiên (Template_PhanCa)
+  workbook.views = [
+    {
+      x: 0,
+      y: 0,
+      width: 10000,
+      height: 10000,
+      firstSheet: 0, 
+      activeTab: 0, 
+      visibility: 'visible'
+    }
+  ];
+
+  // Ghi ra file
   const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(new Blob([buffer]), 'Template_NhapLichLamViec.xlsx');
+  saveAs(new Blob([buffer]), `Template_NhapLichLamViec.xlsx`);
 };
 
 // --- 1. INTERFACES ---
@@ -853,7 +906,7 @@ const exportExcel = async () => {
         };
       });
     });
- } else {
+  } else {
     // ==============================================================
     // 2. XUẤT EXCEL DẠNG DANH SÁCH - ĐỒNG BỘ VỚI QUẢN LÝ NHÂN VIÊN
     // ==============================================================
@@ -932,36 +985,65 @@ const exportExcel = async () => {
       ]);
 
       // Thêm tham số colNumber vào callback
-    row.eachCell((cell, colNumber) => {
-      cell.font = { name: "Times New Roman" };
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-      
-      // Sử dụng colNumber (chắc chắn là số) để so sánh
-      if (colNumber !== 4 && colNumber !== 6) {
-        cell.alignment = { vertical: "middle", horizontal: "center" };
-      } else {
-        cell.alignment = { vertical: "middle", horizontal: "left" };
-      }
-    });
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: "Times New Roman" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        
+        // Sử dụng colNumber (chắc chắn là số) để so sánh
+        if (colNumber !== 4 && colNumber !== 6) {
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+        } else {
+          cell.alignment = { vertical: "middle", horizontal: "left" };
+        }
+      });
     });
 
-    // Thêm Dropdown cho cột Tên Ca (Cột E) trong file xuất ra cho những dòng CÓ DỮ LIỆU
+    // ==============================================================
+    // 3. THÊM TÍNH NĂNG DROPDOWN VÀ VLOOKUP TỰ ĐỘNG ĐIỀN TÊN NV
+    // ==============================================================
+    
+    // Tạo Sheet ẩn chứa dữ liệu nhân viên để làm từ điển VLOOKUP
+    const dataSheet = workbook.addWorksheet('Data_NV', { state: 'hidden' });
+    employees.value.forEach(emp => {
+      dataSheet.addRow([emp.maNv, emp.hoTen]);
+    });
+    const totalEmp = employees.value.length > 0 ? employees.value.length : 1;
+
+    // Khởi tạo công thức
     const shiftNames = shifts.value.map(s => s.tenCa).join(',');
-    const listFormula = `"${shiftNames}"`;
+    const shiftFormula = `"${shiftNames}"`;
+    const maNvFormula = `Data_NV!$A$1:$A$${totalEmp}`;
+
     const startRow = 5; 
     
-    // Chỉ lặp đúng số lượng dòng có dữ liệu
+    // Thêm Dropdown và công thức VLOOKUP chỉ ở những dòng có dữ liệu
     for (let i = startRow; i < startRow + dataToExport.length; i++) {
-      const cellE = worksheet.getCell(`E${i}`);
-      cellE.dataValidation = {
+      
+      // Cột C: Dropdown Mã NV
+      worksheet.getCell(`C${i}`).dataValidation = {
         type: 'list',
         allowBlank: true,
-        formulae: [listFormula]
+        formulae: [maNvFormula]
+      };
+
+      // Cột D: Công thức VLOOKUP tự động điền Tên NV dựa theo Mã NV
+      const currentName = worksheet.getCell(`D${i}`).value;
+      worksheet.getCell(`D${i}`).value = {
+        formula: `IF(C${i}="","",VLOOKUP(C${i},Data_NV!A:B,2,FALSE))`,
+        // Dùng String(currentName) hoặc "" để đảm bảo luôn là kiểu chuỗi hợp lệ, loại bỏ hoàn toàn lỗi null
+        result: currentName ? String(currentName) : "" 
+      };
+
+      // Cột E: Dropdown Tên Ca
+      worksheet.getCell(`E${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [shiftFormula]
       };
     }
   }

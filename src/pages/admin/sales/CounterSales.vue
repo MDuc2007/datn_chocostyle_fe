@@ -1725,7 +1725,23 @@ const submitOrder = async () => {
     );
 
     showToast(`Đặt hàng/Thanh toán thành công ${order.maHoaDon}!`);
-
+    // ==========================================
+    // 👉 THÊM ĐOẠN NÀY ĐỂ BÁO CHO APP FLUTTER BIẾT
+    // ==========================================
+    try {
+      await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, {
+        maHoaDon: order.maHoaDon,
+        isPaid: true, // 👈 Cờ báo hiệu Đơn hàng đã chốt xong
+        sanPhamList: [],
+        tongTienHang: 0,
+        giamGia: 0,
+        tongThanhToan: 0
+      });
+    } catch (syncErr) {
+      console.error("Lỗi báo thanh toán sang App:", syncErr);
+    }
+    // ==========================================
+      
     try {
       const resInvoice = await axios.get(
         `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
@@ -2399,10 +2415,17 @@ const dongBoSangMobile = async () => {
 
   // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
   const payload = {
+    maHoaDon: order.maHoaDon, 
     sanPhamList: order.cart.map(item => ({
       tenSanPham: item.name || 'Sản phẩm', 
       soLuong: item.quantity,
-      donGia: item.price || 0 
+      donGia: item.price || 0,
+      
+      // 👉 THÊM 4 DÒNG NÀY ĐỂ GỬI ẢNH VÀ PHÂN LOẠI SANG APP
+      hinhAnh: item.image || '',
+      maSanPham: item.code || '',
+      mauSac: item.color || '',
+      kichCo: item.size || ''
     })),
     tongTienHang: subTotal.value || 0,
     giamGia: discount.value || 0,
