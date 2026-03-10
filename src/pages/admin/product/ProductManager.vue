@@ -498,28 +498,9 @@ function toggleStatus(item) {
       newStatus === 1
         ? "Bạn có chắc muốn bán lại sản phẩm này?"
         : "Bạn có chắc muốn ngừng bán sản phẩm này?",
-    onConfirm: async () => {
-      try {
-        await axios.put(
-          `http://localhost:8080/api/chi-tiet-san-pham/${item.id}/change-status`,
-          null,
-          {
-            params: {
-              trangThai: newStatus,
-              nguoiCapNhat: "admin",
-            },
-          },
-        );
-
-        showNotification("Cập nhật trạng thái thành công", "success");
-        // 🔴 FIX 1: Tải lại biến thể thay vì gán thủ công để đồng bộ logic = 0 (hết hàng) từ Backend
-        fetchVariants();
-      } catch (error) {
-        showNotification(error.response?.data?.message || "Lỗi cập nhật trạng thái!", "error");
-      }
-
-      modal.value.show = false;
-    },
+    // TRUYỀN THÊM 2 BIẾN NÀY ĐỂ HANDLEMODALCONFIRM CÓ DATA DÙNG
+    item: item,
+    newStatus: newStatus,
   };
 }
 
