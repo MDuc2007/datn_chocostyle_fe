@@ -357,7 +357,7 @@ const logout = () => {
   left: 0;
   height: 100vh;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 999;
 }
 
 .logo-wrapper {

@@ -3,7 +3,12 @@
     <h2 class="title">{{ pageTitle }}</h2>
 
     <div class="toast-container">
-      <div v-for="notif in notifications" :key="notif.id" class="toast" :class="notif.type">
+      <div
+        v-for="notif in notifications"
+        :key="notif.id"
+        class="toast"
+        :class="notif.type"
+      >
         {{ notif.message }}
       </div>
     </div>
@@ -15,20 +20,35 @@
         <div class="row">
           <div class="col">
             <label>Tên sản phẩm <span class="required">*</span></label>
-            <input v-model="tenSanPham" type="text" placeholder="Nhập tên sản phẩm" />
+            <input
+              v-model="tenSanPham"
+              type="text"
+              placeholder="Nhập tên sản phẩm"
+            />
           </div>
 
           <div class="col">
             <label>Xuất xứ <span class="required">*</span></label>
             <div class="select-box">
-              <select class="select2-xuatxu" :ref="(el) => el && (el.__vModel = selectedXuatXu)">
+              <select
+                class="select2-xuatxu"
+                :ref="(el) => el && (el.__vModel = selectedXuatXu)"
+              >
                 <option value="">Chọn xuất xứ</option>
-                <option v-for="item in xuatXuList.filter((x) => x.trangThai === 1)" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in xuatXuList.filter((x) => x.trangThai === 1)"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenXuatXu }}
                 </option>
               </select>
 
-              <button type="button" class="add-btn" @click="openModal('xuat-xu')">
+              <button
+                type="button"
+                class="add-btn"
+                @click="openModal('xuat-xu')"
+              >
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
@@ -37,14 +57,25 @@
           <div class="col">
             <label>Loại áo <span class="required">*</span></label>
             <div class="select-box">
-              <select class="select2-loaiao" :ref="(el) => el && (el.__vModel = selectedLoaiAo)">
+              <select
+                class="select2-loaiao"
+                :ref="(el) => el && (el.__vModel = selectedLoaiAo)"
+              >
                 <option value="">Chọn loại áo</option>
-                <option v-for="item in loaiAoList.filter((x) => x.trangThai === 1)" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in loaiAoList.filter((x) => x.trangThai === 1)"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenLoai }}
                 </option>
               </select>
 
-              <button type="button" class="add-btn" @click="openModal('loai-ao')">
+              <button
+                type="button"
+                class="add-btn"
+                @click="openModal('loai-ao')"
+              >
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
@@ -53,14 +84,25 @@
           <div class="col">
             <label>Kiểu dáng <span class="required">*</span></label>
             <div class="select-box">
-              <select class="select2-kieudang" :ref="(el) => el && (el.__vModel = selectedKieuDang)">
+              <select
+                class="select2-kieudang"
+                :ref="(el) => el && (el.__vModel = selectedKieuDang)"
+              >
                 <option value="">Chọn kiểu dáng</option>
-                <option v-for="item in kieuDangList.filter((x) => x.trangThai === 1)" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in kieuDangList.filter((x) => x.trangThai === 1)"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenKieuDang }}
                 </option>
               </select>
 
-              <button type="button" class="add-btn" @click="openModal('kieu-dang')">
+              <button
+                type="button"
+                class="add-btn"
+                @click="openModal('kieu-dang')"
+              >
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
@@ -69,14 +111,25 @@
           <div class="col">
             <label>Phong cách mặc <span class="required">*</span></label>
             <div class="select-box">
-              <select class="select2-phongcach" :ref="(el) => el && (el.__vModel = selectedPhongCach)">
+              <select
+                class="select2-phongcach"
+                :ref="(el) => el && (el.__vModel = selectedPhongCach)"
+              >
                 <option value="">Chọn phong cách</option>
-                <option v-for="item in phongCachList.filter((x) => x.trangThai === 1)" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in phongCachList.filter((x) => x.trangThai === 1)"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenPhongCach }}
                 </option>
               </select>
 
-              <button type="button" class="add-btn" @click="openModal('phong-cach-mac')">
+              <button
+                type="button"
+                class="add-btn"
+                @click="openModal('phong-cach-mac')"
+              >
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
@@ -85,14 +138,25 @@
           <div class="col">
             <label>Chất liệu <span class="required">*</span></label>
             <div class="select-box">
-              <select class="select2-chatlieu" :ref="(el) => el && (el.__vModel = selectedChatLieu)">
+              <select
+                class="select2-chatlieu"
+                :ref="(el) => el && (el.__vModel = selectedChatLieu)"
+              >
                 <option value="">Chọn chất liệu</option>
-                <option v-for="item in chatLieuList.filter((x) => x.trangThai === 1)" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in chatLieuList.filter((x) => x.trangThai === 1)"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenChatLieu }}
                 </option>
               </select>
 
-              <button type="button" class="add-btn" @click="openModal('chat-lieu')">
+              <button
+                type="button"
+                class="add-btn"
+                @click="openModal('chat-lieu')"
+              >
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
@@ -100,14 +164,22 @@
         </div>
 
         <div class="col full">
-          <label>Mô tả sản phẩm <span class="required">*</span></label>
-          <textarea v-model="moTa" placeholder="Nhập thông tin mô tả"></textarea>
+          <label>Mô tả sản phẩm</label>
+          <textarea
+            v-model="moTa"
+            placeholder="Nhập thông tin mô tả"
+          ></textarea>
         </div>
 
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
             <label>Màu sắc <span class="required">*</span></label>
-            <button type="button" :disabled="isEditMode" class="add-btn" @click="openModal('mau-sac')">
+            <button
+              type="button"
+              :disabled="isEditMode"
+              class="add-btn"
+              @click="openModal('mau-sac')"
+            >
               <img src="/src/assets/icon/plus.svg" />
             </button>
           </div>
@@ -122,7 +194,12 @@
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
             <label>Kích cỡ <span class="required">*</span></label>
-            <button type="button" :disabled="isEditMode" class="add-btn" @click="openModal('kich-co')">
+            <button
+              type="button"
+              :disabled="isEditMode"
+              class="add-btn"
+              @click="openModal('kich-co')"
+            >
               <img src="/src/assets/icon/plus.svg" />
             </button>
           </div>
@@ -135,7 +212,13 @@
       </div>
 
       <div class="right">
-        <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" style="display: none" />
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          @change="onFileChange"
+          style="display: none"
+        />
         <div class="image-box" @click="triggerUpload">
           <img v-if="imageUrl" :src="imageUrl" />
           <div v-else class="plus">+</div>
@@ -146,19 +229,32 @@
       </div>
     </div>
 
-    <button style="margin-top: 10px" v-if="!isEditMode" class="save-btn" @click="handleCreateVariant">
+    <button
+      style="margin-top: 10px"
+      v-if="!isEditMode"
+      class="save-btn"
+      @click="handleCreateVariant"
+    >
       Tạo biến thể
     </button>
 
     <div v-if="showBienThe" class="variants-section">
       <div class="variants-header">
         <h3>Danh sách biến thể</h3>
-        <button class="save-fast-btn" @click="openQuickAllModal" :disabled="isEditMode">
+        <button
+          class="save-fast-btn"
+          @click="openQuickAllModal"
+          :disabled="isEditMode"
+        >
           <span>+</span> Thêm nhanh
         </button>
       </div>
 
-      <div v-for="(bt, mIndex) in bienTheList" :key="mIndex" class="variant-group">
+      <div
+        v-for="(bt, mIndex) in bienTheList"
+        :key="mIndex"
+        class="variant-group"
+      >
         <div class="variant-color-header">
           <h4>{{ getMauSacName(bt.mauSacId) }}</h4>
         </div>
@@ -175,28 +271,49 @@
           <tbody>
             <tr v-for="(s, sIndex) in bt.sizeList" :key="sIndex">
               <td>
-                <input type="text" class="input-field" :value="getKichCoName(s.idKichCo)" disabled />
+                <input
+                  type="text"
+                  class="input-field"
+                  :value="getKichCoName(s.idKichCo)"
+                  disabled
+                />
               </td>
 
               <td>
                 <div class="money-input">
-                  <input type="text" :value="formatMoney(s.giaBan)" @input="handleMoneyInput($event, s, 'giaBan')"
-                    class="input-field" />
+                  <input
+                    type="text"
+                    :value="formatMoney(s.giaBan)"
+                    @input="handleMoneyInput($event, s, 'giaBan')"
+                    class="input-field"
+                  />
                   <span>đ</span>
                 </div>
               </td>
               <td>
                 <div class="money-input">
-                  <input type="text" :value="formatMoney(s.giaNhap)" @input="handleMoneyInput($event, s, 'giaNhap')"
-                    class="input-field" />
+                  <input
+                    type="text"
+                    :value="formatMoney(s.giaNhap)"
+                    @input="handleMoneyInput($event, s, 'giaNhap')"
+                    class="input-field"
+                  />
                   <span>đ</span>
                 </div>
               </td>
               <td>
-                <input type="number" v-model="s.soLuongTon" class="input-field" />
+                <input
+                  type="number"
+                  v-model="s.soLuongTon"
+                  class="input-field"
+                />
               </td>
               <td class="action-cell">
-                <button class="btn-delete" @click="removeSize(mIndex, sIndex)" :disabled="isEditMode">
+                <button
+                  class="btn-delete"
+                  @click="removeSize(mIndex, sIndex)"
+                  :disabled="isEditMode"
+                >
                   ✕
                 </button>
               </td>
@@ -205,27 +322,49 @@
         </table>
       </div>
       <div style="display: flex; gap: 30px">
-        <div v-for="(bt, mIndex) in bienTheList" :key="'image-' + mIndex" style="margin-top: 20px">
+        <div
+          v-for="(bt, mIndex) in bienTheList"
+          :key="'image-' + mIndex"
+          style="margin-top: 20px"
+        >
           <div style="font-weight: 600; margin-bottom: 8px">
             Ảnh theo màu: {{ getMauSacName(bt.mauSacId) }}
           </div>
 
-          <input type="file" accept="image/*" @change="onVariantImageChange($event, mIndex)" style="display: none"
-            :ref="(el) => (variantFileInputs[mIndex] = el)" />
+          <input
+            type="file"
+            accept="image/*"
+            @change="onVariantImageChange($event, mIndex)"
+            style="display: none"
+            :ref="(el) => (variantFileInputs[mIndex] = el)"
+          />
 
-          <div class="image-box" style="width: 120px; height: 120px" @click="variantFileInputs[mIndex].click()">
+          <div
+            class="image-box"
+            style="width: 120px; height: 120px"
+            @click="variantFileInputs[mIndex].click()"
+          >
             <div v-if="bt.hinhAnhUrls.length === 0" class="plus">+</div>
 
-            <img v-if="bt.hinhAnhUrls.length" :src="bt.hinhAnhUrls[0]" style="
+            <img
+              v-if="bt.hinhAnhUrls.length"
+              :src="bt.hinhAnhUrls[0]"
+              style="
                 width: 120px;
                 height: 120px;
                 object-fit: cover;
                 margin: 2px;
-              " />
+              "
+            />
           </div>
         </div>
       </div>
-      <button style="margin-top: 10px" class="save-btn" @confirm="submit" @click="handleOpenConfirm">
+      <button
+        style="margin-top: 10px"
+        class="save-btn"
+        @confirm="submit"
+        @click="handleOpenConfirm"
+      >
         Lưu sản phẩm
       </button>
     </div>
@@ -243,8 +382,13 @@
           </button>
         </div>
         <div class="color-list">
-          <div v-for="m in mauSacDaChon.filter((x) => x.trangThai === 1)" :key="m.id" class="color-item"
-            :class="{ selected: tempMauSacList.some((x) => x.id === m.id) }" @click="toggleTempMauSac(m)">
+          <div
+            v-for="m in mauSacDaChon.filter((x) => x.trangThai === 1)"
+            :key="m.id"
+            class="color-item"
+            :class="{ selected: tempMauSacList.some((x) => x.id === m.id) }"
+            @click="toggleTempMauSac(m)"
+          >
             <span class="dot" :style="{ backgroundColor: m.rgb }"></span>
             <span>{{ m.tenMauSac }}</span>
           </div>
@@ -254,20 +398,32 @@
       <div v-else-if="modalType === 'kich-co'" class="modal-color-list-section">
         <div class="color-list-header">
           <h4>Chọn kích cỡ</h4>
-          <button type="button" class="add-btn-small" @click="modalType = 'kich-co-add'">
+          <button
+            type="button"
+            class="add-btn-small"
+            @click="modalType = 'kich-co-add'"
+          >
             <img src="/src/assets/icon/plus.svg" />
           </button>
         </div>
         <div class="color-list">
-          <div v-for="k in kichCoList.filter((x) => x.trangThai === 1)" :key="k.id" class="color-item"
-            :class="{ selected: tempKichCoList.some((x) => x.id === k.id) }" @click="toggleTempKichCo(k)">
+          <div
+            v-for="k in kichCoList.filter((x) => x.trangThai === 1)"
+            :key="k.id"
+            class="color-item"
+            :class="{ selected: tempKichCoList.some((x) => x.id === k.id) }"
+            @click="toggleTempKichCo(k)"
+          >
             <span>{{ k.tenKichCo }}</span>
           </div>
         </div>
       </div>
 
       <div v-else-if="modalType === 'kich-co-add'">
-        <input v-model="modalInput" placeholder="Nhập tên kích cỡ (vd: S, M, L)" />
+        <input
+          v-model="modalInput"
+          placeholder="Nhập tên kích cỡ (vd: S, M, L)"
+        />
       </div>
 
       <div v-else>
@@ -286,24 +442,46 @@
       <h3>Thêm màu sắc mới</h3>
       <div class="modal-color-section">
         <div class="color-input-group">
-          <input type="color" v-model="modalColorRgb" class="color-picker" style="width: 30%" />
+          <input
+            type="color"
+            v-model="modalColorRgb"
+            class="color-picker"
+            style="width: 30%"
+          />
           <input v-model="modalInput" placeholder="Nhập tên màu" />
         </div>
       </div>
       <div class="modal-actions">
         <button @click="closeColorModal">Huỷ</button>
-        <button class="save-btn" @click="saveColorModal" :disabled="!modalInput.trim()">
+        <button
+          class="save-btn"
+          @click="saveColorModal"
+          :disabled="!modalInput.trim()"
+        >
           Lưu
         </button>
       </div>
     </div>
   </div>
   <transition name="fade-modal">
-    <div v-if="modal.show" class="modal-confirm" @click.self="closeModalConfirm">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeModalConfirm"
+    >
       <div class="confirm-box">
         <div class="confirm-icon-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
-            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M8 12l3 3 5-5"></path>
           </svg>
@@ -329,17 +507,32 @@
       <h3>Thêm nhanh cho tất cả biến thể</h3>
 
       <div class="money-input">
-        <input type="text" :value="formatMoney(quickAllGiaBan)" @input="handleMoneyInput($event, quickAllGiaBan)"
-          class="input-field" placeholder="Giá bán" />
-        <span>đ</span>
-      </div>
-      <div class="money-input">
-        <input type="text" :value="formatMoney(quickAllGiaNhap)" @input="handleMoneyInput($event, quickAllGiaNhap)"
-          class="input-field" placeholder="Giá nhập" />
+        <input
+          type="text"
+          :value="formatMoney(quickAllGiaBan)"
+          @input="handleQuickMoneyInput($event, 'giaBan')"
+          class="input-field"
+          placeholder="Giá bán"
+        />
         <span>đ</span>
       </div>
 
-      <input type="number" v-model.number="quickAllSoLuong" placeholder="Số lượng (áp dụng tất cả)" />
+      <div class="money-input">
+        <input
+          type="text"
+          :value="formatMoney(quickAllGiaNhap)"
+          @input="handleQuickMoneyInput($event, 'giaNhap')"
+          class="input-field"
+          placeholder="Giá nhập"
+        />
+        <span>đ</span>
+      </div>
+
+      <input
+        type="number"
+        v-model.number="quickAllSoLuong"
+        placeholder="Số lượng (áp dụng tất cả)"
+      />
 
       <div class="modal-actions">
         <button @click="showQuickAllModal = false">Huỷ</button>
@@ -385,6 +578,20 @@ const handleMoneyInput = (event, obj, field) => {
   const number = raw ? parseInt(raw) : 0;
 
   obj[field] = number;
+  event.target.value = formatMoney(number);
+};
+
+const handleQuickMoneyInput = (event, field) => {
+  const raw = event.target.value.replace(/\D/g, "");
+  // Nếu xoá trắng thì gán về null để không bị áp dụng số 0 vào tất cả
+  const number = raw ? parseInt(raw) : null;
+
+  if (field === "giaBan") {
+    quickAllGiaBan.value = number;
+  } else if (field === "giaNhap") {
+    quickAllGiaNhap.value = number;
+  }
+
   event.target.value = formatMoney(number);
 };
 
@@ -964,8 +1171,8 @@ const validateBeforeSubmit = () => {
   if (!selectedChatLieu.value)
     return (showNotification("Vui lòng chọn chất liệu", "warning"), false);
 
-  if (!moTa.value.trim())
-    return (showNotification("Vui lòng nhập mô tả sản phẩm", "warning"), false);
+  // if (!moTa.value.trim())
+  //   return (showNotification("Vui lòng nhập mô tả sản phẩm", "warning"), false);
 
   if (!hinhAnhCloud.value)
     return (showNotification("Vui lòng tải ảnh sản phẩm", "warning"), false);
@@ -1240,7 +1447,10 @@ textarea {
   transition: 0.25s;
 }
 
-:deep(.select2-container--default.select2-container--focus .select2-selection--single) {
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+) {
   border-color: #6b3f23;
   box-shadow: 0 0 0 3px rgba(107, 63, 35, 0.08);
 }
@@ -1272,7 +1482,10 @@ textarea {
 }
 
 /* focus giống input */
-:deep(.select2-container--default.select2-container--focus .select2-selection--single) {
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+) {
   border-color: #a9744f;
   box-shadow: 0 0 0 1px rgba(169, 116, 79, 0.35);
 }
