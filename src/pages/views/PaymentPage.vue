@@ -2286,4 +2286,9 @@ watch(
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+.modern-table th:last-child,
+.modern-table td:last-child {
+  text-align: center;
+  vertical-align: middle;
+}
 </style>

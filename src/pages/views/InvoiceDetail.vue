@@ -328,7 +328,7 @@
               v-if="invoice.trangThai === 5"
             >
               <h3>❌ Đơn hàng đã bị hủy</h3>
-              <p>Lý do: {{ invoice.ghiChu || "Không có lý do cụ thể" }}</p>
+              <p>Lý do: {{ lyDoHuy }}</p>
             </div>
 
             <div class="card product-card no-print">
@@ -345,7 +345,11 @@
                   <thead>
                     <tr>
                       <th style="width: 60px">STT</th>
-                      <th class="text-left-force">Sản phẩm</th>
+                      <th
+                        style="text-align: left !important; padding-left: 16px"
+                      >
+                        Sản phẩm
+                      </th>
                       <th>Phân loại hàng</th>
                       <th>Đơn giá</th>
                       <th>Số lượng</th>
@@ -355,12 +359,20 @@
                   <tbody>
                     <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
                       <td class="index-cell">{{ index + 1 }}</td>
-                      <td class="text-left-force">
-                        <div class="product-cell">
-                          <div class="product-thumb"></div>
-                          <div class="product-info-text">
-                            <div class="product-name">{{ p.tenSanPham }}</div>
+                      <td
+                        style="text-align: left !important; padding-left: 16px"
+                      >
+                        <div class="product-info-cell">
+                          <img
+                            v-if="p.hinhAnh"
+                            :src="p.hinhAnh"
+                            alt="Ảnh SP"
+                            class="product-img-thumb"
+                          />
+                          <div v-else class="product-img-placeholder">
+                            No image
                           </div>
+                          <span class="product-name">{{ p.tenSanPham }}</span>
                         </div>
                       </td>
                       <td>
@@ -678,6 +690,7 @@ interface InvoiceProduct {
   soLuong: number;
   donGia: number;
   thanhTien: number;
+  hinhAnh?: string; // Khai báo thêm trường hình ảnh để TS không báo lỗi
 }
 interface InvoiceHistory {
   trangThai: number;
@@ -717,6 +730,20 @@ interface InvoiceDetail {
 
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
+
+const lyDoHuy = computed(() => {
+  if (!invoice.value || invoice.value.trangThai !== 5)
+    return "Không có lý do cụ thể";
+
+  // Tìm trong lịch sử thao tác, lấy ra hành động có trạng thái = 5 (Hủy đơn)
+  const logHuy = invoice.value.lichSuList?.find((log) => log.trangThai === 5);
+
+  if (logHuy && logHuy.ghiChu && logHuy.ghiChu.trim() !== "") {
+    return logHuy.ghiChu; // Trả về lý do hủy (ví dụ: "abc")
+  }
+
+  return "Không có lý do cụ thể";
+});
 
 // ===============================================
 // AUTH HEADER (Phục vụ gọi API Cập nhật)
@@ -2083,27 +2110,7 @@ onMounted(() => {
   color: #334155;
   font-size: 14px;
 }
-.product-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.product-thumb {
-  width: 40px;
-  height: 40px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  border: 1px solid #e2e8f0;
-}
-.product-name {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 14px;
-}
+
 .variant-tags {
   display: flex;
   gap: 6px;
@@ -2449,5 +2456,53 @@ onMounted(() => {
   .main-layout {
     flex-direction: column;
   }
+}
+
+/* =========================================
+   UPDATE CHÍNH CHO BẢNG SẢN PHẨM Ở CLIENT 
+   ========================================= */
+.product-info-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.product-img-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  display: block;
+}
+
+.product-img-placeholder {
+  width: 60px;
+  height: 60px;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 10px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.4;
+  text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

@@ -32,7 +32,7 @@
 
         <div class="form-group">
           <label>Ngày bắt đầu</label>
-          <input type="date" v-model="form.ngayBatDau" />
+          <input type="date" v-model="form.ngayBatDau" :min="today" />
           <small v-if="errors.ngayBatDau">{{ errors.ngayBatDau }}</small>
         </div>
 
@@ -338,6 +338,7 @@ import { reactive, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { computed } from "vue";
+const today = new Date().toISOString().split("T")[0];
 const allChiTietList = computed(() => {
   return selectedSanPhamIds.value.flatMap((spId) => {
     const sp = sanPhamList.find((s) => s.id === spId);
@@ -484,9 +485,13 @@ const validate = () => {
   let valid = true;
 
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
+  const name = form.tenDotGiamGia.trim();
 
-  if (!form.tenDotGiamGia.trim()) {
+  if (!name) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
+    valid = false;
+  } else if (name.length < 3) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
     valid = false;
   }
 
