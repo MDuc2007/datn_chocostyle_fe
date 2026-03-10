@@ -20,15 +20,43 @@
 
       <div class="content-section">
         <div class="main-card fade-in-up">
-          <div class="address-header">
-            <div>
-              <h3 class="page-title">Hồ sơ của tôi</h3>
-              <p class="page-subtitle">Quản lý thông tin cá nhân để bảo mật tài khoản</p>
+          
+          <div class="card-header-custom">
+            
+            <div class="header-left">
+              <div class="avatar-section">
+                <div class="avatar-wrapper" :class="{ 'is-editing': isEditing }">
+                  <img 
+                    v-if="avatarPreview || currentUser?.avatar" 
+                    :src="avatarPreview ? avatarPreview : getFullImageUrl(currentUser?.avatar)" 
+                    alt="Avatar"
+                    @error="handleAvatarError"
+                    class="avatar-img"
+                  >
+                  <span v-else class="avatar-placeholder">{{ getUserInitial(form.tenKhachHang) }}</span>
+                  
+                  <label v-if="isEditing" class="avatar-edit-overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    <span>Thay đổi</span>
+                    <input type="file" accept="image/jpeg, image/png, image/jpg" @change="onFileChange" hidden />
+                  </label>
+                </div>
+              </div>
+
+              <div class="header-text">
+                <h3 class="page-title">Hồ sơ của tôi</h3>
+                <p class="page-subtitle">Quản lý thông tin cá nhân để bảo mật tài khoản</p>
+                <p v-if="isEditing" class="upload-note">Hỗ trợ JPG, PNG (Tối đa 2MB)</p>
+              </div>
             </div>
-            <button v-if="!isEditing" class="btn-brand hover-scale flex-center" @click="toggleEdit">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              Sửa hồ sơ
-            </button>
+
+            <div class="header-right">
+              <button v-if="!isEditing" class="btn-brand hover-scale" @click="toggleEdit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Chỉnh sửa hồ sơ
+              </button>
+            </div>
+
           </div>
 
           <div class="card-body">
@@ -38,26 +66,6 @@
             </div>
 
             <div v-else class="profile-content">
-              
-              <div class="profile-avatar-section">
-                <div class="avatar-wrapper">
-                  <img 
-                    v-if="avatarPreview || currentUser?.avatar" 
-                    :src="avatarPreview || getFullImageUrl(currentUser.avatar)" 
-                    alt="Avatar"
-                    @error="handleAvatarError"
-                  >
-                  <span v-else class="avatar-placeholder">{{ getUserInitial(form.tenKhachHang) }}</span>
-                </div>
-                <div class="avatar-actions" v-if="isEditing">
-                  <label class="btn-upload">
-                    <input type="file" accept="image/jpeg, image/png, image/jpg" @change="onFileChange" hidden />
-                    Chọn Ảnh
-                  </label>
-                  <p class="upload-note">Dung lượng file tối đa 2 MB<br>Định dạng: .JPEG, .PNG</p>
-                </div>
-              </div>
-
               <form class="profile-info-section" @submit.prevent="submitUpdate">
                 
                 <div class="info-row">
@@ -72,7 +80,7 @@
                       @input="clearError('tenKhachHang')"
                       placeholder="Nhập họ và tên"
                     />
-                    <span v-else class="text-bold">{{ form.tenKhachHang || 'Chưa cập nhật' }}</span>
+                    <span v-else class="text-display text-bold">{{ form.tenKhachHang || 'Chưa cập nhật' }}</span>
                     <span v-if="errors.tenKhachHang" class="error-msg">{{ errors.tenKhachHang }}</span>
                   </div>
                 </div>
@@ -86,7 +94,7 @@
                       class="form-input bg-disabled" 
                       disabled
                     />
-                    <span class="lock-hint" v-if="isEditing">Email được dùng làm tài khoản, không thể thay đổi</span>
+                    <span class="lock-hint" v-if="isEditing">Email đăng nhập không thể thay đổi</span>
                   </div>
                 </div>
 
@@ -102,7 +110,7 @@
                       @input="clearError('soDienThoai')"
                       placeholder="Nhập số điện thoại"
                     />
-                    <span v-else>{{ maskPhone(form.soDienThoai) }}</span>
+                    <span v-else class="text-display">{{ maskPhone(form.soDienThoai) }}</span>
                     <span v-if="errors.soDienThoai" class="error-msg">{{ errors.soDienThoai }}</span>
                   </div>
                 </div>
@@ -114,11 +122,11 @@
                       v-if="isEditing" 
                       type="date" 
                       v-model="form.ngaySinh" 
-                      class="form-input"
+                      class="form-input date-input"
                       :class="{ 'input-error': errors.ngaySinh }"
                       @change="clearError('ngaySinh')"
                     />
-                    <span v-else>{{ formatDate(form.ngaySinh) }}</span>
+                    <span v-else class="text-display">{{ formatDate(form.ngaySinh) }}</span>
                     <span v-if="errors.ngaySinh" class="error-msg">{{ errors.ngaySinh }}</span>
                   </div>
                 </div>
@@ -136,27 +144,29 @@
                         <span class="radio-custom"></span> Nữ
                       </label>
                     </div>
-                    <span v-else>{{ form.gioiTinh === true ? 'Nam' : (form.gioiTinh === false ? 'Nữ' : 'Chưa cập nhật') }}</span>
+                    <span v-else class="text-display">{{ form.gioiTinh === true ? 'Nam' : (form.gioiTinh === false ? 'Nữ' : 'Chưa cập nhật') }}</span>
                   </div>
                 </div>
 
                 <div class="info-row" v-if="!isEditing && defaultAddress">
                   <div class="info-label">Địa chỉ mặc định</div>
-                  <div class="info-value address-box">
-                    <svg class="icon-location" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span>{{ formatAddress(defaultAddress) }}</span>
+                  <div class="info-value">
+                    <div class="address-box">
+                      <svg class="icon-location" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      <span>{{ formatAddress(defaultAddress) }}</span>
+                    </div>
                   </div>
                 </div>
 
                 <div class="form-actions" v-if="isEditing">
-                  <button type="button" class="btn-cancel" @click="cancelEdit">Hủy</button>
-                  <button type="submit" class="btn-brand" :disabled="isSubmitting">
-                    <i v-if="isSubmitting" class="fa fa-spinner fa-spin mr-2"></i> Lưu Thay Đổi
+                  <button type="button" class="btn-cancel" @click="cancelEdit">Hủy thay đổi</button>
+                  <button type="submit" class="btn-save" :disabled="isSubmitting">
+                    <i v-if="isSubmitting" class="fa fa-spinner fa-spin mr-2"></i> 
+                    <span v-else>Lưu cập nhật</span>
                   </button>
                 </div>
 
               </form>
-
             </div>
           </div>
         </div>
@@ -187,6 +197,7 @@ const isSubmitting = ref(false);
 
 const selectedFile = ref(null);
 const avatarPreview = ref(null);
+const imageCacheBuster = ref(new Date().getTime()); 
 
 const errors = ref({});
 const toast = ref({ show: false, message: "", type: "success" });
@@ -206,10 +217,22 @@ const getUserInitial = (name) => {
   return words[words.length - 1].charAt(0).toUpperCase();
 };
 
+// 👉 ĐÃ SỬA LỖI TRẮNG ẢNH: Xử lý thông minh mọi loại link
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  if (imagePath.startsWith("http")) return imagePath;
-  return `http://localhost:8080/images/${imagePath}`;
+  
+  // 1. Nếu là chuỗi Base64 (Ảnh tự up)
+  if (imagePath.startsWith("data:image")) {
+    return imagePath;
+  }
+  
+  // 2. Nếu là link Google Login
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  
+  // 3. Fallback (Nếu bạn lưu file cứng vào server)
+  return `http://localhost:8080/images/${imagePath}?t=${imageCacheBuster.value}`;
 };
 
 const handleAvatarError = (e) => {
@@ -272,8 +295,6 @@ const fetchUserProfile = async () => {
     );
 
     currentUser.value = res.data;
-    
-    // Đổ dữ liệu vào Form
     syncForm(res.data);
 
     // Cập nhật lại localStorage để đồng bộ Header
@@ -317,7 +338,6 @@ const cancelEdit = () => {
   avatarPreview.value = null;
 };
 
-// Xử lý chọn ảnh
 const onFileChange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -328,8 +348,8 @@ const onFileChange = (e) => {
     return;
   }
 
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('Dung lượng ảnh tối đa 2MB', 'warning');
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Dung lượng ảnh tối đa 5MB', 'warning');
     return;
   }
 
@@ -337,12 +357,10 @@ const onFileChange = (e) => {
   avatarPreview.value = URL.createObjectURL(file);
 };
 
-// Validate nâng cao
 const validateForm = () => {
   errors.value = {};
   let isValid = true;
   
-  // Validate Họ Tên
   if (!form.tenKhachHang || !form.tenKhachHang.trim()) {
     errors.value.tenKhachHang = "Họ tên không được để trống";
     isValid = false;
@@ -351,24 +369,21 @@ const validateForm = () => {
     isValid = false;
   }
   
-  // Validate SĐT
   const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
   if (!form.soDienThoai || !form.soDienThoai.trim()) {
     errors.value.soDienThoai = "Số điện thoại không được để trống";
     isValid = false;
   } else if (!phoneRegex.test(form.soDienThoai.trim())) {
-    errors.value.soDienThoai = "Số điện thoại không hợp lệ (VD: 0912345678)";
+    errors.value.soDienThoai = "SĐT không hợp lệ (VD: 0912345678)";
     isValid = false;
   }
 
-  // Validate Ngày Sinh
   if (!form.ngaySinh) {
     errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
     isValid = false;
   } else {
     const selectedDate = new Date(form.ngaySinh);
     const today = new Date();
-    // Bỏ thời gian để so sánh chính xác theo ngày
     today.setHours(0, 0, 0, 0);
     if (selectedDate >= today) {
       errors.value.ngaySinh = "Ngày sinh phải nhỏ hơn ngày hiện tại";
@@ -378,7 +393,8 @@ const validateForm = () => {
 
   return isValid;
 };
-// 👉 THAY THẾ TOÀN BỘ HÀM submitUpdate BẰNG ĐOẠN NÀY
+
+// GỘP CHUNG FILE VÀ JSON GỬI 1 LẦN
 const submitUpdate = async () => {
   if (!validateForm()) return;
 
@@ -394,10 +410,8 @@ const submitUpdate = async () => {
   }
 
   try {
-    // 1. Tạo FormData để gói cả thông tin chữ và file ảnh
     const formData = new FormData();
     
-    // Gộp thông tin sửa vào data cũ
     const payloadInfo = {
       ...currentUser.value,
       tenKhachHang: form.tenKhachHang.trim(),
@@ -405,16 +419,13 @@ const submitUpdate = async () => {
       ngaySinh: form.ngaySinh,
       gioiTinh: form.gioiTinh
     };
-
-    // Đính kèm cục JSON (chữ) vào FormData
+    
     formData.append("data", new Blob([JSON.stringify(payloadInfo)], { type: "application/json" }));
 
-    // 2. Đính kèm File ảnh (nếu người dùng có chọn ảnh mới)
     if (selectedFile.value) {
-      formData.append("file", selectedFile.value);
+      formData.append("avatarFile", selectedFile.value);
     }
 
-    // 3. Gửi gọi 1 API PUT duy nhất lên Backend
     await axios.put(`http://localhost:8080/api/khach-hang/${currentUser.value.id}`, formData, {
       headers: { 
         Authorization: `Bearer ${token}`,
@@ -422,10 +433,13 @@ const submitUpdate = async () => {
       }
     });
 
-    showToast("Cập nhật hồ sơ và ảnh thành công!", "success");
-    isEditing.value = false;
+    showToast("Cập nhật hồ sơ thành công!", "success");
     
-    // Gọi lại để load ảnh mới lên giao diện
+    isEditing.value = false;
+    selectedFile.value = null;
+    avatarPreview.value = null;
+    imageCacheBuster.value = new Date().getTime(); 
+    
     await fetchUserProfile(); 
 
   } catch (error) {
@@ -457,8 +471,8 @@ onMounted(() => {
 
 .breadcrumb-wrapper {
   background: #FFFFFF;
-  border-bottom: 1px solid #f3f4f6;
-  padding: 15px 0;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 0;
   margin-bottom: 30px;
 }
 
@@ -467,7 +481,7 @@ onMounted(() => {
   margin: 0 auto;
   padding: 0 20px;
   font-size: 14px;
-  color: #6b7280;
+  color: #64748b;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -483,7 +497,7 @@ onMounted(() => {
 .nav-item:hover { color: #63391F; }
 .icon-home { width: 16px; height: 16px; }
 .separator svg { width: 14px; height: 14px; margin-top: 2px; color: #9ca3af; }
-.current { font-weight: 600; color: #111827; }
+.current { font-weight: 600; color: #1e293b; }
 
 .main-layout {
   max-width: 1280px;
@@ -499,9 +513,9 @@ onMounted(() => {
 .main-card {
   background: #FFFFFF;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  border: 1px solid #f3f4f6;
+  border: 1px solid #f1f5f9;
 }
 
 .fade-in-up { animation: fadeInUp 0.5s ease forwards; }
@@ -510,16 +524,75 @@ onMounted(() => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.address-header {
+/* --- HEADER: AVATAR GÓC TRÁI + NÚT SỬA GÓC PHẢI --- */
+.card-header-custom {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* Ép avatar và chữ nhảy lên trên cùng */
   padding: 30px 40px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #fafafa; /* Làm nổi bật nhẹ phần header */
 }
 
-.page-title { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #111827; }
-.page-subtitle { margin: 0; font-size: 15px; color: #6b7280; }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Khung Avatar nhỏ xinh */
+.avatar-wrapper {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #f1f5f9;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.avatar-wrapper.is-editing {
+  box-shadow: 0 6px 20px rgba(99, 57, 31, 0.15);
+  border-color: #fdf8f6;
+}
+
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-placeholder { font-size: 32px; font-weight: 800; color: #63391F; }
+
+/* Overlay nút đổi ảnh */
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+.avatar-edit-overlay svg { width: 22px; height: 22px; margin-bottom: 2px; }
+.avatar-edit-overlay span { font-size: 11px; font-weight: 600; }
+.avatar-wrapper:hover .avatar-edit-overlay { opacity: 1; }
+
+/* Text Tiêu đề kế bên Avatar */
+.header-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-title { margin: 0 0 6px 0; font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px;}
+.page-subtitle { margin: 0; font-size: 14px; color: #64748b; }
+.upload-note { margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; font-style: italic;}
 
 .btn-brand { 
   display: flex;
@@ -529,149 +602,124 @@ onMounted(() => {
   background: linear-gradient(135deg, #63391F 0%, #8b5a33 100%); 
   color: #fff; 
   border: none; 
-  padding: 0 24px; 
-  height: 44px;
-  border-radius: 10px; 
+  padding: 0 20px; 
+  height: 42px;
+  border-radius: 8px; 
   font-size: 14px;
   font-weight: 600; 
   cursor: pointer; 
   transition: all 0.3s; 
+  margin-top: 10px; /* Đẩy nút sửa xuống xíu cho cân với Avatar */
 }
-.btn-brand:hover:not(:disabled) { 
-  box-shadow: 0 6px 15px rgba(99, 57, 31, 0.25); 
-  transform: translateY(-2px);
+.btn-brand:hover { 
+  box-shadow: 0 4px 12px rgba(99, 57, 31, 0.25); 
+  transform: translateY(-1px);
 }
-.btn-brand:disabled { background: #9ca3af; cursor: not-allowed; }
 .icon-edit { width: 16px; height: 16px; }
 
-/* ================== CARD BODY & CHIA CỘT ================== */
+/* ================== BODY FORM THÔNG TIN TRẢI RỘNG ================== */
 .card-body { padding: 40px; }
 
-.profile-content {
-  display: flex;
-  gap: 50px;
-}
-
-/* --- Cột Trái: Avatar --- */
-.profile-avatar-section {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-right: 1px solid #f3f4f6;
-  padding-right: 30px;
-}
-
-.avatar-wrapper {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #fdf3eb;
-  border: 4px solid #fff;
-  box-shadow: 0 8px 20px rgba(99, 57, 31, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.avatar-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-placeholder { font-size: 48px; font-weight: 700; color: #63391F; }
-
-.avatar-actions { text-align: center; }
-
-.btn-upload {
-  display: inline-block;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 12px;
-}
-
-.btn-upload:hover { background: #f9fafb; border-color: #63391F; color: #63391F;}
-.upload-note { font-size: 13px; color: #9ca3af; line-height: 1.5; margin: 0; }
-
-/* --- Cột Phải: Thông tin --- */
 .profile-info-section {
-  flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
-.info-row { display: flex; align-items: flex-start; }
-.info-label { width: 160px; font-size: 15px; color: #4b5563; font-weight: 600; flex-shrink: 0; padding-top: 12px; }
-.info-value { flex: 1; font-size: 15px; color: #111827; display: flex; flex-direction: column; justify-content: center; min-height: 44px;}
+.info-row { 
+  display: grid; 
+  grid-template-columns: 200px 1fr; /* Tăng độ rộng nhãn lên một chút để cân đối form */
+  align-items: center; 
+  min-height: 60px;
+  padding: 12px 0;
+  border-bottom: 1px dashed #f1f5f9;
+}
+.info-row:last-of-type { border-bottom: none; }
 
-.text-bold { font-weight: 700; font-size: 16px; }
+.info-label { font-size: 15px; color: #64748b; font-weight: 600; flex-shrink: 0;}
+.info-value { flex: 1; font-size: 15px; color: #1e293b; display: flex; flex-direction: column; justify-content: center;}
 
-/* Các Input Form */
+.text-display { padding: 8px 0; display: inline-block; color: #334155; }
+.text-bold { font-weight: 700; font-size: 16px; color: #0f172a;}
+
+/* Các Input Form (Chiều dài lớn để trải đều form) */
 .form-input {
   width: 100%;
-  max-width: 400px;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
+  max-width: 600px; /* Đã tăng chiều dài Input để hài hòa với form rộng */
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   font-size: 15px;
-  color: #111827;
+  color: #1e293b;
   transition: all 0.2s;
   background: #fff;
+  box-sizing: border-box;
 }
-.form-input:focus { outline: none; border-color: #63391F; box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1); }
-.bg-disabled { background-color: #f3f4f6; cursor: not-allowed; color: #6b7280; font-weight: 500;}
-.lock-hint { font-size: 13px; color: #9ca3af; margin-top: 6px; font-style: italic;}
+.form-input:focus { outline: none; border-color: #63391F; box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); }
+.date-input { font-family: 'Inter', sans-serif; color: #475569; }
+
+.bg-disabled { background-color: #f8fafc; cursor: not-allowed; color: #94a3b8; border-color: #e2e8f0;}
+.lock-hint { font-size: 13px; color: #94a3b8; margin-top: 6px; font-style: italic;}
 .input-error { border-color: #ef4444 !important; background-color: #fef2f2; }
 .error-msg { color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 6px; }
 
 /* Radio Button Custom */
-.radio-group { display: flex; gap: 24px; align-items: center; height: 44px;}
-.radio-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px; font-weight: 500;}
+.radio-group { display: flex; gap: 30px; align-items: center; height: 44px;}
+.radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; font-weight: 500; color: #334155;}
 .radio-label input { display: none; }
-.radio-custom { width: 20px; height: 20px; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+.radio-custom { width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
 .radio-label input:checked + .radio-custom { border-color: #63391F; }
-.radio-label input:checked + .radio-custom::after { content: ''; width: 10px; height: 10px; background: #63391F; border-radius: 50%; }
+.radio-label input:checked + .radio-custom::after { content: ''; width: 12px; height: 12px; background: #63391F; border-radius: 50%; }
 
 .address-box {
-  flex-direction: row;
-  background: #f9fafb;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   line-height: 1.5;
-  align-items: flex-start;
-  max-width: 400px;
+  max-width: 600px;
+  color: #475569;
+  font-weight: 500;
+  font-size: 14px;
 }
-.icon-location { width: 18px; height: 18px; color: #63391F; margin-top: 2px; flex-shrink: 0; }
+.icon-location { width: 20px; height: 20px; color: #63391F; flex-shrink: 0; }
 
-.form-actions { display: flex; gap: 16px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f3f4f6;}
-.btn-cancel { padding: 0 24px; height: 44px; border: 1px solid transparent; background: #f3f4f6; color: #4b5563; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
-.btn-cancel:hover { background: #e5e7eb; color: #111827;}
+.form-actions { 
+  display: flex; 
+  justify-content: flex-start; /* Đẩy sát lề form */
+  padding-left: 200px; /* Thụt vào bằng với nhãn info-label */
+  gap: 16px; 
+  margin-top: 30px; 
+  padding-top: 30px; 
+  border-top: 1px solid #f1f5f9;
+}
+.btn-cancel { 
+  padding: 0 24px; height: 46px; 
+  border: 1px solid transparent; background: #f1f5f9; color: #475569; 
+  border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; 
+}
+.btn-cancel:hover { background: #e2e8f0; color: #0f172a;}
+
+.btn-save { 
+  padding: 0 32px; height: 46px; 
+  border: none; background: #63391F; color: #fff; 
+  border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; 
+}
+.btn-save:hover:not(:disabled) { background: #4e2c17; box-shadow: 0 4px 12px rgba(99, 57, 31, 0.2); }
+.btn-save:disabled { opacity: 0.7; cursor: not-allowed; }
 
 /* ================== TRẠNG THÁI LOADING ================== */
-.loading-state { text-align: center; padding: 80px 0; color: #6b7280; }
-.spinner { border: 3px solid #f3f4f6; border-top: 3px solid #63391F; border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+.loading-state { text-align: center; padding: 80px 0; color: #64748b; }
+.spinner { border: 3px solid #f1f5f9; border-top: 3px solid #63391F; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* ================= TOAST MỚI ================= */
 .toast-notification {
-  position: fixed;
-  top: 30px;
-  right: 30px;
-  z-index: 10001;
-  min-width: 300px;
-  padding: 16px 24px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  position: fixed; top: 30px; right: 30px; z-index: 10001; min-width: 300px; padding: 16px 24px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
 }
 .toast-notification.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
 .toast-notification.error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
@@ -681,19 +729,18 @@ onMounted(() => {
 .toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
 
 /* ================== RESPONSIVE ================== */
-@media (max-width: 900px) {
-  .profile-content { flex-direction: column; align-items: center; gap: 30px; }
-  .profile-avatar-section { width: 100%; border-right: none; border-bottom: 1px dashed #e5e7eb; padding-right: 0; padding-bottom: 30px; }
-  .info-row { flex-direction: column; gap: 4px; }
-  .info-label { width: 100%; padding-top: 0;}
-  .form-input { max-width: 100%; }
-  .address-box { max-width: 100%; }
+@media (max-width: 992px) {
+  .info-row { grid-template-columns: 150px 1fr; }
+  .form-actions { padding-left: 150px; }
 }
 @media (max-width: 768px) {
   .main-layout { flex-direction: column; }
-  .address-header { flex-direction: column; align-items: flex-start; gap: 15px; padding: 24px;}
+  .card-header-custom { flex-direction: column; align-items: center; gap: 20px; padding: 24px;}
+  .header-left { flex-direction: column; text-align: center; width: 100%;}
   .card-body { padding: 24px; }
-  .btn-brand, .btn-cancel { width: 100%; justify-content: center;}
-  .form-actions { flex-direction: column; }
+  .info-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px 0; min-height: auto;}
+  .form-input, .address-box { max-width: 100%; }
+  .form-actions { padding-left: 0; flex-direction: column; }
+  .btn-brand, .btn-cancel, .btn-save { width: 100%; justify-content: center; margin-top: 0;}
 }
 </style>

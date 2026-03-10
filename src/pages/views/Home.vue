@@ -1056,7 +1056,7 @@ onBeforeUnmount(() => {
   padding: 80px 4%;
   max-width: 1536px;
   margin: 0 auto;
-  width: 100%;
+
 }
 
 .bg-sale {

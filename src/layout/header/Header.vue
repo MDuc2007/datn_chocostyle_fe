@@ -98,12 +98,16 @@ const updateCartTotal = () => {
   cartTotal.value = cart.reduce((sum, item) => sum + item.soLuong, 0);
 };
 
+// 👉 ĐÃ SỬA LẠI HÀM LẤY ẢNH CHUẨN BASE64 HOẶC GOOGLE LINK
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  if (imagePath.startsWith("http")) {
-    return imagePath;
+  // Nếu là ảnh lấy từ Google hoặc đã lưu dạng Base64
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:image")) {
+    return imagePath; 
   }
-  return `http://localhost:8080/images/${imagePath}`;
+  // Fallback nếu lưu tên file thông thường
+  const timestamp = new Date().getTime();
+  return `http://localhost:8080/images/${imagePath}?t=${timestamp}`;
 };
 
 const checkLoginStatus = async () => {
@@ -221,6 +225,7 @@ onMounted(() => {
 
   window.addEventListener("cartUpdated", updateCartTotal);
   window.addEventListener("userLoggedIn", checkLoginStatus);
+  window.addEventListener("userUpdated", checkLoginStatus); // Nghe sự kiện update ảnh
   document.addEventListener("click", handleClickOutside);
   window.addEventListener("scroll", handleScroll); 
 });
@@ -228,6 +233,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener("cartUpdated", updateCartTotal);
   window.removeEventListener("userLoggedIn", checkLoginStatus);
+  window.removeEventListener("userUpdated", checkLoginStatus);
   document.removeEventListener("click", handleClickOutside);
   window.removeEventListener("scroll", handleScroll); 
 });
@@ -237,10 +243,6 @@ onBeforeUnmount(() => {
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
 /* ================= THIẾT LẬP HEADER CỐ ĐỊNH ================= */
-/* BẢN SỬA LỖI TRÔI HEADER: 
-  Sử dụng position: fixed để ép nó ghim lên cùng màn hình, 
-  không phụ thuộc vào parent có bị overflow hay không.
-*/
 .header {
   position: fixed;
   top: 0;
@@ -256,8 +258,6 @@ onBeforeUnmount(() => {
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Do dùng position: fixed, ta cần 1 cái div giả lót ở dưới 
-   để nội dung trang web không bị chui tuột vào trong Header lúc đầu */
 .header-placeholder {
   height: 80px; 
   width: 100%;
