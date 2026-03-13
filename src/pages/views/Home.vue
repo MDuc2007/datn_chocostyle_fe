@@ -59,7 +59,6 @@
       </div>
 
       <div v-else-if="errorMsg" class="error-state">
-        <div class="error-icon">⚠️</div>
         <p>{{ errorMsg }}</p>
         <button @click="fetchData" class="btn-retry">Tải lại trang</button>
       </div>
@@ -410,9 +409,9 @@
     <transition name="toast-slide">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <div class="toast-icon">
-          <span v-if="toast.type === 'success'">✓</span>
-          <span v-else-if="toast.type === 'error'">✕</span>
-          <span v-else>!</span>
+          <span v-if="toast.type === 'success'"></span>
+          <span v-else-if="toast.type === 'error'"></span>
+          <span v-else></span>
         </div>
         <div class="toast-content">{{ toast.message }}</div>
       </div>
@@ -938,7 +937,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
 });
 </script>
-
 <style scoped>
 /* Import Phông chữ cao cấp */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
@@ -1058,7 +1056,7 @@ onBeforeUnmount(() => {
   padding: 80px 4%;
   max-width: 1536px;
   margin: 0 auto;
-  width: 100%;
+
 }
 
 .bg-sale {
@@ -1467,7 +1465,7 @@ onBeforeUnmount(() => {
   transform: translateY(-2px);
 }
 
-/* ================= TOAST ================= */
+/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) KHÔNG ICON ================= */
 .toast-notification {
   position: fixed;
   top: 30px;
@@ -1475,51 +1473,34 @@ onBeforeUnmount(() => {
   z-index: 10001;
   min-width: 300px;
   padding: 18px 24px;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-left: 5px solid #22c55e;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.toast-notification.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
 .toast-notification.error {
-  border-left-color: #ef4444;
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
 .toast-notification.warning {
-  border-left-color: #f59e0b;
-}
-
-.toast-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.success .toast-icon {
-  background: #22c55e;
-}
-
-.error .toast-icon {
-  background: #ef4444;
-}
-
-.warning .toast-icon {
-  background: #f59e0b;
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
 .toast-content {
-  margin-left: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: inherit;
   font-size: 15px;
 }
 

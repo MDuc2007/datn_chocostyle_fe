@@ -38,10 +38,21 @@
           <div v-if="msg.senderType != 'KHACH_HANG'" class="sender-name">
             {{ msg.senderName }}
           </div>
-          <div class="content">{{ msg.content }}</div>
+          <div class="content" v-html="msg.content"></div>
           <div class="time">{{ formatTime(msg.sentAt) }}</div>
         </div>
       </div>
+    </div>
+
+    <div v-if="chatStatus === 'BOT'" class="suggestions">
+      <button
+        v-for="(q, index) in suggestedQuestions"
+        :key="index"
+        class="suggestion-btn"
+        @click="selectSuggestion(q)"
+      >
+        {{ q }}
+      </button>
     </div>
 
     <div class="input-area">
@@ -95,6 +106,19 @@ const headerStatusText = computed(() => {
   if (chatStatus.value === "WAITING") return "Đang chờ nhân viên...";
   return assignedNhanVien.value || "Nhân viên đang hỗ trợ";
 });
+
+const suggestedQuestions = [
+  "Shop có những sản phẩm gì?",
+  "Áo khoác size L",
+  "Áo khoác dưới 500k",
+  "Áo khoác đang giảm giá",
+  "Shop có voucher không?",
+];
+
+const selectSuggestion = (q) => {
+  newMessage.value = q;
+  sendMessage();
+};
 
 const formatTime = (time) =>
   time
@@ -157,6 +181,7 @@ const connectAndSubscribe = (id) => {
         messages.value.push(incoming);
         lastActivity.value = Date.now();
         lastActivity.value = Date.now();
+        lastActivity.value = Date.now();
         scrollToBottom();
       },
     );
@@ -165,12 +190,16 @@ const connectAndSubscribe = (id) => {
 
 const requestStaff = async () => {
   try {
+    // 🔴 Xóa tin nhắn "Đang xử lý..." của AI nếu khách ấn chuyển nhân viên ngay lúc AI đang load
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/request-staff`,
     );
     chatStatus.value = "WAITING";
 
-    // Gửi tin nhắn thông báo chờ giả lập lên màn hình khách hàng
     messages.value.push({
       id: Date.now(),
       senderType: "SYSTEM",
@@ -181,6 +210,69 @@ const requestStaff = async () => {
     scrollToBottom();
   } catch (error) {
     console.error("Lỗi khi gọi nhân viên:", error);
+  }
+};
+
+const callAI = async (content) => {
+  lastActivity.value = Date.now();
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+  messages.value.push({
+    id: "loading-" + Date.now(),
+    senderType: "AI",
+    senderName: "ChocoBot",
+    content: "Đang xử lý...",
+    sentAt: new Date(),
+  });
+  scrollToBottom();
+
+  try {
+    const res = await axios.post("http://localhost:8080/api/chat", {
+      message: content,
+      conversationId: conversationId.value,
+      senderId: senderId.value,
+    });
+
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
+    // 🔴 FIX 2: Nếu khách đã chuyển sang ĐỢI NHÂN VIÊN thì BỎ QUA tin nhắn của AI trả về
+    if (chatStatus.value !== "BOT") return;
+
+    // 🔴 Tự động chuyển nhân viên nếu AI không giải quyết được
+    if (res.data.reply === "CHUYEN_NHAN_VIEN") {
+      requestStaff();
+      return;
+    }
+
+    messages.value.push({
+      id: Date.now(),
+      senderType: "AI",
+      senderName: "ChocoBot",
+      content: res.data.reply,
+      sentAt: new Date(),
+    });
+    scrollToBottom();
+  } catch (e) {
+    messages.value = messages.value.filter(
+      (m) => !String(m.id).startsWith("loading"),
+    );
+
+    // Chỉ báo lỗi nếu khách vẫn đang chat với BOT
+    if (chatStatus.value === "BOT") {
+      messages.value.push({
+        id: Date.now(),
+        senderType: "SYSTEM",
+        senderName: "Hệ thống",
+        content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
+        sentAt: new Date(),
+      });
+      scrollToBottom();
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -245,6 +337,24 @@ onMounted(async () => {
       scrollToBottom();
     }
   }, 60000);
+  setInterval(() => {
+    const now = Date.now();
+
+    if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
+      messages.value.push({
+        id: Date.now(),
+        senderType: "SYSTEM",
+        senderName: "Hệ thống",
+        content:
+          "Phiên chat đã tạm dừng do không có tương tác. Anh/chị có thể tiếp tục nhắn tin bất cứ lúc nào.",
+        sentAt: new Date(),
+      });
+
+      conversationId.value = null;
+
+      scrollToBottom();
+    }
+  }, 60000);
 });
 
 const sendMessage = async () => {
@@ -285,56 +395,6 @@ const attemptSend = (content) => {
     );
   } else {
     setTimeout(() => attemptSend(content), 200);
-  }
-};
-
-const callAI = async (content) => {
-  lastActivity.value = Date.now();
-  if (isLoading.value) return;
-  isLoading.value = true;
-
-  messages.value.push({
-    id: "loading-" + Date.now(),
-    senderType: "AI",
-    senderName: "ChocoBot",
-    content: "Đang xử lý...",
-    sentAt: new Date(),
-  });
-  scrollToBottom();
-
-  try {
-    const res = await axios.post("http://localhost:8080/api/chat", {
-      message: content,
-      conversationId: conversationId.value,
-      senderId: senderId.value,
-    });
-
-    messages.value = messages.value.filter(
-      (m) => !String(m.id).startsWith("loading"),
-    );
-
-    messages.value.push({
-      id: Date.now(),
-      senderType: "AI",
-      senderName: "ChocoBot",
-      content: res.data.reply,
-      sentAt: new Date(),
-    });
-    scrollToBottom();
-  } catch (e) {
-    messages.value = messages.value.filter(
-      (m) => !String(m.id).startsWith("loading"),
-    );
-    messages.value.push({
-      id: Date.now(),
-      senderType: "SYSTEM",
-      senderName: "Hệ thống",
-      content: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
-      sentAt: new Date(),
-    });
-    scrollToBottom();
-  } finally {
-    isLoading.value = false;
   }
 };
 </script>
@@ -503,5 +563,48 @@ const callAI = async (content) => {
 }
 .send-btn:disabled {
   color: #ccc;
+}
+
+.suggestions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid #eee;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.suggestions::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 30px;
+  background: linear-gradient(to right, transparent, #fff);
+  pointer-events: none;
+}
+
+.suggestions::-webkit-scrollbar {
+  display: none;
+}
+
+.suggestion-btn {
+  background: #f1f3f5;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+
+  flex-shrink: 0;
+}
+
+.suggestion-btn:hover {
+  background: #e0e0e0;
 }
 </style>

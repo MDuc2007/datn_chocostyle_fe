@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, reactive, computed } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -136,10 +136,16 @@ const getUserInitial = (name) => {
   return words[words.length - 1].charAt(0).toUpperCase();
 };
 
+// 👉 ĐÃ SỬA LẠI HÀM LẤY ẢNH CHUẨN BASE64 HOẶC GOOGLE LINK
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  if (imagePath.startsWith("http")) return imagePath;
-  return `http://localhost:8080/images/${imagePath}`;
+  // Nếu là ảnh lấy từ Google hoặc đã lưu dạng Base64
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:image")) {
+    return imagePath; 
+  }
+  // Fallback nếu lưu tên file thông thường
+  const timestamp = new Date().getTime();
+  return `http://localhost:8080/images/${imagePath}?t=${timestamp}`;
 };
 
 const handleAvatarError = (e) => {
@@ -153,8 +159,14 @@ const loadCurrentUser = () => {
   }
 };
 
+// Lắng nghe sự kiện khi ở trang Profile đổi ảnh, Sidebar cũng tự động đổi theo
 onMounted(() => {
   loadCurrentUser();
+  window.addEventListener('userUpdated', loadCurrentUser);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('userUpdated', loadCurrentUser);
 });
 </script>
 

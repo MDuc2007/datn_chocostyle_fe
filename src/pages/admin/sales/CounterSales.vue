@@ -115,8 +115,8 @@
                 <div v-if="item.priceChanged" class="price-change-note">
                   Giá gốc đã thay đổi:
                   <div>
-                  {{ formatPrice(item.oldPriceBeforeChange) }} →
-                  {{ formatPrice(item.newPriceAfterChange) }}
+                    {{ formatPrice(item.oldPriceBeforeChange) }} →
+                    {{ formatPrice(item.newPriceAfterChange) }}
                   </div>
                 </div>
               </div>
@@ -1677,17 +1677,20 @@ const increaseQty = async (item) => {
       return;
     }
 
-    if (latest.oldPrice !== item.originalPrice) {
+    if (
+      latest.oldPrice !== item.originalPrice ||
+      latest.discountPercent !== item.originalDiscount
+    ) {
       item.priceChanged = true;
-
-      item.oldPriceBeforeChange = item.originalPrice;
-      item.newPriceAfterChange = latest.oldPrice;
 
       item.oldDiscountPrice =
         item.originalPrice - (item.originalPrice * item.originalDiscount) / 100;
 
       item.newDiscountPrice =
         latest.oldPrice - (latest.oldPrice * latest.discountPercent) / 100;
+
+      item.oldPriceBeforeChange = Math.round(item.oldDiscountPrice);
+      item.newPriceAfterChange = Math.round(item.newDiscountPrice);
 
       await axios.put(
         "http://localhost:8080/api/hoa-don/tam-thoi-ton-kho",
@@ -2269,11 +2272,11 @@ const revalidateCartPrice = async () => {
         hasChanged = true;
         return;
       }
-      if (latest.oldPrice !== item.originalPrice) {
+      if (
+        latest.oldPrice !== item.originalPrice ||
+        latest.discountPercent !== item.originalDiscount
+      ) {
         item.priceChanged = true;
-
-        item.oldPriceBeforeChange = item.originalPrice;
-        item.newPriceAfterChange = latest.oldPrice;
 
         item.oldDiscountPrice =
           item.originalPrice -
@@ -2281,6 +2284,9 @@ const revalidateCartPrice = async () => {
 
         item.newDiscountPrice =
           latest.oldPrice - (latest.oldPrice * latest.discountPercent) / 100;
+
+        item.oldPriceBeforeChange = Math.round(item.oldDiscountPrice);
+        item.newPriceAfterChange = Math.round(item.newDiscountPrice);
 
         hasChanged = true;
       }

@@ -400,7 +400,6 @@ const showToast = (msg, type = "success") => {
   setTimeout(() => (toast.value.show = false), 3000);
 };
 </script>
-
 <style scoped>
 /* ================= RESET & CƠ BẢN ================= */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
@@ -1040,27 +1039,39 @@ const showToast = (msg, type = "success") => {
   opacity: 0;
 }
 
-/* Toast */
+/* ================= TOAST NOTIFICATION CSS MỚI ================= */
 .toast-notification {
   position: fixed;
   top: 30px;
   right: 30px;
   z-index: 10001;
-  background: #FFFFFF;
-  color: #333;
   padding: 16px 24px;
   border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border-left: 5px solid #22C55E;
+  display: flex;
+  align-items: center;
+  min-width: 250px;
+}
+
+/* Mặc định success nếu bạn để type="success" */
+.toast-notification.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
 .toast-notification.warning {
-  border-left-color: #f59e0b;
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
+
 .toast-notification.error {
-  border-left-color: #d32f2f;
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
 /* Responsive */
