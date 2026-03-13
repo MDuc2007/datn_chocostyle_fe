@@ -1861,6 +1861,12 @@ watch(
   border-bottom: 2px solid #e2e8f0;
 }
 
+.modern-table th:last-child,
+.modern-table td:last-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
 .modern-table td {
   padding: 16px;
   border-bottom: 1px solid #f1f5f9;
