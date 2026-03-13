@@ -21,6 +21,12 @@
               <span class="label">Ca làm việc:</span> 
               <span class="value">{{ caHomNay ? caHomNay.caLamViec.tenCa : 'Không có ca' }}</span>
             </p>
+            
+            <p v-if="chamCong && !chamCong.gioCheckOut">
+              <span class="label">Người mở ca:</span> 
+              <span class="value highlight"><strong>{{ chamCong.tenNguoiMoCa }}</strong></span>
+            </p>
+
             <p>
               <span class="label">Mở lúc:</span> 
               <span class="value">
@@ -80,7 +86,7 @@
             <h3 class="box-title">Nhập tiền thực tế (kết toán)</h3>
             
             <div class="form-group">
-              <label>Tiền mặt</label>
+              <label>Tiền mặt tại két</label>
               <div class="input-wrapper">
                 <input 
                   type="text" 
@@ -96,7 +102,7 @@
             </div>
 
             <div class="form-group">
-              <label>Chuyển khoản</label>
+              <label>Chuyển khoản / Quẹt thẻ</label>
               <div class="input-wrapper">
                 <input 
                   type="text" 
@@ -109,6 +115,16 @@
                 />
                 <span class="currency">VND</span>
               </div>
+            </div>
+
+            <div class="form-group" v-if="!isViewOnly">
+              <label>Ghi chú kết toán (Tùy chọn)</label>
+              <textarea 
+                v-model="ghiChu" 
+                class="custom-input" 
+                placeholder="Nhập lý do chênh lệch (nếu có)..."
+                style="height: 80px; resize: none; padding-right: 15px !important;"
+              ></textarea>
             </div>
 
             <p class="warning-text" v-if="isViewOnly">
@@ -133,6 +149,7 @@
         <button 
           v-else
           class="btn-primary hover-effect" 
+          style="background-color: #dc2626;"
           @click="handleCheckout"
           :disabled="isViewOnly || isLoading"
         >
@@ -181,7 +198,6 @@ import axios from 'axios'
 // ==========================================
 // HÀM HELPER FORMAT TIỀN TỆ VND
 // ==========================================
-// Format số thành chuỗi VND có dấu chấm phân cách
 const formatVND = (value: number | string): string => {
   if (!value && value !== 0) return '';
   const numStr = typeof value === 'string' ? value.replace(/[^0-9]/g, '') : String(value);
@@ -189,32 +205,24 @@ const formatVND = (value: number | string): string => {
   return num.toLocaleString('vi-VN');
 };
 
-// Lọc bỏ ký tự không phải số
 const filterNumbers = (value: string) => {
   return value.replace(/[^0-9]/g, '');
 };
 
-// Xử lý input: chỉ cho phép nhập số và tự động format
-// refName là tên của ref dưới dạng chuỗi để truy cập qua object
 const handleMoneyInput = (event: Event, refName: string) => {
   const target = event.target as HTMLInputElement;
   let value = target.value;
-  // Lọc bỏ các ký tự không phải số
   value = filterNumbers(value);
-  // Chuyển sang số và lưu vào ref tương ứng
   const numValue = value ? parseInt(value) : 0;
   
-  // Cập nhật giá trị theo tên ref
   if (refName === 'cashInAmount') cashInAmount.value = numValue;
   else if (refName === 'transferInAmount') transferInAmount.value = numValue;
   else if (refName === 'cashAmount') cashAmount.value = numValue;
   else if (refName === 'transferAmount') transferAmount.value = numValue;
   
-  // Cập nhật giá trị hiển thị với format VND
   target.value = formatVND(value);
 };
 
-// Format giá trị để hiển thị (dùng cho v-model)
 const formatDisplayValue = (value: number) => {
   if (!value && value !== 0) return '';
   return formatVND(value);
@@ -231,6 +239,7 @@ const transferInAmount = ref(0)
 // Biến lưu trữ giá trị nhập vào (KẾT TOÁN / ĐÓNG CA)
 const cashAmount = ref(0)
 const transferAmount = ref(0)
+const ghiChu = ref('') // 👉 BIẾN GHI CHÚ MỚI
 
 // Biến lưu dữ liệu từ API
 const caHomNay = ref<any>(null)
@@ -263,7 +272,7 @@ const executeModalAction = async () => {
   }
 }
 
-// TÍNH TOÁN: Trạng thái khóa/mở giao diện (Cho form Kết toán)
+// TÍNH TOÁN: Trạng thái khóa/mở giao diện
 const isViewOnly = computed(() => {
   if (!caHomNay.value) return true; // Không có ca hôm nay
   if (!chamCong.value) return true; // Có ca nhưng chưa bấm Mở ca
@@ -329,7 +338,7 @@ const handleCheckout = () => {
     modal.value = {
       show: true,
       title: 'Chưa nhập tiền!',
-      message: "Bạn chưa nhập số tiền kết toán. Bạn có chắc chắn muốn kết thúc ca không?",
+      message: "Bạn chưa nhập số tiền thực tế trong két. Bạn có chắc chắn muốn kết thúc ca (doanh thu gộp) không?",
       action: 'CHECKOUT'
     };
     return;
@@ -342,11 +351,13 @@ const handleCheckout = () => {
 const processCheckout = async () => {
   isLoading.value = true;
   try {
+    // 👉 TRUYỀN THÊM TRƯỜNG ghiChu VÀO ĐÂY
     await axios.post(
       `http://localhost:8080/api/cham-cong/check-out/${idNv}`,
       {
         tienMatCuoiCa: cashAmount.value,
-        tienChuyenKhoanCuoiCa: transferAmount.value
+        tienChuyenKhoanCuoiCa: transferAmount.value,
+        ghiChu: ghiChu.value
       },
       { headers }
     );
@@ -356,7 +367,7 @@ const processCheckout = async () => {
 
   } catch (error: any) {
     console.error("Lỗi đóng ca:", error);
-    showToast(error.response?.data || "Chưa đến giờ kết thúc ca!", 'error');
+    showToast(error.response?.data || "Lỗi đóng ca!", 'error');
   } finally {
     isLoading.value = false;
   }
@@ -369,12 +380,22 @@ onMounted(async () => {
   try {
     // 1. Gọi API lấy thông tin ca
     const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers })
-    caHomNay.value = resCa.data
+    
+    // Fix logic lấy ca giống bên Dashboard để an toàn
+    if (resCa.data && Array.isArray(resCa.data) && resCa.data.length > 0) {
+        caHomNay.value = resCa.data[0];
+    } else if (resCa.data && resCa.data.caLamViec) {
+        caHomNay.value = resCa.data;
+    }
 
     // 2. Gọi API lấy trạng thái chấm công
     try {
       const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers })
-      chamCong.value = resChamCong.data
+      if (resChamCong.data && resChamCong.data !== "") {
+          chamCong.value = resChamCong.data
+      } else {
+          chamCong.value = null
+      }
     } catch (err) {
       chamCong.value = null // Chưa chấm công
     }
@@ -550,19 +571,19 @@ onUnmounted(() => {
 .custom-input {
   width: 100%;
   background-color: var(--white-color) !important;
-  border: 1px solid #9ca3af !important; /* Đổi sang màu xám đậm hơn và ép cứng viền */
+  border: 1px solid #9ca3af !important; 
   padding: 12px 45px 12px 15px !important; 
   border-radius: 8px !important;
   font-size: 15px;
   color: var(--text-main);
   box-sizing: border-box !important;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important; /* Thêm bóng đổ chìm */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important; 
 }
 
 .custom-input:focus:not(:disabled) {
   outline: none !important;
-  border-color: var(--primary-color) !important; /* Chuyển sang màu nâu đậm khi click vào */
+  border-color: var(--primary-color) !important; 
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15) !important; 
 }
 
