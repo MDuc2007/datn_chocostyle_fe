@@ -147,19 +147,24 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // Check Logic thời gian
-  if (form.gioBatDau && form.gioKetThuc) {
-    const startMins = timeToMinutes(form.gioBatDau);
-    const endMins = timeToMinutes(form.gioKetThuc);
-    const duration = endMins - startMins;
+  // Check Logic thời gian (Đã hỗ trợ Ca đêm)
+    if (form.gioBatDau && form.gioKetThuc) {
+      const startMins = timeToMinutes(form.gioBatDau);
+      const endMins = timeToMinutes(form.gioKetThuc);
+      
+      // Tính thời lượng ca làm việc
+      let duration = endMins - startMins;
+      
+      // Nếu thời lượng <= 0, nghĩa là ca làm việc vắt qua ngày hôm sau (Ca đêm)
+      if (duration <= 0) {
+        duration += 24 * 60; // Cộng thêm 24 giờ (1440 phút)
+      }
 
-    if (startMins >= endMins) {
-      errors.gioKetThuc = "Giờ kết thúc phải sau giờ bắt đầu";
-      isValid = false;
-    } else if (duration < 30) {
-      errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
-      isValid = false;
-    }
+      // Chỉ kiểm tra thời lượng tối thiểu 30 phút (Xóa bỏ việc chặn giờ kết thúc < giờ bắt đầu)
+      if (duration < 30) {
+        errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
+        isValid = false;
+      }
 
     // Check trùng khung giờ (Frontend bắt trên page hiện tại)
     if (isValid) {
