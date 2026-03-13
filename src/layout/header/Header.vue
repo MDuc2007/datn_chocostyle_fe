@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px); /* Hỗ trợ Safari */
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 10000; /* Đẩy index lên cực đại để đè lên mọi element */
+  z-index: 9999; /* Đẩy index lên cực đại để đè lên mọi element */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   font-family: 'Nunito', sans-serif;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);

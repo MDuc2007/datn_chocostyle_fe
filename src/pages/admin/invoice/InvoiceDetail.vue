@@ -328,7 +328,7 @@
         v-if="invoice.trangThai === 5"
       >
         <h3>❌ Đơn hàng đã bị hủy</h3>
-        <p>Lý do: {{ invoice.ghiChu || "Không có lý do cụ thể" }}</p>
+        <p>Lý do: {{ lyDoHuy }}</p>
       </div>
 
       <div class="card product-card no-print">
@@ -345,7 +345,9 @@
             <thead>
               <tr>
                 <th style="width: 60px">STT</th>
-                <th class="text-left-force">Sản phẩm</th>
+                <th style="text-align: left !important; padding-left: 16px">
+                  Sản phẩm
+                </th>
                 <th>Phân loại hàng</th>
                 <th>Đơn giá</th>
                 <th>Số lượng</th>
@@ -355,12 +357,16 @@
             <tbody>
               <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
                 <td class="index-cell">{{ index + 1 }}</td>
-                <td class="text-left-force">
-                  <div class="product-cell">
-                    <div class="product-thumb"></div>
-                    <div class="product-info-text">
-                      <div class="product-name">{{ p.tenSanPham }}</div>
-                    </div>
+                <td style="text-align: left !important; padding-left: 16px">
+                  <div class="product-info-cell">
+                    <img
+                      v-if="p.hinhAnh"
+                      :src="p.hinhAnh"
+                      alt="Ảnh SP"
+                      class="product-img-thumb"
+                    />
+                    <div v-else class="product-img-placeholder">No image</div>
+                    <span class="product-name">{{ p.tenSanPham }}</span>
                   </div>
                 </td>
                 <td>
@@ -565,6 +571,7 @@ interface InvoiceProduct {
   soLuong: number;
   donGia: number;
   thanhTien: number;
+  hinhAnh?: string;
 }
 interface InvoiceHistory {
   trangThai: number;
@@ -602,6 +609,21 @@ interface InvoiceDetail {
   thanhToanList: InvoicePayment[];
 }
 
+// Lấy lý do hủy đơn từ Lịch sử hóa đơn - [ĐÃ FIX LỖI "Thanh toán tiền mặt"]
+const lyDoHuy = computed(() => {
+  if (!invoice.value || invoice.value.trangThai !== 5)
+    return "Không có lý do cụ thể";
+
+  const logHuy = invoice.value.lichSuList?.find((log) => log.trangThai === 5);
+
+  if (logHuy && logHuy.ghiChu && logHuy.ghiChu.trim() !== "") {
+    return logHuy.ghiChu;
+  }
+
+  // KHÔNG fallback về invoice.value.ghiChu nữa để không lấy nhầm phương thức thanh toán
+  return "Không có lý do cụ thể";
+});
+
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
@@ -614,7 +636,6 @@ const modal = reactive({
   note: "",
 });
 
-// Toast state (Đã cập nhật type)
 const toast = reactive({ show: false, message: "", type: "success" });
 const showHistoryLog = ref(false);
 
@@ -785,7 +806,6 @@ const getConfirmButtonClass = (type: string) => {
   return "btn-primary-modern";
 };
 
-// Hàm show Toast MỚI
 const showToast = (message: string, type: "success" | "error" = "success") => {
   toast.message = message;
   toast.type = type;
@@ -947,7 +967,15 @@ const executeUpdate = async (status: number, note: string) => {
         ghiChu: note,
       },
     );
-    showToast("Giao hàng thành công!", "success");
+
+    let successMsg = "Cập nhật trạng thái thành công!";
+    if (status === 5) {
+      successMsg = "Đã hủy đơn hàng thành công!";
+    } else if (status === 4) {
+      successMsg = "Giao hàng thành công!";
+    }
+    showToast(successMsg, "success");
+
     await fetchDetail();
     if (status === 1 || status === 4) {
       setTimeout(() => {
@@ -1011,7 +1039,6 @@ onMounted(() => {
   color: #2c3e50;
 }
 
-/* THÊM MỚI: FLEX HEADER CHO LỊCH SỬ THANH TOÁN ĐỂ ĐẶT NÚT Ở BÊN PHẢI */
 .card-header-flex {
   display: flex;
   justify-content: space-between;
@@ -1034,7 +1061,6 @@ onMounted(() => {
   margin: 0 !important;
 }
 
-/* THÊM MỚI: GIAO DIỆN MODAL NHẬP TIỀN GIỐNG MẪU ẢNH */
 .payment-ui-container {
   margin-bottom: 20px;
   text-align: left;
@@ -1101,7 +1127,6 @@ onMounted(() => {
   background-color: #63402e;
 }
 
-/* HEADER CŨ */
 .detail-header {
   display: flex;
   justify-content: space-between;
@@ -1133,7 +1158,6 @@ onMounted(() => {
   background: #dee2e6;
 }
 
-/* DASHBOARD STATS */
 .dashboard-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1199,7 +1223,6 @@ onMounted(() => {
   font-size: 18px;
 }
 
-/* DASHBOARD INFO GRID */
 .dashboard-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1382,7 +1405,6 @@ onMounted(() => {
   color: #1e293b;
 }
 
-/* BUTTONS & TIMELINE */
 .action-bar-bottom {
   display: flex;
   justify-content: space-between;
@@ -1457,7 +1479,6 @@ onMounted(() => {
   color: #333;
 }
 
-/* TIMELINE */
 .timeline-section {
   padding: 40px 20px;
   background: #fff;
@@ -1551,7 +1572,6 @@ onMounted(() => {
   z-index: 1;
 }
 
-/* TABLES */
 .table-responsive {
   overflow-x: auto;
 }
@@ -1586,7 +1606,6 @@ onMounted(() => {
   text-align: right !important;
 }
 
-/* BADGES */
 .badge-type {
   background: #f3e8ff;
   color: #7e22ce;
@@ -1636,7 +1655,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* PRODUCT TABLE */
 .modern-table {
   width: 100%;
   border-collapse: separate;
@@ -1710,7 +1728,6 @@ onMounted(() => {
   font-size: 15px;
 }
 
-/* MODAL CHUNG */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1855,7 +1872,6 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
-/* LỊCH SỬ LOG MODAL */
 .modal-large {
   max-width: 850px;
   padding: 24px;
@@ -1921,7 +1937,6 @@ onMounted(() => {
   border: 1px solid #e2e8f0;
 }
 
-/* === CUSTOM TOAST THEO ẢNH YÊU CẦU === */
 .custom-toast {
   position: fixed;
   top: 30px;
@@ -1938,15 +1953,15 @@ onMounted(() => {
 }
 
 .toast-success {
-  background-color: #d1e7dd; /* Nền xanh nhạt */
-  color: #0f5132; /* Chữ xanh đậm */
-  border-left: 4px solid #198754; /* Viền trái xanh lá */
+  background-color: #d1e7dd;
+  color: #0f5132;
+  border-left: 4px solid #198754;
 }
 
 .toast-error {
-  background-color: #f8d7da; /* Nền đỏ nhạt */
-  color: #842029; /* Chữ đỏ đậm */
-  border-left: 4px solid #dc3545; /* Viền trái đỏ */
+  background-color: #f8d7da;
+  color: #842029;
+  border-left: 4px solid #dc3545;
 }
 
 @keyframes slideInRight {
@@ -1960,7 +1975,6 @@ onMounted(() => {
   }
 }
 
-/* RESPONSIVE */
 @media (max-width: 1024px) {
   .dashboard-stats-grid,
   .dashboard-info-grid {
@@ -1971,5 +1985,39 @@ onMounted(() => {
   .stepper-wrapper {
     min-width: 600px;
   }
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.product-info-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+}
+
+.product-img-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.product-img-placeholder {
+  width: 60px;
+  height: 60px;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 10px;
+  border: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
 </style>
