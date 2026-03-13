@@ -10,9 +10,16 @@
           <div class="avatar-section">
             <div class="avatar-wrapper">
               <label class="avatar-circle" :class="{'is-uploading': isUploadingAvatar}" title="Thay đổi ảnh đại diện">
-                <img v-if="userInfo.avatar" :src="userInfo.avatar" alt="Avatar" />
-                <div v-else class="placeholder-text">
-                  <i class="fa fa-user fa-2x"></i>
+                
+                <img 
+                  v-if="userInfo.avatar && !imageError" 
+                  :src="userInfo.avatar" 
+                  alt="Avatar" 
+                  @error="imageError = true" 
+                />
+                
+                <div v-else class="avatar-placeholder">
+                  {{ getInitialName(userInfo.fullName) }}
                 </div>
                 
                 <div class="avatar-overlay-edit" v-if="!isUploadingAvatar">
@@ -198,6 +205,9 @@ const countdown = ref(0);
 const toast = ref({ show: false, message: "", type: "success" });
 let timer = null;
 
+// Biến kiểm tra lỗi load ảnh
+const imageError = ref(false);
+
 // --- STATE DỮ LIỆU ---
 const userInfo = ref({
   id: null,
@@ -216,6 +226,13 @@ const passForm = ref({
   otp: ''
 });
 const errors = ref({});
+
+// Hàm lấy chữ cái đầu tiên của tên
+const getInitialName = (name) => {
+  if (!name) return "A";
+  const words = String(name).trim().split(" ");
+  return words[words.length - 1].charAt(0).toUpperCase();
+};
 
 // Hàm kiểm tra Admin để đổi màu Badge sang Đỏ
 const isAdmin = computed(() => {
@@ -264,6 +281,12 @@ onMounted(async () => {
         }
       }
 
+      // Xử lý URL ảnh nếu là đường dẫn tĩnh
+      let avatarUrl = data.avatar;
+      if (avatarUrl && !avatarUrl.startsWith("http")) {
+        avatarUrl = `http://localhost:8080/images/${avatarUrl}`;
+      }
+
       userInfo.value = {
         id: data.id,
         fullName: data.tenNhanVien || data.hoTen,
@@ -271,9 +294,12 @@ onMounted(async () => {
         phone: data.soDienThoai || data.sdt,
         gender: data.gioiTinh,
         dob: data.ngaySinh,
-        avatar: data.avatar, 
+        avatar: avatarUrl, 
         role: determinedRole 
       };
+
+      // Reset biến lỗi ảnh mỗi khi load data mới
+      imageError.value = false;
 
     } catch (error) {
       console.error("Lỗi tải thông tin:", error);
@@ -296,6 +322,7 @@ const handleAvatarUpload = async (event) => {
   const oldAvatar = userInfo.value.avatar;
   userInfo.value.avatar = URL.createObjectURL(file);
   isUploadingAvatar.value = true;
+  imageError.value = false;
 
   try {
     const token = localStorage.getItem("token");
@@ -310,7 +337,11 @@ const handleAvatarUpload = async (event) => {
     });
 
     if (res.data && res.data.avatar) {
-      userInfo.value.avatar = res.data.avatar;
+      let newAvatarUrl = res.data.avatar;
+      if (!newAvatarUrl.startsWith("http")) {
+        newAvatarUrl = `http://localhost:8080/images/${newAvatarUrl}`;
+      }
+      userInfo.value.avatar = newAvatarUrl;
     }
 
     showToast("Cập nhật ảnh đại diện thành công!", "success");
@@ -461,14 +492,40 @@ const showToast = (msg, type = "success") => {
 
 /* Thay thẻ div thành thẻ label để click được */
 .avatar-circle {
-  width: 120px; height: 120px; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; margin-bottom: 15px; position: relative; cursor: pointer; transition: 0.3s;
+  width: 130px; 
+  height: 130px; 
+  border: 4px solid #fdf8f6; 
+  box-shadow: 0 4px 15px rgba(99, 57, 31, 0.1); 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  overflow: hidden; 
+  background: #f0f0f0; 
+  margin-bottom: 15px; 
+  position: relative; 
+  cursor: pointer; 
+  transition: 0.3s;
 }
 .avatar-circle:hover:not(.is-uploading) {
   box-shadow: 0 5px 20px rgba(99, 57, 31, 0.3);
   border-color: var(--primary-brown);
 }
 .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-.placeholder-text { color: #ccc; }
+
+/* Placeholder khi không có ảnh */
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #63391F, #8b5328); /* Gradient giống theme */
+  color: #ffffff;
+  font-size: 48px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .file-input-hidden { display: none; }
 
 .avatar-overlay-edit {

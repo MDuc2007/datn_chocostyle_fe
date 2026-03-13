@@ -56,21 +56,22 @@ const closeModal = () => {
 const fetchHandovers = async () => {
   loading.value = true;
   try {
-    const params: any = {};
-    if (filters.keyword) params.keyword = filters.keyword;
-    if (filters.fromDate) params.fromDate = filters.fromDate;
-    if (filters.toDate) params.toDate = filters.toDate;
+    // Ép Frontend luôn gửi tham số lên (dù bị rỗng) để qua mặt lỗi 400 của Spring Boot
+    const params = {
+      keyword: filters.keyword || '',
+      fromDate: filters.fromDate || '',
+      toDate: filters.toDate || ''
+    };
 
     const res = await axios.get('http://localhost:8080/api/cham-cong/giao-ca', { params });
     handovers.value = res.data;
   } catch (error) {
     console.error("Lỗi lấy danh sách giao ca:", error);
-    showToast('Lỗi kết nối server', 'error');
+    showToast('Lỗi kết nối server hoặc dữ liệu', 'error');
   } finally {
     loading.value = false;
   }
 };
-
 const applyFilter = () => fetchHandovers();
 const resetFilters = () => {
   filters.keyword = ''; filters.fromDate = ''; filters.toDate = '';
@@ -131,31 +132,40 @@ onMounted(() => fetchHandovers());
           <thead>
             <tr>
               <th width="3%" class="text-center">#</th>
-              <th width="12%">Nhân viên / Ca</th>
-              <th width="15%">Thời gian</th>
-              <th width="15%">Quỹ Tiền Mặt</th>
-              <th width="15%">Quỹ Chuyển Khoản</th>
-              <th width="15%">Tổng Kết</th>
-              <th width="8%" class="text-center">Trạng thái</th>
+              <th width="12%">Ca phân công</th>
+              <th width="14%">Người chốt ca</th>
+              <th width="14%">Thời gian</th>
+              <th width="13%">Quỹ Tiền Mặt</th>
+              <th width="13%">Quỹ Chuyển Khoản</th>
+              <th width="13%">Tổng Kết</th>
+              <th width="10%" class="text-center">Trạng thái</th>
               <th width="8%" class="text-center">Chi tiết</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="8" class="text-center py-4">Đang tải dữ liệu...</td>
+              <td colspan="9" class="text-center py-4">Đang tải dữ liệu...</td>
             </tr>
             <tr v-else-if="handovers.length === 0">
-              <td colspan="8" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
+              <td colspan="9" class="text-center py-4 text-muted">Không có dữ liệu giao ca</td>
             </tr>
             <tr v-else v-for="(item, index) in handovers" :key="item.id">
               <td class="text-center" style="color: #333333">{{ index + 1 }}</td>
               <td>
-                <div style="font-weight: 500; color: #333;">{{ item.nhanVien }}</div>
+                <div style="font-weight: 500; color: #333;" title="Nhân viên được phân công">{{ item.nhanVien }}</div>
                 <div class="shift-badge" style="margin-top: 4px;">{{ item.ca }}</div>
               </td>
               <td>
-                <div style="font-size: 12px; color: #4b5563;">Mở: <span class="time-text">{{ item.thoiGianMo }}</span></div>
-                <div style="font-size: 12px; color: #4b5563; margin-top: 4px;">Đóng: <span class="time-text">{{ item.thoiGianDong }}</span></div>
+                <div style="font-size: 13px; color: #4b5563;">
+                  Mở: <span style="font-weight: 600; color: #1e293b;">{{ item.nguoiMoCa || 'Chưa xác định' }}</span>
+                </div>
+                <div style="font-size: 13px; color: #4b5563; margin-top: 4px;">
+                  Đóng: <span style="font-weight: 600; color: #1e293b;">{{ item.nguoiDongCa || 'Chưa đóng' }}</span>
+                </div>
+              </td>
+              <td>
+                <div style="font-size: 12px; color: #4b5563;">Vào: <span class="time-text">{{ item.thoiGianMo }}</span></div>
+                <div style="font-size: 12px; color: #4b5563; margin-top: 4px;">Ra: <span class="time-text">{{ item.thoiGianDong }}</span></div>
               </td>
               <td>
                 <div style="font-size: 13px; margin-bottom: 2px;">Bán: <span style="color: #000000;">{{ formatCurrency(item.doanhThuTienMat) }}</span></div>
@@ -211,10 +221,14 @@ onMounted(() => fetchHandovers());
           
           <div class="modal-body-custom">
             <div class="shift-info-grid">
-              <div class="info-item"><span>Nhân viên:</span> <strong>{{ selectedShift.nhanVien }}</strong></div>
+              <div class="info-item"><span>NV được phân công:</span> <strong>{{ selectedShift.nhanVien }}</strong></div>
               <div class="info-item"><span>Ca làm việc:</span> <strong>{{ selectedShift.ca }}</strong></div>
-              <div class="info-item"><span>Mở ca:</span> <strong>{{ selectedShift.thoiGianMo }}</strong></div>
-              <div class="info-item"><span>Đóng ca:</span> <strong :class="{'text-red-600': selectedShift.trangThai !== 1}">{{ selectedShift.trangThai === 1 ? selectedShift.thoiGianDong : 'Chưa đóng ca' }}</strong></div>
+              
+              <div class="info-item"><span>Thời gian mở ca:</span> <strong>{{ selectedShift.thoiGianMo }}</strong></div>
+              <div class="info-item"><span>Người thực hiện mở:</span> <strong class="text-blue-600">{{ selectedShift.nguoiMoCa || 'Chưa xác định' }}</strong></div>
+              
+              <div class="info-item"><span>Thời gian đóng ca:</span> <strong :class="{'text-red-600': selectedShift.trangThai !== 1}">{{ selectedShift.trangThai === 1 ? selectedShift.thoiGianDong : 'Chưa đóng ca' }}</strong></div>
+              <div class="info-item"><span>Người thực hiện đóng:</span> <strong class="text-blue-600">{{ selectedShift.nguoiDongCa || 'Chưa đóng' }}</strong></div>
             </div>
             
             <div class="stats-section">
@@ -245,7 +259,7 @@ onMounted(() => fetchHandovers());
                     <th>Bán được (B)</th>
                     <th>Lý thuyết (A + B)</th>
                     <th>Thực tế đếm (C)</th>
-                    <th>Chênh lệch (C - Lý thuyết)</th>
+                    <th>Chênh lệch (C - LT)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -373,7 +387,7 @@ onMounted(() => fetchHandovers());
    TABLE STYLES
    ========================================= */
 .table-container { width: 100%; overflow-x: auto; }
-.custom-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
+.custom-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1100px; } /* Mở rộng min-width để chứa đủ cột */
 .custom-table th { font-weight: 700; padding: 16px 12px; text-align: left; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; color: #374151; }
 .custom-table td { padding: 14px 12px; font-size: 15px; color: #000; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
 
@@ -403,7 +417,7 @@ onMounted(() => fetchHandovers());
 }
 
 .detail-modal {
-  background: #fff; width: 750px; border-radius: 12px; overflow: hidden;
+  background: #fff; width: 800px; border-radius: 12px; overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: zoomIn 0.3s ease-out;
 }
 
