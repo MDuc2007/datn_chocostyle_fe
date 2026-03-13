@@ -50,66 +50,110 @@
               />
             </div>
 
-          <div v-if="!chamCong">
-            
-            <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
-               <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
-               <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
-                 <span>💵 Tiền mặt tại két:</span> 
-                 <strong>{{ soDuCaTruoc.tienMat?.toLocaleString() || 0 }} VNĐ</strong>
-               </p>
-               <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
-                 <span>💳 Số dư chuyển khoản:</span> 
-                 <strong>{{ soDuCaTruoc.tienCk?.toLocaleString() || 0 }} VNĐ</strong>
-               </p>
+            <div v-if="!chamCong">
+              
+              <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
+                 <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
+                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                   <span>💵 Tiền mặt tại két:</span> 
+                   <strong>{{ soDuCaTruoc.tienMat?.toLocaleString() || 0 }} VNĐ</strong>
+                 </p>
+                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                   <span>💳 Số dư chuyển khoản:</span> 
+                   <strong>{{ soDuCaTruoc.tienCk?.toLocaleString() || 0 }} VNĐ</strong>
+                 </p>
+              </div>
+
+              <div class="form-group">
+                <label>Xác nhận Tiền mặt đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienMat)"
+                    @input="handleMoneyInput($event, 'tienMat')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Xác nhận Tiền tài khoản đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienTaiKhoan)"
+                    @input="handleMoneyInput($event, 'tienTaiKhoan')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
+              </div>
+
             </div>
 
-            <div class="form-group">
-              <label>Xác nhận Tiền mặt đầu ca</label>
-              <div class="input-wrapper">
-                <input
-                  type="text"
-                  :value="formatDisplayValue(form.tienMat)"
-                  @input="handleMoneyInput($event, 'tienMat')"
-                  class="form-control"
-                  placeholder="0"
-                  inputmode="numeric"
-                />
-                <span class="currency-unit">VND</span>
+            <div v-else-if="chamCong && !chamCong.gioCheckOut">
+              <div class="alert-box success" style="margin-bottom: 15px; display: block; text-align: left;">
+                <div class="status-header" style="justify-content: flex-start; margin-bottom: 10px;">
+                  <span class="alert-icon">✅</span>
+                  <p class="status-title" style="margin: 0;">Đang trong ca làm việc</p>
+                </div>
+                <p class="status-time" style="margin: 5px 0;">
+                  Ca được mở bởi: <strong>{{ chamCong.tenNguoiMoCa }}</strong>
+                </p>
+                <p class="status-time" style="margin: 5px 0;">
+                  Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
+                </p>
               </div>
-            </div>
 
-            <div class="form-group">
-              <label>Xác nhận Tiền tài khoản đầu ca</label>
-              <div class="input-wrapper">
-                <input
-                  type="text"
-                  :value="formatDisplayValue(form.tienTaiKhoan)"
-                  @input="handleMoneyInput($event, 'tienTaiKhoan')"
-                  class="form-control"
-                  placeholder="0"
-                  inputmode="numeric"
-                />
-                <span class="currency-unit">VND</span>
+              <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: left;">
+                 <p style="margin: 0; font-size: 14px; color: #9c4221; font-weight: bold;">📝 Nhập số tiền kiểm đếm cuối ca:</p>
               </div>
-            </div>
 
-          </div>
-
-            <div
-              v-else-if="chamCong && !chamCong.gioCheckOut"
-              class="alert-box success"
-            >
-              <div class="status-header">
-                <span class="alert-icon">✅</span>
-                <p class="status-title">Đang trong ca làm việc</p>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label>Két tiền mặt thực tế (Cuối ca)</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienMatCuoiCa)"
+                    @input="handleMoneyInput($event, 'tienMatCuoiCa')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
               </div>
-              <p class="status-time">
-                Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
-              </p>
-              <p class="status-note">
-                Hãy bấm kết thúc ca khi bạn làm xong nhé!
-              </p>
+
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label>Số dư chuyển khoản thực tế</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienCkCuoiCa)"
+                    @input="handleMoneyInput($event, 'tienCkCuoiCa')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label>Ghi chú (Tùy chọn)</label>
+                <textarea 
+                   v-model="form.ghiChu" 
+                   class="form-control" 
+                   placeholder="Nhập ghi chú chênh lệch nếu có..."
+                   style="height: 60px; resize: none;"
+                ></textarea>
+              </div>
+
             </div>
 
             <div v-else class="alert-box disabled-box" style="text-align: left">
@@ -300,7 +344,7 @@
           <template
             v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)"
           >
-          </template>
+            </template>
 
           <template v-else-if="ca && ca.caLamViec && !chamCong">
             <button class="btn btn-outline" @click="close">Hủy bỏ</button>
@@ -314,20 +358,14 @@
           </template>
 
           <template v-else-if="chamCong && !chamCong.gioCheckOut">
-            <button class="btn btn-outline" @click="close">Vào ca</button>
+            <button class="btn btn-outline" @click="close">Tiếp tục bán hàng</button>
 
             <button
               class="btn btn-primary btn-danger-custom"
               @click="checkOut"
-              :disabled="isLoading || isChuaHetCa"
+              :disabled="isLoading"
             >
-              {{
-                isLoading
-                  ? "Đang xử lý..."
-                  : isChuaHetCa
-                    ? "Chưa tới giờ nghỉ"
-                    : "Kết thúc ca"
-              }}
+              {{ isLoading ? "Đang xử lý..." : "Kết thúc ca" }}
             </button>
           </template>
         </div>
@@ -338,13 +376,12 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import Swal from "sweetalert2";
 
 // ==========================================
 // HÀM HELPER FORMAT TIỀN TỆ VND
 // ==========================================
-// Format số thành chuỗi VND có dấu chấm phân cách
 const formatVND = (value) => {
   if (!value && value !== 0) return '';
   const numStr = typeof value === 'string' ? value.replace(/[^0-9]/g, '') : String(value);
@@ -352,30 +389,24 @@ const formatVND = (value) => {
   return num.toLocaleString('vi-VN');
 };
 
-// Lọc bỏ ký tự không phải số
 const filterNumbers = (value) => {
   return value.replace(/[^0-9]/g, '');
 };
 
-// Xử lý input: chỉ cho phép nhập số và tự động format
 const handleMoneyInput = (event, fieldName) => {
   let value = event.target.value;
-  // Lọc bỏ các ký tự không phải số
   value = filterNumbers(value);
-  // Chuyển sang số và lưu vào form
   form.value[fieldName] = value ? parseInt(value) : 0;
-  // Cập nhật giá trị hiển thị với format VND
   event.target.value = formatVND(value);
 };
 
-// Format giá trị để hiển thị (dùng cho v-model)
 const formatDisplayValue = (value) => {
   if (!value && value !== 0) return '';
   return formatVND(value);
 };
 
 const props = defineProps(["ca", "idNv", "tenNv", "token"]);
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["close", "update:show"]);
 
 const show = ref(true);
 const isReady = ref(false);
@@ -391,15 +422,20 @@ const fetchSoDuCaTruoc = async () => {
     console.log("Lỗi lấy số dư:", e);
   }
 };
+
+// 👉 CẬP NHẬT FORM THÊM BIẾN CHO ĐÓNG CA
 const form = ref({
   tienMat: 0,
   tienTaiKhoan: 0,
+  tienMatCuoiCa: 0,
+  tienCkCuoiCa: 0,
+  ghiChu: ''
 });
+
 const handleLogout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("idNv");
-  // Chuyển hướng về login (nhớ import router nếu chưa có)
   window.location.href = "/login";
 };
 
@@ -407,6 +443,7 @@ const closeModal = () => {
   show.value = false;
   emit("update:show", false);
 };
+
 const chamCong = ref(null);
 const currentDateObj = ref(new Date());
 const currentTime = ref("");
@@ -420,26 +457,10 @@ const updateTime = () => {
     currentDateObj.value.toLocaleDateString("vi-VN");
 };
 
-const isChuaHetCa = computed(() => {
-  if (!props.ca || !props.ca.caLamViec || !props.ca.caLamViec.gioKetThuc)
-    return false;
-
-  const endTimeStr = props.ca.caLamViec.gioKetThuc;
-  const [hours, minutes] = endTimeStr.split(":");
-
-  const endTime = new Date();
-  endTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-  return currentDateObj.value.getTime() < endTime.getTime();
-});
-
 const headers = {
   Authorization: `Bearer ${props.token}`,
 };
 
-// ==========================================
-// CẤU HÌNH THIẾT KẾ CHUNG CHO SWEETALERT2
-// ==========================================
 const customSwalConfig = {
   customClass: {
     popup: "custom-swal-popup",
@@ -449,7 +470,7 @@ const customSwalConfig = {
     cancelButton: "custom-swal-cancel-btn",
     actions: "custom-swal-actions",
   },
-  buttonsStyling: false, // Tắt style mặc định để dùng CSS tự viết
+  buttonsStyling: false,
 };
 
 const checkIn = async () => {
@@ -491,8 +512,8 @@ const checkOut = async () => {
   const confirmResult = await Swal.fire({
     ...customSwalConfig,
     title: "Xác nhận kết thúc ca",
-    text: "Bạn có chắc chắn muốn kết thúc ca làm việc này không?",
-    icon: "warning", // 👉 Đổi sang icon cảnh báo (dấu chấm than)
+    text: "Hệ thống sẽ cộng gộp toàn bộ doanh thu của các nhân viên. Bạn có chắc chắn muốn kết thúc ca làm việc này không?",
+    icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Đồng ý",
     cancelButtonText: "Hủy",
@@ -502,9 +523,14 @@ const checkOut = async () => {
 
   isLoading.value = true;
   try {
+    // 👉 TRUYỀN THÊM DỮ LIỆU ĐÓNG CA VÀO ĐÂY
     await axios.post(
       `http://localhost:8080/api/cham-cong/check-out/${props.idNv}`,
-      {},
+      {
+         tienMatCuoiCa: form.value.tienMatCuoiCa,
+         tienChuyenKhoanCuoiCa: form.value.tienCkCuoiCa,
+         ghiChu: form.value.ghiChu
+      },
       { headers },
     );
     window.dispatchEvent(new CustomEvent("set-view-only", { detail: true }));
@@ -544,15 +570,9 @@ onMounted(async () => {
         { headers },
       );
       chamCong.value = res.data;
-
-      // Đã có ca nhưng ĐÃ CHẤM CÔNG (đang làm / đã nghỉ) -> Tự đóng, không làm phiền
-      if (chamCong.value) {
-      }
     } catch (err) {
       chamCong.value = null;
     }
-  } else {
-    // Không có ca -> Tự đóng, không làm phiền
   }
 
   isReady.value = true;
@@ -585,8 +605,9 @@ const close = () => {
 .modal-content {
   background-color: #ffffff;
   width: 480px;
+  max-height: 90vh; /* Chống trôi modal nếu nội dung quá dài */
+  overflow-y: auto;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
   animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -701,18 +722,6 @@ const close = () => {
   font-size: 14px;
   font-weight: 500;
   pointer-events: none;
-}
-
-.previous-balance {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: -5px;
-  margin-bottom: 10px;
-  text-align: right;
-}
-
-.previous-balance strong {
-  color: #63391f;
 }
 
 /* Thông báo trạng thái (Alert Boxes) */
@@ -844,14 +853,12 @@ div.swal2-container {
   z-index: 10000 !important;
 }
 
-/* Định dạng popup */
 .custom-swal-popup {
   border-radius: 16px !important;
   padding: 2em !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Tiêu đề */
 .custom-swal-title {
   color: #63391f !important;
   font-size: 1.25em !important;
@@ -859,13 +866,11 @@ div.swal2-container {
   margin-bottom: 10px !important;
 }
 
-/* Nội dung */
 .custom-swal-text {
   color: #666666 !important;
   font-size: 1em !important;
 }
 
-/* Vùng chứa nút bấm */
 .custom-swal-actions {
   display: flex !important;
   gap: 15px !important;
@@ -873,10 +878,9 @@ div.swal2-container {
   width: 100% !important;
 }
 
-/* Nút Đồng ý */
 .custom-swal-confirm-btn {
   flex: 1;
-  background-color: #9b7054 !important; /* Màu nâu nhạt giống thiết kế */
+  background-color: #9b7054 !important;
   color: white !important;
   border: none !important;
   border-radius: 8px !important;
@@ -888,14 +892,13 @@ div.swal2-container {
 }
 
 .custom-swal-confirm-btn:hover {
-  background-color: #63391f !important; /* Đậm hơn khi hover */
+  background-color: #63391f !important;
 }
 
-/* Nút Hủy */
 .custom-swal-cancel-btn {
   flex: 1;
-  background-color: #f3f4f6 !important; /* Nền xám nhạt */
-  color: #4b5563 !important; /* Chữ xám đậm */
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
   border: none !important;
   border-radius: 8px !important;
   padding: 12px 24px !important;
