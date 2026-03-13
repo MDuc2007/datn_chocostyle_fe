@@ -90,8 +90,8 @@ const orderStats = ref({
   cancelled: 2
 });
 
-const idNv = localStorage.getItem("idNv");
-const token = localStorage.getItem("token");
+const idNv = localStorage.getItem("idNv") || JSON.parse(localStorage.getItem("user") || "{}").id;
+const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user") || "{}").accessToken;
 const tenNv = localStorage.getItem("tenNv");
 
 const ca = ref(null);
@@ -102,26 +102,56 @@ const headers = {
 };
 
 onMounted(async () => {
-  const idNv = localStorage.getItem("idNv");
-  if (!idNv) return; // Tránh lỗi gọi API với null
+  if (!idNv) return;
 
   try {
-    const res = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
+    // 1. Kiểm tra lịch làm việc hôm nay
+    const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
     
-    // Do Backend trả về 200 OK. Nên ta check xem res.data có tồn tại không.
-    if (res.data && res.data.caLamViec) {
-       // CÓ CA BÌNH THƯỜNG
-       ca.value = res.data;
-       showModal.value = true;
-       window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
+    // Spring Boot trả về List, ta lấy phần tử đầu tiên
+    let currentCa = null;
+    if (resCa.data && Array.isArray(resCa.data) && resCa.data.length > 0) {
+        currentCa = resCa.data[0];
+    } else if (resCa.data && resCa.data.caLamViec) {
+        currentCa = resCa.data;
+    }
+
+    if (currentCa) {
+       ca.value = currentCa;
+
+       // 2. CÓ LỊCH LÀM VIỆC -> Kiểm tra xem đã "Mở ca" (Check-in) chưa
+       try {
+         const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
+         
+         if (!resChamCong.data || resChamCong.data === "") {
+             // TRƯỜNG HỢP A: Có lịch nhưng CHƯA MỞ CA -> Tự động bật Popup bắt mở ca
+             showModal.value = true;
+             window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
+         } else {
+             const chamCongData = resChamCong.data;
+             if (chamCongData.gioCheckOut) {
+                 // TRƯỜNG HỢP B: Đã ĐÓNG CA xong -> Bật Popup chặn lại (Báo ca đã kết thúc)
+                 showModal.value = true;
+                 window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
+             } else {
+                 // TRƯỜNG HỢP C: Đang trong ca làm việc (Đã mở ca) -> ẨN POPUP để làm việc bình thường
+                 showModal.value = false;
+                 window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
+             }
+         }
+       } catch (err) {
+           // Bị lỗi khi gọi API chấm công -> Tự động bật popup
+           showModal.value = true;
+       }
+
     } else {
-       // HTTP 200 NHƯNG KHÔNG CÓ DATA => KHÔNG CÓ CA
+       // TRƯỜNG HỢP D: KHÔNG CÓ CA LÀM VIỆC HÔM NAY -> Bật Popup chặn lại
        ca.value = null;
        showModal.value = true;
-       window.dispatchEvent(new CustomEvent('set-view-only', { detail: true })); // Phím Layout khóa màn!
+       window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
     }
+
   } catch (err) {
-    // Nếu API sập hẳn
     console.log("Lỗi check ca:", err);
     ca.value = null;
     showModal.value = true;

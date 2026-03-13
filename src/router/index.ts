@@ -109,6 +109,7 @@ const routes: Array<RouteRecordRaw> = [
     name: "LoginStaff",
     component: () => import("../views/AdminLogin.vue"),
   },
+  
 
   {
     path: "/register",
@@ -162,6 +163,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "Dashboard",
         component: () => import("../pages/admin/dashboard/Dashboard.vue"),
       },
+      {
+  path: "profile",
+  name: "AdminProfile",
+  component: () => import("../pages/admin/Profile.vue"),
+},
       {
         path: "statistic",
         name: "Statistic",
@@ -363,7 +369,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "StaffDashboard",
         component: () => import("../pages/staff/dashboard/Dashboard.vue"),
       },
-
+      {
+  path: "profile",
+  name: "StaffProfile",
+  component: () => import("../pages/staff/Profile.vue"),
+},
       // 2. Bán hàng tại quầy
       {
         path: "sales",

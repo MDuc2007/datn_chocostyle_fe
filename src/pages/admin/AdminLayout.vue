@@ -242,7 +242,7 @@ onMounted(async () => {
         userData.username ||
         "Admin";
 
-      // 👉 GỌI API LẤY ẢNH BASE64 TỪ BACKEND
+      // 👉 GỌI API LẤY ẢNH BASE64 HOẶC TÊN FILE TỪ BACKEND
       if (userData.id && token) {
         try {
           const res = await axios.get(
@@ -253,13 +253,23 @@ onMounted(async () => {
               },
             },
           );
+          
+          // ĐỒNG NHẤT: Cập nhật lại tên chuẩn từ API giống trang Profile
+          if (res.data) {
+            currentUserName.value = res.data.tenNhanVien || res.data.hoTen || currentUserName.value;
+          }
 
-          // Gán ảnh Base64 từ API vào biến hiển thị
+          // Xử lý logic nối chuỗi URL nếu Backend chỉ trả về tên file ảnh
           if (res.data && res.data.avatar) {
-            currentUserAvatar.value = res.data.avatar;
+            let avatarUrl = res.data.avatar;
+            // Nếu đường dẫn chưa bắt đầu bằng "http", nghĩa là nó là tên file lưu ở backend
+            if (!avatarUrl.startsWith("http")) {
+              avatarUrl = `http://localhost:8080/images/${avatarUrl}`;
+            }
+            currentUserAvatar.value = avatarUrl;
           }
         } catch (apiError) {
-          console.error("Lỗi không thể lấy ảnh nhân viên từ API:", apiError);
+          console.error("Lỗi không thể lấy thông tin nhân viên từ API:", apiError);
         }
       }
     } catch (e) {
@@ -276,10 +286,9 @@ onBeforeUnmount(() => {
 
 // Hàm lấy chữ cái đầu tiên
 const getUserInitial = (name: string) => {
-  if (!name || name === "Admin") return "A";
-  const words = name.trim().split(" ");
-  const lastName = words[words.length - 1];
-  return lastName.charAt(0).toUpperCase();
+  if (!name) return "A";
+  const words = String(name).trim().split(" ");
+  return words[words.length - 1].charAt(0).toUpperCase();
 };
 
 const handleAvatarError = () => {
@@ -602,7 +611,7 @@ const logout = () => {
 }
 
 .dropdown-item:hover {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   color: #63391f;
 }
 
@@ -617,7 +626,7 @@ const logout = () => {
 }
 
 .text-danger:hover {
-  background-color: #fef2f2;
+  background: #fef2f2;
   color: #dc2626;
 }
 

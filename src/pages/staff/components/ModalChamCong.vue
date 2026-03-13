@@ -10,7 +10,7 @@
         <div class="modal-body">
           <div class="staff-info">
             <p class="staff-code">
-              Nhân viên : buiminhd73@gmail.com • {{ currentTime }}
+              Nhân viên : {{ staffName }} • {{ currentTime }}
             </p>
           </div>
 
@@ -381,6 +381,7 @@ const show = ref(true);
 const isReady = ref(false);
 const isLoading = ref(false);
 const soDuCaTruoc = ref({ tienMat: 0, tienCk: 0 });
+const staffName = ref("");
 
 const fetchSoDuCaTruoc = async () => {
   try {
@@ -533,6 +534,7 @@ const checkOut = async () => {
 onMounted(async () => {
   updateTime();
   fetchSoDuCaTruoc();
+  staffName.value = localStorage.getItem("tenNv") || "Không xác định";
   timer = setInterval(updateTime, 1000);
 
   if (props.ca && props.ca.caLamViec) {
