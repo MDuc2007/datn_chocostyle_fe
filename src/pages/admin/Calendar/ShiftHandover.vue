@@ -1,16 +1,38 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
-
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 // --- STATE ---
 const loading = ref(false);
 const filters = reactive({ keyword: '', fromDate: '', toDate: '' });
 const notifications = ref<{ id: number; message: string; type: string }[]>([]);
 const handovers = ref<any[]>([]);
-
+// --- WEBSOCKET REALTIME ---
+let stompClient: any = null;
 // State cho Modal Chi tiết
 const selectedShift = ref<any>(null);
 
+const connectWebSocket = () => {
+  // Đổi url '/ws' thành url cài đặt websocket trên SpringBoot của bạn (thường là /ws hoặc /stomp-endpoint)
+  const socket = new SockJS('http://localhost:8080/ws'); 
+  stompClient = Stomp.over(socket);
+  
+  // Tắt log console cho đỡ rối
+  stompClient.debug = () => {}; 
+
+  stompClient.connect({}, () => {
+    console.log("🟢 Đã kết nối Real-time Giao Ca");
+    
+    // Đăng ký nghe kênh cập nhật ca làm việc
+    stompClient.subscribe('/topic/shift-updates', (message: any) => {
+      if (message.body === 'UPDATED') {
+        console.log("🔄 Nhận tín hiệu có đơn hàng mới -> Đang tải lại danh sách ca...");
+        fetchHandovers(); // Lập tức tải lại bảng dữ liệu
+      }
+    });
+  });
+};
 const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
   const id = Date.now();
   notifications.value.push({ id, message, type });
@@ -78,7 +100,14 @@ const resetFilters = () => {
   fetchHandovers();
 };
 
-onMounted(() => fetchHandovers());
+onMounted(() => {
+  fetchHandovers();
+  connectWebSocket(); // Khởi động WebSocket khi mở trang
+});
+
+onUnmounted(() => {
+  if (stompClient) stompClient.disconnect(); // Ngắt kết nối khi chuyển trang khác
+});
 </script>
 
 <template>
@@ -197,9 +226,14 @@ onMounted(() => fetchHandovers());
                 <span class="status-badge" :class="getStatusClass(item.trangThai)">{{ getStatusText(item.trangThai) }}</span>
               </td>
               <td class="text-center">
-                <button class="btn-detail hover-effect" @click="viewDetails(item)" title="Xem chi tiết đối soát">
-                  👁️ Xem
-                </button>
+                <div class="tooltip-wrapper" data-tooltip="Xem chi tiết đối soát">
+                  <span class="icon view" @click="viewDetails(item)">
+                    <img
+                      src="/src/assets/icon/eye.svg"
+                      style="width: 20px; height: 20px"
+                    />
+                  </span>
+                </div>
               </td>
             </tr>
           </tbody>
