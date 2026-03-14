@@ -110,48 +110,58 @@
                 </p>
               </div>
 
-              <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: left;">
-                 <p style="margin: 0; font-size: 14px; color: #9c4221; font-weight: bold;">📝 Nhập số tiền kiểm đếm cuối ca:</p>
+              <div v-if="!isClosingShift" style="padding: 20px; text-align: center; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <span style="font-size: 32px;">🏪</span>
+                <p style="margin: 12px 0 0 0; color: #334155; font-size: 14px; font-weight: 500; line-height: 1.5;">
+                  Cửa hàng đang hoạt động bình thường.<br/>
+                  Tiền đầu ca đã được xác nhận. Bạn có thể vào thẳng màn hình bán hàng!
+                </p>
               </div>
 
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label>Két tiền mặt thực tế (Cuối ca)</label>
-                <div class="input-wrapper">
-                  <input
-                    type="text"
-                    :value="formatDisplayValue(form.tienMatCuoiCa)"
-                    @input="handleMoneyInput($event, 'tienMatCuoiCa')"
-                    class="form-control"
-                    placeholder="0"
-                    inputmode="numeric"
-                  />
-                  <span class="currency-unit">VND</span>
+              <div v-else>
+                <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: left;">
+                  <p style="margin: 0; font-size: 14px; color: #9c4221; font-weight: bold;">📝 Nhập số tiền kiểm đếm cuối ca:</p>
                 </div>
-              </div>
 
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label>Số dư chuyển khoản thực tế</label>
-                <div class="input-wrapper">
-                  <input
-                    type="text"
-                    :value="formatDisplayValue(form.tienCkCuoiCa)"
-                    @input="handleMoneyInput($event, 'tienCkCuoiCa')"
-                    class="form-control"
-                    placeholder="0"
-                    inputmode="numeric"
-                  />
-                  <span class="currency-unit">VND</span>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label>Két tiền mặt thực tế (Cuối ca)</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="text"
+                      :value="formatDisplayValue(form.tienMatCuoiCa)"
+                      @input="handleMoneyInput($event, 'tienMatCuoiCa')"
+                      class="form-control"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                    <span class="currency-unit">VND</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label>Ghi chú (Tùy chọn)</label>
-                <textarea 
-                   v-model="form.ghiChu" 
-                   class="form-control" 
-                   placeholder="Nhập ghi chú chênh lệch nếu có..."
-                   style="height: 60px; resize: none;"
-                ></textarea>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label>Số dư chuyển khoản thực tế</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="text"
+                      :value="formatDisplayValue(form.tienCkCuoiCa)"
+                      @input="handleMoneyInput($event, 'tienCkCuoiCa')"
+                      class="form-control"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                    <span class="currency-unit">VND</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label>Ghi chú (Tùy chọn)</label>
+                  <textarea 
+                    v-model="form.ghiChu" 
+                    class="form-control" 
+                    placeholder="Nhập ghi chú chênh lệch nếu có..."
+                    style="height: 60px; resize: none;"
+                  ></textarea>
+                </div>
               </div>
 
             </div>
@@ -353,20 +363,25 @@
               @click="checkIn"
               :disabled="isLoading"
             >
-              {{ isLoading ? "Đang xử lý..." : "Xác nhận vào ca" }}
+              {{ isLoading ? "Đang xử lý..." : "Xác nhận mở ca" }}
             </button>
           </template>
 
           <template v-else-if="chamCong && !chamCong.gioCheckOut">
-            <button class="btn btn-outline" @click="close">Tiếp tục bán hàng</button>
-
-            <button
-              class="btn btn-primary btn-danger-custom"
-              @click="checkOut"
-              :disabled="isLoading"
-            >
-              {{ isLoading ? "Đang xử lý..." : "Kết thúc ca" }}
-            </button>
+            <template v-if="!isClosingShift">
+              <button class="btn btn-outline" style="border-color: #dc2626; color: #dc2626;" @click="isClosingShift = true">Tiến hành chốt ca</button>
+              <button class="btn btn-primary" @click="close">Vào bán hàng</button>
+            </template>
+            <template v-else>
+              <button class="btn btn-outline" @click="isClosingShift = false">Quay lại</button>
+              <button
+                class="btn btn-primary btn-danger-custom"
+                @click="checkOut"
+                :disabled="isLoading"
+              >
+                {{ isLoading ? "Đang xử lý..." : "Xác nhận chốt ca" }}
+              </button>
+            </template>
           </template>
         </div>
       </div>
@@ -414,6 +429,9 @@ const isLoading = ref(false);
 const soDuCaTruoc = ref({ tienMat: 0, tienCk: 0 });
 const staffName = ref("");
 
+// 👉 BIẾN ĐIỀU KHIỂN HIỂN THỊ FORM CHỐT CA
+const isClosingShift = ref(false);
+
 const fetchSoDuCaTruoc = async () => {
   try {
     const res = await axios.get('http://localhost:8080/api/cham-cong/so-du-ca-truoc', { headers });
@@ -423,7 +441,6 @@ const fetchSoDuCaTruoc = async () => {
   }
 };
 
-// 👉 CẬP NHẬT FORM THÊM BIẾN CHO ĐÓNG CA
 const form = ref({
   tienMat: 0,
   tienTaiKhoan: 0,
@@ -523,7 +540,6 @@ const checkOut = async () => {
 
   isLoading.value = true;
   try {
-    // 👉 TRUYỀN THÊM DỮ LIỆU ĐÓNG CA VÀO ĐÂY
     await axios.post(
       `http://localhost:8080/api/cham-cong/check-out/${props.idNv}`,
       {
@@ -605,7 +621,7 @@ const close = () => {
 .modal-content {
   background-color: #ffffff;
   width: 480px;
-  max-height: 90vh; /* Chống trôi modal nếu nội dung quá dài */
+  max-height: 90vh;
   overflow-y: auto;
   border-radius: 12px;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
