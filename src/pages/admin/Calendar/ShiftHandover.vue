@@ -44,7 +44,15 @@ const formatCurrency = (value: number) => {
   if (value === null || value === undefined) return '0 đ';
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value).replace('₫', 'đ');
 };
-
+// Hàm tách Mã NV và Tên NV từ chuỗi "[NV001] Nguyễn Văn A"
+const formatStaffName = (rawName: string) => {
+  if (!rawName) return { code: '', name: '' };
+  const match = rawName.match(/^\[(.*?)\]\s*(.*)$/);
+  if (match) {
+    return { code: match[1], name: match[2] }; // Trả về code: NV001, name: Nguyễn Văn A
+  }
+  return { code: '', name: rawName }; // Nếu không có mã thì trả về tên bình thường
+};
 const getStatusText = (status: number) => {
   if (status === 1) return 'Đã đóng';
   if (status === 2) return 'Đang mở';
@@ -162,8 +170,8 @@ onUnmounted(() => {
             <tr>
               <th width="3%" class="text-center">#</th>
               <th width="12%">Ca phân công</th>
-              <th width="14%">Người chốt ca</th>
-              <th width="14%">Thời gian</th>
+              <th width="16%">Người chốt ca</th> 
+              <th width="12%">Thời gian</th>
               <th width="13%">Quỹ Tiền Mặt</th>
               <th width="13%">Quỹ Chuyển Khoản</th>
               <th width="13%">Tổng Kết</th>
@@ -185,11 +193,34 @@ onUnmounted(() => {
                 <div class="shift-badge" style="margin-top: 4px;">{{ item.ca }}</div>
               </td>
               <td>
-                <div style="font-size: 13px; color: #4b5563;">
-                  Mở: <span style="font-weight: 600; color: #1e293b;">{{ item.nguoiMoCa || 'Chưa xác định' }}</span>
+                <div style="margin-bottom: 8px;">
+                  <span style="color: #64748b; font-size: 12px; display: block; margin-bottom: 4px;">Mở ca:</span>
+                  <template v-if="item.nguoiMoCa">
+                    <div style="line-height: 1.4;">
+                      <span v-if="formatStaffName(item.nguoiMoCa).code" class="staff-code-badge" style="margin-right: 6px; margin-bottom: 2px; display: inline-block;">
+                        {{ formatStaffName(item.nguoiMoCa).code }}
+                      </span>
+                      <span style="font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block;">
+                        {{ formatStaffName(item.nguoiMoCa).name }}
+                      </span>
+                    </div>
+                  </template>
+                  <span v-else style="font-weight: 600; color: #1e293b; font-size: 13px;">Chưa xác định</span>
                 </div>
-                <div style="font-size: 13px; color: #4b5563; margin-top: 4px;">
-                  Đóng: <span style="font-weight: 600; color: #1e293b;">{{ item.nguoiDongCa || 'Chưa đóng' }}</span>
+
+                <div>
+                  <span style="color: #64748b; font-size: 12px; display: block; margin-bottom: 4px;">Đóng ca:</span>
+                  <template v-if="item.nguoiDongCa">
+                    <div style="line-height: 1.4;">
+                      <span v-if="formatStaffName(item.nguoiDongCa).code" class="staff-code-badge" style="margin-right: 6px; margin-bottom: 2px; display: inline-block;">
+                        {{ formatStaffName(item.nguoiDongCa).code }}
+                      </span>
+                      <span style="font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block;">
+                        {{ formatStaffName(item.nguoiDongCa).name }}
+                      </span>
+                    </div>
+                  </template>
+                  <span v-else style="font-weight: 600; color: #1e293b; font-size: 13px;">Chưa đóng</span>
                 </div>
               </td>
               <td>
@@ -254,15 +285,57 @@ onUnmounted(() => {
           </div>
           
           <div class="modal-body-custom">
-            <div class="shift-info-grid">
-              <div class="info-item"><span>NV được phân công:</span> <strong>{{ selectedShift.nhanVien }}</strong></div>
-              <div class="info-item"><span>Ca làm việc:</span> <strong>{{ selectedShift.ca }}</strong></div>
+            <div class="shift-info-grid" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">NV được phân công:</span> 
+                  <strong style="font-size: 14px; color: #334155;">{{ selectedShift.nhanVien }}</strong>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">Ca làm việc:</span> 
+                  <strong style="font-size: 14px; color: #334155;">{{ selectedShift.ca }}</strong>
+                </div>
+              </div>
               
-              <div class="info-item"><span>Thời gian mở ca:</span> <strong>{{ selectedShift.thoiGianMo }}</strong></div>
-              <div class="info-item"><span>Người thực hiện mở:</span> <strong class="text-blue-600">{{ selectedShift.nguoiMoCa || 'Chưa xác định' }}</strong></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">TG mở ca:</span> 
+                  <strong style="font-size: 14px; color: #334155;">{{ selectedShift.thoiGianMo }}</strong>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">Người mở:</span> 
+                  <strong class="text-blue-600" style="display: flex; align-items: center; gap: 6px; font-size: 14px;">
+                    <template v-if="selectedShift.nguoiMoCa">
+                      <span v-if="formatStaffName(selectedShift.nguoiMoCa).code" class="staff-code-badge">
+                        {{ formatStaffName(selectedShift.nguoiMoCa).code }}
+                      </span>
+                      {{ formatStaffName(selectedShift.nguoiMoCa).name }}
+                    </template>
+                    <template v-else>Chưa xác định</template>
+                  </strong>
+                </div>
+              </div>
               
-              <div class="info-item"><span>Thời gian đóng ca:</span> <strong :class="{'text-red-600': selectedShift.trangThai !== 1}">{{ selectedShift.trangThai === 1 ? selectedShift.thoiGianDong : 'Chưa đóng ca' }}</strong></div>
-              <div class="info-item"><span>Người thực hiện đóng:</span> <strong class="text-blue-600">{{ selectedShift.nguoiDongCa || 'Chưa đóng' }}</strong></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">TG đóng ca:</span> 
+                  <strong style="font-size: 14px;" :class="{'text-red-600': selectedShift.trangThai !== 1, 'color: #334155': selectedShift.trangThai === 1}">
+                    {{ selectedShift.trangThai === 1 ? selectedShift.thoiGianDong : 'Chưa đóng ca' }}
+                  </strong>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="color: #64748b; font-size: 14px;">Người đóng:</span> 
+                  <strong class="text-blue-600" style="display: flex; align-items: center; gap: 6px; font-size: 14px;">
+                    <template v-if="selectedShift.nguoiDongCa">
+                      <span v-if="formatStaffName(selectedShift.nguoiDongCa).code" class="staff-code-badge">
+                        {{ formatStaffName(selectedShift.nguoiDongCa).code }}
+                      </span>
+                      {{ formatStaffName(selectedShift.nguoiDongCa).name }}
+                    </template>
+                    <template v-else>Chưa đóng</template>
+                  </strong>
+                </div>
+              </div>
             </div>
             
             <div class="stats-section">
@@ -499,4 +572,15 @@ onUnmounted(() => {
 .toast.success { border-left: 5px solid #67c23a; color: #67c23a; }
 .toast.error { border-left: 5px solid #f56c6c; color: #f56c6c; }
 @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.staff-code-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  border: 1px solid #cbd5e1;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
 </style>

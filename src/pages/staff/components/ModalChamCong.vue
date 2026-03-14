@@ -3,7 +3,12 @@
     <div v-if="show && isReady" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>MỞ CA LÀM VIỆC</h3>
+          <h3>
+            {{ 
+              isShiftClosed ? 'THÔNG TIN KẾT TOÁN' : 
+              (chamCong ? 'ĐANG TRONG CA' : 'MỞ CA LÀM VIỆC') 
+            }}
+          </h3>
           <p>Hệ thống quản lý bán hàng ChocoStyle Shop</p>
         </div>
 
@@ -50,123 +55,7 @@
               />
             </div>
 
-            <div v-if="!chamCong">
-              
-              <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
-                 <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
-                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
-                   <span>💵 Tiền mặt tại két:</span> 
-                   <strong>{{ soDuCaTruoc.tienMat?.toLocaleString() || 0 }} VNĐ</strong>
-                 </p>
-                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
-                   <span>💳 Số dư chuyển khoản:</span> 
-                   <strong>{{ soDuCaTruoc.tienCk?.toLocaleString() || 0 }} VNĐ</strong>
-                 </p>
-              </div>
-
-              <div class="form-group">
-                <label>Xác nhận Tiền mặt đầu ca</label>
-                <div class="input-wrapper">
-                  <input
-                    type="text"
-                    :value="formatDisplayValue(form.tienMat)"
-                    @input="handleMoneyInput($event, 'tienMat')"
-                    class="form-control"
-                    placeholder="0"
-                    inputmode="numeric"
-                  />
-                  <span class="currency-unit">VND</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Xác nhận Tiền tài khoản đầu ca</label>
-                <div class="input-wrapper">
-                  <input
-                    type="text"
-                    :value="formatDisplayValue(form.tienTaiKhoan)"
-                    @input="handleMoneyInput($event, 'tienTaiKhoan')"
-                    class="form-control"
-                    placeholder="0"
-                    inputmode="numeric"
-                  />
-                  <span class="currency-unit">VND</span>
-                </div>
-              </div>
-
-            </div>
-
-            <div v-else-if="chamCong && !chamCong.gioCheckOut">
-              <div class="alert-box success" style="margin-bottom: 15px; display: block; text-align: left;">
-                <div class="status-header" style="justify-content: flex-start; margin-bottom: 10px;">
-                  <span class="alert-icon">✅</span>
-                  <p class="status-title" style="margin: 0;">Đang trong ca làm việc</p>
-                </div>
-                <p class="status-time" style="margin: 5px 0;">
-                  Ca được mở bởi: <strong>{{ chamCong.tenNguoiMoCa }}</strong>
-                </p>
-                <p class="status-time" style="margin: 5px 0;">
-                  Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
-                </p>
-              </div>
-
-              <div v-if="!isClosingShift" style="padding: 20px; text-align: center; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
-                <span style="font-size: 32px;">🏪</span>
-                <p style="margin: 12px 0 0 0; color: #334155; font-size: 14px; font-weight: 500; line-height: 1.5;">
-                  Cửa hàng đang hoạt động bình thường.<br/>
-                  Tiền đầu ca đã được xác nhận. Bạn có thể vào thẳng màn hình bán hàng!
-                </p>
-              </div>
-
-              <div v-else>
-                <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: left;">
-                  <p style="margin: 0; font-size: 14px; color: #9c4221; font-weight: bold;">📝 Nhập số tiền kiểm đếm cuối ca:</p>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 15px;">
-                  <label>Két tiền mặt thực tế (Cuối ca)</label>
-                  <div class="input-wrapper">
-                    <input
-                      type="text"
-                      :value="formatDisplayValue(form.tienMatCuoiCa)"
-                      @input="handleMoneyInput($event, 'tienMatCuoiCa')"
-                      class="form-control"
-                      placeholder="0"
-                      inputmode="numeric"
-                    />
-                    <span class="currency-unit">VND</span>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 15px;">
-                  <label>Số dư chuyển khoản thực tế</label>
-                  <div class="input-wrapper">
-                    <input
-                      type="text"
-                      :value="formatDisplayValue(form.tienCkCuoiCa)"
-                      @input="handleMoneyInput($event, 'tienCkCuoiCa')"
-                      class="form-control"
-                      placeholder="0"
-                      inputmode="numeric"
-                    />
-                    <span class="currency-unit">VND</span>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 10px;">
-                  <label>Ghi chú (Tùy chọn)</label>
-                  <textarea 
-                    v-model="form.ghiChu" 
-                    class="form-control" 
-                    placeholder="Nhập ghi chú chênh lệch nếu có..."
-                    style="height: 60px; resize: none;"
-                  ></textarea>
-                </div>
-              </div>
-
-            </div>
-
-            <div v-else class="alert-box disabled-box" style="text-align: left">
+            <div v-if="isShiftClosed" class="alert-box disabled-box" style="text-align: left">
               <div
                 style="
                   display: flex;
@@ -181,6 +70,10 @@
                   Ca làm việc đã kết thúc
                 </h4>
               </div>
+
+              <p v-if="ca.trangThai === 1 && (!chamCong || !chamCong.gioCheckOut)" style="text-align: center; color: #c53030; font-weight: bold; margin-bottom: 15px;">
+                ⚠️ Ca này đã được chốt và đóng sớm bởi nhân viên khác!
+              </p>
 
               <div
                 v-if="chamCong"
@@ -347,16 +240,128 @@
                 </button>
               </div>
             </div>
+
+            <div v-else-if="!chamCong">
+              <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
+                 <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
+                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                   <span>💵 Tiền mặt tại két:</span> 
+                   <strong>{{ soDuCaTruoc.tienMat?.toLocaleString() || 0 }} VNĐ</strong>
+                 </p>
+                 <p style="margin: 3px 0; font-size: 13px; color: #285e61; display: flex; justify-content: space-between;">
+                   <span>💳 Số dư chuyển khoản:</span> 
+                   <strong>{{ soDuCaTruoc.tienCk?.toLocaleString() || 0 }} VNĐ</strong>
+                 </p>
+              </div>
+
+              <div class="form-group">
+                <label>Xác nhận Tiền mặt đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienMat)"
+                    @input="handleMoneyInput($event, 'tienMat')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Xác nhận Tiền tài khoản đầu ca</label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    :value="formatDisplayValue(form.tienTaiKhoan)"
+                    @input="handleMoneyInput($event, 'tienTaiKhoan')"
+                    class="form-control"
+                    placeholder="0"
+                    inputmode="numeric"
+                  />
+                  <span class="currency-unit">VND</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else>
+              <div class="alert-box success" style="margin-bottom: 15px; display: block; text-align: left;">
+                <div class="status-header" style="justify-content: flex-start; margin-bottom: 10px;">
+                  <span class="alert-icon">✅</span>
+                  <p class="status-title" style="margin: 0;">Đang trong ca làm việc</p>
+                </div>
+                <p class="status-time" style="margin: 5px 0;">
+                  Ca được mở bởi: <strong>{{ chamCong.tenNguoiMoCa }}</strong>
+                </p>
+                <p class="status-time" style="margin: 5px 0;">
+                  Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
+                </p>
+              </div>
+
+              <div v-if="!isClosingShift" style="padding: 20px; text-align: center; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <span style="font-size: 32px;">🏪</span>
+                <p style="margin: 12px 0 0 0; color: #334155; font-size: 14px; font-weight: 500; line-height: 1.5;">
+                  Cửa hàng đang hoạt động bình thường.<br/>
+                  Tiền đầu ca đã được xác nhận. Bạn có thể vào thẳng màn hình bán hàng!
+                </p>
+              </div>
+
+              <div v-else>
+                <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 12px; margin-bottom: 15px; border-radius: 6px; text-align: left;">
+                  <p style="margin: 0; font-size: 14px; color: #9c4221; font-weight: bold;">📝 Nhập số tiền kiểm đếm cuối ca:</p>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label>Két tiền mặt thực tế (Cuối ca)</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="text"
+                      :value="formatDisplayValue(form.tienMatCuoiCa)"
+                      @input="handleMoneyInput($event, 'tienMatCuoiCa')"
+                      class="form-control"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                    <span class="currency-unit">VND</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label>Số dư chuyển khoản thực tế</label>
+                  <div class="input-wrapper">
+                    <input
+                      type="text"
+                      :value="formatDisplayValue(form.tienCkCuoiCa)"
+                      @input="handleMoneyInput($event, 'tienCkCuoiCa')"
+                      class="form-control"
+                      placeholder="0"
+                      inputmode="numeric"
+                    />
+                    <span class="currency-unit">VND</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label>Ghi chú (Tùy chọn)</label>
+                  <textarea 
+                    v-model="form.ghiChu" 
+                    class="form-control" 
+                    placeholder="Nhập ghi chú chênh lệch nếu có..."
+                    style="height: 60px; resize: none;"
+                  ></textarea>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <template
-            v-if="!ca || !ca.caLamViec || (chamCong && chamCong.gioCheckOut)"
-          >
-            </template>
+          <template v-if="isShiftClosed || !ca || !ca.caLamViec">
+          </template>
 
-          <template v-else-if="ca && ca.caLamViec && !chamCong">
+          <template v-else-if="!chamCong">
             <button class="btn btn-outline" @click="close">Hủy bỏ</button>
             <button
               class="btn btn-primary"
@@ -367,7 +372,7 @@
             </button>
           </template>
 
-          <template v-else-if="chamCong && !chamCong.gioCheckOut">
+          <template v-else>
             <template v-if="!isClosingShift">
               <button class="btn btn-outline" style="border-color: #dc2626; color: #dc2626;" @click="isClosingShift = true">Tiến hành chốt ca</button>
               <button class="btn btn-primary" @click="close">Vào bán hàng</button>
@@ -384,6 +389,7 @@
             </template>
           </template>
         </div>
+
       </div>
     </div>
   </Teleport>
@@ -391,7 +397,7 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import Swal from "sweetalert2";
 
 // ==========================================
@@ -431,6 +437,15 @@ const staffName = ref("");
 
 // 👉 BIẾN ĐIỀU KHIỂN HIỂN THỊ FORM CHỐT CA
 const isClosingShift = ref(false);
+
+// 👉 TÍNH TOÁN TRẠNG THÁI KHÓA CA
+const isShiftClosed = computed(() => {
+  // Nếu toàn bộ Lịch làm việc đã bị người khác chốt đóng (trạng thái = 1)
+  if (props.ca && props.ca.trangThai === 1) return true;
+  // Hoặc nếu cá nhân nhân viên này đã tự Check-out
+  if (chamCong.value && chamCong.value.gioCheckOut) return true;
+  return false;
+});
 
 const fetchSoDuCaTruoc = async () => {
   try {
@@ -576,7 +591,18 @@ const checkOut = async () => {
 onMounted(async () => {
   updateTime();
   fetchSoDuCaTruoc();
-  staffName.value = localStorage.getItem("tenNv") || "Không xác định";
+  // Lấy tên nhân viên an toàn, chống lỗi undefined
+  let nameRaw = props.tenNv || localStorage.getItem("tenNv");
+  if (!nameRaw || nameRaw === "undefined" || nameRaw === "null") {
+    try {
+      // Nếu không có tenNv, chui vào object user để lấy hoTen
+      const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+      nameRaw = userObj.hoTen || userObj.fullName || userObj.tenNv || "Không xác định";
+    } catch(e) {
+      nameRaw = "Không xác định";
+    }
+  }
+  staffName.value = nameRaw;
   timer = setInterval(updateTime, 1000);
 
   if (props.ca && props.ca.caLamViec) {
