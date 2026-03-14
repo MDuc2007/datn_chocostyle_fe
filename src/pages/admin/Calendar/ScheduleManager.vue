@@ -696,16 +696,16 @@ const handleSave = async () => {
     originalForm.value = null;
     closeModal();
     refreshData();
-  } catch (error: any) {
-    const msg = error.response?.data?.message || "Có lỗi xảy ra";
-    if (
-      msg.toLowerCase().includes("trùng") ||
-      msg.toLowerCase().includes("đã có nhân viên")
-    ) {
-      errors.idCa = msg;
-    } else {
-      showToast(msg, "error");
-    }
+} catch (error: any) {
+    // Ưu tiên lấy câu thông báo lỗi chính xác từ Backend trả về
+    const msg = error.response?.data || error.response?.data?.message || "Có lỗi xảy ra khi phân lịch!";
+    
+    // Gộp chung cách xử lý: BẤT KỲ LỖI NÀO (Kể cả trùng ca) cũng show Toast Error đỏ lên góc phải màn hình
+    // Không nhét chữ vào dưới ô Select nữa để giao diện Modal luôn sạch sẽ
+    showToast(msg, "error");
+    
+    // Xóa dòng lỗi cũ ở dưới ô Select nếu có
+    errors.idCa = ""; 
   }
 };
 
