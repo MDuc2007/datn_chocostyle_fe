@@ -188,26 +188,51 @@ onMounted(async () => {
   if (idNv && token) {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      
-      // Kiểm tra xem hôm nay CÓ CA không
       const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
       
-      if (resCa.data && resCa.data.caLamViec) {
-        // Nếu có ca -> Kiểm tra xem ĐÃ CHECK-OUT chưa
-        const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
-        
-        // Nếu API trả về dữ liệu và có trường gioCheckOut (nghĩa là đã kết thúc ca)
-        if (resChamCong.data && resChamCong.data.gioCheckOut) {
-           isViewOnly.value = true;  // KHÓA MÀN HÌNH
+      // Chuẩn hóa dữ liệu ca (để chống lỗi dạng mảng hoặc object)
+      let currentCa = null;
+      if (resCa.data && Array.isArray(resCa.data) && resCa.data.length > 0) {
+          // 👉 TÌM CA THÔNG MINH: Ưu tiên ca Đang làm (3) hoặc Chờ làm (2)
+          currentCa = resCa.data.find(c => c.trangThai === 3) 
+                   || resCa.data.find(c => c.trangThai === 2) 
+                   || resCa.data[resCa.data.length - 1]; // Nếu đóng hết rồi thì lấy ca mới nhất
+      } else if (resCa.data && resCa.data.caLamViec) {
+          currentCa = resCa.data;
+      }
+      if (currentCa) {
+        // 👉 CHỐT CHẶN 1: Nếu tổng ca đã bị đóng (Bởi hệ thống hoặc người khác) -> KHÓA
+        if (currentCa.trangThai === 1) {
+           isViewOnly.value = true;
         } else {
-           isViewOnly.value = false; // MỞ KHÓA (Đang trong ca làm việc)
+           // Có ca, ca đang mở -> Kiểm tra chấm công cá nhân
+           try {
+             const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
+             
+             if (resChamCong.data && resChamCong.data !== "") {
+                // 👉 CHỐT CHẶN 2: Đã bấm chốt ca cá nhân -> KHÓA
+                if (resChamCong.data.gioCheckOut) {
+                   isViewOnly.value = true;  
+                } else {
+                   // Đang làm việc -> MỞ KHÓA
+                   isViewOnly.value = false; 
+                }
+             } else {
+                // 👉 CHỐT CHẶN 3: Chưa có chấm công (chưa mở ca) -> KHÓA
+                isViewOnly.value = true;
+             }
+           } catch (err) {
+             // Lỗi không lấy được chấm công (coi như chưa mở ca) -> KHÓA
+             isViewOnly.value = true;
+           }
         }
       } else {
-        isViewOnly.value = true;  // Không có ca -> KHÓA
+        // 👉 CHỐT CHẶN 4: Không có lịch làm việc hôm nay -> KHÓA
+        isViewOnly.value = true;  
       }
     } catch (error) {
       console.log("Lỗi hoặc không có ca:", error);
-      isViewOnly.value = true; // Lỗi cũng KHÓA luôn cho an toàn
+      isViewOnly.value = true; // Lỗi mạng cũng KHÓA luôn cho an toàn
     }
   } else {
     isViewOnly.value = true;

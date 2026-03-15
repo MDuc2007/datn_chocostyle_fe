@@ -602,12 +602,18 @@ const validateForm = () => {
     const newStart = timeToMinutes(selectedShift.gioBatDau);
     const newEnd = timeToMinutes(selectedShift.gioKetThuc);
     const hasConflict = schedules.value.some((s) => {
+      // 1. Bỏ qua nếu đang sửa chính ca đó
       if (isEditing.value && s.id === form.id) return false;
+      
+      // 👉 2. THÊM MỚI: Bỏ qua luôn những ca đã Đóng (1) hoặc đã Hủy (0)
+      if (s.trangThai === 1 || s.trangThai === 0) return false;
+
       const isSameDay = s.ngayLamViec === form.ngayLamViec;
       const sIdNv = s.nhanVien?.id || (s.nhanVien as any)?.idNv;
       if (isSameDay && Number(sIdNv) === Number(form.idNhanVien)) {
         const existingStart = timeToMinutes(s.caLamViec.gioBatDau);
         const existingEnd = timeToMinutes(s.caLamViec.gioKetThuc);
+        // Kiểm tra xem có giao nhau về mặt thời gian không
         return newStart < existingEnd && newEnd > existingStart;
       }
       return false;

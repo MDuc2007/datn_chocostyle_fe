@@ -1778,7 +1778,10 @@ const submitOrder = async () => {
             .filter(Boolean)
             .join(", ")
         : "";
-
+    // Xác định mã PTTT gửi xuống Backend
+    // CASH (Tiền mặt) và COD (Giao hàng) -> PT001
+    // BANK (Chuyển khoản) -> PT002
+    const maPtttGiaoDich = order.paymentMethod === 'BANK' ? 'PT002' : 'PT001';
     const payload = {
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
@@ -1799,7 +1802,10 @@ const submitOrder = async () => {
       sdtNguoiNhan: order.customer.phone || null,
 
       diaChiGiaoHang: fullAddress,
-
+      
+      // 👉 GỬI TRƯỜNG MA_PTTT XUỐNG BACKEND TẠI ĐÂY:
+      maPttt: maPtttGiaoDich, 
+      
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
