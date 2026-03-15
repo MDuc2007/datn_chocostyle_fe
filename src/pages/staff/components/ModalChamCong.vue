@@ -472,6 +472,8 @@ const handleLogout = () => {
 };
 
 const closeModal = () => {
+  // 👉 PHÁT TÍN HIỆU KHÓA TOÀN BỘ GIAO DIỆN
+  window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
   show.value = false;
   emit("update:show", false);
 };
@@ -625,6 +627,8 @@ onUnmounted(() => {
 });
 
 const close = () => {
+  // 👉 PHÁT TÍN HIỆU MỞ KHÓA ĐỂ LÀM VIỆC
+  window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
   show.value = false;
   emit("close");
 };
