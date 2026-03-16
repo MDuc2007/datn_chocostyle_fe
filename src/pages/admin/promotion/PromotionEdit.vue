@@ -595,24 +595,41 @@ const back = () => router.push("/admin/promotion");
 // 5. Logic Nghiệp vụ & Validation
 const validate = () => {
   let valid = true;
-  Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
-  const name = form.tenDotGiamGia.trim();
 
-  if (!name) {
+  Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
+
+  if (!form.tenDotGiamGia.trim()) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
     valid = false;
-  } else if (name.length < 3) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
-    valid = false;
   }
+
+  if (form.tenDotGiamGia.trim().length < 3) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá phải ít nhất 3 ký tự";
+    return false;
+  }
+
+  if (form.tenDotGiamGia.trim().length > 100) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
+    return false;
+  }
+
+  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
+
+  if (!regex.test(form.tenDotGiamGia.trim())) {
+    errors.tenDotGiamGia = "Tên không được chứa ký tự đặc biệt";
+    return false;
+  }
+
   if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
   }
+
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Ngày bắt đầu không được để trống";
     valid = false;
   }
+
   if (!form.ngayKetThuc) {
     errors.ngayKetThuc = "Ngày kết thúc không được để trống";
     valid = false;
@@ -620,10 +637,12 @@ const validate = () => {
     errors.ngayKetThuc = "Ngày kết thúc phải ≥ ngày bắt đầu";
     valid = false;
   }
+
   if (selectedChiTietIds.value.length === 0) {
     errors.chiTiet = "Vui lòng chọn ít nhất 1 biến thể sản phẩm";
     valid = false;
   }
+
   return valid;
 };
 

@@ -204,6 +204,20 @@
 
               <td>
                 <div class="action-inner">
+                  <div
+                    class="tooltip-wrapper"
+                    data-tooltip="Sửa nhanh (SL, Giá)"
+                  >
+                    <span
+                      class="icon quick-edit"
+                      @click="openQuickQuantityModal(item.id)"
+                    >
+                      <img
+                        src="/src/assets/icon/pencil.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
                   <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
                     <span class="icon view" @click="goToDetail(item.id)">
                       <img
@@ -390,6 +404,123 @@
       </div>
     </div>
   </transition>
+
+  <transition name="fade-modal">
+    <div
+      v-if="quantityModal.show"
+      class="scan-modal-overlay"
+      @click.self="closeQuantityModal"
+    >
+      <div
+        class="scan-modal-content"
+        style="width: 850px; max-width: 95vw; background: #fcfbfa"
+      >
+        <div class="scan-header" style="background: white">
+          <div class="header-title">
+            <h3>
+              Sửa nhanh:
+              <span style="color: #a9744f">{{
+                quantityModal.productName
+              }}</span>
+            </h3>
+          </div>
+          <button class="close-btn" @click="closeQuantityModal">×</button>
+        </div>
+
+        <div
+          class="scan-body"
+          style="max-height: 60vh; overflow-y: auto; padding: 24px"
+        >
+          <table class="quick-edit-table">
+            <thead>
+              <tr>
+                <th style="text-align: left">Thuộc tính (Màu - Size)</th>
+                <th style="width: 130px; text-align: right">Tồn kho</th>
+                <th style="width: 170px; text-align: right">Giá Nhập (₫)</th>
+                <th style="width: 170px; text-align: right">Giá Bán (₫)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="bt in quantityModal.variants" :key="bt.id">
+                <td style="text-align: left">
+                  <div class="variant-badge">
+                    <span
+                      class="dot"
+                      :style="{
+                        backgroundColor: bt.mauSacList[0]?.rgb || '#c89b6d',
+                      }"
+                    ></span>
+                    {{ bt.mauSacList[0]?.tenMauSac }} - {{ bt.kichCoList[0] }}
+                  </div>
+                </td>
+                <td>
+                  <div class="input-wrapper">
+                    <input
+                      type="text"
+                      :value="formatThousand(bt.soLuongTon)"
+                      @input="handleInput(bt, 'soLuongTon', $event)"
+                      class="quick-input"
+                      placeholder="0"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="input-wrapper suffix-vnd">
+                    <input
+                      type="text"
+                      :value="formatThousand(bt.giaNhap)"
+                      @input="handleInput(bt, 'giaNhap', $event)"
+                      class="quick-input"
+                      placeholder="0"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="input-wrapper suffix-vnd">
+                    <input
+                      type="text"
+                      :value="formatThousand(bt.giaBan)"
+                      @input="handleInput(bt, 'giaBan', $event)"
+                      class="quick-input"
+                      placeholder="0"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          class="modal-actions"
+          style="
+            padding: 15px 24px;
+            background: white;
+            border-top: 1px solid #efe6e1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 0;
+          "
+        >
+          <button
+            class="btn-cancel hover-effect"
+            style="width: auto; height: 40px; border-radius: 8px"
+            @click="closeQuantityModal"
+          >
+            Hủy bỏ
+          </button>
+          <button
+            class="btn-confirm hover-effect"
+            style="width: auto; height: 40px; border-radius: 8px"
+            @click="saveQuickVariants"
+          >
+            Lưu thay đổi
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -438,6 +569,101 @@ const modal = ref({
   item: null,
   newStatus: null,
 });
+
+// Hàm hiển thị số có dấu chấm phân cách hàng nghìn (VD: 1.000.000)
+const formatThousand = (val) => {
+  if (val === null || val === undefined || val === "") return "0";
+  // toLocaleString('vi-VN') tự động định dạng theo chuẩn Việt Nam (dùng dấu chấm)
+  return Number(val).toLocaleString("vi-VN");
+};
+
+// Hàm bắt sự kiện khi user gõ vào input
+const handleInput = (item, field, event) => {
+  // Lấy giá trị user vừa nhập, xóa bỏ mọi ký tự không phải là số (bao gồm cả chữ và dấu chấm)
+  let rawValue = event.target.value.replace(/\D/g, "");
+
+  // Ép kiểu về số nguyên (nếu rỗng thì gán = 0)
+  let num = rawValue ? parseInt(rawValue, 10) : 0;
+
+  // 1. Cập nhật con số thật (number) vào object dữ liệu để lát gửi lên Backend
+  item[field] = num;
+
+  // 2. Cập nhật chuỗi đã format (string có dấu chấm) ngay lập tức lên giao diện
+  event.target.value = formatThousand(num);
+};
+
+// State Modal
+const quantityModal = ref({
+  show: false,
+  productId: null,
+  productName: "",
+  variants: [],
+});
+
+// Hàm mở Modal
+const openQuickQuantityModal = async (productId) => {
+  try {
+    const res = await axios.get(
+      `http://localhost:8080/api/san-pham/${productId}`,
+    );
+    const productData = res.data;
+
+    // Gán dữ liệu vào biến variants (Vue sẽ tự binding 2 chiều nhờ v-model)
+    quantityModal.value = {
+      show: true,
+      productId: productData.id,
+      productName: productData.tenSp,
+      variants: productData.bienTheList.map((bt) => ({
+        ...bt,
+        soLuongTon: bt.soLuongTon || 0,
+        giaNhap: bt.giaNhap || 0,
+        giaBan: bt.giaBan || 0,
+      })),
+    };
+  } catch (error) {
+    showNotification("Lỗi khi lấy dữ liệu biến thể!", "error");
+  }
+};
+
+const closeQuantityModal = () => {
+  quantityModal.value.show = false;
+};
+
+// Hàm lưu lên Backend
+const saveQuickVariants = async () => {
+  // Map dữ liệu thành mảng Object String để gửi lên đúng định dạng Backend cần
+  const payload = quantityModal.value.variants.map((bt) => ({
+    id: String(bt.id),
+    soLuongTon: String(bt.soLuongTon),
+    giaNhap: String(bt.giaNhap),
+    giaBan: String(bt.giaBan),
+  }));
+
+  try {
+    await axios.put(
+      `http://localhost:8080/api/san-pham/quick-update-variants`,
+      payload,
+      {
+        params: { nguoiCapNhat: "admin" }, // Có thể thay thế bằng user đăng nhập thực tế
+      },
+    );
+
+    showNotification("Cập nhật thông tin nhanh thành công!", "success");
+    closeQuantityModal();
+
+    // Refresh lại bảng chính
+    fetchProducts(
+      currentPage.value,
+      pageSize.value,
+      keyword.value,
+      selectedStatus.value,
+      selectedOrigin.value,
+      selectedMaterial.value,
+    );
+  } catch (error) {
+    showNotification(error.response?.data?.message || "Lỗi cập nhật!", "error");
+  }
+};
 
 const fetchPromotions = async () => {
   try {
@@ -1835,5 +2061,134 @@ input:checked + .slider::before {
   padding: 3px 6px;
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+/* ===== ADVANCED QUICK EDIT MODAL STYLES ===== */
+
+/* Icon Header */
+.icon-edit-wrapper {
+  background: #fdf1e8;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bảng hiển thị Card-Row */
+.quick-edit-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px; /* Tạo khoảng cách giữa các dòng */
+  margin-top: -10px;
+}
+
+.quick-edit-table th {
+  padding: 0 15px 10px 15px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a7364;
+  border-bottom: 2px solid #efe6e1;
+  font-weight: 700;
+}
+
+.quick-edit-table td {
+  padding: 10px 15px;
+  background: #ffffff;
+  border-top: 1px solid #f2ece9;
+  border-bottom: 1px solid #f2ece9;
+  vertical-align: middle;
+}
+
+/* Bo góc cho từng dòng */
+.quick-edit-table td:first-child {
+  border-left: 1px solid #f2ece9;
+  border-radius: 12px 0 0 12px;
+}
+.quick-edit-table td:last-child {
+  border-right: 1px solid #f2ece9;
+  border-radius: 0 12px 12px 0;
+}
+
+.quick-edit-table tbody tr {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+/* Huy hiệu Biến thể (Pill) */
+.variant-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fcfbfa;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b382d;
+  border: 1px solid #e9ecef;
+}
+
+.variant-badge .dot {
+  width: 8px;
+  height: 8px;
+  background: #c89b6d;
+  border-radius: 50%;
+}
+
+/* Wrapper cho Input để chèn ký hiệu VND */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.suffix-vnd::after {
+  content: "₫";
+  position: absolute;
+  right: 12px;
+  color: #a08c7a;
+  font-weight: 600;
+  pointer-events: none; /* Không cản trở việc click vào input */
+}
+
+/* Input kiểu mới */
+.quick-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #e0d8d4;
+  padding: 0 12px;
+  font-size: 14px;
+  font-family:
+    "Poppins", monospace; /* Dùng monospace cho số để các hàng thẳng tắp */
+  background: #faf8f7;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+  text-align: right;
+  color: #3f2a1d;
+  font-weight: 600;
+}
+
+.suffix-vnd .quick-input {
+  padding-right: 28px; /* Dành chỗ trống cho chữ ₫ không bị số đè lên */
+}
+.quick-input:focus {
+  outline: none;
+  border-color: #a9744f;
+  box-shadow: 0 0 0 3px rgba(169, 116, 79, 0.15);
+  background-color: #fff;
+}
+
+/* Ẩn mũi tên mặc định của input number */
+.quick-input::-webkit-outer-spin-button,
+.quick-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.quick-input[type="number"] {
+  -moz-appearance: textfield;
 }
 </style>
