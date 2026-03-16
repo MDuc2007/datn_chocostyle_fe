@@ -488,6 +488,8 @@ const validateForm = () => {
     return false;
   }
 
+  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
+
   if (!form.tenPgg || !form.tenPgg.trim()) {
     errors.tenPgg = "Tên phiếu giảm giá không được để trống";
     valid = false;
@@ -497,6 +499,9 @@ const validateForm = () => {
   } else if (form.tenPgg.trim().length > 100) {
     errors.tenPgg = "Tên tối đa 100 ký tự";
     valid = false;
+  } else if (!regex.test(form.tenPgg.trim())) {
+    errors.tenPgg = "Tên không được chứa ký tự đặc biệt";
+    return false;
   }
 
   if (form.giaTri === null || form.giaTri <= 0) {

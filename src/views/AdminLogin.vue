@@ -125,7 +125,7 @@ const handleLogin = async () => {
       router.push("/admin/dashboard");
     } else if (res.role === "ROLE_STAFF") {
       // Thay đổi đường dẫn này thành trang bạn muốn Nhân viên vào (ví dụ: /staff/pos)
-      router.push('/staff/dashboard');
+      router.push("/staff/dashboard");
     } else {
       // Trường hợp dự phòng nếu có role khác hoặc lỗi
       router.push("/");
@@ -331,6 +331,7 @@ label {
   align-items: center;
   margin-top: 10px;
   letter-spacing: 0.5px;
+  font-family: "Nunito";
 }
 
 .btn-login:hover {
