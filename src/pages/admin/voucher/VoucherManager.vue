@@ -62,13 +62,15 @@
             </select>
           </div>
 
-          <button class="btn-clear" @click="resetFilter">
-            <img
-              src="/src/assets/icon/refesh.svg"
-              style="width: 20px; height: 20px"
-              alt=""
-            />
-          </button>
+          <span class="tooltip-wrapper" data-tooltip="Làm mới bộ lọc">
+            <button class="btn-clear" @click="resetFilter">
+              <img
+                src="/src/assets/icon/refesh.svg"
+                style="width: 20px; height: 20px"
+                alt=""
+              />
+            </button>
+          </span>
         </div>
 
         <button class="btn-add" @click="goCreate">+ Thêm phiếu giảm giá</button>
@@ -85,6 +87,7 @@
             <th>Kiểu áp dụng</th>
             <th>Chi tiết ưu đãi</th>
             <th>Thời gian áp dụng</th>
+            <th>Số lượng</th>
             <th>Trạng thái</th>
             <th>Hành động</th>
           </tr>
@@ -128,6 +131,8 @@
               Từ {{ formatDateVN(item.ngayBatDau) }}<br />
               Đến {{ formatDateVN(item.ngayKetThuc) }}
             </td>
+
+            <td>{{ item.soLuongDaDung }} / {{ item.soLuong }}</td>
 
             <td>
               <span :class="statusClass(item)">
@@ -304,7 +309,7 @@ const filteredList = computed(() => {
   let data = [...list.value];
 
   if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
+    const kw = keyword.value.trim().toLowerCase();
     data = data.filter(
       (i) =>
         i.maPgg.toLowerCase().includes(kw) ||
@@ -1051,5 +1056,4 @@ onMounted(() => {
   height: 22px;
   display: inline-block;
 }
-
 </style>

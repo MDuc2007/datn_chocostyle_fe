@@ -161,9 +161,58 @@
           <div class="user-welcome">
             <span class="user-name-bold">{{ currentUserName }}</span>
           </div>
+          <div class="notification-wrapper" @click.stop="toggleNotification">
+            <img src="/src/assets/icon/notification.svg" class="icon" />
 
-          <img src="/src/assets/icon/notification.svg" class="icon" />
+            <span v-if="notificationCount > 0" class="notification-badge">
+              {{ notificationCount > 99 ? "99+" : notificationCount }}
+            </span>
 
+            <!-- DROPDOWN -->
+            <div v-if="isNotificationOpen" class="notification-dropdown">
+              <div class="notification-header">
+                <span>Thông báo</span>
+
+                <button class="mark-read" @click="markAllRead">
+                  Đánh dấu đã đọc
+                </button>
+              </div>
+
+              <div v-if="notifications.length === 0" class="notification-empty">
+                Không có thông báo
+              </div>
+
+              <div
+                v-for="(noti, index) in notifications"
+                :key="index"
+                class="notification-item"
+                :class="{ unread: !noti.daDoc }"
+                @click="openNotification(noti)"
+              >
+                <div class="noti-icon">
+                  <span v-if="noti.loaiThongBao === 'ORDER_NEW'">🛒</span>
+                  <span v-else-if="noti.loaiThongBao === 'ORDER_CANCEL'"
+                    >❌</span
+                  >
+                  <span v-else-if="noti.loaiThongBao === 'PAYMENT_SUCCESS'"
+                    >💰</span
+                  >
+                  <span v-else>🔔</span>
+                </div>
+
+                <div class="noti-body">
+                  <div class="noti-title">{{ noti.tieuDe }}</div>
+                  <div class="noti-content">{{ noti.noiDung }}</div>
+                  <div class="noti-time">
+                    {{ formatTime(noti.ngayTao) }}
+                  </div>
+                </div>
+              </div>
+              <div v-if="hasMore" class="load-more" @click="loadMore">
+                Xem thêm
+              </div>
+            </div>
+          </div>
           <div
             class="user-icon-wrapper"
             @click.stop="toggleUserMenu"
@@ -185,7 +234,7 @@
                 <button @click.stop="viewProfile" class="dropdown-item">
                   Xem thông tin
                 </button>
-                
+
                 <button @click.stop="viewMyOrders" class="dropdown-item">
                   Đơn mua của tôi
                 </button>
@@ -211,9 +260,142 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
-
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 const router = useRouter();
 
+const notificationCount = ref(0);
+const notifications = ref<any[]>([]);
+let stompClient: Client | null = null;
+
+const page = ref(0);
+
+const loadNotifications = async () => {
+  try {
+
+    page.value = 0;   // reset page
+    hasMore.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8080/api/thong-bao?page=0&size=20`
+    );
+
+    notifications.value = res.data.content;
+    hasMore.value = res.data.content.length === 20;
+
+  } catch (e) {
+    console.error("Lỗi load thông báo", e);
+  }
+};
+
+const loadNotificationCount = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/thong-bao/count");
+    notificationCount.value = res.data;
+  } catch (e) {
+    console.error("Lỗi count thông báo", e);
+  }
+};
+
+const formatTime = (time: string) => {
+  const now = new Date().getTime();
+  const notiTime = new Date(time).getTime();
+
+  const diff = Math.floor((now - notiTime) / 1000);
+
+  if (diff < 60) return "Vừa xong";
+  if (diff < 3600) return Math.floor(diff / 60) + " phút trước";
+  if (diff < 86400) return Math.floor(diff / 3600) + " giờ trước";
+
+  return Math.floor(diff / 86400) + " ngày trước";
+};
+
+const markAllRead = async () => {
+  for (const n of notifications.value) {
+    if (!n.daDoc) {
+      await axios.put(`http://localhost:8080/api/thong-bao/${n.id}/read`);
+
+      n.daDoc = true;
+    }
+  }
+
+  notificationCount.value = 0;
+};
+
+const hasMore = ref(true);
+
+const loadMore = async () => {
+  page.value++;
+
+  const res = await axios.get(
+    `http://localhost:8080/api/thong-bao?page=${page.value}&size=20`
+  );
+
+  const newData = res.data.content;
+
+  if (newData.length === 0) {
+    hasMore.value = false;
+    return;
+  }
+
+  notifications.value.push(...newData);
+};
+
+const connectWebSocket = () => {
+  stompClient = new Client({
+    brokerURL: "ws://localhost:8080/ws-chocostyle",
+
+    reconnectDelay: 5000,
+
+    debug: (str) => {
+      console.log(str);
+    },
+
+    onConnect: () => {
+      console.log("WebSocket connected");
+
+      stompClient?.subscribe("/topic/notification", (message) => {
+        console.log("NHẬN:", message.body);
+
+        const data = JSON.parse(message.body);
+
+        if (!data.tieuDe && !data.noiDung) return;
+
+        notifications.value.unshift({
+          ...data,
+          orderId: data.orderId,
+        });
+
+        notificationCount.value++;
+      });
+    },
+  });
+
+  stompClient.activate();
+};
+const isNotificationOpen = ref(false);
+const toggleNotification = async () => {
+  isNotificationOpen.value = !isNotificationOpen.value;
+
+  if (isNotificationOpen.value) {
+    await loadNotifications();
+    await loadNotificationCount();
+  }
+};
+const openNotification = async (noti: any) => {
+  try {
+    await axios.put(`http://localhost:8080/api/thong-bao/${noti.id}/read`);
+  } catch (e) {
+    console.error("Lỗi đánh dấu đọc", e);
+  }
+
+  if (noti.orderId) {
+    router.push(`/admin/invoice/${noti.orderId}`);
+  }
+
+  notificationCount.value--;
+  isNotificationOpen.value = false;
+};
 // Các biến state cho menu
 const isDiscountOpen = ref(false);
 const isAccountOpen = ref(false);
@@ -229,12 +411,12 @@ const currentUserAvatar = ref<string | null>(null);
 // Hàm chạy khi load trang để lấy thông tin từ LocalStorage
 onMounted(async () => {
   const userStr = localStorage.getItem("user");
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
 
   if (userStr) {
     try {
       const userData = JSON.parse(userStr);
-      // Ưu tiên lấy tên nhân viên -> họ tên -> name
+
       currentUserName.value =
         userData.tenNhanVien ||
         userData.hoTen ||
@@ -242,7 +424,6 @@ onMounted(async () => {
         userData.username ||
         "Admin";
 
-      // 👉 GỌI API LẤY ẢNH BASE64 HOẶC TÊN FILE TỪ BACKEND
       if (userData.id && token) {
         try {
           const res = await axios.get(
@@ -253,23 +434,26 @@ onMounted(async () => {
               },
             },
           );
-          
-          // ĐỒNG NHẤT: Cập nhật lại tên chuẩn từ API giống trang Profile
+
           if (res.data) {
-            currentUserName.value = res.data.tenNhanVien || res.data.hoTen || currentUserName.value;
+            currentUserName.value =
+              res.data.tenNhanVien || res.data.hoTen || currentUserName.value;
           }
 
-          // Xử lý logic nối chuỗi URL nếu Backend chỉ trả về tên file ảnh
           if (res.data && res.data.avatar) {
             let avatarUrl = res.data.avatar;
-            // Nếu đường dẫn chưa bắt đầu bằng "http", nghĩa là nó là tên file lưu ở backend
+
             if (!avatarUrl.startsWith("http")) {
               avatarUrl = `http://localhost:8080/images/${avatarUrl}`;
             }
+
             currentUserAvatar.value = avatarUrl;
           }
         } catch (apiError) {
-          console.error("Lỗi không thể lấy thông tin nhân viên từ API:", apiError);
+          console.error(
+            "Lỗi không thể lấy thông tin nhân viên từ API:",
+            apiError,
+          );
         }
       }
     } catch (e) {
@@ -278,12 +462,20 @@ onMounted(async () => {
   }
 
   document.addEventListener("click", handleClickOutside);
+
+  await loadNotifications();
+  await loadNotificationCount();
+
+  connectWebSocket();
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
-});
 
+  if (stompClient) {
+    stompClient.deactivate();
+  }
+});
 // Hàm lấy chữ cái đầu tiên
 const getUserInitial = (name: string) => {
   if (!name) return "A";
@@ -292,12 +484,16 @@ const getUserInitial = (name: string) => {
 };
 
 const handleAvatarError = () => {
-  currentUserAvatar.value = null; 
+  currentUserAvatar.value = null;
 };
 
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
     isUserMenuOpen.value = false;
+  }
+
+  if (!(event.target as HTMLElement).closest(".notification-wrapper")) {
+    isNotificationOpen.value = false;
   }
 };
 
@@ -332,7 +528,7 @@ const viewProfile = () => {
 // 👉 ĐÃ THÊM: Logic chuyển hướng sang trang Đơn mua
 const viewMyOrders = () => {
   isUserMenuOpen.value = false;
-  router.push("/don-hang"); 
+  router.push("/don-hang");
 };
 
 const logout = () => {
@@ -460,7 +656,7 @@ const logout = () => {
   color: #6b3f23;
   font-weight: 700;
   border-left: 3px solid #6b3f23;
-  padding-left: 17px; 
+  padding-left: 17px;
 }
 
 /* ================= HAS CHILD ================= */
@@ -468,7 +664,7 @@ const logout = () => {
   display: flex;
   align-items: center;
   gap: 15px;
-  justify-content: space-between; 
+  justify-content: space-between;
 }
 
 .has-children > div {
@@ -580,7 +776,6 @@ const logout = () => {
   z-index: 1000;
   /* Đảm bảo text không bị tràn */
   overflow: hidden;
-
 }
 
 .user-dropdown::before {
@@ -607,7 +802,7 @@ const logout = () => {
   color: #333;
   cursor: pointer;
   transition: background-color 0.2s;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .dropdown-item:hover {
@@ -651,5 +846,127 @@ const logout = () => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  background: #ff424f;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 2px 6px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 360px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #eee;
+}
+
+.notification-header {
+  padding: 12px 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.notification-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2f2f2;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #f6f6f6;
+}
+
+.notification-item:first-child {
+  background: #fff7f0;
+}
+
+.noti-icon {
+  width: 34px;
+  height: 34px;
+  background: #fff3f3;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.noti-body {
+  flex: 1;
+}
+
+.noti-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.noti-content {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.noti-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.notification-empty {
+  padding: 30px;
+  text-align: center;
+  color: #999;
+}
+
+.notification-item.unread {
+  background: #fff7f0;
+}
+
+.notification-item.unread .noti-title {
+  font-weight: 700;
+}
+
+.mark-read {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #ee4d2d;
+  cursor: pointer;
+}
+
+.load-more {
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  color: #ee4d2d;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+}
+
+.load-more:hover {
+  background: #f9f9f9;
 }
 </style>
