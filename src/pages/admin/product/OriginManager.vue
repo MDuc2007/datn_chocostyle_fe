@@ -52,6 +52,8 @@
           <tbody>
             <tr v-for="(item, index) in paginatedColors" :key="item.id">
               <td>{{ index + 1 + currentPage * pageSize }}</td>
+            <tr v-for="(item, index) in paginatedColors" :key="item.id">
+              <td>{{ index + 1 + currentPage * pageSize }}</td>
               <td>{{ item.code }}</td>
               <td>{{ item.name }}</td>
               <td>{{ formatDate(item.ngayTao) }}</td>
@@ -111,6 +113,15 @@
           &lt;
         </button>
         <div class="page-numbers">
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page - 1 === currentPage }"
+            @click="currentPage = page - 1"
+          >
+            {{ page }}
+          </button>
           <button
             v-for="page in totalPages"
             :key="page"
@@ -195,6 +206,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from "vue";
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -298,6 +310,8 @@ async function handleModalConfirm() {
 const handleFilterChange = () => {
   currentPage.value = 0;
 
+  currentPage.value = 0;
+
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
@@ -322,6 +336,7 @@ const fetchColors = async () => {
   }));
 
   colors.value = [...allColors.value];
+  currentPage.value = 0;
   currentPage.value = 0;
 };
 
@@ -656,6 +671,10 @@ input:checked + .slider::before {
 }
 .pagination button {
   padding: 6px 12px;
+}
+.page-numbers {
+  display: flex;
+  gap: 10px;
 }
 .page-numbers {
   display: flex;

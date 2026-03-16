@@ -504,7 +504,7 @@ const validate = () => {
   const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
 
   if (!regex.test(form.tenDotGiamGia.trim())) {
-    errors.tenDotGiamGia = "Tên không được chứa ký tự đặc biệt";
+    errors.tenDotGiamGia = "Tên đợt giảm giá không được chứa ký tự đặc biệt";
     return false;
   }
 
@@ -533,6 +533,7 @@ const validate = () => {
 
   return valid;
 };
+
 const searchKeyword = ref("");
 
 const filteredSanPhamList = computed(() => {

@@ -52,6 +52,8 @@
           <tbody>
             <tr v-for="(item, index) in paginatedColors" :key="item.id">
               <td>{{ index + 1 + currentPage * pageSize }}</td>
+            <tr v-for="(item, index) in paginatedColors" :key="item.id">
+              <td>{{ index + 1 + currentPage * pageSize }}</td>
               <td>{{ item.code }}</td>
               <td>{{ item.rgb }}</td>
               <td>{{ item.name }}</td>
@@ -95,6 +97,32 @@
                       <span class="slider"></span>
                     </label>
                   </div>
+                    <span class="icon view" @click="editColor(item)">
+                      <img
+                        src="/src/assets/icon/eye.svg"
+                        style="width: 20px; height: 20px"
+                      />
+                    </span>
+                  </div>
+                  <div
+                    class="tooltip-wrapper"
+                    :data-tooltip="
+                      item.trangThai === 1
+                        ? 'Ngừng hoạt động'
+                        : item.trangThai === 0
+                          ? 'Hoạt động'
+                          : 'Không khả dụng'
+                    "
+                  >
+                    <label class="switch">
+                      <input
+                        type="checkbox"
+                        :checked="item.trangThai === 1"
+                        @click.prevent="toggleStatus(item)"
+                      />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -111,6 +139,15 @@
           &lt;
         </button>
         <div class="page-numbers">
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page - 1 === currentPage }"
+            @click="currentPage = page - 1"
+          >
+            {{ page }}
+          </button>
           <button
             v-for="page in totalPages"
             :key="page"
@@ -203,6 +240,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from "vue";
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
@@ -310,6 +348,8 @@ function closeConfirmModal() {
 const handleFilterChange = () => {
   currentPage.value = 0;
 
+  currentPage.value = 0;
+
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
@@ -335,6 +375,7 @@ const fetchColors = async () => {
     }));
 
     colors.value = [...allColors.value];
+    currentPage.value = 0;
     currentPage.value = 0;
   } catch (error) {
     showNotification("Không thể tải danh sách màu sắc", "error");
@@ -683,6 +724,10 @@ input:checked + .slider::before {
 }
 .pagination button {
   padding: 6px 12px;
+}
+.page-numbers {
+  display: flex;
+  gap: 10px;
 }
 .page-numbers {
   display: flex;

@@ -965,12 +965,40 @@ const getDiscountPrice = (ct: any) => {
   z-index: 2;
 }
 
+/* chỉ body cuộn */
+/* chỉ body cuộn */
+.table tbody {
+  display: block;
+  max-height: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* mỗi row body giữ đúng width */
+.table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* cell */
 .table th,
 .table td {
   padding: 14px 8px;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
+
+/* header không xuống dòng */
+.table thead th {
+  white-space: nowrap;
+}
+
+.table td:nth-child(4) {
+  width: 200px;
+  white-space: nowrap;
+}
+
 img {
   width: 50px;
   height: 50px;
