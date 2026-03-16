@@ -34,7 +34,7 @@
             <form class="checkout-form" @submit.prevent>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Họ và tên người nhận</label>
+                  <label>Họ và tên người nhận <span class="required">*</span></label>
                   <input
                     v-model="form.tenKhachHang"
                     type="text"
@@ -43,7 +43,7 @@
                   />
                 </div>
                 <div class="form-group">
-                  <label>Số điện thoại</label>
+                  <label>Số điện thoại <span class="required">*</span></label>
                   <input
                     v-model="form.soDienThoai"
                     type="text"
@@ -65,7 +65,7 @@
 
               <div class="form-row triplet">
                 <div class="form-group">
-                  <label>Tỉnh/Thành phố</label>
+                  <label>Tỉnh/Thành phố <span class="required">*</span></label>
                   <select id="select-province" class="form-control">
                     <option value="">Chọn Tỉnh/Thành phố</option>
                     <option
@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Quận/Huyện</label>
+                  <label>Quận/Huyện <span class="required">*</span></label>
                   <select
                     id="select-district"
                     class="form-control"
@@ -97,7 +97,7 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Phường/Xã</label>
+                  <label>Phường/Xã <span class="required">*</span></label>
                   <select
                     id="select-ward"
                     class="form-control"
@@ -116,7 +116,7 @@
               </div>
 
               <div class="form-group">
-                <label>Địa chỉ cụ thể (Số nhà, tên đường)</label>
+                <label>Địa chỉ cụ thể (Số nhà, tên đường) <span class="required">*</span></label>
                 <input
                   v-model="form.diaChiCuThe"
                   type="text"
@@ -247,10 +247,15 @@
 
               <div v-if="selectedVoucher" class="selected-voucher-tag">
                 <span class="voucher-icon">🎟️</span>
-                <div class="voucher-info">
+                <div class="voucher-info" style="flex: 1;">
                   <strong>{{ selectedVoucher.maPgg }}</strong>
                   <small>{{ selectedVoucher.tenPgg }}</small>
                 </div>
+                
+                <span v-if="selectedVoucher.isBest" class="best-badge-summary">
+                  🔥 Tốt nhất
+                </span>
+
                 <button class="btn-remove-v" @click="selectedVoucher = null">
                   &times;
                 </button>
@@ -287,9 +292,18 @@
                   >- {{ formatPrice(voucherDiscountAmount) }}</span
                 >
               </div>
-              <div class="price-row">
-                <span class="label">Phí vận chuyển:</span>
-                <span class="value">{{ formatPrice(shipFee) }}</span>
+              <div class="shipping-info-group">
+                <div class="price-row shipping-row">
+                  <span class="label">Phí vận chuyển:</span>
+                  <span class="value">{{ formatPrice(shipFee) }}</span>
+                </div>
+                
+                <div class="shipping-provider-wrapper" v-if="shipFee > 0">
+                    <div class="shipping-provider-right">
+                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-GHN-Orange.png" alt="GHN" class="provider-logo-rt" />
+                        <span>Giao Hàng Nhanh</span>
+                    </div>
+                </div>
               </div>
             </div>
 
@@ -330,18 +344,18 @@
             </button>
           </div>
           <div class="modal-body custom-scroll shopee-modal-body">
+            
             <div v-if="processedVouchers.length > 0" class="voucher-list">
               <div
                 v-for="v in processedVouchers"
                 :key="v.id"
                 class="shopee-voucher-card"
-                :class="{ 'v-active': selectedVoucher?.id === v.id }"
-                @click="selectVoucher(v)"
+                :class="{ 
+                  'v-active': selectedVoucher?.id === v.id,
+                  'v-disabled': subTotal < (v.dieueKienDonHang || v.dieuKienDonHang || 0) 
+                }"
+                @click="subTotal >= (v.dieueKienDonHang || v.dieuKienDonHang || 0) ? selectVoucher(v) : null"
               >
-                <div class="v-best-badge" v-if="v.isBest">
-                  Lựa chọn tốt nhất
-                </div>
-
                 <div class="shopee-v-left">
                   <div class="brand-text">CHOCO<br />STYLE</div>
                 </div>
@@ -356,6 +370,15 @@
                           : formatPrice(v.giaTri)
                       }}
                     </div>
+                    
+                    <div v-if="v.isBest && subTotal >= (v.dieueKienDonHang || v.dieuKienDonHang || 0)" class="best-voucher-alert">
+                      🔥 Mã giảm giá tốt nhất
+                    </div>
+
+                    <div v-if="subTotal < (v.dieueKienDonHang || v.dieuKienDonHang || 0)" class="not-eligible-alert">
+                      ❌ Chưa đủ điều kiện (Thiếu {{ formatPrice((v.dieueKienDonHang || v.dieuKienDonHang || 0) - subTotal) }})
+                    </div>
+
                     <div class="v-condition">
                       Đơn tối thiểu
                       {{
@@ -385,6 +408,7 @@
                 </div>
               </div>
             </div>
+
             <div v-else class="text-center py-5">
               <p class="text-muted">Bạn chưa có mã giảm giá nào khả dụng.</p>
             </div>
@@ -595,7 +619,6 @@ const handleImageError = (e) => {
   e.target.src = "/src/assets/logo/no-image-placeholder.png";
 };
 
-// ================== 1. LOGIC GHN ==================
 const getProvinces = async () => {
   try {
     const res = await axios.get(`${GHN_API_BASE}/master-data/province`, {
@@ -705,8 +728,6 @@ const handleWardChange = async () => {
   }
 };
 
-// ================== 2. LOGIC SẢN PHẨM & KHUYẾN MÃI (ĐÃ FIX LỖI GIẢM 2 LẦN) ==================
-
 const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/promotions");
@@ -727,7 +748,6 @@ const fetchPromotions = async () => {
     const isFromCart = route.query.fromCart === "true";
 
     checkoutItems.value.forEach((item) => {
-      // Tìm Khuyến mãi tốt nhất cho biến thể này
       const itemPromos = validPromos.filter((p) =>
         p.chiTietSanPhamIds?.some(
           (id) => Number(id) === Number(item.variantId),
@@ -743,12 +763,8 @@ const fetchPromotions = async () => {
         item.discountPercent = 0;
       }
 
-      // XỬ LÝ GIÁ ĐỂ TRÁNH GIẢM 2 LẦN
       if (isFromCart) {
-        // Nếu từ Giỏ Hàng: item.giaBan ĐÃ LÀ GIÁ ĐƯỢC GIẢM RỒI
         item.giaCuoiCung = item.giaBan;
-
-        // Tính ngược lại giá gốc để hiển thị gạch ngang (nếu có khuyến mãi)
         if (item.discountPercent > 0) {
           item.giaGoc = Math.round(
             item.giaCuoiCung / (1 - item.discountPercent / 100),
@@ -757,10 +773,7 @@ const fetchPromotions = async () => {
           item.giaGoc = item.giaCuoiCung;
         }
       } else {
-        // Nếu Mua Ngay: variant.giaBan từ API trả về LÀ GIÁ GỐC
         item.giaGoc = item.giaBan;
-
-        // Tính xuôi để ra giá cuối cùng
         if (item.discountPercent > 0) {
           item.giaCuoiCung = Math.round(
             item.giaGoc * (1 - item.discountPercent / 100),
@@ -771,10 +784,8 @@ const fetchPromotions = async () => {
       }
     });
   } catch (err) {
-    // Xử lý lỗi (Thường gặp khi chưa đăng nhập)
     checkoutItems.value.forEach((item) => {
       item.discountPercent = 0;
-      // Tránh lỗi undefined nếu API xịt
       item.giaCuoiCung = item.giaBan;
       item.giaGoc = item.giaBan;
     });
@@ -792,13 +803,11 @@ const fetchVouchers = async (khId) => {
   }
 };
 
-// ================== 3. TÍNH TOÁN TIỀN ĐÃ CẬP NHẬT ==================
 
 const totalItemCount = computed(() => {
   return checkoutItems.value.reduce((sum, item) => sum + item.soLuong, 0);
 });
 
-// Tạm tính dùng giaCuoiCung thay vì hàm getDiscountedPrice
 const subTotal = computed(() => {
   return checkoutItems.value.reduce(
     (sum, item) => sum + item.giaCuoiCung * item.soLuong,
@@ -806,7 +815,6 @@ const subTotal = computed(() => {
   );
 });
 
-// Tính giảm giá Voucher dựa trên subTotal
 const voucherDiscountAmount = computed(() => {
   if (!selectedVoucher.value) return 0;
   const v = selectedVoucher.value;
@@ -830,7 +838,6 @@ const finalTotal = computed(() => {
   return total > 0 ? Math.round(total) : 0;
 });
 
-// Xử lý logic Voucher Shopee style
 const processedVouchers = computed(() => {
   const basePrice = subTotal.value;
 
@@ -875,7 +882,6 @@ const selectVoucher = (v) => {
   showVoucherModal.value = false;
 };
 
-// ================== 4. XỬ LÝ ĐẶT HÀNG ==================
 const addNotification = (m, t = "success") => {
   const id = Date.now();
   notifications.value.push({ id, message: m, type: t });
@@ -912,7 +918,6 @@ const handleCheckout = async () => {
   isProcessing.value = true;
   const fullAddress = `${form.value.diaChiCuThe}, ${form.value.phuong}, ${form.value.quan}, ${form.value.thanhPho}`;
 
-  // Gửi giá giaCuoiCung chuẩn xác cho BE
   const orderDetails = checkoutItems.value.map((item) => ({
     idChiTietSanPham: item.variantId,
     soLuong: item.soLuong,
@@ -921,8 +926,8 @@ const handleCheckout = async () => {
 
   const orderData = {
     idKhachHang: customer.value?.id || null,
-    idNhanVien: 1, // Tránh lỗi SQL NULL
-    loaiDon: 0, // Online
+    idNhanVien: 1, 
+    loaiDon: 0, 
     ghiChu: form.value.ghiChu,
     tongTienHang: subTotal.value,
     phiShip: shipFee.value,
@@ -1017,7 +1022,6 @@ const updateOriginalCartAfterPurchase = () => {
   localStorage.removeItem("checkout_items");
 };
 
-// ================== 5. KHỞI TẠO ==================
 const fetchCustomer = async () => {
   const userStr = localStorage.getItem("user");
   if (!userStr) return;
@@ -1154,7 +1158,6 @@ onMounted(async () => {
     }
   }
 
-  // Lấy dữ liệu sản phẩm
   const checkoutData = localStorage.getItem("checkout_items");
   if (checkoutData) {
     try {
@@ -1175,7 +1178,6 @@ onMounted(async () => {
     }
   }
 
-  // Mua ngay
   if (checkoutItems.value.length === 0) {
     const { productId, variantId, quantity } = route.query;
     if (productId && variantId) {
@@ -1207,25 +1209,19 @@ onMounted(async () => {
       }
     }
   }
-
-  // 👉 THÊM DÒNG NÀY VÀO CUỐI CÙNG
-  // Sau khi đã load xong giá sản phẩm và voucher của khách hàng
-  autoSelectBestVoucher();
 });
 
 watch(
   () => processedVouchers.value,
   (newVal) => {
-    // Nếu chưa có voucher nào được chọn VÀ danh sách có voucher khả dụng
     if (!selectedVoucher.value && newVal && newVal.length > 0) {
       const bestVoucher = newVal[0];
-      // Nếu voucher tốt nhất đủ điều kiện giảm giá (> 0) thì tự động chọn luôn
       if (bestVoucher.simulatedDiscount > 0) {
         selectedVoucher.value = bestVoucher;
       }
     }
   },
-  { immediate: true }, // Kích hoạt ngay lập tức khi component vừa render
+  { immediate: true }, 
 );
 </script>
 
@@ -1234,7 +1230,7 @@ watch(
 
 /* ================== VARIABLES & GLOBALS ================== */
 .checkout-wrapper {
-  background-color: #f7f7f7; /* Nền xám nhạt */
+  background-color: #f7f7f7; 
   min-height: 100vh;
   font-family: "Nunito", sans-serif;
   color: #1a1a1a;
@@ -1273,7 +1269,7 @@ watch(
   font-family: "Montserrat", sans-serif;
   font-size: 32px;
   font-weight: 800;
-  color: #63391f; /* Màu nâu chủ đạo */
+  color: #63391f; 
   margin: 0 0 10px 0;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1375,6 +1371,12 @@ watch(
   font-weight: 700;
   color: #334155;
   margin-bottom: 8px;
+}
+
+/* 👉 CSS CHO DẤU * BẮT BUỘC NHẬP */
+.required {
+  color: #dc2626;
+  margin-left: 2px;
 }
 
 .form-control {
@@ -1596,7 +1598,7 @@ watch(
 .btn-link-sm {
   background: none;
   border: none;
-  color: #d32f2f; /* Màu đỏ nổi bật cho voucher */
+  color: #d32f2f; 
   font-weight: 700;
   cursor: pointer;
   font-size: 13px;
@@ -1685,7 +1687,7 @@ watch(
 }
 
 .discount-text {
-  color: #10b981; /* Xanh lá cho giảm giá */
+  color: #10b981; 
   font-weight: 700;
 }
 
@@ -1700,7 +1702,7 @@ watch(
 }
 
 .highlight-price {
-  color: #d32f2f; /* Đỏ rực */
+  color: #d32f2f; 
   font-size: 24px;
   font-family: "Montserrat", sans-serif;
 }
@@ -2296,5 +2298,74 @@ watch(
 .modern-table td:last-child {
   text-align: center;
   vertical-align: middle;
+}
+
+/* Nhãn Tốt nhất ở cột bên phải (Tóm tắt đơn hàng) */
+.best-badge-summary {
+  color: #dc2626; 
+  background-color: #fef2f2; 
+  border: 1px solid #fecaca;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto; 
+  margin-right: 10px; 
+  white-space: nowrap;
+  animation: pulse 2s infinite;
+}
+
+.selected-voucher-tag {
+  display: flex;
+  align-items: center;
+}
+/* Đóng khung Giao Hàng Nhanh trải dài 100% */
+.shipping-provider-wrapper {
+    display: block; 
+    margin-top: 8px; 
+    width: 100%;
+}
+.shipping-provider-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; 
+    background: #fff7ed;
+    padding: 10px 12px; 
+    border-radius: 6px;
+    border: 1px dashed #fdba74;
+    font-size: 14px; 
+    color: #ea580c;
+    font-weight: 600;
+    width: 100%;
+    box-sizing: border-box;
+    animation: fadeInRt 0.4s ease-out;
+}
+
+.provider-logo-rt {
+    height: 18px; 
+    object-fit: contain;
+}
+
+/* Style cho Voucher bị mờ (Chưa đủ điều kiện) */
+.shopee-voucher-card.v-disabled {
+  opacity: 0.5;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+  pointer-events: none; 
+}
+
+/* Nhãn báo chưa đủ điều kiện */
+.not-eligible-alert {
+  display: inline-block;
+  color: #991b1b;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  margin-bottom: 2px;
 }
 </style>

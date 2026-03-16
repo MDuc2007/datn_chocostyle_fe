@@ -75,7 +75,7 @@
                 <button class="btn-outline" @click="$router.push(`/don-hang/${order.id}`)">Xem chi tiết</button>
                 
                 <button 
-                  v-if="order.trangThai === 0 || order.trangThai === 1" 
+                  v-if="(order.trangThai === 0 || order.trangThai === 1) && isLoggedIn" 
                   class="btn-danger-outline"
                   @click="openCancelModal(order.id)"
                 >
@@ -149,6 +149,9 @@ const activeTab = ref('ALL');
 const orders = ref([]);
 let currentUserId = null; 
 
+// 👉 BIẾN LƯU TRẠNG THÁI ĐĂNG NHẬP
+const isLoggedIn = ref(false);
+
 // Modal hủy đơn
 const cancelModal = ref({ show: false, orderId: null });
 const isCancelling = ref(false);
@@ -158,11 +161,18 @@ onMounted(async () => {
   const userStr = localStorage.getItem("user");
   const token = localStorage.getItem("token");
 
-  if (userStr) {
+  // Kiểm tra xem khách có đăng nhập hay không
+  if (userStr && token) {
     const userData = JSON.parse(userStr);
     currentUserId = userData.id;
+    isLoggedIn.value = true; // Đánh dấu là khách đã đăng nhập (có quyền Hủy đơn)
+  } else {
+    isLoggedIn.value = false; // Khách vãng lai (ẩn nút Hủy đơn)
   }
 
+  // Chú ý: Ở đây bạn đang chặn khách chưa đăng nhập thì đẩy về trang /login
+  // Nếu bạn muốn khách chưa đăng nhập vẫn vào được trang này để "Tra cứu", 
+  // thì bạn có thể bỏ 2 dòng dưới đi.
   if (!currentUserId || !token) {
     router.push('/login');
     return;
@@ -174,12 +184,10 @@ onMounted(async () => {
 const fetchOrders = async (token) => {
   loadingData.value = true;
   try {
-    // 👉 GỌI API LẤY DANH SÁCH ĐƠN HÀNG CỦA KHÁCH (Thay đường dẫn cho khớp Backend)
     const res = await axios.get(`http://localhost:8080/api/khach-hang/${currentUserId}/don-hang`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
-    // Giả định backend trả về mảng đơn hàng
     orders.value = res.data.content || res.data || [];
     
   } catch (error) {
@@ -245,7 +253,6 @@ const confirmCancelOrder = async () => {
   const token = localStorage.getItem("token");
 
   try {
-    // 👉 GỌI API HỦY ĐƠN HÀNG
     await axios.put(`http://localhost:8080/api/don-hang/${cancelModal.value.orderId}/huy`, null, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -253,7 +260,6 @@ const confirmCancelOrder = async () => {
     showToast("Đã hủy đơn hàng thành công!", "success");
     cancelModal.value.show = false;
     
-    // Tải lại danh sách
     await fetchOrders(token);
   } catch (error) {
     showToast(error.response?.data || "Không thể hủy đơn hàng lúc này!", "error");

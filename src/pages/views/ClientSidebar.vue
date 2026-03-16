@@ -1,6 +1,7 @@
 <template>
   <aside class="sidebar-wrapper">
-    <div class="user-brief">
+    
+    <div class="user-brief" v-if="isLoggedIn">
       <div class="avatar-circle">
         <img
           v-if="currentUser?.avatar"
@@ -24,9 +25,24 @@
       </div>
     </div>
 
+    <div class="user-brief" v-else style="justify-content: center; text-align: center; padding-bottom: 20px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div class="avatar-circle" style="background-color: #f3f4f6; border-color: #e5e7eb;">
+          <span class="avatar-placeholder" style="color: #9ca3af;">?</span>
+        </div>
+        <div class="username" style="color: #6b7280;">Khách vãng lai</div>
+        <button 
+          style="background: #6b3f1e; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 5px;"
+          @click="$router.push('/login')"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    </div>
+
     <nav class="sidebar-menu">
       
-      <div class="menu-group">
+      <div class="menu-group" v-if="isLoggedIn">
         <div 
           class="menu-header" 
           @click="toggleMenu('account')"
@@ -81,7 +97,7 @@
         </div>
       </div>
 
-      <div class="menu-group">
+      <div class="menu-group" v-if="isLoggedIn">
         <div 
           class="menu-header single-link" 
           @click="$router.push('/my-vouchers')"
@@ -96,7 +112,7 @@
         </div>
       </div>
 
-      <div class="menu-group">
+      <div class="menu-group" v-if="isLoggedIn">
         <div 
           class="menu-header single-link" 
           @click="$router.push('/change-password')"
@@ -123,6 +139,7 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const currentUser = ref(null);
 const openMenus = reactive({ account: true });
+const isLoggedIn = ref(false); // 👉 BIẾN LƯU TRẠNG THÁI ĐĂNG NHẬP
 
 const currentPath = computed(() => route.path);
 
@@ -136,14 +153,11 @@ const getUserInitial = (name) => {
   return words[words.length - 1].charAt(0).toUpperCase();
 };
 
-// 👉 ĐÃ SỬA LẠI HÀM LẤY ẢNH CHUẨN BASE64 HOẶC GOOGLE LINK
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  // Nếu là ảnh lấy từ Google hoặc đã lưu dạng Base64
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:image")) {
     return imagePath; 
   }
-  // Fallback nếu lưu tên file thông thường
   const timestamp = new Date().getTime();
   return `http://localhost:8080/images/${imagePath}?t=${timestamp}`;
 };
@@ -154,12 +168,17 @@ const handleAvatarError = (e) => {
 
 const loadCurrentUser = () => {
   const userStr = localStorage.getItem("user");
-  if (userStr) {
+  const token = localStorage.getItem("token");
+  
+  if (userStr && token) {
     currentUser.value = JSON.parse(userStr);
+    isLoggedIn.value = true;
+  } else {
+    currentUser.value = null;
+    isLoggedIn.value = false;
   }
 };
 
-// Lắng nghe sự kiện khi ở trang Profile đổi ảnh, Sidebar cũng tự động đổi theo
 onMounted(() => {
   loadCurrentUser();
   window.addEventListener('userUpdated', loadCurrentUser);

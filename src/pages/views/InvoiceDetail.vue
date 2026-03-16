@@ -63,7 +63,7 @@
                 </div>
               </div>
 
-              <div class="action-bar-bottom">
+              <div class="action-bar-bottom" v-if="isLoggedIn">
                 <div class="action-left">
                   <button
                     v-if="invoice.trangThai === 0"
@@ -153,7 +153,7 @@
                   </div>
 
                   <button
-                    v-if="canEditCustomerInfo"
+                    v-if="canEditCustomerInfo && isLoggedIn"
                     @click="openEditCustomerModal"
                     class="text-primary-btn"
                   >
@@ -260,8 +260,8 @@
                 <table class="payment-table text-center-table">
                   <thead>
                     <tr>
-                      <th>STT</th>
-                      <th>Mã giao dịch</th>
+                      <th style="width: 60px">STT</th>
+                      <th style="width: 140px">Mã giao dịch</th>
                       <th>Loại giao dịch</th>
                       <th>Phương thức</th>
                       <th>Trạng thái</th>
@@ -345,6 +345,9 @@
                   <thead>
                     <tr>
                       <th style="width: 60px">STT</th>
+                      
+                      <th style="width: 120px">Mã CTSP</th>
+
                       <th
                         style="text-align: left !important; padding-left: 16px"
                       >
@@ -359,6 +362,9 @@
                   <tbody>
                     <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
                       <td class="index-cell">{{ index + 1 }}</td>
+                      
+                      <td style="font-weight: bold; color: #475569;">{{ p.idSpct }}</td>
+
                       <td
                         style="text-align: left !important; padding-left: 16px"
                       >
@@ -407,7 +413,7 @@
                         </div>
                       </td>
                       <td class="quantity-text">
-                        <div v-if="canEditProducts" class="qty-control-wrapper">
+                        <div v-if="canEditProducts && isLoggedIn" class="qty-control-wrapper">
                           <button
                             class="btn-qty"
                             @click="updateProductQuantity(p, p.soLuong - 1)"
@@ -690,7 +696,7 @@ interface InvoiceProduct {
   soLuong: number;
   donGia: number;
   thanhTien: number;
-  hinhAnh?: string; // Khai báo thêm trường hình ảnh để TS không báo lỗi
+  hinhAnh?: string; 
 }
 interface InvoiceHistory {
   trangThai: number;
@@ -731,15 +737,17 @@ interface InvoiceDetail {
 const route = useRoute();
 const invoice = ref<InvoiceDetail | null>(null);
 
+// 👉 BIẾN ĐIỀU KHIỂN NÚT HỦY ĐƠN (Kiểm tra đăng nhập)
+const isLoggedIn = ref(false);
+
 const lyDoHuy = computed(() => {
   if (!invoice.value || invoice.value.trangThai !== 5)
     return "Không có lý do cụ thể";
 
-  // Tìm trong lịch sử thao tác, lấy ra hành động có trạng thái = 5 (Hủy đơn)
   const logHuy = invoice.value.lichSuList?.find((log) => log.trangThai === 5);
 
   if (logHuy && logHuy.ghiChu && logHuy.ghiChu.trim() !== "") {
-    return logHuy.ghiChu; // Trả về lý do hủy (ví dụ: "abc")
+    return logHuy.ghiChu; 
   }
 
   return "Không có lý do cụ thể";
@@ -1155,7 +1163,6 @@ const timelineSteps = computed(() => {
     ];
   }
 
-  // Sắp xếp thời gian cũ -> mới
   const sortedHistory = [...invoice.value.lichSuList].sort(
     (a, b) => new Date(a.thoiGian).getTime() - new Date(b.thoiGian).getTime(),
   );
@@ -1164,7 +1171,6 @@ const timelineSteps = computed(() => {
   const seenStatuses = new Set();
 
   for (const log of sortedHistory) {
-    // Chỉ lấy lần ĐẦU TIÊN mà đơn hàng đạt trạng thái này để tránh lặp UI
     if (!seenStatuses.has(log.trangThai)) {
       seenStatuses.add(log.trangThai);
       uniqueSteps.push({
@@ -1359,11 +1365,10 @@ const isChuyenKhoan = computed(() => {
 });
 
 // ===============================================
-// ĐIỀU KIỆN SỬA SẢN PHẨM: Tiền mặt + Chờ xác nhận
+// ĐIỀU KIỆN SỬA SẢN PHẨM: Tiền mặt + Chờ xác nhận + ĐÃ ĐĂNG NHẬP
 // ===============================================
 const canEditProducts = computed(() => {
   if (!invoice.value) return false;
-  // Chuyển khoản -> KHÔNG cho phép sửa thông tin sản phẩm
   return invoice.value.trangThai === 0 && !isChuyenKhoan.value;
 });
 
@@ -1376,6 +1381,14 @@ const canEditCustomerInfo = computed(() => {
 });
 
 onMounted(() => {
+  // KIỂM TRA ĐĂNG NHẬP ĐỂ HIỆN/ẨN NÚT HỦY ĐƠN & NÚT SỬA 
+  const token = localStorage.getItem("token");
+  if (token) {
+    isLoggedIn.value = true;
+  } else {
+    isLoggedIn.value = false;
+  }
+  
   fetchDetail();
 });
 </script>
@@ -1874,7 +1887,7 @@ onMounted(() => {
   gap: 8px;
 }
 .btn-outline-red:hover {
-  background-color: #fef2f2;
+  background: #fef2f2;
 }
 .btn-outline-orange {
   background-color: white;
@@ -1890,7 +1903,7 @@ onMounted(() => {
   gap: 8px;
 }
 .btn-outline-orange:hover {
-  background-color: #fff5f0;
+  background: #fff5f0;
 }
 .btn-white-border {
   background-color: white;
@@ -1903,7 +1916,7 @@ onMounted(() => {
   cursor: pointer;
 }
 .btn-white-border:hover {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   border-color: #ccc;
   color: #333;
 }
