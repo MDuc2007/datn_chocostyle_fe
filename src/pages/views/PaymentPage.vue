@@ -292,18 +292,18 @@
                   >- {{ formatPrice(voucherDiscountAmount) }}</span
                 >
               </div>
-              <div class="shipping-info-group">
-                <div class="price-row shipping-row">
-                  <span class="label">Phí vận chuyển:</span>
-                  <span class="value">{{ formatPrice(shipFee) }}</span>
-                </div>
+              <div class="price-row" style="align-items: center;">
                 
-                <div class="shipping-provider-wrapper" v-if="shipFee > 0">
-                    <div class="shipping-provider-right">
-                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-GHN-Orange.png" alt="GHN" class="provider-logo-rt" />
-                        <span>Giao Hàng Nhanh</span>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="label" style="margin-bottom: 0;">Phí vận chuyển:</span>
+                  
+                  <div class="ghn-inline-badge" v-if="shipFee > 0">
+                      <div class="ghn-square-logo">GHN</div>
+                      <span>Giao Hàng Nhanh</span>
+                  </div>
                 </div>
+
+                <span class="value">{{ formatPrice(shipFee) }}</span>
               </div>
             </div>
 
@@ -2319,34 +2319,6 @@ watch(
   display: flex;
   align-items: center;
 }
-/* Đóng khung Giao Hàng Nhanh trải dài 100% */
-.shipping-provider-wrapper {
-    display: block; 
-    margin-top: 8px; 
-    width: 100%;
-}
-.shipping-provider-right {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px; 
-    background: #fff7ed;
-    padding: 10px 12px; 
-    border-radius: 6px;
-    border: 1px dashed #fdba74;
-    font-size: 14px; 
-    color: #ea580c;
-    font-weight: 600;
-    width: 100%;
-    box-sizing: border-box;
-    animation: fadeInRt 0.4s ease-out;
-}
-
-.provider-logo-rt {
-    height: 18px; 
-    object-fit: contain;
-}
-
 /* Style cho Voucher bị mờ (Chưa đủ điều kiện) */
 .shopee-voucher-card.v-disabled {
   opacity: 0.5;
@@ -2367,5 +2339,30 @@ watch(
   border-radius: 4px;
   margin-top: 4px;
   margin-bottom: 2px;
+}
+/* Khung viền đứt màu cam nét mảnh */
+.ghn-inline-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fffaf5; 
+  padding: 3px 8px; 
+  border-radius: 4px;
+  border: 1px dashed #f97316; 
+  font-size: 12px; 
+  color: #f97316; 
+  font-weight: 600;
+}
+
+/* Logo ô vuông màu cam chữ trắng (Giống Ảnh 2) */
+.ghn-square-logo {
+  background-color: #f97316;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 2px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  line-height: 1;
 }
 </style>

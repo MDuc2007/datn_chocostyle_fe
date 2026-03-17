@@ -138,7 +138,7 @@
 
           <div class="modal-content" v-if="selectedProduct">
             <div class="modal-left">
-              <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
+              <img :src="currentVariant?.hinhAnhUrls?.[0] || currentVariant?.hinhAnh || selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
             </div>
 
             <div class="modal-right">
@@ -146,7 +146,7 @@
 
               <div class="modal-price-container">
                 <p class="modal-old-price">
-                  <span v-if="currentVariant">{{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}</span>
+                  <span v-if="currentVariant">{{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan || currentVariant.gia) }}</span>
                   <span v-else>{{ formatPrice(getOldPrice(selectedProduct)) }}</span>
                 </p>
                 
@@ -176,7 +176,7 @@
               </div>
 
               <div class="attribute-group">
-                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0 }})</span></label>
+                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon ?? currentVariant.soLuong ?? 0 }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
                   <input type="number" v-model="quantity" min="1" readonly />
@@ -213,7 +213,7 @@ const errorMsg = ref("");
 
 // --- Trạng thái Lọc & Sắp xếp ---
 const searchKeyword = ref("");
-const selectedSort = ref("bestSale"); // Sắp xếp mặc định theo Sale nhiều nhất
+const selectedSort = ref("bestSale"); 
 const advancedFilters = ref({ minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] });
 
 // --- Phân trang Backend ---
@@ -221,7 +221,7 @@ const currentPage = ref(0);
 const itemsPerPage = 12;
 const totalPages = ref(1);
 
-// --- Phân trang Frontend (Hiển thị tạm thời nếu dùng chung mảng) ---
+// --- Phân trang Frontend ---
 const visibleCount = ref(itemsPerPage);
 const displayedProducts = computed(() => filteredProducts.value.slice(0, visibleCount.value));
 const hasMore = computed(() => visibleCount.value < filteredProducts.value.length);
@@ -366,7 +366,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// --- LOGIC MODAL QUICK ADD ---
+// --- LOGIC MODAL QUICK ADD ĐÃ FIX GIỐNG TRANG TRƯỚC ---
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -379,31 +379,40 @@ const availableSizes = ref([]);
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find(v => {
-    const tenM = v.tenMauSac || v.mauSac?.tenMauSac;
-    const tenS = v.tenKichCo || v.kichCo?.tenKichCo;
+    const tenM = v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac;
+    const tenS = v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo;
     return tenM === selectedColor.value && tenS === selectedSize.value;
   });
 });
 
-// ĐÃ THÊM: Tính giá đã giảm cho biến thể trong Modal Quick Add
+// Tính giá đã giảm cho biến thể trong Modal
 const currentVariantDiscountedPrice = computed(() => {
   if (!currentVariant.value) return 0;
   const rawPrice = currentVariant.value.giaBan || currentVariant.value.gia || 0;
-  const discountPercent = selectedProduct.value?.phanTramGiam || 0;
-  return Math.round(rawPrice * (1 - discountPercent / 100));
+  const discountPercent = selectedProduct.value?.phanTramGiam || currentVariant.value.phanTramGiam || 0;
+  return currentVariant.value.giaSauGiam || Math.round(rawPrice * (1 - discountPercent / 100));
 });
 
 const openQuickAddModal = async (sp) => {
   selectedProduct.value = sp;
   quantity.value = 1;
   isQuickAddModalOpen.value = true;
+  
   try {
-    const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?keyword=${sp.maSanPham}&size=100`);
-    productVariants.value = res.data.content || res.data || [];
+    const res = await axios.get(`http://localhost:8080/api/san-pham/${sp.id}`);
+    const prod = res.data;
+
+    productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      availableColors.value = [...new Set(productVariants.value.map(v => v.tenMauSac || v.mauSac?.tenMauSac))].filter(Boolean);
-      availableSizes.value = [...new Set(productVariants.value.map(v => v.tenKichCo || v.kichCo?.tenKichCo))].filter(Boolean);
+      availableColors.value = [...new Set(productVariants.value.map(v => 
+        v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac
+      ))].filter(Boolean);
+
+      availableSizes.value = [...new Set(productVariants.value.map(v => 
+        v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo
+      ))].filter(Boolean);
+      
       if (availableColors.value.length) selectedColor.value = availableColors.value[0];
       if (availableSizes.value.length) selectedSize.value = availableSizes.value[0];
     } else {
@@ -411,6 +420,7 @@ const openQuickAddModal = async (sp) => {
       availableSizes.value = [];
     }
   } catch (error) {
+    console.error("Lỗi lấy chi tiết biến thể Modal: ", error);
     showToast("Không thể tải thông tin chi tiết!", "error");
   }
 };
@@ -422,18 +432,29 @@ const closeQuickAddModal = () => {
 
 const confirmAddToCart = () => {
   if (!currentVariant.value) return showToast("Vui lòng chọn phân loại hợp lệ!", "warning");
-  const tk = currentVariant.value.soLuongTon || 0;
+  
+  const tk = currentVariant.value.soLuongTon ?? currentVariant.value.soLuong ?? 0;
   if (quantity.value > tk) return showToast(`Kho chỉ còn ${tk} sản phẩm!`, "error");
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+  const giaBan = currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const phanTram = selectedProduct.value.phanTramGiam || currentVariant.value.phanTramGiam || 0;
+  const giaSauGiam = currentVariant.value.giaSauGiam || (giaBan * (1 - phanTram / 100));
+
+  const hinhAnhVariant = currentVariant.value.hinhAnhUrls?.[0] || currentVariant.value.hinhAnh;
+  const hinhAnhSp = selectedProduct.value.hinhAnh;
+  const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
+
   const newItem = {
     productId: selectedProduct.value.id,
     variantId: currentVariant.value.id,
-    tenSp: selectedProduct.value.tenSp,
-    hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-    mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
+    tenSp: selectedProduct.value.tenSp || selectedProduct.value.tenSanPham,
+    hinhAnh: finalImage,
+    mauSac: currentVariant.value.mauSac || { tenMau: selectedColor.value, rgb: '#63391F' },
     kichCo: selectedSize.value,
-    giaBan: currentVariant.value.giaBan || currentVariant.value.gia || 0, // Vẫn lưu giá gốc để Cart.vue tự tính lại
+    giaBan: Math.round(giaSauGiam), 
+    giaGoc: giaBan, 
     soLuong: quantity.value,
     tonKho: tk
   };
@@ -695,16 +716,26 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
+/* MỚI THÊM: CSS CHO BADGE SALE/MỚI */
 .badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   padding: 4px 10px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: white;
-  background: #d0021b;
+  z-index: 2;
+}
+
+.badge-new {
+  background: #10B981;
+}
+
+.badge-sale {
+  background: #d32f2f;
+  box-shadow: 0 4px 6px rgba(211, 47, 47, 0.3);
 }
 
 .product-info {

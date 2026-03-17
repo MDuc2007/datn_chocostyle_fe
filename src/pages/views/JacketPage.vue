@@ -143,7 +143,7 @@
 
           <div class="modal-content" v-if="selectedProduct">
             <div class="modal-left">
-              <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
+              <img :src="currentVariant?.hinhAnhUrls?.[0] || currentVariant?.hinhAnh || selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
             </div>
 
             <div class="modal-right">
@@ -151,12 +151,19 @@
 
               <p class="modal-price">
                 <template v-if="currentVariant">
-                  <span v-if="currentVariant.phanTramGiam > 0" class="modal-old-price">
-                    {{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan) }}
-                  </span>
-                  <span class="modal-current-price">
-                    {{ formatPrice(currentVariant.giaSauGiam || currentVariant.giaBan) }}
-                  </span>
+                  <template v-if="(selectedProduct?.phanTramGiam > 0) || (currentVariant.phanTramGiam > 0)">
+                    <span class="modal-old-price">
+                      {{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan) }}
+                    </span>
+                    <span class="modal-current-price">
+                      {{ formatPrice(currentVariant.giaSauGiam || (currentVariant.giaBan * (1 - (selectedProduct?.phanTramGiam || 0) / 100))) }}
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="modal-current-price">
+                      {{ formatPrice(currentVariant.giaBan) }}
+                    </span>
+                  </template>
                 </template>
 
                 <template v-else>
@@ -202,7 +209,7 @@
               </div>
 
               <div class="attribute-group">
-                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
+                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon ?? currentVariant.soLuong ?? 0
                     }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
@@ -294,7 +301,7 @@ const applyFilters = () => {
   fetchFilteredData();
 }
 
-// ================= LOGIC GỌI API LỌC TỪ BACKEND & XỬ LÝ ID =================
+// ================= LOGIC GỌI API LỌC TỪ BACKEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -331,7 +338,6 @@ const fetchFilteredData = async (isAppend = false) => {
           }
           if (!realProductId) realProductId = item.id;
 
-          // MỚI THÊM: Map luôn thông tin giá gốc và giá sau giảm
           uniqueProductsMap.set(item.maSanPham, {
             id: realProductId,
             maSanPham: item.maSanPham,
@@ -349,15 +355,12 @@ const fetchFilteredData = async (isAppend = false) => {
           const currentGia = item.giaGoc || item.giaBan;
           const currentGiaSauGiam = item.giaSauGiam || item.giaBan;
 
-          // Cập nhật giá Min/Max cho Giá Gốc
           if (currentGia < existing.giaMin) existing.giaMin = currentGia;
           if (currentGia > existing.giaMax) existing.giaMax = currentGia;
 
-          // Cập nhật giá Min/Max cho Giá Đã Giảm
           if (currentGiaSauGiam < existing.giaMinSauGiam) existing.giaMinSauGiam = currentGiaSauGiam;
           if (currentGiaSauGiam > existing.giaMaxSauGiam) existing.giaMaxSauGiam = currentGiaSauGiam;
 
-          // Lấy phầm trăm giảm lớn nhất nếu có nhiều biến thể sale khác nhau
           if (item.phanTramGiam > existing.phanTramGiam) existing.phanTramGiam = item.phanTramGiam;
         }
       }
@@ -365,7 +368,6 @@ const fetchFilteredData = async (isAppend = false) => {
 
     let uniqueProducts = Array.from(uniqueProductsMap.values());
 
-    // MỚI THÊM: Sắp xếp theo giá trị thực tế sau khi đã giảm
     if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMinSauGiam - b.giaMinSauGiam);
     else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMinSauGiam - a.giaMinSauGiam);
     else uniqueProducts.sort((a, b) => b.id - a.id);
@@ -387,7 +389,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// --- LOGIC MODAL QUICK ADD ---
+// ================= LOGIC MODAL QUICK ADD ĐÃ FIX =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -397,11 +399,14 @@ const productVariants = ref([]);
 const availableColors = ref([]);
 const availableSizes = ref([]);
 
+// TỰ ĐỘNG CHỌN BIẾN THỂ KHI BẤM MÀU/SIZE (BẮT TẤT CẢ CÁC TRƯỜNG HỢP JSON API)
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find(v => {
-    const tenM = v.tenMauSac || v.mauSac?.tenMauSac;
-    const tenS = v.tenKichCo || v.kichCo?.tenKichCo;
+    // Bao phủ mọi cấu trúc Backend có thể trả về (Object lồng nhau hoặc String)
+    const tenM = v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac;
+    const tenS = v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo;
+    
     return tenM === selectedColor.value && tenS === selectedSize.value;
   });
 });
@@ -410,13 +415,26 @@ const openQuickAddModal = async (sp) => {
   selectedProduct.value = sp;
   quantity.value = 1;
   isQuickAddModalOpen.value = true;
+  
   try {
-    const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?keyword=${sp.maSanPham}&size=100`);
-    productVariants.value = res.data.content || res.data || [];
+    // 👉 ĐÃ SỬA: Gọi từ endpoint /api/san-pham/{id} để lấy danh sách biến thể CHUẨN XÁC NHẤT
+    const res = await axios.get(`http://localhost:8080/api/san-pham/${sp.id}`);
+    const prod = res.data;
+
+    // Lấy mảng biến thể (Tùy thuộc backend trả về bienTheList hay sanPhamChiTietList)
+    productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      availableColors.value = [...new Set(productVariants.value.map(v => v.tenMauSac || v.mauSac?.tenMauSac))].filter(Boolean);
-      availableSizes.value = [...new Set(productVariants.value.map(v => v.tenKichCo || v.kichCo?.tenKichCo))].filter(Boolean);
+      // Trích xuất list Màu
+      availableColors.value = [...new Set(productVariants.value.map(v => 
+        v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac
+      ))].filter(Boolean);
+
+      // Trích xuất list Size
+      availableSizes.value = [...new Set(productVariants.value.map(v => 
+        v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo
+      ))].filter(Boolean);
+      
       if (availableColors.value.length) selectedColor.value = availableColors.value[0];
       if (availableSizes.value.length) selectedSize.value = availableSizes.value[0];
     } else {
@@ -424,6 +442,7 @@ const openQuickAddModal = async (sp) => {
       availableSizes.value = [];
     }
   } catch (error) {
+    console.error("Lỗi lấy chi tiết biến thể Modal: ", error);
     showToast("Không thể tải thông tin chi tiết!", "error");
   }
 };
@@ -435,22 +454,32 @@ const closeQuickAddModal = () => {
 
 const confirmAddToCart = () => {
   if (!currentVariant.value) return showToast("Vui lòng chọn phân loại hợp lệ!", "warning");
-  const tk = currentVariant.value.soLuongTon || 0;
+  
+  // Bao phủ các kiểu trả về của Backend
+  const tk = currentVariant.value.soLuongTon ?? currentVariant.value.soLuong ?? 0;
   if (quantity.value > tk) return showToast(`Kho chỉ còn ${tk} sản phẩm!`, "error");
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  // MỚI THÊM: Ưu tiên lấy giá sau giảm (nếu có) để đưa vào giỏ hàng
-  const giaDuaVaoGioHang = currentVariant.value.giaSauGiam || currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  // Tính toán giá để cho vào giỏ hàng
+  const giaBan = currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const phanTram = selectedProduct.value.phanTramGiam || currentVariant.value.phanTramGiam || 0;
+  const giaSauGiam = currentVariant.value.giaSauGiam || (giaBan * (1 - phanTram / 100));
+
+  // Lấy đường dẫn ảnh
+  const hinhAnhVariant = currentVariant.value.hinhAnhUrls?.[0] || currentVariant.value.hinhAnh;
+  const hinhAnhSp = selectedProduct.value.hinhAnh;
+  const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
   const newItem = {
     productId: selectedProduct.value.id,
     variantId: currentVariant.value.id,
-    tenSp: selectedProduct.value.tenSp,
-    hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-    mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
+    tenSp: selectedProduct.value.tenSp || selectedProduct.value.tenSanPham,
+    hinhAnh: finalImage,
+    mauSac: currentVariant.value.mauSac || { tenMau: selectedColor.value, rgb: '#63391F' },
     kichCo: selectedSize.value,
-    giaBan: giaDuaVaoGioHang, // Giá thực tế KH trả tiền
+    giaBan: Math.round(giaSauGiam), // Giá thực tế khách trả
+    giaGoc: giaBan, // Giá gốc để hiển thị gạch ngang (nếu cần)
     soLuong: quantity.value,
     tonKho: tk
   };
@@ -480,6 +509,7 @@ onMounted(() => {
   fetchFilteredData();
 });
 </script>
+
 <style scoped>
 .app-container {
   min-height: 100vh;
@@ -709,7 +739,6 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
-/* MỚI THÊM: CSS CHO BADGE SALE/MỚI */
 .badge {
   position: absolute;
   top: 12px;
@@ -759,7 +788,6 @@ onMounted(() => {
   color: #63391F;
 }
 
-/* MỚI THÊM: CSS CHO GIÁ CŨ VÀ MỚI ĐÚNG THEO ẢNH YÊU CẦU */
 .price-wrapper {
   display: flex;
   flex-direction: column;
@@ -940,7 +968,6 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* MỚI THÊM: CSS CHO GIÁ TRONG MODAL */
 .modal-old-price {
   text-decoration: line-through;
   color: #999;
@@ -1079,7 +1106,6 @@ onMounted(() => {
   }
 }
 
-/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) KHÔNG ICON ================= */
 .toast-notification {
   position: fixed;
   top: 30px;
