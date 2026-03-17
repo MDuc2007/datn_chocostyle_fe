@@ -66,8 +66,10 @@
                   }}
                 </span>
               </td>
+
               <td>
                 <div class="action-inner">
+                  <!-- Xem chi tiết -->
                   <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
                     <span class="icon view" @click="editColor(item)">
                       <img
@@ -76,14 +78,12 @@
                       />
                     </span>
                   </div>
+
+                  <!-- Toggle trạng thái -->
                   <div
                     class="tooltip-wrapper"
                     :data-tooltip="
-                      item.trangThai === 1
-                        ? 'Ngừng hoạt động'
-                        : item.trangThai === 0
-                          ? 'Hoạt động'
-                          : 'Không khả dụng'
+                      item.trangThai === 1 ? 'Ngừng hoạt động' : 'Hoạt động'
                     "
                   >
                     <label class="switch">
@@ -111,6 +111,15 @@
           &lt;
         </button>
         <div class="page-numbers">
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page - 1 === currentPage }"
+            @click="currentPage = page - 1"
+          >
+            {{ page }}
+          </button>
           <button
             v-for="page in totalPages"
             :key="page"
@@ -310,6 +319,8 @@ function closeConfirmModal() {
 const handleFilterChange = () => {
   currentPage.value = 0;
 
+  currentPage.value = 0;
+
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
@@ -335,6 +346,7 @@ const fetchColors = async () => {
     }));
 
     colors.value = [...allColors.value];
+    currentPage.value = 0;
     currentPage.value = 0;
   } catch (error) {
     showNotification("Không thể tải danh sách màu sắc", "error");
@@ -683,6 +695,10 @@ input:checked + .slider::before {
 }
 .pagination button {
   padding: 6px 12px;
+}
+.page-numbers {
+  display: flex;
+  gap: 10px;
 }
 .page-numbers {
   display: flex;

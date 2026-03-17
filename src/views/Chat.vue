@@ -8,6 +8,14 @@
           {{ headerStatusText }}
         </p>
       </div>
+
+      <button
+        v-if="chatStatus === 'ACTIVE'"
+        class="end-chat-btn"
+        @click="endChat"
+      >
+        Kết thúc
+      </button>
     </div>
 
     <div v-if="chatStatus === 'BOT'" class="request-staff-banner">
@@ -16,6 +24,7 @@
     </div>
     <div v-if="chatStatus === 'WAITING'" class="request-staff-banner waiting">
       <span>Đang kết nối với nhân viên hỗ trợ... Vui lòng giữ máy.</span>
+      <button @click="cancelRequest">Hủy yêu cầu</button>
     </div>
 
     <div class="messages-box" ref="msgBox">
@@ -180,8 +189,6 @@ const connectAndSubscribe = (id) => {
 
         messages.value.push(incoming);
         lastActivity.value = Date.now();
-        lastActivity.value = Date.now();
-        lastActivity.value = Date.now();
         scrollToBottom();
       },
     );
@@ -190,14 +197,21 @@ const connectAndSubscribe = (id) => {
 
 const requestStaff = async () => {
   try {
-    // 🔴 Xóa tin nhắn "Đang xử lý..." của AI nếu khách ấn chuyển nhân viên ngay lúc AI đang load
     messages.value = messages.value.filter(
       (m) => !String(m.id).startsWith("loading"),
     );
 
+    // 1️⃣ đổi trạng thái conversation
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/request-staff`,
     );
+
+    // 2️⃣ gửi thông báo cho staff
+    await axios.post("http://localhost:8080/api/thong-bao/support-request", {
+      khachHangId: senderId.value,
+      conversationId: conversationId.value,
+    });
+
     chatStatus.value = "WAITING";
 
     messages.value.push({
@@ -207,9 +221,66 @@ const requestStaff = async () => {
       content: "Đã gửi yêu cầu đến nhân viên. Vui lòng đợi trong giây lát...",
       sentAt: new Date(),
     });
+
     scrollToBottom();
   } catch (error) {
     console.error("Lỗi khi gọi nhân viên:", error);
+  }
+};
+
+const cancelRequest = async () => {
+  if (!conversationId.value) return;
+
+  try {
+    await axios.put(
+      `http://localhost:8080/api/conversations/${conversationId.value}/cancel-request`
+    );
+
+    chatStatus.value = "BOT";
+    assignedNhanVien.value = null;
+
+    messages.value.push({
+      id: Date.now(),
+      senderType: "SYSTEM",
+      senderName: "Hệ thống",
+      content: "Bạn đã hủy yêu cầu hỗ trợ. ChocoBot sẽ tiếp tục hỗ trợ bạn.",
+      sentAt: new Date(),
+    });
+
+    scrollToBottom();
+  } catch (error) {
+    console.error("Không thể hủy yêu cầu", error);
+  }
+};
+
+const endChat = async () => {
+  if (!conversationId.value) return;
+
+  try {
+    await axios.put(
+      `http://localhost:8080/api/conversations/${conversationId.value}/end`,
+    );
+
+    messages.value.push({
+      id: Date.now(),
+      senderType: "SYSTEM",
+      senderName: "Hệ thống",
+      content: "Bạn đã kết thúc cuộc trò chuyện.",
+      sentAt: new Date(),
+    });
+
+    conversationId.value = null;
+    chatStatus.value = "BOT";
+    assignedNhanVien.value = null;
+
+    if (stompClient.value) {
+      stompClient.value.disconnect();
+      connected.value = false;
+    }
+
+    scrollToBottom();
+  } catch (error) {
+    console.error("Không thể kết thúc chat", error);
   }
 };
 
@@ -319,38 +390,34 @@ onMounted(async () => {
   } catch (error) {
     console.log("Khách hàng mới hoặc chưa đăng nhập.");
   }
-  setInterval(() => {
+  setInterval(async () => {
     const now = Date.now();
 
     if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
+      try {
+        await axios.put(
+          `http://localhost:8080/api/conversations/${conversationId.value}/timeout`,
+        );
+      } catch (e) {
+        console.log("Timeout API lỗi");
+      }
+
       messages.value.push({
         id: Date.now(),
         senderType: "SYSTEM",
         senderName: "Hệ thống",
-        content:
-          "Phiên chat đã tạm dừng do không có tương tác. Anh/chị có thể tiếp tục nhắn tin bất cứ lúc nào.",
+        content: "Phiên chat đã tự động kết thúc do không có tương tác.",
         sentAt: new Date(),
       });
 
       conversationId.value = null;
+      chatStatus.value = "BOT";
+      assignedNhanVien.value = null;
 
-      scrollToBottom();
-    }
-  }, 60000);
-  setInterval(() => {
-    const now = Date.now();
-
-    if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
-      messages.value.push({
-        id: Date.now(),
-        senderType: "SYSTEM",
-        senderName: "Hệ thống",
-        content:
-          "Phiên chat đã tạm dừng do không có tương tác. Anh/chị có thể tiếp tục nhắn tin bất cứ lúc nào.",
-        sentAt: new Date(),
-      });
-
-      conversationId.value = null;
+      if (stompClient.value) {
+        stompClient.value.disconnect();
+        connected.value = false;
+      }
 
       scrollToBottom();
     }
@@ -606,5 +673,19 @@ const attemptSend = (content) => {
 
 .suggestion-btn:hover {
   background: #e0e0e0;
+}
+
+.end-chat-btn {
+  background: #e53935;
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.end-chat-btn:hover {
+  background: #c62828;
 }
 </style>

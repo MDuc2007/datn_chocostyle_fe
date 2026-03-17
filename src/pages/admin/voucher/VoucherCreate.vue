@@ -503,6 +503,13 @@ const validateTenPgg = () => {
     return false;
   }
 
+  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
+
+  if (!regex.test(form.tenPgg.trim())) {
+    errors.tenPgg = "Tên không được chứa ký tự đặc biệt";
+    return false;
+  }
+
   return true;
 };
 

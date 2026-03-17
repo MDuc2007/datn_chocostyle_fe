@@ -120,6 +120,15 @@
           >
             {{ page }}
           </button>
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page - 1 === currentPage }"
+            @click="currentPage = page - 1"
+          >
+            {{ page }}
+          </button>
         </div>
         <button
           class="nav-btn"
@@ -298,6 +307,8 @@ async function handleModalConfirm() {
 const handleFilterChange = () => {
   currentPage.value = 0;
 
+  currentPage.value = 0;
+
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
@@ -322,6 +333,7 @@ const fetchColors = async () => {
   }));
 
   colors.value = [...allColors.value];
+  currentPage.value = 0;
   currentPage.value = 0;
 };
 
@@ -656,6 +668,10 @@ input:checked + .slider::before {
 }
 .pagination button {
   padding: 6px 12px;
+}
+.page-numbers {
+  display: flex;
+  gap: 10px;
 }
 .page-numbers {
   display: flex;

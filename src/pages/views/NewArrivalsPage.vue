@@ -160,7 +160,7 @@
 
           <div class="modal-content" v-if="selectedProduct">
             <div class="modal-left">
-              <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
+              <img :src="currentVariant?.hinhAnhUrls?.[0] || currentVariant?.hinhAnh || selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
             </div>
 
             <div class="modal-right">
@@ -168,13 +168,14 @@
 
               <p class="modal-price">
                 <template v-if="currentVariant">
-                  <span v-if="currentVariant.phanTramGiam > 0" class="modal-old-price">
-                    {{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan) }}
+                  <span v-if="(selectedProduct?.phanTramGiam > 0) || (currentVariant.phanTramGiam > 0)" class="modal-old-price">
+                    {{ formatPrice(currentVariant.giaGoc || currentVariant.giaBan || currentVariant.gia) }}
                   </span>
                   <span class="modal-current-price">
-                    {{ formatPrice(currentVariant.giaSauGiam || currentVariant.giaBan) }}
+                    {{ formatPrice(currentVariantDiscountedPrice) }}
                   </span>
                 </template>
+
                 <template v-else>
                   <template v-if="selectedProduct.phanTramGiam > 0">
                     <span class="modal-old-price">
@@ -218,7 +219,7 @@
               </div>
 
               <div class="attribute-group">
-                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon || 0
+                <label>Số lượng: <span v-if="currentVariant" class="stock-info">(Kho: {{ currentVariant.soLuongTon ?? currentVariant.soLuong ?? 0
                 }})</span></label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
@@ -430,10 +431,18 @@ const availableSizes = ref([]);
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find(v => {
-    const tenM = v.tenMauSac || v.mauSac?.tenMauSac;
-    const tenS = v.tenKichCo || v.kichCo?.tenKichCo;
+    const tenM = v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac;
+    const tenS = v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo;
     return tenM === selectedColor.value && tenS === selectedSize.value;
   });
+});
+
+// ĐÃ THÊM: Tính giá đã giảm cho biến thể trong Modal Quick Add
+const currentVariantDiscountedPrice = computed(() => {
+  if (!currentVariant.value) return 0;
+  const rawPrice = currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const discountPercent = selectedProduct.value?.phanTramGiam || currentVariant.value.phanTramGiam || 0;
+  return currentVariant.value.giaSauGiam || Math.round(rawPrice * (1 - discountPercent / 100));
 });
 
 const openQuickAddModal = async (sp) => {
@@ -441,12 +450,21 @@ const openQuickAddModal = async (sp) => {
   quantity.value = 1;
   isQuickAddModalOpen.value = true;
   try {
-    const res = await axios.get(`http://localhost:8080/api/chi-tiet-san-pham?keyword=${sp.maSanPham}&size=100`);
-    productVariants.value = res.data.content || res.data || [];
+    // 👉 ĐÃ SỬA: Gọi từ endpoint /api/san-pham/{id} để lấy danh sách biến thể CHUẨN XÁC NHẤT
+    const res = await axios.get(`http://localhost:8080/api/san-pham/${sp.id}`);
+    const prod = res.data;
+
+    productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      availableColors.value = [...new Set(productVariants.value.map(v => v.tenMauSac || v.mauSac?.tenMauSac))].filter(Boolean);
-      availableSizes.value = [...new Set(productVariants.value.map(v => v.tenKichCo || v.kichCo?.tenKichCo))].filter(Boolean);
+      availableColors.value = [...new Set(productVariants.value.map(v => 
+        v.mauSac?.tenMau || v.mauSac?.tenMauSac || v.tenMauSac
+      ))].filter(Boolean);
+
+      availableSizes.value = [...new Set(productVariants.value.map(v => 
+        v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenKichCo
+      ))].filter(Boolean);
+      
       if (availableColors.value.length) selectedColor.value = availableColors.value[0];
       if (availableSizes.value.length) selectedSize.value = availableSizes.value[0];
     } else {
@@ -454,6 +472,7 @@ const openQuickAddModal = async (sp) => {
       availableSizes.value = [];
     }
   } catch (error) {
+    console.error("Lỗi tải thông tin Modal: ", error);
     showToast("Không thể tải thông tin chi tiết!", "error");
   }
 };
@@ -465,21 +484,29 @@ const closeQuickAddModal = () => {
 
 const confirmAddToCart = () => {
   if (!currentVariant.value) return showToast("Vui lòng chọn phân loại hợp lệ!", "warning");
-  const tk = currentVariant.value.soLuongTon || 0;
+  
+  const tk = currentVariant.value.soLuongTon ?? currentVariant.value.soLuong ?? 0;
   if (quantity.value > tk) return showToast(`Kho chỉ còn ${tk} sản phẩm!`, "error");
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  const giaDuaVaoGioHang = currentVariant.value.giaSauGiam || currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const giaBan = currentVariant.value.giaBan || currentVariant.value.gia || 0;
+  const phanTram = selectedProduct.value.phanTramGiam || currentVariant.value.phanTramGiam || 0;
+  const giaSauGiam = currentVariant.value.giaSauGiam || (giaBan * (1 - phanTram / 100));
+
+  const hinhAnhVariant = currentVariant.value.hinhAnhUrls?.[0] || currentVariant.value.hinhAnh;
+  const hinhAnhSp = selectedProduct.value.hinhAnh;
+  const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
   const newItem = {
     productId: selectedProduct.value.id,
     variantId: currentVariant.value.id,
-    tenSp: selectedProduct.value.tenSp,
-    hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-    mauSac: { tenMau: selectedColor.value, rgb: '#63391F' },
+    tenSp: selectedProduct.value.tenSp || selectedProduct.value.tenSanPham,
+    hinhAnh: finalImage,
+    mauSac: currentVariant.value.mauSac || { tenMau: selectedColor.value, rgb: '#63391F' },
     kichCo: selectedSize.value,
-    giaBan: giaDuaVaoGioHang,
+    giaBan: Math.round(giaSauGiam),
+    giaGoc: giaBan,
     soLuong: quantity.value,
     tonKho: tk
   };
@@ -1242,7 +1269,6 @@ onMounted(() => {
   transform: translateX(120%);
   opacity: 0;
 }
-
 
 @media (max-width: 992px) {
   .shop-layout {

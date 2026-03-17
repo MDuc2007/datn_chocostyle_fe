@@ -485,14 +485,27 @@ const validate = () => {
   let valid = true;
 
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
-  const name = form.tenDotGiamGia.trim();
 
-  if (!name) {
+  if (!form.tenDotGiamGia.trim()) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
     valid = false;
-  } else if (name.length < 3) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
-    valid = false;
+  }
+
+  if (form.tenDotGiamGia.trim().length < 3) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá phải ít nhất 3 ký tự";
+    return false;
+  }
+
+  if (form.tenDotGiamGia.trim().length > 100) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
+    return false;
+  }
+
+  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
+
+  if (!regex.test(form.tenDotGiamGia.trim())) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá không được chứa ký tự đặc biệt";
+    return false;
   }
 
   if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
@@ -520,6 +533,7 @@ const validate = () => {
 
   return valid;
 };
+
 const searchKeyword = ref("");
 
 const filteredSanPhamList = computed(() => {
@@ -584,22 +598,14 @@ const isAllSanPhamSelected = computed(() => {
     )
   );
 });
+
 const toggleAllSanPham = async () => {
   if (isAllSanPhamSelected.value) {
-    filteredSanPhamList.value.forEach((sp) => {
-      const index = selectedSanPhamIds.value.indexOf(sp.id);
-      if (index !== -1) selectedSanPhamIds.value.splice(index, 1);
-
-      delete chiTietMap[sp.id];
+    selectedSanPhamIds.value = [];
+    selectedChiTietIds.value = []; // ⭐ thêm dòng này
+    Object.keys(chiTietMap).forEach((k) => {
+      delete chiTietMap[k as any];
     });
-
-    selectedChiTietIds.value = selectedChiTietIds.value.filter(
-      (id) =>
-        !Object.values(chiTietMap)
-          .flat()
-          .some((ct) => ct.id === id),
-    );
-
     return;
   }
 
@@ -612,7 +618,6 @@ const toggleAllSanPham = async () => {
       const res = await axios.get(
         `http://localhost:8080/api/san-pham/${sp.id}`,
       );
-
       chiTietMap[sp.id] = res.data.bienTheList || [];
     }
 

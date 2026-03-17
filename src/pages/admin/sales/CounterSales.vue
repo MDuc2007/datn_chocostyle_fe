@@ -1196,10 +1196,11 @@ const selectCustomer = async (c) => {
   isSettingAddress.value = true;
   currentOrder.value.customer.address = diaChi.diaChiCuThe;
 
-  if (currentOrder.value.deliveryType === "DELIVERY") {
-    await mapAddressFromText(diaChi.thanhPho, diaChi.quan, diaChi.phuong);
-  }
+  // if (currentOrder.value.deliveryType === "DELIVERY") {
+  //   await mapAddressFromText(diaChi.thanhPho, diaChi.quan, diaChi.phuong);
+  // }
 
+  await mapAddressFromText(diaChi.thanhPho, diaChi.quan, diaChi.phuong);
   setTimeout(() => {
     isSettingAddress.value = false;
   }, 0);
@@ -1778,7 +1779,6 @@ const submitOrder = async () => {
             .filter(Boolean)
             .join(", ")
         : "";
-
     const payload = {
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
@@ -1824,19 +1824,22 @@ const submitOrder = async () => {
     // 👉 THÊM ĐOẠN NÀY ĐỂ BÁO CHO APP FLUTTER BIẾT
     // ==========================================
     try {
-      await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, {
-        maHoaDon: order.maHoaDon,
-        isPaid: true, // 👈 Cờ báo hiệu Đơn hàng đã chốt xong
-        sanPhamList: [],
-        tongTienHang: 0,
-        giamGia: 0,
-        tongThanhToan: 0
-      });
+      await axios.post(
+        `http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`,
+        {
+          maHoaDon: order.maHoaDon,
+          isPaid: true, // 👈 Cờ báo hiệu Đơn hàng đã chốt xong
+          sanPhamList: [],
+          tongTienHang: 0,
+          giamGia: 0,
+          tongThanhToan: 0,
+        },
+      );
     } catch (syncErr) {
       console.error("Lỗi báo thanh toán sang App:", syncErr);
     }
     // ==========================================
-      
+
     try {
       const resInvoice = await axios.get(
         `http://localhost:8080/api/hoa-don/${order.idHoaDon}`,
@@ -2312,10 +2315,14 @@ const autoRevalidateSystem = async () => {
     if (currentVoucher) {
       const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
 
-      if (!found || found.trangThai !== 1) {
+      if (
+        !found ||
+        found.trangThai !== 1 ||
+        (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
+      ) {
         openConfirmModal(
           "Voucher không còn hợp lệ",
-          "Phiếu giảm giá hiện tại đã bị ngừng hoặc hết hạn.",
+          "Phiếu giảm giá không còn đủ điều kiện áp dụng.",
           () => {
             currentOrder.value.appliedVoucher = null;
             currentOrder.value.voucherCode = "";
@@ -2402,12 +2409,20 @@ const toggleDelivery = async (e) => {
   if (isDelivery) {
     await nextTick();
     initSelect2();
+    if (currentOrder.value.customer.province) {
+      setSelect2Value("#select-province", currentOrder.value.customer.province);
+      await getDistricts(currentOrder.value.customer.province);
+
+      if (currentOrder.value.customer.district) {
+        await getWards(currentOrder.value.customer.district);
+      }
+    }
   } else {
     currentOrder.value.shippingFee = 0;
-    currentOrder.value.customer.address = "";
-    currentOrder.value.customer.province = "";
-    currentOrder.value.customer.district = "";
-    currentOrder.value.customer.ward = "";
+    // currentOrder.value.customer.address = "";
+    // currentOrder.value.customer.province = "";
+    // currentOrder.value.customer.district = "";
+    // currentOrder.value.customer.ward = "";
   }
 
   const currentVoucher = currentOrder.value.appliedVoucher;
@@ -2476,12 +2491,15 @@ const dongBoSangMobile = async () => {
     })),
     tongTienHang: subTotal.value || 0,
     giamGia: discount.value || 0,
-    tongThanhToan: total.value || 0
+    tongThanhToan: total.value || 0,
   };
 
   try {
     // 3. Bắn sang trạm tiếp sóng Spring Boot
-    await axios.post(`http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`, payload);
+    await axios.post(
+      `http://localhost:8080/api/hoa-don/sync-realtime/${order.idHoaDon}`,
+      payload,
+    );
   } catch (error) {
     console.error("Lỗi đồng bộ màn hình khách hàng:", error);
   }
@@ -2496,7 +2514,7 @@ watch(
   () => {
     dongBoSangMobile();
   },
-  { deep: true } // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
+  { deep: true }, // Bắt buộc phải có để Vue quét sâu vào bên trong mảng cart
 );
 </script>
 
