@@ -10,6 +10,7 @@ export interface InvoiceResponse {
     loaiDon: number; // 0: Online, 1: Tại quầy
     trangThai: number;
     ngayTao: string; // Dạng chuỗi 'yyyy-MM-dd' hoặc ISO
+    trangThaiHuyChiTiet?: string; // Thêm trường này
 }
 
 // 2. Interface cho Param tìm kiếm

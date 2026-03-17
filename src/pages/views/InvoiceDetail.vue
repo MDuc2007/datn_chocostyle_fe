@@ -323,11 +323,9 @@
               </div>
             </div>
 
-            <div
-              class="card cancelled-section no-print"
-              v-if="invoice.trangThai === 5"
-            >
+            <div class="card cancelled-section no-print" v-if="invoice.trangThai === 5">
               <h3>❌ Đơn hàng đã bị hủy</h3>
+              <p>Lý do: {{ lyDoHuy }}</p>
               <p>Lý do: {{ lyDoHuy }}</p>
             </div>
 
@@ -763,6 +761,7 @@ const getAuthHeaders = () => {
     : localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
+
 
 // ===============================================
 // KIỂM TRA ĐIỀU KIỆN CHUNG CHO SỬA & HỦY
@@ -2123,6 +2122,7 @@ onMounted(() => {
   color: #334155;
   font-size: 14px;
 }
+
 
 .variant-tags {
   display: flex;
