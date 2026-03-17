@@ -149,6 +149,7 @@
 
 <script setup lang="ts">
 // --- GIỮ NGUYÊN LOGIC SCRIPT CŨ, CHỈ THÊM MAVOUCHER VÀO INTERFACE ---
+// --- GIỮ NGUYÊN LOGIC SCRIPT CŨ, CHỈ THÊM MAVOUCHER VÀO INTERFACE ---
 interface InvoiceProduct {
   tenSanPham: string;
   mauSac: string;
@@ -168,6 +169,7 @@ interface InvoiceDetail {
   phiShip: number;
   giamGia: number;
   tongThanhToan: number;
+  maVoucher?: string; // <--- ĐÃ THÊM BIẾN NÀY
   maVoucher?: string; // <--- ĐÃ THÊM BIẾN NÀY
   sanPhamList: InvoiceProduct[];
 }

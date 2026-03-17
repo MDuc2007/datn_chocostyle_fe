@@ -150,15 +150,24 @@
 
       <div class="dashboard-info-grid no-print">
         <div class="detail-card">
-          <div class="card-header-clean">
-            <div class="header-icon">
-              <img
-                src="/src/assets/icon/user.svg"
-                style="width: 24px; height: 24px"
-                alt=""
-              />
+          <div class="card-header-clean" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="header-icon">
+                <img
+                  src="/src/assets/icon/user.svg"
+                  style="width: 24px; height: 24px"
+                  alt=""
+                />
+              </div>
+              <h3>Thông tin khách hàng</h3>
             </div>
-            <h3>Thông tin khách hàng</h3>
+            <button 
+              v-if="invoice.trangThai === 0" 
+              class="btn-text-edit" 
+              @click="openAddressModal"
+            >
+              Sửa
+            </button>
           </div>
           <div class="card-body-clean">
             <div class="customer-profile">
@@ -371,22 +380,63 @@
                 </td>
                 <td>
                   <div class="variant-tags">
-                    <span class="variant-badge color-badge">{{
-                      p.mauSac
-                    }}</span>
+                    <span class="variant-badge color-badge">{{ p.mauSac }}</span>
                     <span class="variant-badge size-badge">{{ p.kichCo }}</span>
                   </div>
                 </td>
                 <td class="light-text">{{ formatCurrency(p.donGia) }}</td>
-                <td class="quantity-text">x{{ p.soLuong }}</td>
+                
+                <td>
+                  <div class="quantity-control" v-if="invoice.trangThai === 0">
+                    <button 
+                      class="qty-btn" 
+                      :disabled="p.soLuong <= 1" 
+                      @click="changeQuantity(p, p.soLuong - 1)"
+                    >-</button>
+                    <span class="qty-val">{{ p.soLuong }}</span>
+                    <button 
+                      class="qty-btn" 
+                      @click="changeQuantity(p, p.soLuong + 1)"
+                    >+</button>
+                  </div>
+                  <div v-else class="quantity-text">x{{ p.soLuong }}</div>
+                </td>
+
                 <td class="text-right-force">
-                  <span class="total-price-text">{{
-                    formatCurrency(p.thanhTien)
-                  }}</span>
+                  <span class="total-price-text">{{ formatCurrency(p.thanhTien) }}</span>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showAddressModal" class="modal-overlay" @click.self="showAddressModal = false">
+      <div class="modal-card">
+        <h3 class="modal-title-modern">Sửa thông tin nhận hàng</h3>
+        <p class="modal-message-modern text-left">Chỉ có thể thay đổi khi đơn hàng chờ xác nhận.</p>
+
+        <div class="modal-input-wrapper">
+          <label class="input-label">Tên khách hàng</label>
+          <input v-model="editForm.ten" type="text" class="modern-input" placeholder="Nhập tên người nhận"/>
+        </div>
+        <div class="modal-input-wrapper">
+          <label class="input-label">Số điện thoại</label>
+          <input v-model="editForm.sdt" type="text" class="modern-input" placeholder="Nhập số điện thoại"/>
+        </div>
+        <div class="modal-input-wrapper">
+          <label class="input-label">Địa chỉ chi tiết</label>
+          <textarea v-model="editForm.diaChi" rows="3" class="modern-textarea" placeholder="Số nhà, đường, xã/phường, quận/huyện..."></textarea>
+        </div>
+
+        <div class="modal-footer-modern" style="margin-top: 20px;">
+          <button class="btn-modern btn-secondary" @click="showAddressModal = false">
+            Hủy
+          </button>
+          <button class="btn-modern btn-primary-modern" @click="saveAddress">
+            Lưu thông tin
+          </button>
         </div>
       </div>
     </div>
@@ -565,6 +615,7 @@ import cancelIcon from "../../../assets/icon/cancel-svgrepo-com.svg";
 
 // --- INTERFACES ---
 interface InvoiceProduct {
+  idSpct?: number; // Cần thiết để gọi API cập nhật số lượng
   tenSanPham: string;
   mauSac: string;
   kichCo: string;
@@ -609,23 +660,18 @@ interface InvoiceDetail {
   thanhToanList: InvoicePayment[];
 }
 
-// Lấy lý do hủy đơn từ Lịch sử hóa đơn - [ĐÃ FIX LỖI "Thanh toán tiền mặt"]
+const route = useRoute();
+const invoice = ref<InvoiceDetail | null>(null);
+
 const lyDoHuy = computed(() => {
   if (!invoice.value || invoice.value.trangThai !== 5)
     return "Không có lý do cụ thể";
-
   const logHuy = invoice.value.lichSuList?.find((log) => log.trangThai === 5);
-
   if (logHuy && logHuy.ghiChu && logHuy.ghiChu.trim() !== "") {
     return logHuy.ghiChu;
   }
-
-  // KHÔNG fallback về invoice.value.ghiChu nữa để không lấy nhầm phương thức thanh toán
   return "Không có lý do cụ thể";
 });
-
-const route = useRoute();
-const invoice = ref<InvoiceDetail | null>(null);
 
 const modal = reactive({
   show: false,
@@ -641,6 +687,14 @@ const showHistoryLog = ref(false);
 
 const rawPaymentAmount = ref(0);
 const displayPaymentAmount = ref("");
+
+// --- CÁC STATE CHO POPUP SỬA ĐỊA CHỈ ---
+const showAddressModal = ref(false);
+const editForm = reactive({
+  ten: "",
+  sdt: "",
+  diaChi: ""
+});
 
 const orderedHistory = computed(() => {
   if (!invoice.value || !invoice.value.lichSuList) return [];
@@ -813,6 +867,60 @@ const showToast = (message: string, type: "success" | "error" = "success") => {
   setTimeout(() => {
     toast.show = false;
   }, 3000);
+};
+
+// --- CHỨC NĂNG SỬA ĐỊA CHỈ & SỐ LƯỢNG ---
+
+// 1. Hàm mở Modal và đổ dữ liệu cũ vào
+const openAddressModal = () => {
+  if (!invoice.value) return;
+  editForm.ten = invoice.value.tenKhachHang || "";
+  editForm.sdt = invoice.value.soDienThoai || "";
+  editForm.diaChi = invoice.value.diaChi || "";
+  showAddressModal.value = true;
+};
+
+// 2. Hàm Gọi API Lưu thông tin địa chỉ
+const saveAddress = async () => {
+  if (!editForm.ten || !editForm.sdt || !editForm.diaChi) {
+    showToast("Vui lòng điền đầy đủ thông tin!", "error");
+    return;
+  }
+  try {
+    await axios.put(`http://localhost:8080/api/hoa-don/${invoice.value?.id}/thong-tin-nhan-hang`, null, {
+      params: {
+        ten: editForm.ten,
+        sdt: editForm.sdt,
+        diaChi: editForm.diaChi
+      }
+    });
+    
+    await fetchDetail(); 
+    showAddressModal.value = false;
+    showToast("Cập nhật thông tin nhận hàng thành công!", "success");
+  } catch (error: any) {
+    showToast(error.response?.data || "Lỗi cập nhật địa chỉ", "error");
+  }
+};
+
+// 3. Hàm Gọi API Tăng / Giảm số lượng
+const changeQuantity = async (product: any, newQuantity: number) => {
+  if (newQuantity < 1) return;
+  if (!invoice.value || !product.idSpct) return;
+  
+  try {
+    await axios.put(`http://localhost:8080/api/hoa-don/${invoice.value.id}/so-luong-san-pham`, null, {
+      params: {
+        idSpct: product.idSpct,
+        soLuongMoi: newQuantity
+      }
+    });
+    
+    await fetchDetail();
+    showToast("Đã cập nhật số lượng!", "success");
+  } catch (error: any) {
+    showToast(error.response?.data || "Lỗi cập nhật số lượng. Có thể do hết hàng hoặc lỗi mạng.", "error");
+  }
 };
 
 // --- ACTION HANDLERS ---
@@ -1812,6 +1920,27 @@ onMounted(() => {
   margin-bottom: 8px;
   display: block;
 }
+
+/* INPUT VÀ NÚT MỚI THÊM */
+.modern-input {
+  width: 100%;
+  padding: 12px 15px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+.modern-input:focus {
+  outline: none;
+  border-color: #8b5e34;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(139, 94, 52, 0.1);
+}
+
 .modern-textarea {
   width: 100%;
   padding: 12px 15px;
@@ -1870,6 +1999,65 @@ onMounted(() => {
 .btn-danger-modern:hover {
   background: #b91c1c;
   transform: translateY(-1px);
+}
+
+/* THÊM CSS MỚI CHO NÚT SỬA VÀ TĂNG GIẢM SỐ LƯỢNG */
+.btn-text-edit {
+  background: none;
+  border: none;
+  color: #0284c7;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-text-edit:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.quantity-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  margin: 0 auto;
+}
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  font-weight: bold;
+  font-size: 16px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.qty-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.qty-val {
+  width: 40px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  border-left: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
 }
 
 .modal-large {
