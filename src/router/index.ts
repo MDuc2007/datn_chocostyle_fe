@@ -370,10 +370,10 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/staff/dashboard/Dashboard.vue"),
       },
       {
-  path: "profile",
-  name: "StaffProfile",
-  component: () => import("../pages/staff/Profile.vue"),
-},
+        path: "profile",
+        name: "StaffProfile",
+        component: () => import("../pages/staff/Profile.vue"),
+      },
       // 2. Bán hàng tại quầy
       {
         path: "sales",
@@ -388,7 +388,8 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/admin/invoice/InvoiceList.vue"),
       },
       {
-        path: "invoice/:id",
+        // 👉 ĐÃ SỬA: Đổi từ "invoice/:id" thành "invoice/detail/:id" cho khớp với code Vue
+        path: "invoice/detail/:id", 
         name: "StaffInvoiceDetail",
         component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
@@ -400,7 +401,19 @@ const routes: Array<RouteRecordRaw> = [
         name: "StaffCustomerList",
         component: () => import("../pages/admin/customer/CustomerManager.vue"),
       },
-
+      // 👉 MỚI THÊM: Bổ sung trang sửa khách hàng cho nhân viên
+      {
+        path: "customer/edit/:id",
+        name: "StaffCustomerEdit",
+        component: () => import("../pages/admin/customer/CustomerEdit.vue"),
+        props: true,
+      },
+      // Trong mảng children của /staff
+      {
+        path: "customer/add",
+        name: "StaffCustomerAdd",
+        component: () => import("../pages/admin/customer/CustomerCreate.vue"),
+      },
       // 5. Lịch làm việc
       {
         path: "my-schedule",

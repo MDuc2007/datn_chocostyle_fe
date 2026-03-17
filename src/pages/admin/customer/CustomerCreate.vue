@@ -2,7 +2,7 @@
   <div class="add-employee-page">
     <div class="main-card form-page-animation">
       <div class="header-simple">
-        <button class="btn-back hover-effect" @click="$router.push('/admin/customer')">
+        <button class="btn-back hover-effect" @click="$router.back()">
           <i class="fa fa-arrow-left"></i> Quay lại danh sách
         </button>
       </div>
@@ -599,7 +599,11 @@ const confirmUpdateAction = async () => {
 const closeModal = () => (modal.value.show = false);
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type: type };
-  setTimeout(() => (toast.value.show = false), 3000);
+  // 👉 ĐÃ SỬA: Tự động kiểm tra xem đang ở /staff hay /admin để quay về cho đúng
+    setTimeout(() => {
+      const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+      router.push(`${basePath}/customer`);
+    }, 1500);
 };
 </script>
 

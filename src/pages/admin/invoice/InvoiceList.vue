@@ -161,7 +161,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
+// 👉 SỬA BƯỚC 1: Bổ sung useRoute để lấy đường dẫn hiện tại
+import { useRouter, useRoute } from "vue-router"; 
 import invoiceService from "../../../services/invoiceService";
 import type { InvoiceResponse } from "../../../types/invoice";
 
@@ -170,6 +171,7 @@ import iconSearch from "../../../assets/icon/search.svg";
 import iconEdit from "../../../assets/icon/edit.svg";
 
 const router = useRouter();
+const route = useRoute(); // Khởi tạo route
 
 // --- [THÊM MỚI] Hàm lấy ngày hôm nay chuẩn YYYY-MM-DD ---
 const getToday = () => {
@@ -237,8 +239,13 @@ const resetFilters = () => {
   fetchInvoices();
 };
 
+// 👉 SỬA BƯỚC 2: Cập nhật hàm goToDetail linh hoạt theo quyền (Admin / Staff)
 const goToDetail = (id: number) => {
-  router.push(`/admin/invoice/${id}`);
+  // Kiểm tra xem user đang đứng ở URL có chứa /staff hay không
+  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  
+  // Chuyển trang theo đúng nhánh đó và đúng chuẩn URL "invoice/detail/:id"
+  router.push(`${basePath}/invoice/detail/${id}`);
 };
 
 // --- Computed Pagination ---

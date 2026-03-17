@@ -57,7 +57,7 @@
           </button>
           <button
             class="btn btn-primary hover-effect"
-            @click="$router.push('/admin/customer/add')"
+            @click="goToAdd"
           >
             + Thêm mới
           </button>
@@ -172,7 +172,7 @@
                     <div class="tooltip-container" data-tooltip="Chỉnh sửa">
                       <button
                         class="btn-icon-action edit-btn"
-                        @click="$router.push(`/admin/customer/edit/${c.id}`)"
+                        @click="goToEdit(c.id)"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -264,7 +264,6 @@
     <transition name="fade-modal">
       <div v-if="addressModal.show" class="modal-overlay address-modal-overlay" @click.self="closeAddressModal">
         <div class="address-box form-page-animation">
-          
           <div class="address-header">
             <div class="header-left">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#63391F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -421,6 +420,10 @@ import { ref, onMounted, computed, nextTick } from "vue";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
 
+import { useRouter, useRoute } from "vue-router";
+const router = useRouter();
+const route = useRoute();
+
 const keyword = ref("");
 const customers = ref([]);
 const currentPage = ref(1);
@@ -442,6 +445,18 @@ const API_URL = "http://localhost:8080/api/khach-hang";
 
 const isActive = (c) => Number(c.trangThai) === 1;
 
+// 👉 HÀM 1: CHUYỂN SANG TRANG THÊM MỚI (Tự động nhận diện Admin hay Staff)
+const goToAdd = () => {
+  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  router.push(`${basePath}/customer/add`);
+};
+
+// 👉 HÀM 2: CHUYỂN SANG TRANG CHỈNH SỬA
+const goToEdit = (id) => {
+  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  router.push(`${basePath}/customer/edit/${id}`);
+};
+
 // =========================================
 // HÀM KHỞI TẠO SELECT2 ĐÃ ĐƯỢC FIX LỖI MODAL
 // =========================================
@@ -458,7 +473,6 @@ const initSelect2 = (selector, placeholder, modelRef, onChangeCallback) => {
     width: "100%",
     placeholder,
     allowClear: true,
-    // 👉 QUAN TRỌNG NHẤT: Đính kèm dropdown vào lớp phủ modal để tránh bị cắt bởi overflow: hidden
     dropdownParent: window.$('.address-modal-overlay') 
   });
 
