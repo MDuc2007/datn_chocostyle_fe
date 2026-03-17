@@ -1782,7 +1782,7 @@ const submitOrder = async () => {
     // Xác định mã PTTT gửi xuống Backend
     // CASH (Tiền mặt) và COD (Giao hàng) -> PT001
     // BANK (Chuyển khoản) -> PT002
-    const maPtttGiaoDich = order.paymentMethod === 'BANK' ? 'PT002' : 'PT001';
+    const maPtttGiaoDich = order.paymentMethod === "BANK" ? "PT002" : "PT001";
     const payload = {
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
@@ -1803,10 +1803,10 @@ const submitOrder = async () => {
       sdtNguoiNhan: order.customer.phone || null,
 
       diaChiGiaoHang: fullAddress,
-      
+
       // 👉 GỬI TRƯỜNG MA_PTTT XUỐNG BACKEND TẠI ĐÂY:
-      maPttt: maPtttGiaoDich, 
-      
+      maPttt: maPtttGiaoDich,
+
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
         soLuong: i.quantity,
@@ -2322,10 +2322,14 @@ const autoRevalidateSystem = async () => {
     if (currentVoucher) {
       const found = vouchers.value.find((v) => v.maPgg === currentVoucher.code);
 
-      if (!found || found.trangThai !== 1) {
+      if (
+        !found ||
+        found.trangThai !== 1 ||
+        (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
+      ) {
         openConfirmModal(
           "Voucher không còn hợp lệ",
-          "Phiếu giảm giá hiện tại đã bị ngừng hoặc hết hạn.",
+          "Phiếu giảm giá không còn đủ điều kiện áp dụng.",
           () => {
             currentOrder.value.appliedVoucher = null;
             currentOrder.value.voucherCode = "";

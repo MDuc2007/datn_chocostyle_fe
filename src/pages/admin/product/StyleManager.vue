@@ -52,8 +52,6 @@
           <tbody>
             <tr v-for="(item, index) in paginatedColors" :key="item.id">
               <td>{{ index + 1 + currentPage * pageSize }}</td>
-            <tr v-for="(item, index) in paginatedColors" :key="item.id">
-              <td>{{ index + 1 + currentPage * pageSize }}</td>
               <td>{{ item.code }}</td>
               <td>{{ item.name }}</td>
               <td>{{ formatDate(item.ngayTao) }}</td>
@@ -208,7 +206,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
