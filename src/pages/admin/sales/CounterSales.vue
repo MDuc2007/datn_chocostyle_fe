@@ -1779,10 +1779,6 @@ const submitOrder = async () => {
             .filter(Boolean)
             .join(", ")
         : "";
-    // Xác định mã PTTT gửi xuống Backend
-    // CASH (Tiền mặt) và COD (Giao hàng) -> PT001
-    // BANK (Chuyển khoản) -> PT002
-    const maPtttGiaoDich = order.paymentMethod === "BANK" ? "PT002" : "PT001";
     const payload = {
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
@@ -1803,9 +1799,6 @@ const submitOrder = async () => {
       sdtNguoiNhan: order.customer.phone || null,
 
       diaChiGiaoHang: fullAddress,
-
-      // 👉 GỬI TRƯỜNG MA_PTTT XUỐNG BACKEND TẠI ĐÂY:
-      maPttt: maPtttGiaoDich,
 
       sanPhamChiTiet: order.cart.map((i) => ({
         idChiTietSanPham: i.id,
@@ -2470,6 +2463,9 @@ const showToast = (msg, type = "success") => {
 // ==========================================
 // ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
 // ==========================================
+// ==========================================
+// ĐỒNG BỘ REAL-TIME SANG APP FLUTTER
+// ==========================================
 const dongBoSangMobile = async () => {
   // 1. Kiểm tra xem có đơn hàng nào đang được mở không
   const order = currentOrder.value;
@@ -2477,17 +2473,21 @@ const dongBoSangMobile = async () => {
 
   // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
   const payload = {
-    maHoaDon: order.maHoaDon,
-    sanPhamList: order.cart.map((item) => ({
-      tenSanPham: item.name || "Sản phẩm",
+    maHoaDon: order.maHoaDon, 
+    
+    // 👉 ĐÃ THÊM 3 DÒNG NÀY ĐỂ TRUYỀN THÔNG TIN KHÁCH & VOUCHER SANG APP:
+    tenKhachHang: order.customer?.name || 'Khách lẻ',
+    soDienThoai: order.customer?.phone || '',
+    tenVoucher: order.appliedVoucher ? order.appliedVoucher.code : '',
+
+    sanPhamList: order.cart.map(item => ({
+      tenSanPham: item.name || 'Sản phẩm', 
       soLuong: item.quantity,
       donGia: item.price || 0,
-
-      // 👉 THÊM 4 DÒNG NÀY ĐỂ GỬI ẢNH VÀ PHÂN LOẠI SANG APP
-      hinhAnh: item.image || "",
-      maSanPham: item.code || "",
-      mauSac: item.color || "",
-      kichCo: item.size || "",
+      hinhAnh: item.image || '',
+      maSanPham: item.code || '',
+      mauSac: item.color || '',
+      kichCo: item.size || ''
     })),
     tongTienHang: subTotal.value || 0,
     giamGia: discount.value || 0,
@@ -2506,9 +2506,10 @@ const dongBoSangMobile = async () => {
 };
 watch(
   [
-    () => currentOrder.value?.cart, // Theo dõi khi thêm/xóa/sửa sản phẩm
-    () => activeOrderIndex.value, // Theo dõi khi nhân viên bấm sang Tab đơn khác
-    () => total.value, // Theo dõi khi áp Voucher hoặc đổi phí Ship
+    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
+    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
+    () => total.value,                // Theo dõi khi tổng tiền thay đổi (ví dụ do voucher tự động áp dụng)
+    () => currentOrder.value?.customer                   
   ],
   () => {
     dongBoSangMobile();

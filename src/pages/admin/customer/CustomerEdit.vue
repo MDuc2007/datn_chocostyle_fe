@@ -2,7 +2,7 @@
   <div class="add-employee-page">
     <div class="main-card form-page-animation">
       <div class="header-simple">
-        <button class="btn-back hover-effect" @click="$router.push('/admin/customer')">
+        <button class="btn-back hover-effect" @click="$router.back()">
           <i class="fa fa-arrow-left"></i> Quay lại danh sách
         </button>
       </div>
@@ -259,10 +259,8 @@ const initSelect2ForAddress = (index) => {
   // --- INIT TỈNH/THÀNH ---
   $prov.select2({ width: "100%", placeholder: "Chọn Tỉnh/Thành phố" });
 
-  // Set giá trị ban đầu (convert sang String)
   if (addr.provinceId) $prov.val(String(addr.provinceId)).trigger("change");
 
-  // Bắt sự kiện chọn
   $prov.off("select2:select").on("select2:select", async function (e) {
     const val = e.params.data.id;
     if (addr.provinceId != val) {
@@ -283,10 +281,9 @@ const initSelect2ForAddress = (index) => {
     }
   });
 
-  // --- INIT PHƯỜNG/XÃ (Chỗ hay bị lỗi nhất) ---
+  // --- INIT PHƯỜNG/XÃ ---
   $ward.select2({ width: "100%", placeholder: "Chọn Phường/Xã" });
 
-  // Quan trọng: Đảm bảo options đã render xong mới set value
   if (addr.wardCode) {
     $ward.val(String(addr.wardCode)).trigger("change");
   }
@@ -312,10 +309,12 @@ onMounted(async () => {
   await fetchProvinces();
   if (customerId) {
     await fetchCustomerDetail();
-    await initAllSelect2(); // Load Select2 khi có dữ liệu sửa
+    await nextTick();
+    editForm.value.listDiaChi.forEach((_, idx) => initSelect2ForAddress(idx));
   } else {
-    addAddressField();
     loadingData.value = false;
+    await nextTick(); 
+    addAddressField(); 
   }
 });
 
@@ -354,7 +353,6 @@ const onProvinceChange = async (addr, index) => {
   addr.districtOptions = [];
   addr.wardOptions = [];
 
-  // Clear giao diện Quận, Phường của dòng hiện tại
   window.$(`#select-dist-${index}`).val(null).trigger("change.select2");
   window.$(`#select-ward-${index}`).val(null).trigger("change.select2");
 
@@ -367,7 +365,6 @@ const onProvinceChange = async (addr, index) => {
         `https://provinces.open-api.vn/api/p/${addr.provinceId}?depth=2`,
       );
       addr.districtOptions = res.data.districts;
-      // Khởi tạo lại select2 cho quận/huyện để bắt trạng thái disable/enable mới
       await nextTick();
       initSelect2ForAddress(index);
     } catch (error) {
@@ -418,14 +415,12 @@ const addAddressField = async () => {
     macDinh: editForm.value.listDiaChi.length === 0,
   });
 
-  // Render DOM xong thì init jquery
   await nextTick();
   initSelect2ForAddress(editForm.value.listDiaChi.length - 1);
 };
 
 const removeAddressField = async (i) => {
   if (editForm.value.listDiaChi.length > 1) {
-    // Dọn dẹp select2 để chống lỗi ghost element
     window.$(`#select-prov-${i}`).select2("destroy");
     window.$(`#select-dist-${i}`).select2("destroy");
     window.$(`#select-ward-${i}`).select2("destroy");
@@ -435,7 +430,6 @@ const removeAddressField = async (i) => {
 
     if (wasDefault) editForm.value.listDiaChi[0].macDinh = true;
 
-    // Load lại select2 cho mảng mới vì index bị thay đổi
     await initAllSelect2();
   }
 };
@@ -481,7 +475,7 @@ const validateForm = () => {
     errors.value.email = "Vui lòng nhập Email";
     isValid = false;
   } else if (!emailRegex.test(form.email)) {
-    errors.value.email = "Email không đúng định dạng";
+    errors.value.email = "Email sai định dạng";
     isValid = false;
   }
 
@@ -523,7 +517,7 @@ const handleUpdateClick = () => {
     title: customerId ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
     message: customerId
       ? `Bạn có chắc chắn muốn thay đổi thông tin khách hàng này?`
-      : `Bạn có chắc chắn muốn thêm khách hàng này?`,
+      : `Bạn có chắc chắn muốn thêm khách hàng mới này?`,
   };
 };
 
@@ -547,8 +541,10 @@ const confirmUpdateAction = async () => {
         (isEmailChanged && result.isEmailExist) ||
         (isPhoneChanged && result.isPhoneExist)
       ) {
-        if (result.isEmailExist) errors.value.email = "Email đã tồn tại!";
-        if (result.isPhoneExist) errors.value.soDienThoai = "SĐT đã tồn tại!";
+        if (result.isEmailExist)
+          errors.value.email = "Email đã tồn tại trên hệ thống!";
+        if (result.isPhoneExist)
+          errors.value.soDienThoai = "Số điện thoại đã tồn tại!";
         showToast("Thông tin bị trùng lặp!", "error");
         isLoading.value = false;
         return;
@@ -573,7 +569,12 @@ const confirmUpdateAction = async () => {
       showToast("Thêm mới thành công!", "success");
     }
 
-    setTimeout(() => router.push("/admin/customer"), 1500);
+    // 👉 ĐÃ SỬA: Tự động điều hướng về đúng list khách hàng của Admin hoặc Staff
+    setTimeout(() => {
+      const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+      router.push(`${basePath}/customer`);
+    }, 1500);
+
   } catch (error) {
     console.error("Lỗi:", error);
     if (error.response && error.response.data) {

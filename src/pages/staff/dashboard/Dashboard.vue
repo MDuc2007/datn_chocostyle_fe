@@ -1,76 +1,112 @@
 <template>
   <div class="dashboard-page">
     
-    <div class="dashboard-card slider-section">
-      <div class="slider-header">
-        <h2 class="title">Dashboard</h2>
-        <div class="slider-dots">
-          <span class="dot active"></span>
-          <span class="dot"></span>
-        </div>
+    <div class="dashboard-header">
+      <div class="welcome-section">
+        <h2>Xin chào, {{ staffName || 'Nhân viên' }}! 👋</h2>
+        <p class="current-date">{{ currentTime }}</p>
       </div>
-
-      <div class="slider-container">
-        <button class="nav-btn prev">‹</button>
-        <div class="image-grid">
-          <div class="img-wrapper"><img src="#" alt="" /></div>
-          <div class="img-wrapper"><img src="" alt="" /></div>
-          <div class="img-wrapper"><img src="" alt="" /></div>
+      
+      <div class="shift-summary">
+        <div class="shift-info">
+          <span class="shift-name">Ca làm việc: <strong>{{ shiftInfo.shiftName }}</strong></span>
+          <span class="shift-time">{{ shiftInfo.startTime }} - {{ shiftInfo.endTime }}</span>
         </div>
-        <button class="nav-btn next">›</button>
-      </div>
-    </div>
-
-    <div class="dashboard-card status-section">
-      <h3 class="title">Trạng thái đơn hàng</h3>
-      <div class="status-grid">
-        <div class="status-box pending">
-          <div class="status-info"><span class="icon">⏳</span> <span class="label">Chờ xử lý</span></div>
-          <span class="value">{{ orderStats.pending }}</span>
-        </div>
-        <div class="status-box delivering">
-          <div class="status-info"><span class="icon">🚚</span> <span class="label">Đang giao</span></div>
-          <span class="value">{{ orderStats.delivering }}</span>
-        </div>
-        <div class="status-box completed">
-          <div class="status-info"><span class="icon">✅</span> <span class="label">Đã hoàn thành</span></div>
-          <span class="value">{{ orderStats.completed }}</span>
-        </div>
-        <div class="status-box cancelled">
-          <div class="status-info"><span class="icon">❌</span> <span class="label">Đã hủy</span></div>
-          <span class="value">{{ orderStats.cancelled }}</span>
+        <div class="shift-revenue">
+          <span class="label">Tiền mặt trong két:</span>
+          <span class="amount">{{ formatCurrency(shiftInfo.currentCash) }}</span>
         </div>
       </div>
     </div>
 
-    <div class="info-grid">
-      <div class="dashboard-card info-box">
-        <div class="info-header"><span class="icon">👔</span><h4>ChocoStyle Shop</h4></div>
-        <p class="desc">Chuyên âu phục, vest cưới/tiệc, đo may & chỉnh sửa theo form. Trải nghiệm mua sắm chuyên nghiệp và nhanh gọn.</p>
+    <div class="quick-actions">
+      <router-link to="/staff/sales" class="action-btn primary">
+        <span class="icon">🛒</span>
+        <div class="text">
+          <strong>Bán hàng ngay</strong>
+          <span>Mở màn hình POS</span>
+        </div>
+      </router-link>
+
+      <router-link to="/staff/invoice" class="action-btn secondary">
+        <span class="icon">🧾</span>
+        <div class="text">
+          <strong>Quản lý Hóa đơn</strong>
+          <span>Tra cứu & Đổi trả</span>
+        </div>
+      </router-link>
+
+      <router-link to="/staff/customer" class="action-btn outline">
+        <span class="icon">👥</span>
+        <div class="text">
+          <strong>Khách hàng</strong>
+          <span>Thêm/Sửa thông tin</span>
+        </div>
+      </router-link>
+    </div>
+
+    <div class="dashboard-grid">
+      
+      <div class="dashboard-card orders-card">
+        <div class="card-header">
+          <h3>Trạng thái đơn(Hôm nay)</h3>
+          <router-link to="/staff/online-orders" class="view-all">Xem tất cả</router-link>
+        </div>
+        <div class="status-grid">
+          <div class="status-box pending">
+            <div class="status-info"><span class="icon">⏳</span> <span class="label">Chờ xác nhận</span></div>
+            <span class="value">{{ orderStats.pending }}</span>
+          </div>
+          <div class="status-box delivering">
+            <div class="status-info"><span class="icon">🚚</span> <span class="label">Đang giao</span></div>
+            <span class="value">{{ orderStats.delivering }}</span>
+          </div>
+          <div class="status-box completed">
+            <div class="status-info"><span class="icon">✅</span> <span class="label">Hoàn thành</span></div>
+            <span class="value">{{ orderStats.completed }}</span>
+          </div>
+          <div class="status-box cancelled">
+            <div class="status-info"><span class="icon">❌</span> <span class="label">Đã hủy</span></div>
+            <span class="value">{{ orderStats.cancelled }}</span>
+          </div>
+        </div>
       </div>
-      <div class="dashboard-card info-box">
-        <div class="info-header"><span class="icon">📦</span><h4>Quy trình làm việc</h4></div>
-        <ul class="info-list">
-          <li>Tạo đơn → Xác nhận thông tin</li>
-          <li>Chuẩn bị hàng → Bàn giao ship</li>
-          <li>Hoàn thành → Lưu lịch sử</li>
-        </ul>
+
+      <div class="dashboard-card recent-card">
+        <div class="card-header">
+          <h3>Giao dịch gần nhất</h3>
+        </div>
+        <div class="recent-list">
+          <div 
+            v-for="(hd, index) in recentInvoices" 
+            :key="index" 
+            class="recent-item hover-item" 
+            @click="goToInvoiceDetail(hd.id)"
+          >
+            <div class="item-left">
+              <span class="hd-code">{{ hd.maHoaDon }}</span>
+              <span class="hd-time">{{ formatTimeOnly(hd.ngayTao) }}</span>
+            </div>
+            <div class="item-right">
+              <span class="hd-total">{{ formatCurrency(hd.tongTienThanhToan) }}</span>
+              <span class="hd-type" :class="hd.pttt === 'Tiền mặt' ? 'cash' : 'bank'">
+                {{ hd.pttt || 'Tiền mặt' }}
+              </span>
+            </div>
+          </div>
+          <div v-if="recentInvoices.length === 0" class="empty-state">
+            Chưa có giao dịch nào...
+          </div>
+        </div>
       </div>
-      <div class="dashboard-card info-box">
-        <div class="info-header"><span class="icon">🛡️</span><h4>Chính sách</h4></div>
-        <ul class="info-list">
-          <li>Đổi size nhanh trong 7 ngày</li>
-          <li>Hỗ trợ chỉnh sửa form</li>
-          <li>CSKH & bảo hành đường may</li>
-        </ul>
-      </div>
+
     </div>
 
     <ModalChamCong
       v-if="showModal"
       :ca="ca"
       :idNv="idNv"
-      :tenNv="tenNv" 
+      :tenNv="staffName" 
       :token="token"
       @close="showModal = false"
     />
@@ -79,36 +115,166 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import axios from "axios";
 import ModalChamCong from "../components/ModalChamCong.vue";
+import { useRouter, useRoute } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
-const orderStats = ref({
-  pending: 12,
-  delivering: 8,
-  completed: 25,
-  cancelled: 2
-});
-
+// --- AUTH & USER INFO ---
 const idNv = localStorage.getItem("idNv") || JSON.parse(localStorage.getItem("user") || "{}").id;
 const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user") || "{}").accessToken;
-const tenNv = localStorage.getItem("tenNv");
 
+// --- TÊN NHÂN VIÊN VỚI XỬ LÝ AN TOÀN ---
+const staffName = ref("");
+
+// Hàm lấy tên nhân viên an toàn (cùng logic với ModalChamCong)
+const getStaffName = () => {
+  // Ưu tiên lấy từ localStorage tenNv
+  let nameRaw = localStorage.getItem("tenNv");
+  
+  // Nếu không có hoặc là giá trị không hợp lệ, thử parse từ object user
+  if (!nameRaw || nameRaw === "undefined" || nameRaw === "null") {
+    try {
+      const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+      nameRaw = userObj.hoTen || userObj.fullName || userObj.tenNv || "";
+    } catch (e) {
+      nameRaw = "";
+    }
+  }
+  
+  return nameRaw || "";
+};
+
+const headers = { Authorization: `Bearer ${token}` };
+
+// --- MODAL & CA LÀM VIỆC ---
 const ca = ref(null);
 const showModal = ref(false);
 
-const headers = {
-  Authorization: `Bearer ${token}`
+// --- DASHBOARD DATA ---
+const currentTime = ref('');
+let timer = null;
+
+const shiftInfo = ref({
+  shiftName: 'Chưa xác định',
+  startTime: '--:--',
+  endTime: '--:--',
+  currentCash: 0
+});
+
+const orderStats = ref({
+  pending: 0,
+  delivering: 0,
+  completed: 0,
+  cancelled: 0
+});
+
+const recentInvoices = ref([]);
+
+// --- HELPER FUNCTIONS ---
+const formatCurrency = (val) => {
+  if (!val) return "0 ₫";
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 };
 
+const formatTimeOnly = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+};
+
+const updateTime = () => {
+  const now = new Date();
+  currentTime.value = now.toLocaleDateString('vi-VN', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+};
+const goToInvoiceDetail = (id) => {
+  if (!id) {
+    console.error("Lỗi: Không tìm thấy ID hóa đơn!");
+    return;
+  }
+  // Tự động nhận diện quyền Staff hoặc Admin
+  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  router.push(`${basePath}/invoice/detail/${id}`);
+};
+// --- API FUNCTIONS FOR REAL DATA ---
+// --- API FUNCTIONS FOR REAL DATA ---
+// --- API FUNCTIONS FOR REAL DATA ---
+// --- API FUNCTIONS FOR REAL DATA ---
+// --- API FUNCTIONS FOR REAL DATA ---
+const fetchDashboardStats = async () => {
+  try {
+    // Gọi API lấy 50 giao dịch gần nhất
+    const resInvoices = await axios.get(
+      `http://localhost:8080/api/hoa-don/dashboard/recent`, 
+      { headers }
+    );
+
+    if (resInvoices.data) {
+      const allInvoices = resInvoices.data;
+
+      // 1. LẤY 5 GIAO DỊCH MỚI NHẤT CHO BẢNG BÊN PHẢI
+      recentInvoices.value = allInvoices.slice(0, 5);
+
+      // 2. ĐẾM TRẠNG THÁI ĐƠN CỦA "HÔM NAY"
+      // Lấy chuỗi ngày hôm nay theo định dạng YYYY-MM-DD
+      const today = new Date();
+      today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+      const todayStr = today.toISOString().split('T')[0];
+      
+      let pending = 0, delivering = 0, completed = 0, cancelled = 0;
+      
+      allInvoices.forEach(hd => {
+         // Lấy ngày tạo của hóa đơn (YYYY-MM-DD)
+         const hdDate = hd.ngayTao ? hd.ngayTao.split('T')[0] : '';
+         
+         // CHỈ ĐẾM CÁC ĐƠN CỦA NGÀY HÔM NAY
+         if (hdDate === todayStr) {
+             // 0: Chờ xác nhận, 1: Đã xác nhận
+             if (hd.trangThai === 0 || hd.trangThai === 1) pending++;
+             
+             // 2: Chờ giao, 3: Đang giao
+             else if (hd.trangThai === 2 || hd.trangThai === 3) delivering++;
+             
+             // 4: Hoàn thành (Bao gồm cả đơn POS bán tại quầy)
+             else if (hd.trangThai === 4) completed++;
+             
+             // 5: Đã hủy
+             else if (hd.trangThai === 5) cancelled++;
+         }
+      });
+
+      // Cập nhật lên giao diện 4 ô màu
+      orderStats.value = {
+        pending: pending,
+        delivering: delivering,
+        completed: completed,
+        cancelled: cancelled
+      };
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải dữ liệu dashboard:", error);
+  }
+};
+
+// --- LIFECYCLE ---
 onMounted(async () => {
+  updateTime();
+  timer = setInterval(updateTime, 60000); // Cập nhật đồng hồ mỗi phút
+  
+  // Lấy tên nhân viên khi mount
+  staffName.value = getStaffName();
+  
   if (!idNv) return;
 
   try {
-    // 1. Kiểm tra lịch làm việc hôm nay
+    // 1. Kiểm tra lịch làm việc hôm nay (GIỮ NGUYÊN LOGIC)
     const resCa = await axios.get(`http://localhost:8080/api/lich-lam-viec/check-ca-hom-nay/${idNv}`, { headers });
     
-    // Spring Boot trả về List, ta lấy phần tử đầu tiên
     let currentCa = null;
     if (resCa.data && Array.isArray(resCa.data) && resCa.data.length > 0) {
         currentCa = resCa.data[0];
@@ -118,34 +284,48 @@ onMounted(async () => {
 
     if (currentCa) {
        ca.value = currentCa;
+       
+       // CẬP NHẬT THÔNG TIN CA LÊN GIAO DIỆN
+       if (currentCa.caLamViec) {
+          shiftInfo.value.shiftName = currentCa.caLamViec.tenCa;
+          shiftInfo.value.startTime = currentCa.caLamViec.gioBatDau;
+          shiftInfo.value.endTime = currentCa.caLamViec.gioKetThuc;
+       }
 
-       // 2. CÓ LỊCH LÀM VIỆC -> Kiểm tra xem đã "Mở ca" (Check-in) chưa
+       // 👉 ƯU TIÊN 1: NẾU TỔNG CA ĐÃ BỊ ĐÓNG
+       if (currentCa.trangThai === 1) {
+           showModal.value = true;
+           window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
+           return; 
+       }
+
+       // 👉 ƯU TIÊN 2: NẾU CA ĐANG MỞ
        try {
          const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers });
          
          if (!resChamCong.data || resChamCong.data === "") {
-             // TRƯỜNG HỢP A: Có lịch nhưng CHƯA MỞ CA -> Tự động bật Popup bắt mở ca
+             // Chưa mở ca
              showModal.value = true;
              window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
          } else {
-             const chamCongData = resChamCong.data;
-             if (chamCongData.gioCheckOut) {
-                 // TRƯỜNG HỢP B: Đã ĐÓNG CA xong -> Bật Popup chặn lại (Báo ca đã kết thúc)
-                 showModal.value = true;
-                 window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
-             } else {
-                 // TRƯỜNG HỢP C: Đang trong ca làm việc (Đã mở ca) -> ẨN POPUP để làm việc bình thường
-                 showModal.value = false;
-                 window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
-             }
+             // Đang trong ca -> Cập nhật số tiền trong két thực tế!
+             showModal.value = false;
+             window.dispatchEvent(new CustomEvent('set-view-only', { detail: false }));
+             
+             // Tiền mặt hiện tại = Tiền mặt đầu ca + Doanh thu tiền mặt bán được
+             const tienDauCa = resChamCong.data.tienMatDauCa || 0;
+             const doanhThuMat = resChamCong.data.doanhThuTienMat || 0;
+             shiftInfo.value.currentCash = tienDauCa + doanhThuMat;
+             
+             // Gọi hàm tải dữ liệu hóa đơn/thống kê
+             fetchDashboardStats();
          }
        } catch (err) {
-           // Bị lỗi khi gọi API chấm công -> Tự động bật popup
            showModal.value = true;
        }
 
     } else {
-       // TRƯỜNG HỢP D: KHÔNG CÓ CA LÀM VIỆC HÔM NAY -> Bật Popup chặn lại
+       // TRƯỜNG HỢP KHÔNG CÓ CA LÀM VIỆC
        ca.value = null;
        showModal.value = true;
        window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
@@ -158,193 +338,182 @@ onMounted(async () => {
     window.dispatchEvent(new CustomEvent('set-view-only', { detail: true }));
   }
 });
+
+onUnmounted(() => {
+  clearInterval(timer);
+});
 </script>
 
 <style scoped>
-/* Tổng thể trang */
 .dashboard-page {
-  background-color: #F7F7F7;
   padding: 20px;
+  background-color: #f8f9fa;
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: relative; 
 }
 
-/* Thẻ Card */
+/* HEADER CA LÀM VIỆC */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 20px 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #eaeaea;
+  margin-bottom: 20px;
+  border-left: 5px solid #9b7054;
+}
+
+.welcome-section h2 {
+  margin: 0 0 5px 0;
+  color: #63391F;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.current-date {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.shift-summary {
+  display: flex;
+  gap: 30px;
+  text-align: right;
+}
+
+.shift-info, .shift-revenue {
+  display: flex;
+  flex-direction: column;
+}
+
+.shift-info .shift-name { font-size: 15px; color: #333; margin-bottom: 3px; }
+.shift-info .shift-time { font-size: 13px; color: #666; }
+
+.shift-revenue .label { font-size: 13px; color: #666; margin-bottom: 3px; }
+.shift-revenue .amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2F855A;
+}
+
+/* THAO TÁC NHANH */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.action-btn .icon { font-size: 30px; }
+.action-btn .text strong { display: block; font-size: 16px; margin-bottom: 3px; }
+.action-btn .text span { font-size: 13px; opacity: 0.9; }
+
+.action-btn.primary { background: #63391F; color: white; }
+.action-btn.secondary { background: #fff; border: 1px solid #63391F; color: #63391F; }
+.action-btn.outline { background: #fff; border: 1px solid #ddd; color: #333; }
+
+/* LƯỚI BÊN DƯỚI */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
 .dashboard-card {
-  background-color: #FFFFFF;
+  background: white;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border: 1px solid #eaeaea;
 }
 
-/* Tiêu đề chung */
-.title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #63391F;
-  margin: 0 0 15px 0;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-/* ================= SLIDER SECTION ================= */
-.slider-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
+.card-header h3 { margin: 0; font-size: 16px; color: #63391F; font-weight: 700;}
+.view-all { color: #63391F; text-decoration: none; font-size: 13px; font-weight: 600; }
+
+/* TRẠNG THÁI ĐƠN HÀNG */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
 }
 
-.slider-dots { 
-  display: flex; 
-  gap: 6px; 
+.status-box {
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.dot { 
-  width: 8px; 
-  height: 8px; 
-  border-radius: 50%; 
-  background-color: #D1D5DB; 
-}
+.status-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
+.status-box .value { font-size: 24px; font-weight: 700; }
 
-.dot.active { 
-  background-color: #63391F; 
-}
-
-.slider-container { 
-  display: flex; 
-  align-items: center; 
-  gap: 15px; 
-  position: relative; 
-}
-
-.nav-btn { 
-  background-color: #FFFFFF; 
-  border: 1px solid #E2E8F0; 
-  border-radius: 50%; 
-  width: 40px; 
-  height: 40px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 24px; 
-  cursor: pointer; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-  color: #666666; 
-  z-index: 2; 
-  transition: all 0.2s ease;
-}
-
-.nav-btn:hover { 
-  background-color: #F7F7F7; 
-  color: #63391F;
-  border-color: #63391F;
-}
-
-.image-grid { 
-  display: flex; 
-  flex: 1; 
-  gap: 20px; 
-  overflow: hidden; 
-}
-
-.img-wrapper { 
-  flex: 1; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  height: 350px; 
-  background-color: #E2E8F0; /* Màu nền chờ cho ảnh */
-}
-
-.img-wrapper img { 
-  width: 100%; 
-  height: 100%; 
-  object-fit: cover; 
-}
-
-/* ================= STATUS SECTION ================= */
-.status-grid { 
-  display: grid; 
-  grid-template-columns: repeat(4, 1fr); 
-  gap: 15px; 
-}
-
-.status-box { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 15px 20px; 
-  border-radius: 8px; 
-  border: 1px solid transparent; 
-}
-
-.status-info { 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  font-weight: 600; 
-  font-size: 14px; 
-}
-
-.status-box .value { 
-  font-size: 24px; 
-  font-weight: 700; 
-}
-
-/* Giữ nguyên màu sắc semantic cho trạng thái đơn hàng để dễ nhận diện */
 .pending { background-color: #FFF8EE; border-color: #FFE6C7; color: #C05621; }
 .delivering { background-color: #F0F7FF; border-color: #D6E8FF; color: #2B6CB0; }
 .completed { background-color: #F0FFF4; border-color: #C6F6D5; color: #2F855A; }
 .cancelled { background-color: #FFF5F5; border-color: #FED7D7; color: #C53030; }
 
-/* ================= INFO GRID SECTION ================= */
-.info-grid { 
-  display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 20px; 
+/* LỊCH SỬ GIAO DỊCH */
+.recent-list { display: flex; flex-direction: column; gap: 10px; }
+.recent-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 10px; /* Thêm padding để không bị sát lề khi hover */
+  border-bottom: 1px dashed #eee;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-.info-box { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 10px; 
-}
+.recent-item:last-child { border-bottom: none; }
 
-.info-header { 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
+/* 👉 BƯỚC 3: CSS Hiệu ứng hover */
+.recent-item.hover-item {
+  cursor: pointer;
 }
-
-.info-header h4 { 
-  margin: 0; 
-  font-size: 15px; 
-  color: #63391F; 
-  font-weight: 700;
+.recent-item.hover-item:hover {
+  background-color: #fdf8f6; /* Nền nâu cực nhạt */
+  transform: translateX(4px); /* Trượt nhẹ sang phải */
+  box-shadow: 0 2px 8px rgba(99, 57, 31, 0.05); /* Đổ bóng nhẹ */
+  border-bottom-color: transparent; /* Ẩn đường gạch ngang khi hover */
 }
-
-.info-header .icon { 
-  font-size: 18px; 
-}
-
-.desc { 
-  font-size: 13px; 
-  color: #666666; 
-  line-height: 1.5; 
-  margin: 0; 
-}
-
-.info-list { 
-  margin: 0; 
-  padding-left: 20px; 
-  font-size: 13px; 
-  color: #666666; 
-  line-height: 1.8; 
-}
+.item-left, .item-right { display: flex; flex-direction: column; }
+.item-right { text-align: right; }
+.hd-code { font-weight: 600; color: #333; font-size: 14px;}
+.hd-time { font-size: 12px; color: #888; margin-top: 3px;}
+.hd-total { font-weight: bold; color: #2F855A; font-size: 15px;}
+.hd-type { font-size: 12px; margin-top: 3px; font-weight: 500;}
+.hd-type.cash { color: #C05621; }
+.hd-type.bank { color: #2B6CB0; }
+.empty-state { text-align: center; color: #888; padding: 20px 0; font-size: 14px; font-style: italic; }
 
 @media (max-width: 1024px) {
-  .status-grid { grid-template-columns: repeat(2, 1fr); }
-  .image-grid { flex-direction: column; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
