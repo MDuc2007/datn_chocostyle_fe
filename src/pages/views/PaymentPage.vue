@@ -34,7 +34,9 @@
             <form class="checkout-form" @submit.prevent>
               <div class="form-row">
                 <div class="form-group">
-                  <label>Họ và tên người nhận <span class="required">*</span></label>
+                  <label
+                    >Họ và tên người nhận <span class="required">*</span></label
+                  >
                   <input
                     v-model="form.tenKhachHang"
                     type="text"
@@ -116,7 +118,10 @@
               </div>
 
               <div class="form-group">
-                <label>Địa chỉ cụ thể (Số nhà, tên đường) <span class="required">*</span></label>
+                <label
+                  >Địa chỉ cụ thể (Số nhà, tên đường)
+                  <span class="required">*</span></label
+                >
                 <input
                   v-model="form.diaChiCuThe"
                   type="text"
@@ -180,11 +185,9 @@
                     @click="paymentMethod = 'ONLINE'"
                   >
                     <div class="pay-info">
-                      <span class="pay-name"
-                        >Thanh toán trực tuyến (VNPAY)</span
-                      >
+                      <span class="pay-name">Thanh toán trực tuyến</span>
                       <span class="pay-desc"
-                        >Quét mã QR hoặc dùng thẻ ATM/Visa/MasterCard</span
+                        >Ví MoMo, VNPAY, Chuyển khoản VietQR</span
                       >
                     </div>
                     <div class="radio-indicator"></div>
@@ -247,11 +250,11 @@
 
               <div v-if="selectedVoucher" class="selected-voucher-tag">
                 <span class="voucher-icon">🎟️</span>
-                <div class="voucher-info" style="flex: 1;">
+                <div class="voucher-info" style="flex: 1">
                   <strong>{{ selectedVoucher.maPgg }}</strong>
                   <small>{{ selectedVoucher.tenPgg }}</small>
                 </div>
-                
+
                 <span v-if="selectedVoucher.isBest" class="best-badge-summary">
                   🔥 Tốt nhất
                 </span>
@@ -292,18 +295,27 @@
                   >- {{ formatPrice(voucherDiscountAmount) }}</span
                 >
               </div>
-              <div class="price-row" style="align-items: center;">
-                
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="label" style="margin-bottom: 0;">Phí vận chuyển:</span>
-                  
+
+              <div class="price-row" style="align-items: center">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span class="label" style="margin-bottom: 0"
+                    >Phí vận chuyển:</span
+                  >
+
                   <div class="ghn-inline-badge" v-if="shipFee > 0">
-                      <div class="ghn-square-logo">GHN</div>
-                      <span>Giao Hàng Nhanh</span>
+                    <div class="ghn-square-logo">GHN</div>
+                    <span>Giao Hàng Nhanh</span>
                   </div>
                 </div>
 
-                <span class="value">{{ formatPrice(shipFee) }}</span>
+                <span class="value">
+                  <span
+                    v-if="subTotal >= 5000000 && shipFee === 0"
+                    style="color: #10b981; font-weight: bold"
+                    >(Freeship)
+                  </span>
+                  {{ formatPrice(shipFee) }}
+                </span>
               </div>
             </div>
 
@@ -332,6 +344,175 @@
 
     <transition name="fade">
       <div
+        v-if="showGatewayModal"
+        class="modal-backdrop"
+        @click.self="showGatewayModal = false"
+      >
+        <div class="modal-dialog gateway-modal">
+          <div class="modal-header">
+            <h3>💳 Chọn cổng thanh toán</h3>
+            <button class="btn-close-modal" @click="showGatewayModal = false">
+              &times;
+            </button>
+          </div>
+          <div class="modal-body pb-4">
+            <p class="text-muted text-center mb-4">
+              Vui lòng chọn 1 trong các phương thức dưới đây để tiếp tục thanh
+              toán an toàn.
+            </p>
+            <div class="gateway-grid">
+              <label
+                class="gateway-card"
+                :class="{ active: selectedGateway === 'VNPAY' }"
+                @click="selectedGateway = 'VNPAY'"
+              >
+                <div class="gateway-logo vnpay-bg">
+                  <img
+                    src="/src/assets/logo/0oxhzjmxbksr1686814746087.png"
+                    alt="VNPAY"
+                  />
+                </div>
+                <div class="gateway-name">VNPAY</div>
+                <div class="radio-indicator"></div>
+              </label>
+
+              <label
+                class="gateway-card"
+                :class="{ active: selectedGateway === 'MOMO' }"
+                @click="selectedGateway = 'MOMO'"
+              >
+                <div class="gateway-logo momo-bg">
+                  <img
+                    src="/src/assets/logo/Logo-MoMo-Square.webp"
+                    alt="MoMo"
+                  />
+                </div>
+                <div class="gateway-name">Ví MoMo</div>
+                <div class="radio-indicator"></div>
+              </label>
+              <label
+                class="gateway-card"
+                :class="{ active: selectedGateway === 'ZALOPAY' }"
+                @click="selectedGateway = 'ZALOPAY'"
+              >
+                <div class="gateway-logo zalo-bg">
+                  <img
+                    src="/src/assets/logo/Logo-ZaloPay-Square.webp"
+                    alt="ZaloPay"
+                  />
+                </div>
+                <div class="gateway-name">ZaloPay</div>
+                <div class="radio-indicator"></div>
+              </label>
+
+              <label
+                class="gateway-card"
+                :class="{ active: selectedGateway === 'VIETQR' }"
+                @click="selectedGateway = 'VIETQR'"
+              >
+                <div class="gateway-logo qr-bg">
+                  <img
+                    src="/src/assets/logo/VietQR.46a78cbb_utwzzh.png"
+                    alt="VietQR"
+                    style="object-fit: contain; width: 100%"
+                  />
+                </div>
+                <div class="gateway-name">Chuyển Khoản</div>
+                <div class="radio-indicator"></div>
+              </label>
+            </div>
+
+            <button
+              type="button"
+              class="btn-submit-order mt-4"
+              @click="handleOnlineCheckout"
+              :disabled="isProcessing"
+            >
+              <span v-if="isProcessing" class="loader-spinner"></span>
+              <span v-else>THANH TOÁN {{ formatPrice(finalTotal) }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="zoom">
+      <div v-if="showVietQRModal" class="modal-backdrop">
+        <div class="modal-dialog qr-modal">
+          <div class="modal-body text-center p-0">
+            <div class="qr-header bg-gradient-primary">
+              <img
+                src="/src/assets/logo/VietQR.46a78cbb_utwzzh.png"
+                alt="VietQR"
+                class="vietqr-logo-top"
+              />
+              <h3 class="text-white mb-1 mt-2">Thanh Toán Chuyển Khoản</h3>
+            </div>
+
+            <div class="qr-content p-4">
+              <div class="qr-wrapper shadow-sm mb-4">
+                <div class="scan-line"></div>
+                <img
+                  :src="currentVietQRUrl"
+                  alt="VietQR"
+                  class="img-fluid rounded qr-code-img"
+                />
+              </div>
+
+              <div class="order-bill p-3 bg-light rounded text-left mb-4">
+                <div
+                  class="d-flex justify-content-between mb-2 pb-2 border-bottom"
+                >
+                  <span class="text-muted">Mã đơn hàng:</span>
+                  <strong class="text-dark">HD{{ currentOrderId }}</strong>
+                </div>
+                <div
+                  class="d-flex justify-content-between mb-2 pb-2 border-bottom"
+                >
+                  <span class="text-muted">Số tiền cần chuyển:</span>
+                  <strong class="text-danger" style="font-size: 16px">{{
+                    formatPrice(finalTotal)
+                  }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">Nội dung CK:</span>
+                  <strong class="text-primary">HD{{ currentOrderId }}</strong>
+                </div>
+              </div>
+
+              <div
+                class="d-flex align-items-center justify-content-center gap-2 mb-2"
+              >
+                <div
+                  class="spinner-grow text-success spinner-grow-sm"
+                  role="status"
+                ></div>
+                <p class="text-success small fw-bold mb-0 blinking-text">
+                  Hệ thống đang tự động dò tìm giao dịch...
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="qr-footer p-3 bg-light border-top"
+              style="margin-bottom: 20px"
+            >
+              <button
+                class="btn-cancel-qr w-100"
+                @click="cancelVietQR"
+                :disabled="isProcessing"
+              >
+                <span v-if="isProcessing">Đang hủy...</span>
+                <span v-else>Hủy Giao Dịch</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div
         v-if="showVoucherModal"
         class="modal-backdrop"
         @click.self="showVoucherModal = false"
@@ -344,22 +525,25 @@
             </button>
           </div>
           <div class="modal-body custom-scroll shopee-modal-body">
-            
             <div v-if="processedVouchers.length > 0" class="voucher-list">
               <div
                 v-for="v in processedVouchers"
                 :key="v.id"
                 class="shopee-voucher-card"
-                :class="{ 
+                :class="{
                   'v-active': selectedVoucher?.id === v.id,
-                  'v-disabled': subTotal < (v.dieueKienDonHang || v.dieuKienDonHang || 0) 
+                  'v-disabled':
+                    subTotal < (v.dieueKienDonHang || v.dieuKienDonHang || 0),
                 }"
-                @click="subTotal >= (v.dieueKienDonHang || v.dieuKienDonHang || 0) ? selectVoucher(v) : null"
+                @click="
+                  subTotal >= (v.dieueKienDonHang || v.dieuKienDonHang || 0)
+                    ? selectVoucher(v)
+                    : null
+                "
               >
                 <div class="shopee-v-left">
                   <div class="brand-text">CHOCO<br />STYLE</div>
                 </div>
-
                 <div class="shopee-v-right">
                   <div class="v-info-wrap">
                     <div class="v-title">
@@ -370,15 +554,31 @@
                           : formatPrice(v.giaTri)
                       }}
                     </div>
-                    
-                    <div v-if="v.isBest && subTotal >= (v.dieueKienDonHang || v.dieuKienDonHang || 0)" class="best-voucher-alert">
-                      🔥 Mã giảm giá tốt nhất
+                    <div
+                      v-if="
+                        v.isBest &&
+                        subTotal >=
+                          (v.dieueKienDonHang || v.dieuKienDonHang || 0)
+                      "
+                      class="best-voucher-alert"
+                    >
+                      🔥 Mã tốt nhất
                     </div>
-
-                    <div v-if="subTotal < (v.dieueKienDonHang || v.dieuKienDonHang || 0)" class="not-eligible-alert">
-                      ❌ Chưa đủ điều kiện (Thiếu {{ formatPrice((v.dieueKienDonHang || v.dieuKienDonHang || 0) - subTotal) }})
+                    <div
+                      v-if="
+                        subTotal <
+                        (v.dieueKienDonHang || v.dieuKienDonHang || 0)
+                      "
+                      class="not-eligible-alert"
+                    >
+                      ❌ Thiếu
+                      {{
+                        formatPrice(
+                          (v.dieueKienDonHang || v.dieuKienDonHang || 0) -
+                            subTotal,
+                        )
+                      }}
                     </div>
-
                     <div class="v-condition">
                       Đơn tối thiểu
                       {{
@@ -387,18 +587,15 @@
                         )
                       }}
                     </div>
-
                     <div class="v-expiry">
                       <span
                         v-if="v.giaTriToiDa && v.loaiGiam === 'PERCENT'"
                         class="v-max-discount"
+                        >Tối đa {{ formatPrice(v.giaTriToiDa) }}</span
                       >
-                        Giảm tối đa {{ formatPrice(v.giaTriToiDa) }}
-                      </span>
                       HSD: {{ v.ngayKetThuc }}
                     </div>
                   </div>
-
                   <div class="v-radio-wrap">
                     <div
                       class="shopee-radio"
@@ -408,7 +605,6 @@
                 </div>
               </div>
             </div>
-
             <div v-else class="text-center py-5">
               <p class="text-muted">Bạn chưa có mã giảm giá nào khả dụng.</p>
             </div>
@@ -459,8 +655,7 @@
                     <td class="address-cell">
                       <span v-if="item.diaChi.macDinh" class="default-badge"
                         >Mặc định</span
-                      >
-                      {{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
+                      >{{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
                       {{ item.diaChi.quan }}, {{ item.diaChi.thanhPho }}
                     </td>
                     <td class="text-center">
@@ -512,12 +707,6 @@
           class="modern-toast"
           :class="'toast-' + notif.type"
         >
-          <span class="toast-icon">
-            <template v-if="notif.type === 'success'">✓</template>
-            <template v-else-if="notif.type === 'warning'">!</template>
-            <template v-else-if="notif.type === 'info'">i</template>
-            <template v-else>✕</template>
-          </span>
           <span class="toast-message">{{ notif.message }}</span>
         </div>
       </transition-group>
@@ -553,6 +742,13 @@ const notifications = ref([]);
 const modal = reactive({ show: false, title: "", message: "", action: null });
 const isProcessing = ref(false);
 
+const showGatewayModal = ref(false);
+const selectedGateway = ref("VNPAY");
+const showVietQRModal = ref(false);
+const currentVietQRUrl = ref("");
+const currentOrderId = ref(null);
+const pollingInterval = ref(null);
+
 const shipFee = ref(0);
 const provinces = ref([]);
 const districts = ref([]);
@@ -575,7 +771,6 @@ const form = ref({
 const initSelect2 = () => {
   const $prov = window.$("#select-province");
   $prov.select2({ width: "100%", placeholder: "Chọn Tỉnh/Thành phố" });
-
   $prov.off("select2:select").on("select2:select", async (e) => {
     const val = Number(e.params.data.id);
     if (selectedProvince.value !== val) {
@@ -586,7 +781,6 @@ const initSelect2 = () => {
 
   const $dist = window.$("#select-district");
   $dist.select2({ width: "100%", placeholder: "Chọn Quận/Huyện" });
-
   $dist.off("select2:select").on("select2:select", async (e) => {
     const val = Number(e.params.data.id);
     if (selectedDistrict.value !== val) {
@@ -597,7 +791,6 @@ const initSelect2 = () => {
 
   const $ward = window.$("#select-ward");
   $ward.select2({ width: "100%", placeholder: "Chọn Phường/Xã" });
-
   $ward.off("select2:select").on("select2:select", async (e) => {
     const val = e.params.data.id;
     if (selectedWard.value !== val) {
@@ -609,9 +802,7 @@ const initSelect2 = () => {
 
 const setSelect2Value = (idSelector, value) => {
   const $el = window.$(idSelector);
-  if ($el.length) {
-    $el.val(String(value)).trigger("change");
-  }
+  if ($el.length) $el.val(String(value)).trigger("change");
 };
 
 const formatPrice = (v) => new Intl.NumberFormat("vi-VN").format(v) + " đ";
@@ -662,6 +853,13 @@ const getWards = async (districtId) => {
 
 const calculateShippingFee = async () => {
   if (!selectedDistrict.value || !selectedWard.value) return;
+
+  // Tính năng Freeship nếu đơn từ 5.000.000 trở lên
+  if (subTotal.value >= 5000000) {
+    shipFee.value = 0;
+    return;
+  }
+
   try {
     const insurance = subTotal.value > 5000000 ? 5000000 : subTotal.value;
     const res = await axios.post(
@@ -685,6 +883,7 @@ const calculateShippingFee = async () => {
     console.error("Lỗi tính phí ship:", error);
     shipFee.value = 30000;
   }
+  // shipFee.value = 0;
 };
 
 const handleProvinceChange = async () => {
@@ -695,7 +894,6 @@ const handleProvinceChange = async () => {
   shipFee.value = 0;
   setSelect2Value("#select-district", "");
   setSelect2Value("#select-ward", "");
-
   const p = provinces.value.find(
     (x) => x.ProvinceID === selectedProvince.value,
   );
@@ -710,7 +908,6 @@ const handleDistrictChange = async () => {
   selectedWard.value = null;
   shipFee.value = 0;
   setSelect2Value("#select-ward", "");
-
   const d = districts.value.find(
     (x) => x.DistrictID === selectedDistrict.value,
   );
@@ -732,10 +929,8 @@ const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/promotions");
     if (!res.data) return;
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const validPromos = res.data.filter((p) => {
       if (Number(p.trangThai) !== 1) return false;
       const start = new Date(p.ngayBatDau);
@@ -744,7 +939,6 @@ const fetchPromotions = async () => {
       end.setHours(23, 59, 59, 999);
       return today >= start && today <= end;
     });
-
     const isFromCart = route.query.fromCart === "true";
 
     checkoutItems.value.forEach((item) => {
@@ -753,7 +947,6 @@ const fetchPromotions = async () => {
           (id) => Number(id) === Number(item.variantId),
         ),
       );
-
       if (itemPromos.length > 0) {
         const best = itemPromos.reduce((max, cur) =>
           Number(cur.giaTriGiam) > Number(max.giaTriGiam) ? cur : max,
@@ -765,22 +958,16 @@ const fetchPromotions = async () => {
 
       if (isFromCart) {
         item.giaCuoiCung = item.giaBan;
-        if (item.discountPercent > 0) {
-          item.giaGoc = Math.round(
-            item.giaCuoiCung / (1 - item.discountPercent / 100),
-          );
-        } else {
-          item.giaGoc = item.giaCuoiCung;
-        }
+        item.giaGoc =
+          item.discountPercent > 0
+            ? Math.round(item.giaCuoiCung / (1 - item.discountPercent / 100))
+            : item.giaCuoiCung;
       } else {
         item.giaGoc = item.giaBan;
-        if (item.discountPercent > 0) {
-          item.giaCuoiCung = Math.round(
-            item.giaGoc * (1 - item.discountPercent / 100),
-          );
-        } else {
-          item.giaCuoiCung = item.giaGoc;
-        }
+        item.giaCuoiCung =
+          item.discountPercent > 0
+            ? Math.round(item.giaGoc * (1 - item.discountPercent / 100))
+            : item.giaGoc;
       }
     });
   } catch (err) {
@@ -803,17 +990,15 @@ const fetchVouchers = async (khId) => {
   }
 };
 
-
-const totalItemCount = computed(() => {
-  return checkoutItems.value.reduce((sum, item) => sum + item.soLuong, 0);
-});
-
-const subTotal = computed(() => {
-  return checkoutItems.value.reduce(
+const totalItemCount = computed(() =>
+  checkoutItems.value.reduce((sum, item) => sum + item.soLuong, 0),
+);
+const subTotal = computed(() =>
+  checkoutItems.value.reduce(
     (sum, item) => sum + item.giaCuoiCung * item.soLuong,
     0,
-  );
-});
+  ),
+);
 
 const voucherDiscountAmount = computed(() => {
   if (!selectedVoucher.value) return 0;
@@ -821,9 +1006,7 @@ const voucherDiscountAmount = computed(() => {
   let discount = 0;
   const basePrice = subTotal.value;
   const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
-
   if (basePrice < dieuKien) return 0;
-
   if (v.loaiGiam === "PERCENT") {
     discount = (basePrice * v.giaTri) / 100;
     if (v.giaTriToiDa && discount > v.giaTriToiDa) discount = v.giaTriToiDa;
@@ -840,37 +1023,29 @@ const finalTotal = computed(() => {
 
 const processedVouchers = computed(() => {
   const basePrice = subTotal.value;
-
   let list = availableVouchers.value.map((v) => {
     const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
     const isEligible = basePrice >= dieuKien;
-
     let simulatedDiscount = 0;
     if (isEligible) {
       if (v.loaiGiam === "PERCENT") {
         simulatedDiscount = (basePrice * v.giaTri) / 100;
-        if (v.giaTriToiDa && simulatedDiscount > v.giaTriToiDa) {
+        if (v.giaTriToiDa && simulatedDiscount > v.giaTriToiDa)
           simulatedDiscount = v.giaTriToiDa;
-        }
       } else {
         simulatedDiscount = v.giaTri;
       }
     }
     return { ...v, simulatedDiscount };
   });
-
   list.sort((a, b) => b.simulatedDiscount - a.simulatedDiscount);
-
-  if (list.length > 0 && list[0].simulatedDiscount > 0) {
-    list[0].isBest = true;
-  }
+  if (list.length > 0 && list[0].simulatedDiscount > 0) list[0].isBest = true;
   return list;
 });
 
 const selectVoucher = (v) => {
   const basePrice = subTotal.value;
   const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
-
   if (basePrice < dieuKien) {
     addNotification(
       `Đơn hàng tối thiểu ${formatPrice(dieuKien)} để dùng mã này`,
@@ -900,21 +1075,28 @@ const confirmOrder = () => {
   if (!form.value.diaChiCuThe?.trim())
     return addNotification("Vui lòng nhập Địa chỉ cụ thể!", "warning");
 
-  modal.show = true;
-  modal.action = handleCheckout;
-  modal.title = "Xác nhận đặt hàng";
-  modal.message = "Bạn có chắc chắn các thông tin đã chính xác?";
+  if (paymentMethod.value === "COD") {
+    modal.show = true;
+    modal.action = () => handleCheckout("COD");
+    modal.title = "Xác nhận đặt hàng";
+    modal.message = "Bạn có chắc chắn các thông tin đã chính xác?";
+  } else {
+    showGatewayModal.value = true;
+  }
 };
 
 const handleModalConfirm = () => {
   modal.action();
 };
-
 const closeModal = () => {
   if (!isProcessing.value) modal.show = false;
 };
 
-const handleCheckout = async () => {
+const handleOnlineCheckout = () => {
+  handleCheckout(selectedGateway.value);
+};
+
+const handleCheckout = async (gatewayType) => {
   isProcessing.value = true;
   const fullAddress = `${form.value.diaChiCuThe}, ${form.value.phuong}, ${form.value.quan}, ${form.value.thanhPho}`;
 
@@ -924,29 +1106,32 @@ const handleCheckout = async () => {
     donGia: item.giaCuoiCung,
   }));
 
+  let phuongThucId = 1;
+  if (gatewayType === "VNPAY") phuongThucId = 2;
+  else if (gatewayType === "MOMO") phuongThucId = 3;
+  else if (gatewayType === "VIETQR") phuongThucId = 4;
+  else if (gatewayType === "ZALOPAY") phuongThucId = 5;
+
   const orderData = {
     idKhachHang: customer.value?.id || null,
-    idNhanVien: 1, 
-    loaiDon: 0, 
+    idNhanVien: 1,
+    loaiDon: 0,
     ghiChu: form.value.ghiChu,
     tongTienHang: subTotal.value,
     phiShip: shipFee.value,
     maVoucher: selectedVoucher.value ? selectedVoucher.value.maPgg : "",
     giamGiaVoucher: voucherDiscountAmount.value,
-
     tenNguoiNhan: form.value.tenKhachHang,
     sdtNguoiNhan: form.value.soDienThoai,
     emailNguoiNhan: form.value.email,
     diaChiGiaoHang: fullAddress,
-
-    phuongThuc: paymentMethod.value === "COD" ? 1 : 2,
+    phuongThuc: phuongThucId,
     sanPhamChiTiet: orderDetails,
   };
 
   try {
     const token = localStorage.getItem("token");
-    const headers = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     const response = await axios.post(
       "http://localhost:8080/api/hoa-don",
@@ -964,9 +1149,13 @@ const handleCheckout = async () => {
       hoaDonId = response.data;
     }
 
-    if (paymentMethod.value === "COD") {
+    localStorage.setItem("pending_order_id", hoaDonId);
+
+    if (gatewayType === "COD") {
+      localStorage.removeItem("pending_order_id");
       updateOriginalCartAfterPurchase();
       addNotification("Đặt hàng thành công!", "success");
+      modal.show = false;
       setTimeout(() => {
         router.push({
           path: "/payment-result",
@@ -979,14 +1168,28 @@ const handleCheckout = async () => {
           },
         });
       }, 1000);
+    } else if (gatewayType === "VIETQR") {
+      showGatewayModal.value = false;
+      currentOrderId.value = hoaDonId;
+      currentVietQRUrl.value = `https://img.vietqr.io/image/970422-6123123466666-compact2.png?amount=${finalTotal.value}&addInfo=HD${hoaDonId}&accountName=BUI MINH DUC`;
+      showVietQRModal.value = true;
+      startPollingVietQR(hoaDonId);
     } else {
+      let apiPath = "/api/vnpay/create-payment";
+
+      if (gatewayType === "MOMO") {
+        apiPath = "/api/vnpay/momo/create-payment";
+      } else if (gatewayType === "ZALOPAY") {
+        apiPath = "/api/vnpay/zalopay/create-payment";
+      }
+
       const paymentRes = await axios.post(
-        "http://localhost:8080/api/vnpay/create-payment",
+        `http://localhost:8080${apiPath}`,
         null,
         { params: { hoaDonId } },
       );
+
       if (paymentRes.data) {
-        updateOriginalCartAfterPurchase();
         window.location.href = paymentRes.data;
       }
     }
@@ -1004,9 +1207,45 @@ const handleCheckout = async () => {
       );
     }
     modal.show = false;
+    showGatewayModal.value = false;
   } finally {
     isProcessing.value = false;
   }
+};
+
+const startPollingVietQR = (id) => {
+  pollingInterval.value = setInterval(async () => {
+    try {
+      const res = await axios.get(`http://localhost:8080/api/hoa-don/${id}`);
+
+      // ✅ TÌM TRONG DANH SÁCH THANH TOÁN XEM CÓ GIAO DỊCH NÀO THÀNH CÔNG CHƯA
+      const daThanhToan = res.data?.thanhToanList?.some(
+        (tt) => tt.trangThai === 1,
+      );
+
+      if (daThanhToan) {
+        clearInterval(pollingInterval.value);
+        localStorage.removeItem("pending_order_id");
+        updateOriginalCartAfterPurchase();
+        showVietQRModal.value = false;
+        router.push({
+          path: "/payment-result",
+          query: { method: "VIETQR", status: "success", hoaDonId: id },
+        });
+      }
+    } catch (e) {
+      console.error("Lỗi check trạng thái VietQR:", e);
+    }
+  }, 3000);
+};
+
+const cancelVietQR = async () => {
+  isProcessing.value = true;
+  clearInterval(pollingInterval.value);
+
+  showVietQRModal.value = false;
+  localStorage.removeItem("pending_order_id");
+  isProcessing.value = false;
 };
 
 const updateOriginalCartAfterPurchase = () => {
@@ -1015,7 +1254,6 @@ const updateOriginalCartAfterPurchase = () => {
     let cart = JSON.parse(savedCart);
     const boughtIds = checkoutItems.value.map((i) => i.variantId);
     cart = cart.filter((c) => !boughtIds.includes(c.variantId));
-
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("cartUpdated"));
   }
@@ -1025,26 +1263,19 @@ const updateOriginalCartAfterPurchase = () => {
 const fetchCustomer = async () => {
   const userStr = localStorage.getItem("user");
   if (!userStr) return;
-
   const user = JSON.parse(userStr);
   const userId = user.id;
   const token = user.accessToken || localStorage.getItem("token");
-
   if (!userId) return;
-
   try {
     const res = await axios.get(
       `http://localhost:8080/api/khach-hang/${userId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+      { headers: { Authorization: `Bearer ${token}` } },
     );
-
     customer.value = res.data;
     form.value.tenKhachHang = res.data.tenKhachHang;
     form.value.soDienThoai = res.data.soDienThoai;
     form.value.email = res.data.email;
-
     const addr =
       res.data.listDiaChi?.find((d) => d.macDinh) || res.data.listDiaChi?.[0];
     if (addr) {
@@ -1089,7 +1320,6 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
   if (!cityName || !districtName || !wardName) return;
   try {
     if (provinces.value.length === 0) await getProvinces();
-
     const foundProvince = provinces.value.find(
       (p) =>
         p.ProvinceName.toLowerCase().trim() === cityName.toLowerCase().trim() ||
@@ -1097,13 +1327,11 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
           (ext) => ext.toLowerCase() === cityName.toLowerCase().trim(),
         ),
     );
-
     if (foundProvince) {
       selectedProvince.value = foundProvince.ProvinceID;
       form.value.thanhPho = foundProvince.ProvinceName;
       setSelect2Value("#select-province", foundProvince.ProvinceID);
       await getDistricts(foundProvince.ProvinceID);
-
       const foundDistrict = districts.value.find(
         (d) =>
           d.DistrictName.toLowerCase().trim() ===
@@ -1112,14 +1340,12 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
             (ext) => ext.toLowerCase() === districtName.toLowerCase().trim(),
           ),
       );
-
       if (foundDistrict) {
         selectedDistrict.value = foundDistrict.DistrictID;
         form.value.quan = foundDistrict.DistrictName;
         await nextTick();
         setSelect2Value("#select-district", foundDistrict.DistrictID);
         await getWards(foundDistrict.DistrictID);
-
         const foundWard = wards.value.find(
           (w) =>
             w.WardName.toLowerCase().trim() === wardName.toLowerCase().trim() ||
@@ -1127,7 +1353,6 @@ const mapAddressFromText = async (cityName, districtName, wardName) => {
               (ext) => ext.toLowerCase() === wardName.toLowerCase().trim(),
             ),
         );
-
         if (foundWard) {
           selectedWard.value = foundWard.WardCode;
           form.value.phuong = foundWard.WardName;
@@ -1146,7 +1371,6 @@ const openCustomerModal = () => (showCustomerModal.value = true);
 
 onMounted(async () => {
   await getProvinces();
-
   const token = localStorage.getItem("token");
   if (token) {
     try {
@@ -1157,7 +1381,6 @@ onMounted(async () => {
       }
     }
   }
-
   const checkoutData = localStorage.getItem("checkout_items");
   if (checkoutData) {
     try {
@@ -1177,7 +1400,6 @@ onMounted(async () => {
       console.error("Lỗi parse checkout items", e);
     }
   }
-
   if (checkoutItems.value.length === 0) {
     const { productId, variantId, quantity } = route.query;
     if (productId && variantId) {
@@ -1187,7 +1409,6 @@ onMounted(async () => {
         );
         const prod = res.data;
         const variant = prod.bienTheList.find((b) => b.id == variantId);
-
         if (variant) {
           checkoutItems.value.push({
             variantId: variant.id,
@@ -1221,28 +1442,25 @@ watch(
       }
     }
   },
-  { immediate: true }, 
+  { immediate: true },
 );
 </script>
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
 
-/* ================== VARIABLES & GLOBALS ================== */
 .checkout-wrapper {
-  background-color: #f7f7f7; 
+  background-color: #f7f7f7;
   min-height: 100vh;
   font-family: "Nunito", sans-serif;
   color: #1a1a1a;
   padding-bottom: 60px;
 }
-
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
-
 .mb-3 {
   margin-bottom: 1rem;
 }
@@ -1259,51 +1477,24 @@ watch(
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-/* ================== HEADER ================== */
-.page-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.page-title {
-  font-family: "Montserrat", sans-serif;
-  font-size: 32px;
-  font-weight: 800;
-  color: #63391f; 
-  margin: 0 0 10px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.page-subtitle {
-  color: #64748b;
-  font-size: 15px;
-  margin: 0;
-  font-weight: 500;
-}
-
-/* ================== GRID LAYOUT ================== */
 .checkout-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 30px;
   align-items: start;
 }
-
 @media (max-width: 992px) {
   .checkout-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* ================== CARDS ================== */
 .card {
   background: #ffffff;
   border-radius: 16px;
   padding: 30px;
   border: 1px solid #f1f5f9;
 }
-
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -1312,13 +1503,11 @@ watch(
   padding-bottom: 15px;
   border-bottom: 2px dashed #f1f5f9;
 }
-
 .header-title {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .header-title h2 {
   font-family: "Montserrat", sans-serif;
   font-size: 18px;
@@ -1326,7 +1515,6 @@ watch(
   margin: 0;
   color: #1e293b;
 }
-
 .icon-circle {
   display: flex;
   align-items: center;
@@ -1342,17 +1530,14 @@ watch(
   height: 20px;
 }
 
-/* ================== FORMS ================== */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
-
 .form-row.triplet {
   grid-template-columns: 1fr 1fr 1fr;
 }
-
 @media (max-width: 768px) {
   .form-row,
   .form-row.triplet {
@@ -1360,11 +1545,9 @@ watch(
     gap: 0;
   }
 }
-
 .form-group {
   margin-bottom: 20px;
 }
-
 .form-group label {
   display: block;
   font-size: 14px;
@@ -1372,13 +1555,10 @@ watch(
   color: #334155;
   margin-bottom: 8px;
 }
-
-/* 👉 CSS CHO DẤU * BẮT BUỘC NHẬP */
 .required {
   color: #dc2626;
   margin-left: 2px;
 }
-
 .form-control {
   width: 100%;
   padding: 14px 16px;
@@ -1391,7 +1571,6 @@ watch(
   color: #1e293b;
   font-family: "Nunito", sans-serif;
 }
-
 .form-control:focus {
   outline: none;
   border-color: #63391f;
@@ -1399,13 +1578,11 @@ watch(
   box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
 }
 
-/* ================== PAYMENT OPTIONS ================== */
 .payment-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 .payment-card {
   display: flex;
   align-items: center;
@@ -1417,35 +1594,29 @@ watch(
   position: relative;
   background: #fff;
 }
-
 .payment-card:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
 }
-
 .payment-card.active {
   border-color: #63391f;
   background-color: #fdfaf8;
 }
-
 .pay-info {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
-
 .pay-name {
   font-weight: 700;
   color: #1e293b;
   font-size: 15px;
 }
-
 .pay-desc {
   font-size: 13px;
   color: #64748b;
   margin-top: 4px;
 }
-
 .radio-indicator {
   width: 22px;
   height: 22px;
@@ -1454,12 +1625,10 @@ watch(
   position: relative;
   transition: all 0.2s;
 }
-
 .payment-card.active .radio-indicator {
   border-color: #63391f;
   background: #63391f;
 }
-
 .payment-card.active .radio-indicator::after {
   content: "";
   position: absolute;
@@ -1472,12 +1641,10 @@ watch(
   border-radius: 50%;
 }
 
-/* ================== RIGHT COLUMN: SUMMARY ================== */
 .sticky-summary {
   position: sticky;
   top: 24px;
 }
-
 .summary-title {
   font-family: "Montserrat", sans-serif;
   font-size: 20px;
@@ -1485,14 +1652,12 @@ watch(
   margin-bottom: 25px;
   color: #1e293b;
 }
-
 .product-item {
   display: flex;
   gap: 15px;
   align-items: center;
   margin-bottom: 15px;
 }
-
 .product-img-wrapper {
   position: relative;
   width: 75px;
@@ -1506,13 +1671,11 @@ watch(
   justify-content: center;
   padding: 5px;
 }
-
 .product-img-wrapper img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
-
 .product-qty-badge {
   position: absolute;
   top: -8px;
@@ -1529,11 +1692,9 @@ watch(
   border-radius: 50%;
   border: 2px solid #fff;
 }
-
 .product-detail {
   flex-grow: 1;
 }
-
 .product-name {
   font-size: 15px;
   font-weight: 700;
@@ -1545,48 +1706,40 @@ watch(
   overflow: hidden;
   line-height: 1.3;
 }
-
 .product-meta {
   font-size: 13px;
   color: #64748b;
   margin: 0 0 8px 0;
   font-weight: 500;
 }
-
 .price-display {
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
-
 .old-price {
   text-decoration: line-through;
   color: #94a3b8;
   font-size: 13px;
   font-weight: 600;
 }
-
 .product-price {
   font-weight: 800;
   color: #63391f;
   margin: 0;
   font-size: 15px;
 }
-
 .divider {
   border-top: 1px solid #e2e8f0;
   margin: 20px 0;
 }
-
 .divider.dashed {
   border-top-style: dashed;
 }
 
-/* VOUCHER SECTION */
 .voucher-section {
   margin: 15px 0;
 }
-
 .small-label {
   font-size: 14px;
   font-weight: 700;
@@ -1594,11 +1747,10 @@ watch(
   margin-bottom: 5px;
   display: block;
 }
-
 .btn-link-sm {
   background: none;
   border: none;
-  color: #d32f2f; 
+  color: #d32f2f;
   font-weight: 700;
   cursor: pointer;
   font-size: 13px;
@@ -1607,7 +1759,6 @@ watch(
 .btn-link-sm:hover {
   text-decoration: underline;
 }
-
 .no-voucher-box {
   border: 1px dashed #cbd5e1;
   padding: 14px;
@@ -1625,7 +1776,6 @@ watch(
   color: #d32f2f;
   background: #fef2f2;
 }
-
 .selected-voucher-tag {
   display: flex;
   align-items: center;
@@ -1635,31 +1785,22 @@ watch(
   border-radius: 10px;
   position: relative;
 }
-
 .voucher-icon {
   font-size: 24px;
   margin-right: 12px;
 }
-
-.voucher-info {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
 .voucher-info strong {
   color: #b91c1c;
   font-size: 14px;
   font-weight: 800;
+  display: block;
 }
-
 .voucher-info small {
   color: #dc2626;
   font-size: 12px;
   font-weight: 600;
   margin-top: 2px;
 }
-
 .btn-remove-v {
   background: none;
   border: none;
@@ -1673,24 +1814,20 @@ watch(
   color: #991b1b;
 }
 
-/* PRICE BREAKDOWN */
 .price-breakdown {
   font-size: 15px;
   color: #475569;
   font-weight: 500;
 }
-
 .price-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
 }
-
 .discount-text {
-  color: #10b981; 
+  color: #10b981;
   font-weight: 700;
 }
-
 .price-total {
   display: flex;
   justify-content: space-between;
@@ -1700,14 +1837,12 @@ watch(
   margin-bottom: 25px;
   color: #1e293b;
 }
-
 .highlight-price {
-  color: #d32f2f; 
+  color: #d32f2f;
   font-size: 24px;
   font-family: "Montserrat", sans-serif;
 }
 
-/* BUTTON SUBMIT */
 .btn-outline {
   background: transparent;
   color: #63391f;
@@ -1719,12 +1854,10 @@ watch(
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .btn-outline:hover {
   background: #fdfaf8;
   box-shadow: 0 4px 10px rgba(99, 57, 31, 0.1);
 }
-
 .btn-submit-order {
   width: 100%;
   background: linear-gradient(135deg, #63391f, #8b5a2b);
@@ -1746,18 +1879,15 @@ watch(
     transform 0.2s,
     box-shadow 0.2s;
 }
-
 .btn-submit-order:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(99, 57, 31, 0.35);
 }
-
 .btn-submit-order:disabled {
   background: #cbd5e1;
   cursor: not-allowed;
   box-shadow: none;
 }
-
 .loader-spinner {
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top: 3px solid #fff;
@@ -1766,7 +1896,6 @@ watch(
   height: 20px;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -1776,7 +1905,6 @@ watch(
   }
 }
 
-/* ================== MODALS ================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1787,7 +1915,6 @@ watch(
   align-items: center;
   z-index: 9999;
 }
-
 .modal-dialog {
   background: #fff;
   border-radius: 20px;
@@ -1797,7 +1924,6 @@ watch(
   display: flex;
   flex-direction: column;
 }
-
 .modal-lg {
   max-width: 800px;
 }
@@ -1805,7 +1931,6 @@ watch(
   max-width: 400px;
   padding: 35px 30px;
 }
-
 .modal-header {
   padding: 20px 25px;
   border-bottom: 1px solid #f1f5f9;
@@ -1813,14 +1938,12 @@ watch(
   justify-content: space-between;
   align-items: center;
 }
-
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 800;
   color: #1e293b;
 }
-
 .btn-close-modal {
   background: #f1f5f9;
   border: none;
@@ -1835,24 +1958,20 @@ watch(
   justify-content: center;
   transition: 0.2s;
 }
-
 .btn-close-modal:hover {
   background: #fee2e2;
   color: #ef4444;
 }
-
 .modal-body {
   padding: 25px;
   overflow-y: auto;
 }
 
-/* Table in Modal */
 .modern-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
-
 .modern-table th {
   background: #f8fafc;
   padding: 14px 16px;
@@ -1862,13 +1981,11 @@ watch(
   text-align: left;
   border-bottom: 2px solid #e2e8f0;
 }
-
 .modern-table th:last-child,
 .modern-table td:last-child {
   text-align: center;
   vertical-align: middle;
 }
-
 .modern-table td {
   padding: 16px;
   border-bottom: 1px solid #f1f5f9;
@@ -1876,16 +1993,13 @@ watch(
   font-size: 14px;
   color: #334155;
 }
-
 .modern-table tr:hover td {
   background: #fdfdfd;
 }
-
 .address-cell {
   max-width: 250px;
   line-height: 1.6;
 }
-
 .default-badge {
   background: #dcfce7;
   color: #059669;
@@ -1895,7 +2009,6 @@ watch(
   font-weight: 700;
   margin-right: 8px;
 }
-
 .btn-select {
   background: #f1f5f9;
   color: #1e293b;
@@ -1906,13 +2019,11 @@ watch(
   cursor: pointer;
   transition: 0.2s;
 }
-
 .btn-select:hover {
   background: #63391f;
   color: white;
 }
 
-/* Confirm Modal Specifics */
 .confirm-icon {
   font-size: 48px;
   width: 80px;
@@ -1924,25 +2035,21 @@ watch(
   justify-content: center;
   margin: 0 auto 20px;
 }
-
 .confirm-title {
   font-size: 22px;
   font-weight: 800;
   color: #1e293b;
   margin-bottom: 10px;
 }
-
 .confirm-desc {
   color: #64748b;
   margin-bottom: 30px;
   line-height: 1.6;
 }
-
 .confirm-actions {
   display: flex;
   gap: 15px;
 }
-
 .confirm-actions button {
   flex: 1;
   padding: 14px;
@@ -1952,27 +2059,22 @@ watch(
   border: none;
   transition: 0.2s;
 }
-
 .btn-cancel {
   background: #f1f5f9;
   color: #475569;
 }
-
 .btn-cancel:hover {
   background: #e2e8f0;
   color: #1e293b;
 }
-
 .btn-confirm {
   background: #63391f;
   color: white;
 }
-
 .btn-confirm:hover {
   background: #4e2c17;
 }
 
-/* ================== TOASTS ================== */
 .toast-container {
   position: fixed;
   top: 30px;
@@ -1983,7 +2085,6 @@ watch(
   gap: 10px;
   pointer-events: none;
 }
-
 .modern-toast {
   display: flex;
   align-items: center;
@@ -1995,39 +2096,29 @@ watch(
   min-width: 300px;
   border-left: 5px solid #cbd5e1;
 }
-
-.toast-success {
-  border-left-color: #10b981;
-}
-.toast-success .toast-icon {
-  background: #10b981;
-  color: white;
+.toast-warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
 .toast-error {
-  border-left-color: #ef4444;
-}
-.toast-error .toast-icon {
-  background: #ef4444;
-  color: white;
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
-.toast-warning {
-  border-left-color: #f59e0b;
-}
-.toast-warning .toast-icon {
-  background: #f59e0b;
-  color: white;
+.toast-success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
 .toast-info {
-  border-left-color: #3b82f6;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-left: 4px solid #3b82f6;
 }
-.toast-info .toast-icon {
-  background: #3b82f6;
-  color: white;
-}
-
 .toast-icon {
   width: 28px;
   height: 28px;
@@ -2038,14 +2129,12 @@ watch(
   font-weight: bold;
   font-size: 14px;
 }
-
 .toast-message {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
 }
 
-/* ANIMATIONS */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -2054,7 +2143,6 @@ watch(
 .fade-leave-to {
   opacity: 0;
 }
-
 .zoom-enter-active,
 .zoom-leave-active {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -2064,7 +2152,6 @@ watch(
   opacity: 0;
   transform: scale(0.9);
 }
-
 .slide-fade-enter-active {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2077,7 +2164,6 @@ watch(
   opacity: 0;
 }
 
-/* ================== SELECT2 CUSTOM STYLES ================== */
 :deep(.select2-container) {
   width: 100% !important;
 }
@@ -2128,29 +2214,24 @@ watch(
   color: white !important;
 }
 
-/* ================== SHOPEE VOUCHER STYLE ================== */
 .modal-small-custom {
   max-width: 500px !important;
   width: 95%;
   border-radius: 16px;
 }
-
 .shopee-modal-body {
   background-color: #f8fafc;
   padding: 20px;
 }
-
 .custom-scroll {
   max-height: 450px;
   overflow-y: auto;
 }
-
 .voucher-list {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
-
 .shopee-voucher-card {
   display: flex;
   background: #fff;
@@ -2163,17 +2244,14 @@ watch(
   transition: all 0.2s;
   height: 110px;
 }
-
 .shopee-voucher-card:hover {
   border-color: #d32f2f;
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.1);
 }
-
 .shopee-voucher-card.v-active {
   border-color: #d32f2f;
   background-color: #fef2f2;
 }
-
 .shopee-v-left {
   width: 100px;
   background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -2186,7 +2264,6 @@ watch(
   flex-shrink: 0;
   position: relative;
 }
-
 .shopee-v-left::before,
 .shopee-v-left::after {
   content: "";
@@ -2203,7 +2280,6 @@ watch(
 .shopee-v-left::after {
   bottom: -8px;
 }
-
 .brand-text {
   font-family: "Montserrat", sans-serif;
   font-weight: 900;
@@ -2211,7 +2287,6 @@ watch(
   line-height: 1.2;
   letter-spacing: 1px;
 }
-
 .shopee-v-right {
   flex-grow: 1;
   padding: 15px;
@@ -2219,25 +2294,21 @@ watch(
   justify-content: space-between;
   align-items: center;
 }
-
 .v-info-wrap {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .v-title {
   font-size: 15px;
   font-weight: 800;
   color: #1e293b;
 }
-
 .v-condition {
   font-size: 13px;
   font-weight: 600;
   color: #64748b;
 }
-
 .v-max-discount {
   display: inline-block;
   color: #d32f2f;
@@ -2248,27 +2319,11 @@ watch(
   font-size: 11px;
   font-weight: 700;
 }
-
 .v-expiry {
   font-size: 11px;
   color: #94a3b8;
   font-weight: 600;
 }
-
-.v-best-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: #d32f2f;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-bottom-left-radius: 8px;
-  z-index: 2;
-  text-transform: uppercase;
-}
-
 .shopee-radio {
   width: 24px;
   height: 24px;
@@ -2277,12 +2332,10 @@ watch(
   position: relative;
   transition: 0.2s;
 }
-
 .shopee-radio.checked {
   border-color: #d32f2f;
   background-color: #d32f2f;
 }
-
 .shopee-radio.checked::after {
   content: "";
   position: absolute;
@@ -2294,40 +2347,25 @@ watch(
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
-.modern-table th:last-child,
-.modern-table td:last-child {
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* Nhãn Tốt nhất ở cột bên phải (Tóm tắt đơn hàng) */
 .best-badge-summary {
-  color: #dc2626; 
-  background-color: #fef2f2; 
+  color: #dc2626;
+  background-color: #fef2f2;
   border: 1px solid #fecaca;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  margin-left: auto; 
-  margin-right: 10px; 
+  margin-left: auto;
+  margin-right: 10px;
   white-space: nowrap;
   animation: pulse 2s infinite;
 }
-
-.selected-voucher-tag {
-  display: flex;
-  align-items: center;
-}
-/* Style cho Voucher bị mờ (Chưa đủ điều kiện) */
 .shopee-voucher-card.v-disabled {
   opacity: 0.5;
   filter: grayscale(100%);
   cursor: not-allowed;
-  pointer-events: none; 
+  pointer-events: none;
 }
-
-/* Nhãn báo chưa đủ điều kiện */
 .not-eligible-alert {
   display: inline-block;
   color: #991b1b;
@@ -2340,21 +2378,249 @@ watch(
   margin-top: 4px;
   margin-bottom: 2px;
 }
-/* Khung viền đứt màu cam nét mảnh */
+
+.qr-modal .modal-body {
+  overflow-y: hidden !important;
+  padding-bottom: 0 !important;
+}
+.qr-wrapper {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  display: inline-block;
+  border: 1px dashed #cbd5e1;
+}
+.w-100 {
+  width: 100%;
+}
+
+.gateway-modal {
+  max-width: 500px;
+}
+.gateway-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.gateway-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gateway-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.gateway-card.active {
+  border-color: #63391f;
+  background-color: #fdfaf8;
+}
+.gateway-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.gateway-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vnpay-bg {
+  background: #fff;
+  border: 1px solid #eee;
+}
+.momo-bg {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+}
+.zalo-bg {
+  background: #fff;
+}
+.qr-bg {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+}
+
+.gateway-name {
+  font-weight: 700;
+  color: #334155;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.gateway-card .radio-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.gateway-card.active .radio-indicator {
+  border-color: #63391f;
+  background-color: #63391f;
+}
+
+.gateway-card.active .radio-indicator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+.qr-modal {
+  max-width: 420px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  padding: 10px 10px 20px !important;
+  border-radius: 0;
+  position: relative;
+}
+.vietqr-logo-top {
+  height: 40px;
+  width: 100px;
+  filter: brightness(0) invert(1);
+}
+.qr-content {
+  background: #fff;
+  margin-top: -30px;
+  border-radius: 24px 24px 0 0;
+  position: relative;
+  z-index: 2;
+  padding: 20px !important;
+  height: 360px;
+}
+
+.qr-wrapper {
+  background: white;
+  padding: 10px;
+  border-radius: 16px;
+  display: inline-block;
+  border: 2px solid #e2e8f0;
+  width: 220px;
+  height: 220px;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 15px !important;
+}
+.qr-code-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(34, 197, 94, 0.8);
+  box-shadow:
+    0 0 10px rgba(34, 197, 94, 0.6),
+    0 0 20px rgba(34, 197, 94, 0.4);
+  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  z-index: 10;
+  border-radius: 50%;
+}
+@keyframes scan {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+.order-bill {
+  font-size: 14px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  margin-bottom: 15px !important;
+}
+.border-bottom {
+  border-bottom: 1px solid #e2e8f0;
+}
+.blinking-text {
+  animation: blinker 1.5s linear infinite;
+}
+@keyframes blinker {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.btn-cancel-qr {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel-qr:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #94a3b8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+.btn-cancel-qr:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .ghn-inline-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #fffaf5; 
-  padding: 3px 8px; 
+  background: #fffaf5;
+  padding: 3px 8px;
   border-radius: 4px;
-  border: 1px dashed #f97316; 
-  font-size: 12px; 
-  color: #f97316; 
+  border: 1px dashed #f97316;
+  font-size: 12px;
+  color: #f97316;
   font-weight: 600;
 }
 
-/* Logo ô vuông màu cam chữ trắng (Giống Ảnh 2) */
 .ghn-square-logo {
   background-color: #f97316;
   color: #ffffff;
