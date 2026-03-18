@@ -522,30 +522,25 @@
               </div>
 
               <div class="attribute-group" v-if="availableColors.length > 0">
-                <label>Màu sắc:</label>
-                <div class="btn-group color-group">
-                  <button
-                    v-for="color in availableColors"
-                    :key="color"
+                <label>Màu sắc: <span class="selected-val">{{ selectedColor || 'Chưa chọn' }}</span></label>
+                <div class="color-options">
+                  <button v-for="color in availableColors" :key="color" 
+                    class="color-circle" 
                     :class="{ active: selectedColor === color }"
+                    :style="{ backgroundColor: getColorCode(color) }"
                     @click="selectedColor = color"
-                  >
-                    {{ color }}
-                  </button>
+                    :title="color"
+                  ></button>
                 </div>
               </div>
 
               <div class="attribute-group" v-if="availableSizes.length > 0">
-                <label>Kích cỡ:</label>
-                <div class="btn-group size-group">
-                  <button
-                    v-for="size in availableSizes"
-                    :key="size"
+                <label>Kích cỡ: <span class="selected-val">{{ selectedSize || 'Chưa chọn' }}</span></label>
+                <div class="size-options">
+                  <button v-for="size in availableSizes" :key="size" 
+                    class="size-btn"
                     :class="{ active: selectedSize === size }"
-                    @click="selectedSize = size"
-                  >
-                    {{ size }}
-                  </button>
+                    @click="selectedSize = size">{{ size }}</button>
                 </div>
               </div>
 
@@ -692,6 +687,28 @@ const formatPrice = (v) => {
 const getDiscountedPrice = (price, discountPercent) => {
   if (!discountPercent || discountPercent <= 0) return price;
   return price - (price * discountPercent) / 100;
+};
+
+// 👉 HÀM LẤY MÃ MÀU CHUẨN ĐỒNG BỘ CÁC TRANG
+const getColorCode = (name) => {
+  if (!name) return '#ddd';
+  const n = name.toLowerCase().trim();
+  const colorMap = {
+    'đen': '#000000',
+    'trắng': '#ffffff',
+    'đỏ': '#dc2626',
+    'xanh dương': '#2563eb',
+    'xanh lá': '#10b981',
+    'vàng': '#eab308',
+    'tím': '#9333ea',
+    'hồng': '#db2777',
+    'cam': '#f97316',
+    'xám': '#64748b',
+    'nâu': '#78350f',
+    'be': '#f5f5dc',
+    'navy': '#1e3a8a'
+  };
+  return colorMap[n] || '#cccccc'; 
 };
 
 const handleImageError = (event) => {
@@ -897,7 +914,7 @@ const confirmAddToCart = () => {
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-      mauSac: { tenMau: selectedColor.value, rgb: "#63391F" },
+      mauSac: { tenMau: selectedColor.value, rgb: getColorCode(selectedColor.value) },
       kichCo: selectedSize.value,
       giaBan: giaSauGiam, // Lưu giá ĐÃ GIẢM vào giỏ hàng
       soLuong: quantity.value,
@@ -937,6 +954,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
 });
 </script>
+
 <style scoped>
 /* Import Phông chữ cao cấp */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
@@ -1737,11 +1755,22 @@ onBeforeUnmount(() => {
 .attribute-group label {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   font-weight: 700;
   margin-bottom: 12px;
   color: #334155;
   font-size: 15px;
+}
+
+.selected-val {
+  font-weight: 400;
+  color: #333;
+  margin-left: 8px;
+  text-transform: capitalize;
+}
+
+.qty-label {
+  justify-content: space-between !important;
 }
 
 .stock-badge {
@@ -1753,30 +1782,66 @@ onBeforeUnmount(() => {
   border-radius: 12px;
 }
 
-.btn-group {
+/* CSS MÀU SẮC (VÒNG TRÒN) */
+.color-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.color-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  position: relative;
+}
+
+.color-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.color-circle.active {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d32f2f;
+}
+
+/* CSS KÍCH CỠ (Ô VUÔNG) */
+.size-options {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
-.btn-group button {
-  padding: 10px 20px;
-  border: 2px solid #e2e8f0;
+.size-btn {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 12px;
   background: #fff;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 14px;
   font-weight: 600;
   color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }
 
-.btn-group button:hover {
+.size-btn:hover {
   border-color: #cbd5e1;
   color: #334155;
 }
 
-.btn-group button.active {
+.size-btn.active {
   background: #6b3f1e;
   color: #fff;
   border-color: #6b3f1e;
