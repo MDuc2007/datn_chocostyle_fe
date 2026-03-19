@@ -302,9 +302,8 @@
                     >Phí vận chuyển:</span
                   >
 
-                  <div class="ghn-inline-badge" v-if="shipFee > 0">
-                    <div class="ghn-square-logo">GHN</div>
-                    <span>Giao Hàng Nhanh</span>
+                  <div>
+                    <img :src="ghnLogo" class="ghn-icon" />
                   </div>
                 </div>
 
@@ -720,6 +719,7 @@ import Footer from "../../layout/footer/Footer.vue";
 import { ref, onMounted, computed, reactive, nextTick, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
+import ghnLogo from "../../../src/assets/logo/ghn.png";
 
 const GHN_TOKEN = "31476b34-15db-11f1-9cf9-9efb715b9957";
 const GHN_SHOP_ID = 6296816;
@@ -2630,5 +2630,11 @@ watch(
   border-radius: 2px;
   letter-spacing: 0.5px;
   line-height: 1;
+}
+.ghn-icon {
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+  margin-top: 10px;
 }
 </style>

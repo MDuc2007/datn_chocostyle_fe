@@ -150,8 +150,8 @@
 
       <div class="dashboard-info-grid no-print">
         <div class="detail-card">
-          <div class="card-header-clean" style="justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="card-header-clean" style="justify-content: space-between">
+            <div style="display: flex; align-items: center; gap: 10px">
               <div class="header-icon">
                 <img
                   src="/src/assets/icon/user.svg"
@@ -161,9 +161,9 @@
               </div>
               <h3>Thông tin khách hàng</h3>
             </div>
-            <button 
-              v-if="invoice.trangThai === 0" 
-              class="btn-text-edit" 
+            <button
+              v-if="invoice.trangThai === 0"
+              class="btn-text-edit"
               @click="openAddressModal"
             >
               Sửa
@@ -354,6 +354,7 @@
             <thead>
               <tr>
                 <th style="width: 60px">STT</th>
+                <th style="width: 120px">Mã CTSP</th>
                 <th style="text-align: left !important; padding-left: 16px">
                   Sản phẩm
                 </th>
@@ -366,6 +367,9 @@
             <tbody>
               <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
                 <td class="index-cell">{{ index + 1 }}</td>
+                <td style="font-weight: bold; color: #475569">
+                  {{ p.maSpct }}
+                </td>
                 <td style="text-align: left !important; padding-left: 16px">
                   <div class="product-info-cell">
                     <img
@@ -380,30 +384,38 @@
                 </td>
                 <td>
                   <div class="variant-tags">
-                    <span class="variant-badge color-badge">{{ p.mauSac }}</span>
+                    <span class="variant-badge color-badge">{{
+                      p.mauSac
+                    }}</span>
                     <span class="variant-badge size-badge">{{ p.kichCo }}</span>
                   </div>
                 </td>
                 <td class="light-text">{{ formatCurrency(p.donGia) }}</td>
-                
+
                 <td>
                   <div class="quantity-control" v-if="invoice.trangThai === 0">
-                    <button 
-                      class="qty-btn" 
-                      :disabled="p.soLuong <= 1" 
+                    <button
+                      class="qty-btn"
+                      :disabled="p.soLuong <= 1"
                       @click="changeQuantity(p, p.soLuong - 1)"
-                    >-</button>
+                    >
+                      -
+                    </button>
                     <span class="qty-val">{{ p.soLuong }}</span>
-                    <button 
-                      class="qty-btn" 
+                    <button
+                      class="qty-btn"
                       @click="changeQuantity(p, p.soLuong + 1)"
-                    >+</button>
+                    >
+                      +
+                    </button>
                   </div>
                   <div v-else class="quantity-text">x{{ p.soLuong }}</div>
                 </td>
 
                 <td class="text-right-force">
-                  <span class="total-price-text">{{ formatCurrency(p.thanhTien) }}</span>
+                  <span class="total-price-text">{{
+                    formatCurrency(p.thanhTien)
+                  }}</span>
                 </td>
               </tr>
             </tbody>
@@ -412,26 +424,50 @@
       </div>
     </div>
 
-    <div v-if="showAddressModal" class="modal-overlay" @click.self="showAddressModal = false">
+    <div
+      v-if="showAddressModal"
+      class="modal-overlay"
+      @click.self="showAddressModal = false"
+    >
       <div class="modal-card">
         <h3 class="modal-title-modern">Sửa thông tin nhận hàng</h3>
-        <p class="modal-message-modern text-left">Chỉ có thể thay đổi khi đơn hàng chờ xác nhận.</p>
+        <p class="modal-message-modern text-left">
+          Chỉ có thể thay đổi khi đơn hàng chờ xác nhận.
+        </p>
 
         <div class="modal-input-wrapper">
           <label class="input-label">Tên khách hàng</label>
-          <input v-model="editForm.ten" type="text" class="modern-input" placeholder="Nhập tên người nhận"/>
+          <input
+            v-model="editForm.ten"
+            type="text"
+            class="modern-input"
+            placeholder="Nhập tên người nhận"
+          />
         </div>
         <div class="modal-input-wrapper">
           <label class="input-label">Số điện thoại</label>
-          <input v-model="editForm.sdt" type="text" class="modern-input" placeholder="Nhập số điện thoại"/>
+          <input
+            v-model="editForm.sdt"
+            type="text"
+            class="modern-input"
+            placeholder="Nhập số điện thoại"
+          />
         </div>
         <div class="modal-input-wrapper">
           <label class="input-label">Địa chỉ chi tiết</label>
-          <textarea v-model="editForm.diaChi" rows="3" class="modern-textarea" placeholder="Số nhà, đường, xã/phường, quận/huyện..."></textarea>
+          <textarea
+            v-model="editForm.diaChi"
+            rows="3"
+            class="modern-textarea"
+            placeholder="Số nhà, đường, xã/phường, quận/huyện..."
+          ></textarea>
         </div>
 
-        <div class="modal-footer-modern" style="margin-top: 20px;">
-          <button class="btn-modern btn-secondary" @click="showAddressModal = false">
+        <div class="modal-footer-modern" style="margin-top: 20px">
+          <button
+            class="btn-modern btn-secondary"
+            @click="showAddressModal = false"
+          >
             Hủy
           </button>
           <button class="btn-modern btn-primary-modern" @click="saveAddress">
@@ -693,7 +729,7 @@ const showAddressModal = ref(false);
 const editForm = reactive({
   ten: "",
   sdt: "",
-  diaChi: ""
+  diaChi: "",
 });
 
 const orderedHistory = computed(() => {
@@ -887,15 +923,19 @@ const saveAddress = async () => {
     return;
   }
   try {
-    await axios.put(`http://localhost:8080/api/hoa-don/${invoice.value?.id}/thong-tin-nhan-hang`, null, {
-      params: {
-        ten: editForm.ten,
-        sdt: editForm.sdt,
-        diaChi: editForm.diaChi
-      }
-    });
-    
-    await fetchDetail(); 
+    await axios.put(
+      `http://localhost:8080/api/hoa-don/${invoice.value?.id}/thong-tin-nhan-hang`,
+      null,
+      {
+        params: {
+          ten: editForm.ten,
+          sdt: editForm.sdt,
+          diaChi: editForm.diaChi,
+        },
+      },
+    );
+
+    await fetchDetail();
     showAddressModal.value = false;
     showToast("Cập nhật thông tin nhận hàng thành công!", "success");
   } catch (error: any) {
@@ -907,19 +947,27 @@ const saveAddress = async () => {
 const changeQuantity = async (product: any, newQuantity: number) => {
   if (newQuantity < 1) return;
   if (!invoice.value || !product.idSpct) return;
-  
+
   try {
-    await axios.put(`http://localhost:8080/api/hoa-don/${invoice.value.id}/so-luong-san-pham`, null, {
-      params: {
-        idSpct: product.idSpct,
-        soLuongMoi: newQuantity
-      }
-    });
-    
+    await axios.put(
+      `http://localhost:8080/api/hoa-don/${invoice.value.id}/so-luong-san-pham`,
+      null,
+      {
+        params: {
+          idSpct: product.idSpct,
+          soLuongMoi: newQuantity,
+        },
+      },
+    );
+
     await fetchDetail();
     showToast("Đã cập nhật số lượng!", "success");
   } catch (error: any) {
-    showToast(error.response?.data || "Lỗi cập nhật số lượng. Có thể do hết hàng hoặc lỗi mạng.", "error");
+    showToast(
+      error.response?.data ||
+        "Lỗi cập nhật số lượng. Có thể do hết hàng hoặc lỗi mạng.",
+      "error",
+    );
   }
 };
 
