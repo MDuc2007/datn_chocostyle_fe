@@ -102,16 +102,14 @@
             </div>
 
             <div class="form-group">
-              <label>Chuyển khoản / Quẹt thẻ</label>
+              <label>Chuyển khoản / Quẹt thẻ (Hệ thống tự tính)</label>
               <div class="input-wrapper">
                 <input 
                   type="text" 
                   :value="formatDisplayValue(transferAmount)"
-                  @input="handleMoneyInput($event, 'transferAmount')"
                   class="custom-input" 
                   placeholder="0" 
-                  inputmode="numeric"
-                  :disabled="isViewOnly"
+                  disabled 
                 />
                 <span class="currency">VND</span>
               </div>
@@ -276,6 +274,7 @@ const executeModalAction = async () => {
 const isViewOnly = computed(() => {
   if (!caHomNay.value) return true; // Không có ca hôm nay
   if (!chamCong.value) return true; // Có ca nhưng chưa bấm Mở ca
+  if (caHomNay.value.trangThai === 1) return true;
   if (chamCong.value.gioCheckOut) return true; // Đã kết thúc ca rồi
   return false;
 })
@@ -389,10 +388,17 @@ onMounted(async () => {
     }
 
     // 2. Gọi API lấy trạng thái chấm công
+    // 2. Gọi API lấy trạng thái chấm công
     try {
       const resChamCong = await axios.get(`http://localhost:8080/api/cham-cong/hom-nay/${idNv}`, { headers })
       if (resChamCong.data && resChamCong.data !== "") {
           chamCong.value = resChamCong.data
+          
+          // 👉 THÊM ĐOẠN NÀY: TỰ ĐỘNG TÍNH TIỀN CHUYỂN KHOẢN CUỐI CA
+          const dauCaCk = chamCong.value.tienChuyenKhoanDauCa || 0;
+          const doanhThuCk = chamCong.value.doanhThuCk || 0;
+          transferAmount.value = dauCaCk + doanhThuCk;
+
       } else {
           chamCong.value = null
       }

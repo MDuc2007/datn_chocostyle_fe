@@ -271,17 +271,18 @@
 
               <div class="form-group">
                 <label>Xác nhận Tiền tài khoản đầu ca</label>
+                <div class="form-group">
+                <label>Tiền tài khoản đầu ca (Tự động chuyển từ ca trước)</label>
                 <div class="input-wrapper">
                   <input
                     type="text"
-                    :value="formatDisplayValue(form.tienTaiKhoan)"
-                    @input="handleMoneyInput($event, 'tienTaiKhoan')"
-                    class="form-control"
-                    placeholder="0"
-                    inputmode="numeric"
+                    :value="formatDisplayValue(soDuCaTruoc.tienCk)"
+                    class="form-control disabled-input"
+                    disabled
                   />
                   <span class="currency-unit">VND</span>
                 </div>
+              </div>
               </div>
             </div>
 
@@ -514,7 +515,7 @@ const checkIn = async () => {
       `http://localhost:8080/api/cham-cong/check-in/${props.idNv}`,
       {
         tienMatDauCa: form.value.tienMat,
-        tienTaiKhoanDauCa: form.value.tienTaiKhoan,
+        tienTaiKhoanDauCa: soDuCaTruoc.value.tienCk || 0,
       },
       { headers },
     );
