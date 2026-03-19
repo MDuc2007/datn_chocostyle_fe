@@ -109,7 +109,6 @@ const routes: Array<RouteRecordRaw> = [
     name: "LoginStaff",
     component: () => import("../views/AdminLogin.vue"),
   },
-  
 
   {
     path: "/register",
@@ -164,10 +163,10 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/admin/dashboard/Dashboard.vue"),
       },
       {
-  path: "profile",
-  name: "AdminProfile",
-  component: () => import("../pages/admin/Profile.vue"),
-},
+        path: "profile",
+        name: "AdminProfile",
+        component: () => import("../pages/admin/Profile.vue"),
+      },
       {
         path: "statistic",
         name: "Statistic",
@@ -376,7 +375,7 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         // 👉 ĐÃ SỬA: Đổi từ "invoice/:id" thành "invoice/detail/:id" cho khớp với code Vue
-        path: "invoice/detail/:id", 
+        path: "invoice/detail/:id",
         name: "StaffInvoiceDetail",
         component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
@@ -450,11 +449,11 @@ router.beforeEach((to, from, next) => {
     "/ao-khoac", // <--- Thêm trang Áo khoác
     "/tra-cuu", // <--- Thêm trang Tra cứu đơn hàng
     "/payment-result", // <--- Thêm trang Kết quả thanh toán
-    "/my-orders"
+    "/my-orders",
   ];
 
   const isPublic =
-    publicPages.includes(to.path) || 
+    publicPages.includes(to.path) ||
     to.path.startsWith("/home/product/") ||
     to.path.startsWith("/order-detail/");
 

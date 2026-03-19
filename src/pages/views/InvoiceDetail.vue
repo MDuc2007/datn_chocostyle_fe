@@ -345,7 +345,7 @@
                   <thead>
                     <tr>
                       <th style="width: 60px">STT</th>
-                      
+
                       <th style="width: 120px">Mã CTSP</th>
 
                       <th
@@ -362,8 +362,10 @@
                   <tbody>
                     <tr v-for="(p, index) in invoice.sanPhamList" :key="index">
                       <td class="index-cell">{{ index + 1 }}</td>
-                      
-                      <td style="font-weight: bold; color: #475569;">{{ p.idSpct }}</td>
+
+                      <td style="font-weight: bold; color: #475569">
+                        {{ p.maSpct }}
+                      </td>
 
                       <td
                         style="text-align: left !important; padding-left: 16px"
@@ -400,20 +402,38 @@
                           "
                         >
                           <div
-                            style="display: flex; align-items: center; gap: 5px"
+                            v-if="getPriceChangeInfo(p.idSpct, p.donGia)"
+                            class="price-changed-wrapper"
                           >
-                            <span>{{ formatCurrency(p.donGia) }}</span>
+                            <div class="current-price-red">
+                              {{ formatCurrency(p.donGia) }}
+                            </div>
+
+                            <div class="price-warning-box">
+                              <div class="box-title">Giá gốc đã thay đổi:</div>
+                              <div class="box-compare">
+                                <span class="old-price-strike">{{
+                                  formatCurrency(
+                                    getPriceChangeInfo(p.idSpct, p.donGia)
+                                      .oldPrice,
+                                  )
+                                }}</span>
+                                →
+                                <span>{{ formatCurrency(p.donGia) }}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div
-                            v-if="getPriceChangeHistory(p.idSpct)"
-                            class="price-warning-badge"
-                          >
-                            ⚠️ {{ getPriceChangeHistory(p.idSpct) }}
+
+                          <div v-else>
+                            <span>{{ formatCurrency(p.donGia) }}</span>
                           </div>
                         </div>
                       </td>
                       <td class="quantity-text">
-                        <div v-if="canEditProducts && isLoggedIn" class="qty-control-wrapper">
+                        <div
+                          v-if="canEditProducts && isLoggedIn"
+                          class="qty-control-wrapper"
+                        >
                           <button
                             class="btn-qty"
                             @click="updateProductQuantity(p, p.soLuong - 1)"
@@ -696,7 +716,7 @@ interface InvoiceProduct {
   soLuong: number;
   donGia: number;
   thanhTien: number;
-  hinhAnh?: string; 
+  hinhAnh?: string;
 }
 interface InvoiceHistory {
   trangThai: number;
@@ -747,7 +767,7 @@ const lyDoHuy = computed(() => {
   const logHuy = invoice.value.lichSuList?.find((log) => log.trangThai === 5);
 
   if (logHuy && logHuy.ghiChu && logHuy.ghiChu.trim() !== "") {
-    return logHuy.ghiChu; 
+    return logHuy.ghiChu;
   }
 
   return "Không có lý do cụ thể";
@@ -989,7 +1009,12 @@ const updateProductQuantity = async (item: InvoiceProduct, newQty: number) => {
       `http://localhost:8080/api/hoa-don/${invoice.value?.id}/so-luong-san-pham`,
       null,
       {
-        params: { idSpct: item.idSpct, soLuongMoi: newQty },
+        // THÊM donGia VÀO ĐÂY ĐỂ BACKEND NHẬN DIỆN DÒNG
+        params: {
+          idSpct: item.idSpct,
+          soLuongMoi: newQty,
+          donGia: item.donGia,
+        },
         headers: getAuthHeaders(),
       },
     );
@@ -998,20 +1023,27 @@ const updateProductQuantity = async (item: InvoiceProduct, newQty: number) => {
     showToast(e.response?.data || "Lỗi khi cập nhật số lượng!", "error");
   }
 };
-
 // ===============================================
 // LẤY CẢNH BÁO GIÁ ĐÃ BỊ ADMIN THAY ĐỔI
 // ===============================================
-const getPriceChangeHistory = (idSpct: number) => {
+const getPriceChangeInfo = (idSpct, currentPrice) => {
   if (!invoice.value?.lichSuList) return null;
-  const log = invoice.value.lichSuList.find(
-    (l) =>
-      l.hanhDong === "Thay đổi giá sản phẩm" &&
-      l.ghiChu.includes(`[PRICE_CHANGE] ID ${idSpct}`),
+  // Tìm các lịch sử liên quan đến thay đổi giá của idSpct này
+  const logs = [...invoice.value.lichSuList].filter((l) =>
+    l.ghiChu.includes(`[PRICE_CHANGE] ID ${idSpct}:`),
   );
-  if (log) {
-    const match = log.ghiChu.split(": ")[1];
-    return `Giá đổi ${match}`;
+
+  if (logs.length > 0) {
+    const match = logs[0].ghiChu.match(/Từ ([\d.]+) thành ([\d.]+)/);
+    if (match) {
+      const oldPrice = parseFloat(match[1]);
+      const newPrice = parseFloat(match[2]);
+
+      // SỬA Ở ĐÂY: Chỉ trả về info nếu dòng sản phẩm này đang mang mức GIÁ CŨ (giá gốc)
+      if (currentPrice === oldPrice) {
+        return { oldPrice, newPrice };
+      }
+    }
   }
   return null;
 };
@@ -1369,26 +1401,43 @@ const isChuyenKhoan = computed(() => {
 // ===============================================
 const canEditProducts = computed(() => {
   if (!invoice.value) return false;
-  return invoice.value.trangThai === 0 && !isChuyenKhoan.value;
-});
 
+  // Lấy tên phương thức thanh toán
+  const paymentMethod = getPaymentMethodName().toLowerCase();
+
+  // Kiểm tra xem có phải là tiền mặt hoặc COD không
+  const isCashOrCOD =
+    invoice.value.loaiDon === 1 ||
+    paymentMethod.includes("khi nhận hàng");
+
+  // Chỉ cho phép sửa nếu là trạng thái Chờ xác nhận (0) VÀ là Tiền mặt/COD
+  return invoice.value.trangThai === 0 && isCashOrCOD;
+});
 // ===============================================
 // ĐIỀU KIỆN SỬA ĐỊA CHỈ: Chờ xác nhận (Cả CK và Tiền mặt đều sửa được)
 // ===============================================
+// Tìm đến hàm canEditCustomerInfo và cập nhật lại:
 const canEditCustomerInfo = computed(() => {
   if (!invoice.value) return false;
-  return invoice.value.trangThai === 0;
+
+  const paymentMethod = getPaymentMethodName().toLowerCase();
+  const isCashOrCOD =
+    invoice.value.loaiDon === 1 ||
+    paymentMethod.includes("khi nhận hàng");
+
+  // Chỉ cho phép sửa địa chỉ ở trạng thái 0 và phải là Tiền mặt/COD
+  return invoice.value.trangThai === 0 && isCashOrCOD;
 });
 
 onMounted(() => {
-  // KIỂM TRA ĐĂNG NHẬP ĐỂ HIỆN/ẨN NÚT HỦY ĐƠN & NÚT SỬA 
+  // KIỂM TRA ĐĂNG NHẬP ĐỂ HIỆN/ẨN NÚT HỦY ĐƠN & NÚT SỬA
   const token = localStorage.getItem("token");
   if (token) {
     isLoggedIn.value = true;
   } else {
     isLoggedIn.value = false;
   }
-  
+
   fetchDetail();
 });
 </script>
@@ -2517,5 +2566,44 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+/* Giao diện thay đổi giá giống y hệt hình ảnh */
+.price-changed-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.current-price-red {
+  color: red;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.price-warning-box {
+  background: #fff8eb; /* Màu nền be nhạt */
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.price-warning-box .box-title {
+  color: #d97706; /* Màu cam chữ */
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.price-warning-box .box-compare {
+  color: #d97706; /* Màu cam chữ */
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.old-price-strike {
+  text-decoration: none; /* Trong hình của bạn gạch dưới hoặc gạch ngang, tôi set gạch dưới cho giống hình, có thể đổi thành line-through */
+  opacity: 0.9;
 }
 </style>

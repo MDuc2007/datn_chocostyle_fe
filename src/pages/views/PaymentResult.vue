@@ -10,19 +10,23 @@
         </div>
 
         <h2 class="title">
-          {{ isSuccess ? "Thanh toán thành công!" : "Thanh toán thất bại!" }}
+          {{
+            isSuccess
+              ? "Thanh toán thành công!"
+              : "Thanh toán thất bại / Bị hủy!"
+          }}
         </h2>
 
-        <p class="message">
+        <p class="message" :class="{ 'text-danger': !isSuccess }">
           {{
             isSuccess
               ? "Cảm ơn bạn đã mua hàng. Đơn hàng đã được xác nhận và đang trong quá trình xử lý."
-              : "Giao dịch bị hủy hoặc xảy ra lỗi trong quá trình thanh toán. Vui lòng thử lại."
+              : "Giao dịch đã bị hủy hoặc xảy ra lỗi. Đơn hàng tạm thời của bạn đã được xóa khỏi hệ thống."
           }}
         </p>
 
         <div v-if="isLoading" class="loading-box">
-          <span class="loader"></span> Đang tải thông tin đơn hàng...
+          <span class="loader"></span> Đang tải thông tin...
         </div>
 
         <div v-else>
@@ -30,7 +34,7 @@
             <h3 class="box-title">Chi tiết giao dịch</h3>
             <div class="info-row">
               <span>Mã đơn hàng:</span>
-              <strong>{{ orderDetails.maHoaDon }}</strong>
+              <strong>{{ orderDetails.maHoaDon || orderId }}</strong>
             </div>
             <div class="info-row">
               <span>Người nhận:</span>
@@ -42,7 +46,9 @@
             </div>
             <div class="info-row">
               <span>Địa chỉ giao:</span>
-              <strong class="text-right">{{ orderDetails.diaChi }}</strong>
+              <strong class="text-right">{{
+                orderDetails.diaChi || orderDetails.diaChiGiaoHang
+              }}</strong>
             </div>
             <div
               class="info-row"
@@ -52,17 +58,20 @@
               "
             >
               <span>Phương thức:</span>
-              <strong>{{ orderDetails.thanhToanList[0].phuongThuc }}</strong>
+              <strong>{{
+                orderDetails.thanhToanList[0].phuongThuc ||
+                (vnpRef ? "VNPAY/MOMO" : "VIETQR")
+              }}</strong>
             </div>
             <div
               class="info-row"
               v-if="
                 vnpRef &&
-                vnpRef !== orderDetails.maHoaDon &&
+                vnpRef !== (orderDetails.maHoaDon || '') &&
                 !vnpRef.includes('COD')
               "
             >
-              <span>Mã tham chiếu (VNPAY):</span>
+              <span>Mã tham chiếu:</span>
               <strong>{{ vnpRef }}</strong>
             </div>
 
@@ -71,7 +80,11 @@
             <div class="info-row total-row">
               <span>Tổng thanh toán:</span>
               <strong class="highlight-price">{{
-                formatPrice(orderDetails.tongThanhToan)
+                formatPrice(
+                  orderDetails.tongTienThanhToan ||
+                    orderDetails.tongThanhToan ||
+                    amount,
+                )
               }}</strong>
             </div>
           </div>
@@ -93,7 +106,7 @@
           <button class="btn-primary" @click="goToHome">Về trang chủ</button>
 
           <button
-            v-if="orderId || vnpRef"
+            v-if="(orderId || vnpRef) && isSuccess"
             class="btn-outline"
             @click="goToDetail"
           >
@@ -110,7 +123,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios"; // Đã import thêm axios
+import axios from "axios";
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 
@@ -121,34 +134,67 @@ const isSuccess = ref(false);
 const vnpRef = ref("");
 const amount = ref(0);
 const orderId = ref(null);
-
-// State mới để lưu chi tiết order
 const orderDetails = ref(null);
 const isLoading = ref(true);
 
 onMounted(async () => {
   const params = route.query;
 
-  // Xác định trạng thái thành công
-  if (params.vnp_ResponseCode === "00" || params.status === "success") {
+  if (
+    params.vnp_ResponseCode === "00" ||
+    params.status === "success" ||
+    params.status === "1" ||
+    params.resultCode === "0"
+  ) {
     isSuccess.value = true;
   } else {
     isSuccess.value = false;
   }
 
-  vnpRef.value = params.vnp_TxnRef || params.orderRef || "";
+  if (!isSuccess.value) {
+    const pendingOrderId = localStorage.getItem("pending_order_id");
+    if (pendingOrderId) {
+      try {
+        await axios.delete(
+          `http://localhost:8080/api/hoa-don/${pendingOrderId}`,
+        );
+        console.log(
+          "Đã tự động xóa đơn hàng vì giao dịch bị hủy:",
+          pendingOrderId,
+        );
+      } catch (e) {
+        console.error("Lỗi xóa đơn hàng hủy:", e);
+      } finally {
+        localStorage.removeItem("pending_order_id");
+      }
+    }
+    isLoading.value = false;
+    return;
+  }
 
-  if (params.method === "COD") {
+  localStorage.removeItem("pending_order_id");
+  window.dispatchEvent(new Event("cartUpdated"));
+
+  vnpRef.value =
+    params.vnp_TxnRef ||
+    params.orderRef ||
+    params.orderId ||
+    params.apptransid ||
+    "";
+
+  if (
+    params.method === "COD" ||
+    params.method === "VIETQR" ||
+    params.method === "MOMO" ||
+    params.method === "ZALOPAY"
+  ) {
     amount.value = params.amount ? Number(params.amount) : 0;
   } else {
     amount.value = params.vnp_Amount ? Number(params.vnp_Amount) / 100 : 0;
   }
 
-  if (params.hoaDonId) {
-    orderId.value = params.hoaDonId;
-  }
+  if (params.hoaDonId) orderId.value = params.hoaDonId;
 
-  // Gọi API lấy thông tin chi tiết đơn hàng
   if (orderId.value) {
     try {
       const token = localStorage.getItem("token");
@@ -178,15 +224,12 @@ const goToDetail = () => {
   const isLoggedIn = !!localStorage.getItem("token");
 
   if (isLoggedIn) {
-    // NẾU ĐÃ ĐĂNG NHẬP -> Vào thẳng lịch sử đơn hàng
     if (orderId.value) {
       router.push({ name: "ClientOrderDetail", params: { id: orderId.value } });
     } else {
       router.push("/my-orders");
     }
   } else {
-    // NẾU KHÁCH LẺ -> Đẩy sang trang tra cứu đơn hàng
-    // Ưu tiên dùng mã đơn hàng lấy từ API, nếu không có thì dùng vnpRef
     const maDon = orderDetails.value?.maHoaDon || vnpRef.value;
     if (maDon) {
       router.push({ path: "/tra-cuu", query: { code: maDon } });
@@ -203,7 +246,6 @@ const goToDetail = () => {
   flex-direction: column;
   min-height: 100vh;
 }
-
 .content-wrapper {
   flex: 1;
   display: flex;
@@ -213,18 +255,16 @@ const goToDetail = () => {
   min-height: 500px;
   padding: 40px 20px;
 }
-
 .result-card {
   background: white;
   padding: 50px 40px;
   border-radius: 16px;
   text-align: center;
-  max-width: 520px; /* Nới rộng một chút cho bảng thông tin đẹp hơn */
+  max-width: 520px;
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   animation: slideUp 0.5s ease-out;
 }
-
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -247,12 +287,10 @@ const goToDetail = () => {
   color: white;
   margin: 0 auto 24px;
 }
-
 .success {
   background: #22c55e;
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
-
 .error {
   background: #ef4444;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
@@ -264,7 +302,6 @@ const goToDetail = () => {
   font-weight: 700;
   font-size: 24px;
 }
-
 .message {
   color: #64748b;
   margin-bottom: 30px;
@@ -272,7 +309,6 @@ const goToDetail = () => {
   font-size: 15px;
 }
 
-/* BOX THÔNG TIN ĐƠN HÀNG */
 .info-box {
   background: #f8fafc;
   padding: 24px;
@@ -281,7 +317,6 @@ const goToDetail = () => {
   text-align: left;
   border: 1px solid #e2e8f0;
 }
-
 .box-title {
   font-size: 16px;
   font-weight: 700;
@@ -292,7 +327,6 @@ const goToDetail = () => {
   border-bottom: 2px solid #e2e8f0;
   text-align: center;
 }
-
 .info-row {
   display: flex;
   align-items: flex-start;
@@ -300,52 +334,46 @@ const goToDetail = () => {
   font-size: 14px;
   color: #475569;
 }
-
 .info-row:last-child {
   margin-bottom: 0;
 }
-
 .info-row span {
   flex-shrink: 0;
   margin-right: 15px;
 }
-
 .info-row strong {
   color: #1e293b;
 }
-
 .text-right {
   text-align: right;
   line-height: 1.5;
 }
-
 .highlight-price {
   color: #d32f2f !important;
   font-size: 16px;
   font-weight: 800;
 }
-
 .divider {
   border-top: 1px solid #e2e8f0;
   margin: 15px 0;
 }
-
 .divider.dashed {
   border-top-style: dashed;
 }
-
 .total-row {
   margin-top: 10px;
   align-items: center;
 }
-
 .total-row span {
   font-weight: 600;
   color: #1e293b;
   font-size: 15px;
 }
+.text-danger {
+  color: #ef4444;
+  font-weight: bold;
+}
 
-/* LOADING STATE */
 .loading-box {
   display: flex;
   justify-content: center;
@@ -356,7 +384,6 @@ const goToDetail = () => {
   font-size: 14px;
   margin-bottom: 20px;
 }
-
 .loader {
   border: 2px solid #e2e8f0;
   border-top: 2px solid #6b3f1e;
@@ -365,7 +392,6 @@ const goToDetail = () => {
   height: 16px;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -375,20 +401,17 @@ const goToDetail = () => {
   }
 }
 
-/* BUTTONS */
 .action-buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 @media (min-width: 480px) {
   .action-buttons {
     flex-direction: row;
     justify-content: center;
   }
 }
-
 .btn-primary {
   background: #6b3f1e;
   color: white;
@@ -400,11 +423,9 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
-
 .btn-primary:hover {
   background: #5a3218;
 }
-
 .btn-outline {
   background: white;
   border: 1px solid #cbd5e1;
@@ -416,7 +437,6 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
-
 .btn-outline:hover {
   border-color: #6b3f1e;
   color: #6b3f1e;

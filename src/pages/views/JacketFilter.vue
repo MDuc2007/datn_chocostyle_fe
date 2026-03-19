@@ -139,22 +139,47 @@ const materials = ref([]);
 const sizes = ref([]);
 const colors = ref([]);
 
-const getHexFromColorName = (colorName) => {
-  if (!colorName) return '#E5E7EB';
-  const name = colorName.toLowerCase();
-  if (name.includes('đen')) return '#222222';
-  if (name.includes('trắng')) return '#FFFFFF';
-  if (name.includes('đỏ')) return '#DC2626';
-  if (name.includes('xanh navy') || name.includes('xanh sẫm')) return '#1E3A8A';
-  if (name.includes('xanh')) return '#2563EB';
-  if (name.includes('nâu')) return '#6b3f1e';
-  if (name.includes('xám') || name.includes('ghi')) return '#9CA3AF';
-  if (name.includes('vàng')) return '#FBBF24';
-  if (name.includes('hồng')) return '#F472B6';
-  if (name.includes('cam')) return '#F97316';
-  if (name.includes('rêu')) return '#4B5320';
-  if (name.includes('be')) return '#F5F5DC';
-  return '#E5E7EB'; 
+// 👉 ĐÃ NÂNG CẤP BỘ LỌC MÀU CHUẨN ĐẦY ĐỦ CÁC MÀU
+const getColorCode = (name) => {
+  if (!name) return '#E5E7EB';
+  const n = name.toLowerCase().trim();
+  
+  // Ánh xạ chính xác tên màu
+  const colorMap = {
+    'đen': '#000000',
+    'trắng': '#ffffff',
+    'đỏ': '#dc2626',
+    'xanh dương': '#2563eb',
+    'xanh lá': '#10b981',
+    'vàng': '#eab308',
+    'tím': '#9333ea',
+    'hồng': '#db2777',
+    'cam': '#f97316',
+    'xám': '#64748b',
+    'ghi': '#9ca3af',
+    'nâu': '#78350f',
+    'be': '#f5f5dc',
+    'navy': '#1e3a8a',
+    'rêu': '#4B5320',
+  };
+
+  if (colorMap[n]) return colorMap[n];
+
+  // Nếu tên màu dài (VD: "Đen nhạt", "Tím than"), dùng fallback:
+  if (n.includes('đen')) return '#000000';
+  if (n.includes('trắng')) return '#ffffff';
+  if (n.includes('đỏ')) return '#dc2626';
+  if (n.includes('tím')) return '#9333ea';
+  if (n.includes('vàng')) return '#eab308';
+  if (n.includes('hồng')) return '#db2777';
+  if (n.includes('cam')) return '#f97316';
+  if (n.includes('nâu')) return '#78350f';
+  if (n.includes('rêu')) return '#4B5320';
+  if (n.includes('xanh navy') || n.includes('xanh sẫm')) return '#1E3A8A';
+  if (n.includes('xanh')) return '#2563EB';
+  if (n.includes('xám') || n.includes('ghi')) return '#9CA3AF';
+
+  return '#E5E7EB'; // Màu mặc định nếu không khớp
 };
 
 const fetchDynamicFilters = async () => {
@@ -168,29 +193,42 @@ const fetchDynamicFilters = async () => {
     const uniqueColorsMap = new Map(); 
 
     dataList.forEach(item => {
-      if (item.tenLoaiAo) uniqueTypes.add(item.tenLoaiAo);
-      if (item.danhMuc?.tenDanhMuc) uniqueTypes.add(item.danhMuc.tenDanhMuc);
+      // 1. Loại áo
+      const typeName = item.tenLoaiAo || item.loaiAo?.tenLoaiAo || item.danhMuc?.tenDanhMuc;
+      if (typeName) uniqueTypes.add(typeName);
 
-      if (item.tenChatLieu) uniqueMaterials.add(item.tenChatLieu);
-      if (item.chatLieu?.tenChatLieu) uniqueMaterials.add(item.chatLieu.tenChatLieu);
+      // 2. Chất liệu
+      const materialName = item.tenChatLieu || item.chatLieu?.tenChatLieu;
+      if (materialName) uniqueMaterials.add(materialName);
 
-      if (item.tenKichCo) uniqueSizes.add(item.tenKichCo);
-      if (item.kichCo?.tenKichCo) uniqueSizes.add(item.kichCo.tenKichCo);
+      // 3. Kích cỡ (Bao phủ cấu trúc mảng và object)
+      const sizeName = item.tenKichCo || item.kichCo?.tenKichCo || item.kichCoList?.[0] || item.kichCo;
+      if (sizeName) uniqueSizes.add(sizeName);
 
-      const colorName = item.tenMauSac || item.mauSac?.tenMauSac;
+      // 4. Màu sắc (Bao phủ cấu trúc mảng và object)
+      const colorName = item.tenMauSac || item.mauSac?.tenMau || item.mauSac?.tenMauSac || item.mauSacList?.[0]?.tenMauSac;
+      const rgb = item.rgb || item.mauSac?.rgb || item.mauSacList?.[0]?.rgb;
+
       if (colorName && !uniqueColorsMap.has(colorName)) {
-        uniqueColorsMap.set(colorName, getHexFromColorName(colorName));
+        // Nếu backend trả về mã màu rgb thì lấy, không thì dùng hàm getColorCode
+        uniqueColorsMap.set(colorName, rgb || getColorCode(colorName));
       }
     });
 
     jacketTypes.value = Array.from(uniqueTypes).map(val => ({ label: val, value: val }));
     materials.value = Array.from(uniqueMaterials).map(val => ({ label: val, value: val }));
     
+    // Sắp xếp Kích cỡ theo thứ tự chuẩn S M L XL
     const sizeOrder = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     sizes.value = Array.from(uniqueSizes).sort((a, b) => {
-      return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+      let indexA = sizeOrder.indexOf(String(a).trim().toUpperCase());
+      let indexB = sizeOrder.indexOf(String(b).trim().toUpperCase());
+      if(indexA === -1) indexA = 99;
+      if(indexB === -1) indexB = 99;
+      return indexA === indexB ? String(a).localeCompare(String(b)) : indexA - indexB;
     });
 
+    // Sắp xếp Màu sắc
     colors.value = Array.from(uniqueColorsMap, ([name, hex]) => ({
       label: name,
       value: name,

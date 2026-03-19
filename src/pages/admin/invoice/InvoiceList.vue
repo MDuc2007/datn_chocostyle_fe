@@ -113,7 +113,7 @@
               </td>
               <td class="text-center">
                 <span :class="getStatusClass(hd.trangThai)">
-                  {{ getStatusName(hd.trangThai) }}
+                  {{ getStatusName(hd.trangThai, (hd as any).trangThaiHuyChiTiet) }}
                 </span>
               </td>
               <td class="text-center">
@@ -173,7 +173,7 @@ import iconEdit from "../../../assets/icon/edit.svg";
 const router = useRouter();
 const route = useRoute(); // Khởi tạo route
 
-// --- [THÊM MỚI] Hàm lấy ngày hôm nay chuẩn YYYY-MM-DD ---
+// --- Hàm lấy ngày hôm nay chuẩn YYYY-MM-DD ---
 const getToday = () => {
   const d = new Date();
   // Trừ đi múi giờ để đảm bảo lấy đúng ngày ở VN, không bị lùi ngày
@@ -185,7 +185,7 @@ const getToday = () => {
 const invoices = ref<InvoiceResponse[]>([]);
 const pagination = reactive({ page: 0, size: 8, total: 0, totalPages: 0 });
 
-// --- [ĐÃ SỬA] Cập nhật startDate và endDate gọi hàm getToday() ---
+// --- Cập nhật startDate và endDate gọi hàm getToday() ---
 const filters = reactive({
   keyword: "",
   trangThai: null,
@@ -228,7 +228,7 @@ const changePage = (newPage: number) => {
   fetchInvoices();
 };
 
-// --- [ĐÃ SỬA] Reset lại bộ lọc cũng tự động về ngày hôm nay ---
+// --- Reset lại bộ lọc cũng tự động về ngày hôm nay ---
 const resetFilters = () => {
   filters.keyword = "";
   filters.trangThai = null;
@@ -278,7 +278,13 @@ const formatDate = (dateStr: string) => {
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 };
 
-const getStatusName = (stt: number) => {
+// --- ĐÃ SỬA: Cập nhật hàm getStatusName để nhận thêm tham số trạng thái hủy chi tiết ---
+const getStatusName = (stt: number, huyChiTiet?: string) => {
+  // Nếu là đơn hủy và backend có trả về trạng thái chi tiết -> ưu tiên hiển thị chi tiết
+  if (stt === 5 && huyChiTiet) {
+    return huyChiTiet;
+  }
+
   const map: Record<number, string> = {
     0: "Chờ xác nhận",
     1: "Đã xác nhận",
@@ -299,7 +305,7 @@ const getStatusClass = (stt: number) => {
   return "status-text status-green";
 };
 
-// --- [THÊM MỚI] Helper cho Loại Đơn ---
+// --- Helper cho Loại Đơn ---
 const getLoaiDonName = (type: number) => {
   if (type === 1) return "Tại quầy";
   if (type === 0) return "Online";
@@ -544,6 +550,7 @@ onMounted(() => {
   font-size: 13px;
   padding: 6px 12px;
   border-radius: 20px;
+  white-space: nowrap; /* Tránh cho chữ bị rớt dòng nếu nội dung quá dài */
 }
 .status-green {
   color: #00b894;

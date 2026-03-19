@@ -15,6 +15,8 @@
               type="text"
               class="search-input"
               placeholder="Tìm kiếm loại áo theo tên"
+              v-model="keyword"
+              @keyup.enter="handleSearch"
             />
           </div>
         </div>
@@ -78,6 +80,19 @@
           />
           Tải excel
         </button>
+
+        <button
+          v-if="selectedProducts.length > 0"
+          @click="openMultiQuickQuantityModal"
+          style="background: #a9744f; color: white; border: none"
+        >
+          <img
+            src="/src/assets/icon/pencil.svg"
+            style="width: 20px; height: 20px; filter: brightness(0) invert(1)"
+          />
+          Sửa nhanh ({{ selectedProducts.length }})
+        </button>
+
         <button @click="$router.push('/admin/product/create')">
           <span>＋</span> Thêm sản phẩm
         </button>
@@ -90,6 +105,13 @@
         <table class="product-table">
           <thead>
             <tr>
+              <th style="width: 40px">
+                <input
+                  type="checkbox"
+                  v-model="selectAll"
+                  class="custom-checkbox"
+                />
+              </th>
               <th>STT</th>
               <th>Hình ảnh</th>
               <th>Mã sản phẩm</th>
@@ -102,9 +124,16 @@
               <th>Hành động</th>
             </tr>
           </thead>
-
           <tbody>
             <tr v-for="(item, index) in products" :key="item.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :value="item.id"
+                  v-model="selectedProducts"
+                  class="custom-checkbox"
+                />
+              </td>
               <td>{{ currentPage * pageSize + index + 1 }}</td>
               <td>
                 <div class="product-image-wrapper">
@@ -122,9 +151,7 @@
               <td>{{ item.material }}</td>
               <td>{{ item.quantity }}</td>
               <td>
-                <!-- ===== GIÁ LÀ NUMBER ===== -->
                 <template v-if="typeof item.price === 'number'">
-                  <!-- Có giảm giá -->
                   <div v-if="promotionMap[item.id]">
                     <div
                       style="
@@ -143,20 +170,17 @@
                     </div>
                   </div>
 
-                  <!-- Không giảm -->
                   <div v-else>
                     {{ formatCurrency(item.price) }}
                   </div>
                 </template>
 
-                <!-- ===== GIÁ LÀ MIN ~ MAX ===== -->
                 <template
                   v-else-if="
                     typeof item.price === 'string' && item.price.includes('~')
                   "
                 >
                   <div v-if="promotionMap[item.id]">
-                    <!-- Giá gốc -->
                     <div
                       style="
                         font-size: 12px;
@@ -167,7 +191,6 @@
                       {{ formatPriceRange(item.price) }}
                     </div>
 
-                    <!-- Giá sau giảm -->
                     <div
                       style="color: #e53935; font-weight: 700; font-size: 12px"
                     >
@@ -264,7 +287,6 @@
         </table>
       </div>
       <div class="pagination">
-        <!-- PREV -->
         <button
           class="nav-btn"
           @click="previousPage"
@@ -273,7 +295,6 @@
           &lt;
         </button>
 
-        <!-- PAGE NUMBERS -->
         <button
           v-for="page in visiblePages"
           :key="page"
@@ -285,7 +306,6 @@
           {{ page }}
         </button>
 
-        <!-- NEXT -->
         <button
           class="nav-btn"
           @click="nextPage"
@@ -413,11 +433,17 @@
     >
       <div
         class="scan-modal-content"
-        style="width: 850px; max-width: 95vw; background: #fcfbfa"
+        style="width: 1000px; max-width: 95vw; background: #fcfbfa"
       >
         <div class="scan-header" style="background: white">
           <div class="header-title">
-            <h3>
+            <h3 v-if="quantityModal.isMulti">
+              Sửa nhanh:
+              <span style="color: #a9744f"
+                >{{ selectedProducts.length }} sản phẩm đã chọn</span
+              >
+            </h3>
+            <h3 v-else>
               Sửa nhanh:
               <span style="color: #a9744f">{{
                 quantityModal.productName
@@ -434,6 +460,9 @@
           <table class="quick-edit-table">
             <thead>
               <tr>
+                <th v-if="quantityModal.isMulti" style="text-align: left">
+                  Sản phẩm
+                </th>
                 <th style="text-align: left">Thuộc tính (Màu - Size)</th>
                 <th style="width: 130px; text-align: right">Tồn kho</th>
                 <th style="width: 170px; text-align: right">Giá Nhập (₫)</th>
@@ -442,6 +471,12 @@
             </thead>
             <tbody>
               <tr v-for="bt in quantityModal.variants" :key="bt.id">
+                <td
+                  v-if="quantityModal.isMulti"
+                  style="text-align: left; font-weight: bold; color: #63391f"
+                >
+                  {{ bt.productName }}
+                </td>
                 <td style="text-align: left">
                   <div class="variant-badge">
                     <span
@@ -528,6 +563,7 @@ import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { QrcodeStream, QrcodeCapture } from "vue-qrcode-reader";
+
 /* ===== TOAST (GIỐNG SỬA BIẾN THỂ) ===== */
 const notifications = ref([]);
 
@@ -548,6 +584,22 @@ const goToUpdate = (id) => {
 
 const products = ref([]);
 const promotionMap = ref({});
+
+// --- THÊM STATE MULTI-SELECT ---
+const selectedProducts = ref([]);
+
+const selectAll = computed({
+  get: () =>
+    products.value.length > 0 &&
+    selectedProducts.value.length === products.value.length,
+  set: (val) => {
+    if (val) {
+      selectedProducts.value = products.value.map((p) => p.id);
+    } else {
+      selectedProducts.value = [];
+    }
+  },
+});
 
 const currentPage = ref(0);
 const pageSize = ref(8);
@@ -573,34 +625,27 @@ const modal = ref({
 // Hàm hiển thị số có dấu chấm phân cách hàng nghìn (VD: 1.000.000)
 const formatThousand = (val) => {
   if (val === null || val === undefined || val === "") return "0";
-  // toLocaleString('vi-VN') tự động định dạng theo chuẩn Việt Nam (dùng dấu chấm)
   return Number(val).toLocaleString("vi-VN");
 };
 
 // Hàm bắt sự kiện khi user gõ vào input
 const handleInput = (item, field, event) => {
-  // Lấy giá trị user vừa nhập, xóa bỏ mọi ký tự không phải là số (bao gồm cả chữ và dấu chấm)
   let rawValue = event.target.value.replace(/\D/g, "");
-
-  // Ép kiểu về số nguyên (nếu rỗng thì gán = 0)
   let num = rawValue ? parseInt(rawValue, 10) : 0;
-
-  // 1. Cập nhật con số thật (number) vào object dữ liệu để lát gửi lên Backend
   item[field] = num;
-
-  // 2. Cập nhật chuỗi đã format (string có dấu chấm) ngay lập tức lên giao diện
   event.target.value = formatThousand(num);
 };
 
-// State Modal
+// State Modal (có isMulti)
 const quantityModal = ref({
   show: false,
+  isMulti: false,
   productId: null,
   productName: "",
   variants: [],
 });
 
-// Hàm mở Modal
+// Hàm mở Modal 1 sản phẩm
 const openQuickQuantityModal = async (productId) => {
   try {
     const res = await axios.get(
@@ -608,9 +653,9 @@ const openQuickQuantityModal = async (productId) => {
     );
     const productData = res.data;
 
-    // Gán dữ liệu vào biến variants (Vue sẽ tự binding 2 chiều nhờ v-model)
     quantityModal.value = {
       show: true,
+      isMulti: false,
       productId: productData.id,
       productName: productData.tenSp,
       variants: productData.bienTheList.map((bt) => ({
@@ -625,13 +670,46 @@ const openQuickQuantityModal = async (productId) => {
   }
 };
 
+// Hàm mở Modal Nhiều Sản phẩm (Multi Edit)
+const openMultiQuickQuantityModal = async () => {
+  try {
+    const promises = selectedProducts.value.map((id) =>
+      axios.get(`http://localhost:8080/api/san-pham/${id}`),
+    );
+    const responses = await Promise.all(promises);
+
+    let allVariants = [];
+
+    responses.forEach((res) => {
+      const productData = res.data;
+      const variants = productData.bienTheList.map((bt) => ({
+        ...bt,
+        productName: productData.tenSp,
+        soLuongTon: bt.soLuongTon || 0,
+        giaNhap: bt.giaNhap || 0,
+        giaBan: bt.giaBan || 0,
+      }));
+      allVariants = allVariants.concat(variants);
+    });
+
+    quantityModal.value = {
+      show: true,
+      isMulti: true,
+      productId: null,
+      productName: "",
+      variants: allVariants,
+    };
+  } catch (error) {
+    showNotification("Lỗi khi lấy dữ liệu các sản phẩm!", "error");
+  }
+};
+
 const closeQuantityModal = () => {
   quantityModal.value.show = false;
 };
 
 // Hàm lưu lên Backend
 const saveQuickVariants = async () => {
-  // Map dữ liệu thành mảng Object String để gửi lên đúng định dạng Backend cần
   const payload = quantityModal.value.variants.map((bt) => ({
     id: String(bt.id),
     soLuongTon: String(bt.soLuongTon),
@@ -644,12 +722,13 @@ const saveQuickVariants = async () => {
       `http://localhost:8080/api/san-pham/quick-update-variants`,
       payload,
       {
-        params: { nguoiCapNhat: "admin" }, // Có thể thay thế bằng user đăng nhập thực tế
+        params: { nguoiCapNhat: "admin" },
       },
     );
 
     showNotification("Cập nhật thông tin nhanh thành công!", "success");
     closeQuantityModal();
+    selectedProducts.value = []; // Reset checkbox
 
     // Refresh lại bảng chính
     fetchProducts(
@@ -724,7 +803,6 @@ function toggleStatus(item) {
       newStatus === 1
         ? "Bạn có chắc muốn bán lại sản phẩm này?"
         : "Bạn có chắc muốn ngừng bán sản phẩm này?",
-    // TRUYỀN THÊM 2 BIẾN NÀY ĐỂ HANDLEMODALCONFIRM CÓ DATA DÙNG
     item: item,
     newStatus: newStatus,
   };
@@ -746,7 +824,6 @@ async function handleModalConfirm() {
     );
 
     showNotification("Cập nhật trạng thái thành công", "success");
-    // 🔴 FIX 1: Tải lại danh sách để lấy trạng thái chuẩn xác được tính toán bởi Backend
     fetchProducts(
       currentPage.value,
       pageSize.value,
@@ -772,7 +849,7 @@ function closeModal() {
 function openScanModal() {
   showScanModal.value = true;
   scanError.value = "";
-  cameraActive.value = false; // Mặc định tắt để user tự bật
+  cameraActive.value = false;
 }
 
 function closeScanModal() {
@@ -792,7 +869,6 @@ function onDetect(detectedCodes) {
 
   const qrValue = result.rawValue.trim();
 
-  // ❌ QR SAI
   if (!qrValue.startsWith("SP")) {
     showNotification("QR không hợp lệ!", "error");
 
@@ -802,7 +878,6 @@ function onDetect(detectedCodes) {
     return;
   }
 
-  // ✅ QR ĐÚNG
   showNotification("Quét QR thành công", "success");
 
   cameraActive.value = false;
@@ -877,6 +952,7 @@ const fetchProducts = async (
   materialId = "",
 ) => {
   try {
+    selectedProducts.value = []; // Reset checkbox khi load data mới
     const params = {
       page,
       size,
@@ -920,11 +996,11 @@ const fetchProducts = async (
       let price = null;
 
       if (prices.length === 1) {
-        price = prices[0]; // 1 giá
+        price = prices[0];
       } else if (prices.length > 1) {
         const min = Math.min(...prices);
         const max = Math.max(...prices);
-        price = min === max ? min : `${min}~${max}`; // khoảng giá
+        price = min === max ? min : `${min}~${max}`;
       }
 
       if (item.tenXuatXu) {
@@ -950,7 +1026,7 @@ const fetchProducts = async (
         material: item.tenChatLieu,
         materialId: idChatLieu,
         quantity,
-        price, // 👈 số HOẶC string "min~max"
+        price,
         trangThai: item.trangThai,
         image: item.hinhAnh || "https://via.placeholder.com/50x60",
       };
@@ -1090,33 +1166,6 @@ const nextPage = () => {
   }
 };
 
-// async function toggleStatus(item) {
-//   const oldStatus = item.trangThai;
-
-//   // 🔁 toggle 1 ↔ 2
-//   const newStatus = oldStatus === 1 ? 2 : 1;
-
-//   // optimistic update
-//   item.trangThai = newStatus;
-
-//   try {
-//     await axios.put(
-//       `http://localhost:8080/api/san-pham/${item.id}/change-status`,
-//       null,
-//       {
-//         params: {
-//           trangThai: newStatus,
-//           nguoiCapNhat: "admin",
-//         },
-//       },
-//     );
-//   } catch (error) {
-//     // rollback
-//     item.trangThai = oldStatus;
-//     alert("Lỗi cập nhật trạng thái sản phẩm!");
-//   }
-// }
-
 const formatCurrency = (value) => {
   if (value == null) return "0 ₫";
   return new Intl.NumberFormat("vi-VN", {
@@ -1145,7 +1194,6 @@ const initSelect2 = (selector, placeholder, modelRef) => {
 
   if (!$el.length || !$el.select2) return;
 
-  // destroy nếu đã init trước đó (tránh init lại khi edit)
   if ($el.hasClass("select2-hidden-accessible")) {
     $el.select2("destroy");
   }
@@ -1156,7 +1204,6 @@ const initSelect2 = (selector, placeholder, modelRef) => {
     allowClear: true,
   });
 
-  // set giá trị nếu đã có (khi edit)
   if (modelRef.value) {
     $el.val(modelRef.value).trigger("change.select2");
   }
@@ -1188,11 +1235,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ===== THÊM STYLE CHO CHECKBOX BỰ HƠN ===== */
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #a9744f;
+}
+
 /* ===== HEADER PANEL ===== */
 .header {
   background: #fff;
   border-radius: 20px;
-  border: 1px solid #e5e5e5; /* 👈 viền mỏng */
+  border: 1px solid #e5e5e5;
   margin-bottom: 12px;
 }
 
@@ -1242,7 +1297,7 @@ onMounted(() => {
 /* ===== FILTER ===== */
 .filters {
   display: flex;
-  gap: 12px; /* 👈 GỌN HƠN */
+  gap: 12px;
   align-items: flex-end;
   margin-top: 20px;
 }
@@ -1262,7 +1317,7 @@ onMounted(() => {
 
 .filter-item select,
 .filter-item input {
-  height: 40px; /* 👈 BẰNG SEARCH */
+  height: 40px;
   padding: 0 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -1280,10 +1335,10 @@ onMounted(() => {
 }
 
 .add-btn button {
-  height: 40px; /* 👈 bằng input */
-  padding: 0 16px; /* ngang vừa tay */
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
+  border-radius: 10px;
   background: #fff;
   cursor: pointer;
 
@@ -1308,7 +1363,7 @@ onMounted(() => {
   background: #fff;
   border-radius: 20px;
   padding: 10px;
-  border: 1px solid #e5e5e5; /* 👈 viền nhẹ */
+  border: 1px solid #e5e5e5;
 }
 
 .product-table {
@@ -1332,7 +1387,7 @@ onMounted(() => {
 .status {
   display: inline-block;
   padding: 6px 14px;
-  border-radius: 999px; /* bo tròn full */
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
@@ -1363,7 +1418,6 @@ onMounted(() => {
   font-size: 10px;
 }
 
-/* (tuỳ chọn) hover đẹp hơn */
 .status:hover {
   filter: brightness(0.95);
 }
@@ -1385,7 +1439,6 @@ onMounted(() => {
 .slider {
   position: absolute;
   inset: 0;
-  background: #ccc;
   background: #ccc;
   border-radius: 24px;
   transition: 0.3s;
@@ -1666,7 +1719,7 @@ input:checked + .slider::before {
   background: #7d4a2b;
 }
 
-/* SCAN FRAME (Đè lên camera) */
+/* SCAN FRAME */
 .scan-frame {
   position: absolute;
   top: 20px;
@@ -1750,7 +1803,7 @@ input:checked + .slider::before {
   padding: 0 10px;
 }
 
-/* UPLOAD SECTION (Custom UI cho input file) */
+/* UPLOAD SECTION */
 .upload-box {
   border: 2px dashed #d6c3b4;
   background: #faf6f4;
@@ -1784,7 +1837,7 @@ input:checked + .slider::before {
 }
 .hidden-capture-input {
   display: none;
-} /* Ẩn input mặc định của qrcode-capture */
+}
 .error-alert {
   margin-top: 15px;
   padding: 10px;
@@ -1907,14 +1960,14 @@ input:checked + .slider::before {
 /* text bên trong */
 :deep(.select2-selection__rendered) {
   font-size: 14px;
-  color: #3f2a1d; /* màu chữ input */
+  color: #3f2a1d;
   padding-left: 0 !important;
   line-height: normal !important;
 }
 
 /* placeholder */
 :deep(.select2-selection__placeholder) {
-  color: #a08c7a; /* giống placeholder input */
+  color: #a08c7a;
 }
 
 /* mũi tên */
@@ -1950,8 +2003,6 @@ input:checked + .slider::before {
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
-/* Tìm đoạn này trong phần 8. MODAL & TOAST */
-/* Sửa lại đoạn này */
 .confirm-icon-wrapper {
   width: 80px;
   height: 80px;
@@ -1959,30 +2010,17 @@ input:checked + .slider::before {
   background-color: #fff4e5;
   color: #ff9800;
   margin: 0 auto 15px auto;
-
-  /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-size: 40px;
-
-  /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
   line-height: 1;
-
-  /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
-  /* animation: none; */
 }
-
-/* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
 .confirm-icon-wrapper i,
 .confirm-icon-wrapper svg,
 .confirm-icon-wrapper span {
-  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0; /* Xóa margin mặc định nếu có */
-
-  /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
-  /* transform: translateY(2px); */
+  display: block;
+  margin: 0;
 }
 .confirm-title {
   color: #63391f;
@@ -2064,7 +2102,6 @@ input:checked + .slider::before {
 }
 /* ===== ADVANCED QUICK EDIT MODAL STYLES ===== */
 
-/* Icon Header */
 .icon-edit-wrapper {
   background: #fdf1e8;
   padding: 8px;
@@ -2074,11 +2111,10 @@ input:checked + .slider::before {
   justify-content: center;
 }
 
-/* Bảng hiển thị Card-Row */
 .quick-edit-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 10px; /* Tạo khoảng cách giữa các dòng */
+  border-spacing: 0 10px;
   margin-top: -10px;
 }
 
@@ -2100,7 +2136,6 @@ input:checked + .slider::before {
   vertical-align: middle;
 }
 
-/* Bo góc cho từng dòng */
 .quick-edit-table td:first-child {
   border-left: 1px solid #f2ece9;
   border-radius: 12px 0 0 12px;
@@ -2117,7 +2152,6 @@ input:checked + .slider::before {
     box-shadow 0.2s;
 }
 
-/* Huy hiệu Biến thể (Pill) */
 .variant-badge {
   display: inline-flex;
   align-items: center;
@@ -2138,7 +2172,6 @@ input:checked + .slider::before {
   border-radius: 50%;
 }
 
-/* Wrapper cho Input để chèn ký hiệu VND */
 .input-wrapper {
   position: relative;
   display: flex;
@@ -2151,10 +2184,9 @@ input:checked + .slider::before {
   right: 12px;
   color: #a08c7a;
   font-weight: 600;
-  pointer-events: none; /* Không cản trở việc click vào input */
+  pointer-events: none;
 }
 
-/* Input kiểu mới */
 .quick-input {
   width: 100%;
   height: 42px;
@@ -2162,8 +2194,7 @@ input:checked + .slider::before {
   border: 1px solid #e0d8d4;
   padding: 0 12px;
   font-size: 14px;
-  font-family:
-    "Poppins", monospace; /* Dùng monospace cho số để các hàng thẳng tắp */
+  font-family: "Poppins", monospace;
   background: #faf8f7;
   transition: all 0.25s ease;
   box-sizing: border-box;
@@ -2173,7 +2204,7 @@ input:checked + .slider::before {
 }
 
 .suffix-vnd .quick-input {
-  padding-right: 28px; /* Dành chỗ trống cho chữ ₫ không bị số đè lên */
+  padding-right: 28px;
 }
 .quick-input:focus {
   outline: none;
@@ -2182,7 +2213,6 @@ input:checked + .slider::before {
   background-color: #fff;
 }
 
-/* Ẩn mũi tên mặc định của input number */
 .quick-input::-webkit-outer-spin-button,
 .quick-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
