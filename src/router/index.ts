@@ -241,24 +241,11 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../pages/admin/invoice/InvoiceList.vue"),
       },
       {
-        path: "invoice/:id",
+        path: "invoice/detail/:id",
         name: "InvoiceDetail",
         component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
       },
-      // 2.2. Quản lý hoá đơn
-      {
-        path: "invoice",
-        name: "InvoiceList",
-        component: () => import("../pages/admin/invoice/InvoiceList.vue"),
-      },
-      {
-        path: "invoice/:id",
-        name: "InvoiceDetail",
-        component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
-        props: true,
-      },
-
       // 2.3. Bán hàng tại quầy
       {
         path: "sales",

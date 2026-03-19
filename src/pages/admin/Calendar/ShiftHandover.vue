@@ -623,10 +623,10 @@ onUnmounted(() => {
                   </tr>
                   <tr>
                     <td>💳 Chuyển khoản</td>
-                    <td>
-                      {{ formatCurrency(selectedShift.tienChuyenKhoanDauCa) }}
-                    </td>
+                    <td>{{ formatCurrency(selectedShift.tienChuyenKhoanDauCa) }}</td>
+                    
                     <td>{{ formatCurrency(selectedShift.doanhThuCk) }}</td>
+                    
                     <td class="bg-gray-50 font-bold">
                       {{
                         formatCurrency(
@@ -635,6 +635,7 @@ onUnmounted(() => {
                         )
                       }}
                     </td>
+                    
                     <td class="font-bold text-blue-600">
                       {{ formatCurrency(selectedShift.tienChuyenKhoan) }}
                     </td>
