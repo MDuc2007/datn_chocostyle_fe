@@ -184,7 +184,7 @@
 
               <div
                 v-for="(noti, index) in notifications"
-                :key="index"
+                :key="noti.id"
                 class="notification-item"
                 :class="{ unread: !noti.daDoc }"
                 @click="openNotification(noti)"
@@ -234,11 +234,6 @@
                 <button @click.stop="viewProfile" class="dropdown-item">
                   Xem thông tin
                 </button>
-
-                <button @click.stop="viewMyOrders" class="dropdown-item">
-                  Đơn mua của tôi
-                </button>
-
                 <div class="dropdown-divider"></div>
                 <button @click.stop="logout" class="dropdown-item text-danger">
                   Đăng xuất
@@ -270,19 +265,19 @@ let stompClient: Client | null = null;
 
 const page = ref(0);
 
+const hasMore = ref(true);
+
 const loadNotifications = async () => {
   try {
-
-    page.value = 0;   // reset page
+    page.value = 0; // reset page
     hasMore.value = true;
 
     const res = await axios.get(
-      `http://localhost:8080/api/thong-bao?page=0&size=20`
+      `http://localhost:8080/api/thong-bao?page=0&size=20`,
     );
 
     notifications.value = res.data.content;
     hasMore.value = res.data.content.length === 20;
-
   } catch (e) {
     console.error("Lỗi load thông báo", e);
   }
@@ -322,13 +317,11 @@ const markAllRead = async () => {
   notificationCount.value = 0;
 };
 
-const hasMore = ref(true);
-
 const loadMore = async () => {
   page.value++;
 
   const res = await axios.get(
-    `http://localhost:8080/api/thong-bao?page=${page.value}&size=20`
+    `http://localhost:8080/api/thong-bao?page=${page.value}&size=20`,
   );
 
   const newData = res.data.content;
@@ -339,35 +332,43 @@ const loadMore = async () => {
   }
 
   notifications.value.push(...newData);
+
+  hasMore.value = newData.length === 20;
 };
 
 const connectWebSocket = () => {
   stompClient = new Client({
-    brokerURL: "ws://localhost:8080/ws-chocostyle",
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws-chocostyle"),
 
     reconnectDelay: 5000,
 
     debug: (str) => {
-      console.log(str);
+      console.log("STOMP:", str);
     },
 
     onConnect: () => {
       console.log("WebSocket connected");
 
-      stompClient?.subscribe("/topic/notification", (message) => {
-        console.log("NHẬN:", message.body);
+      // ❗ clear trước nếu reconnect
+      notifications.value = notifications.value || [];
 
+      stompClient?.subscribe("/topic/notification", async (message) => {
         const data = JSON.parse(message.body);
 
-        if (!data.tieuDe && !data.noiDung) return;
+        // 🔥 ép kiểu id cho chắc (tránh lệch string vs number)
+        const exists = notifications.value.some(
+          (n) => Number(n.id) === Number(data.id),
+        );
 
-        notifications.value.unshift({
-          ...data,
-          orderId: data.orderId,
-        });
-
-        notificationCount.value++;
+        if (!exists) {
+          notifications.value.unshift(data);
+          await loadNotificationCount();
+        }
       });
+    },
+
+    onStompError: (frame) => {
+      console.error("Broker error:", frame.headers["message"]);
     },
   });
 
@@ -377,23 +378,26 @@ const isNotificationOpen = ref(false);
 const toggleNotification = async () => {
   isNotificationOpen.value = !isNotificationOpen.value;
 
-  if (isNotificationOpen.value) {
+  if (isNotificationOpen.value && notifications.value.length === 0) {
     await loadNotifications();
-    await loadNotificationCount();
   }
+
+  await loadNotificationCount();
 };
 const openNotification = async (noti: any) => {
   try {
     await axios.put(`http://localhost:8080/api/thong-bao/${noti.id}/read`);
+    noti.daDoc = true;
   } catch (e) {
     console.error("Lỗi đánh dấu đọc", e);
   }
 
   if (noti.orderId) {
-    router.push(`/admin/invoice/${noti.orderId}`);
+    router.push(`/admin/invoice/detail/${noti.orderId}`);
   }
 
-  notificationCount.value--;
+  await loadNotificationCount();
+
   isNotificationOpen.value = false;
 };
 // Các biến state cho menu
