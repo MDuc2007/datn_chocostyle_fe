@@ -9,6 +9,7 @@
         </p>
       </div>
 
+
       <button
         v-if="chatStatus === 'ACTIVE'"
         class="end-chat-btn"
@@ -18,6 +19,7 @@
       </button>
     </div>
 
+
     <div v-if="chatStatus === 'BOT'" class="request-staff-banner">
       <span>AI chưa giải quyết được vấn đề?</span>
       <button @click="requestStaff">Gặp nhân viên</button>
@@ -26,6 +28,7 @@
       <span>Đang kết nối với nhân viên hỗ trợ... Vui lòng giữ máy.</span>
       <button @click="cancelRequest">Hủy yêu cầu</button>
     </div>
+
 
     <div class="messages-box" ref="msgBox">
       <div
@@ -53,6 +56,7 @@
       </div>
     </div>
 
+
     <div v-if="chatStatus === 'BOT'" class="suggestions">
       <button
         v-for="(q, index) in suggestedQuestions"
@@ -63,6 +67,7 @@
         {{ q }}
       </button>
     </div>
+
 
     <div class="input-area">
       <div class="input-wrapper">
@@ -89,11 +94,13 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, nextTick, computed } from "vue";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import axios from "axios";
+
 
 const stompClient = ref(null);
 const connected = ref(false);
@@ -104,17 +111,20 @@ const senderId = ref(null);
 const senderType = ref("KHACH_HANG");
 const conversationId = ref(null);
 
+
 const assignedNhanVien = ref(null);
 const chatStatus = ref("BOT"); // 'BOT', 'WAITING', 'ACTIVE'
 const lastActivity = ref(Date.now());
 const CHAT_TIMEOUT = 15 * 60 * 1000;
 const isLoading = ref(false);
 
+
 const headerStatusText = computed(() => {
   if (chatStatus.value === "BOT") return "ChocoBot đang hỗ trợ";
   if (chatStatus.value === "WAITING") return "Đang chờ nhân viên...";
   return assignedNhanVien.value || "Nhân viên đang hỗ trợ";
 });
+
 
 const suggestedQuestions = [
   "Shop có những sản phẩm gì?",
@@ -124,10 +134,12 @@ const suggestedQuestions = [
   "Shop có voucher không?",
 ];
 
+
 const selectSuggestion = (q) => {
   newMessage.value = q;
   sendMessage();
 };
+
 
 const formatTime = (time) =>
   time
@@ -137,26 +149,33 @@ const formatTime = (time) =>
       })
     : "";
 
+
 const scrollToBottom = () =>
   nextTick(() => {
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
   });
 
+
 const messageSubscription = ref(null);
+
 
 const connectAndSubscribe = (id) => {
   if (stompClient.value && stompClient.value.connected) {
     stompClient.value.disconnect();
   }
 
+
   const socket = new SockJS("http://localhost:8080/ws-chocostyle");
   stompClient.value = Stomp.over(socket);
   stompClient.value.debug = null;
 
+
   stompClient.value.connect({}, () => {
     connected.value = true;
 
+
     if (messageSubscription.value) messageSubscription.value.unsubscribe();
+
 
     // 🔴 Lắng nghe tin nhắn từ kênh chính
     messageSubscription.value = stompClient.value.subscribe(
@@ -169,10 +188,12 @@ const connectAndSubscribe = (id) => {
         )
           return;
 
+
         // Loại bỏ tin nhắn loading của AI
         messages.value = messages.value.filter(
           (m) => !String(m.id).startsWith("loading"),
         );
+
 
         // 🔴 NẾU CÓ TIN NHẮN TỪ SYSTEM (Nhân viên vừa vào)
         if (
@@ -187,6 +208,7 @@ const connectAndSubscribe = (id) => {
           }
         }
 
+
         messages.value.push(incoming);
         lastActivity.value = Date.now();
         scrollToBottom();
@@ -195,16 +217,19 @@ const connectAndSubscribe = (id) => {
   });
 };
 
+
 const requestStaff = async () => {
   try {
     messages.value = messages.value.filter(
       (m) => !String(m.id).startsWith("loading"),
     );
 
+
     // 1️⃣ đổi trạng thái conversation
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/request-staff`,
     );
+
 
     // 2️⃣ gửi thông báo cho staff
     await axios.post("http://localhost:8080/api/thong-bao/support-request", {
@@ -212,7 +237,9 @@ const requestStaff = async () => {
       conversationId: conversationId.value,
     });
 
+
     chatStatus.value = "WAITING";
+
 
     messages.value.push({
       id: Date.now(),
@@ -222,22 +249,27 @@ const requestStaff = async () => {
       sentAt: new Date(),
     });
 
+
     scrollToBottom();
   } catch (error) {
     console.error("Lỗi khi gọi nhân viên:", error);
   }
 };
 
+
 const cancelRequest = async () => {
   if (!conversationId.value) return;
+
 
   try {
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/cancel-request`,
     );
 
+
     chatStatus.value = "BOT";
     assignedNhanVien.value = null;
+
 
     messages.value.push({
       id: Date.now(),
@@ -247,19 +279,23 @@ const cancelRequest = async () => {
       sentAt: new Date(),
     });
 
+
     scrollToBottom();
   } catch (error) {
     console.error("Không thể hủy yêu cầu", error);
   }
 };
 
+
 const endChat = async () => {
   if (!conversationId.value) return;
+
 
   try {
     await axios.put(
       `http://localhost:8080/api/conversations/${conversationId.value}/end`,
     );
+
 
     messages.value.push({
       id: Date.now(),
@@ -281,10 +317,12 @@ const endChat = async () => {
   }
 };
 
+
 const callAI = async (content) => {
   lastActivity.value = Date.now();
   if (isLoading.value) return;
   isLoading.value = true;
+
 
   messages.value.push({
     id: "loading-" + Date.now(),
@@ -295,6 +333,7 @@ const callAI = async (content) => {
   });
   scrollToBottom();
 
+
   try {
     const res = await axios.post("http://localhost:8080/api/chat", {
       message: content,
@@ -302,18 +341,22 @@ const callAI = async (content) => {
       senderId: senderId.value,
     });
 
+
     messages.value = messages.value.filter(
       (m) => !String(m.id).startsWith("loading"),
     );
 
+
     // 🔴 FIX 2: Nếu khách đã chuyển sang ĐỢI NHÂN VIÊN thì BỎ QUA tin nhắn của AI trả về
     if (chatStatus.value !== "BOT") return;
+
 
     // 🔴 Tự động chuyển nhân viên nếu AI không giải quyết được
     if (res.data.reply === "CHUYEN_NHAN_VIEN") {
       requestStaff();
       return;
     }
+
 
     messages.value.push({
       id: Date.now(),
@@ -327,6 +370,7 @@ const callAI = async (content) => {
     messages.value = messages.value.filter(
       (m) => !String(m.id).startsWith("loading"),
     );
+
 
     // Chỉ báo lỗi nếu khách vẫn đang chat với BOT
     if (chatStatus.value === "BOT") {
@@ -344,10 +388,12 @@ const callAI = async (content) => {
   }
 };
 
+
 onMounted(async () => {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
   senderId.value = user.id;
+
 
   try {
     const response = await axios.post(
@@ -355,9 +401,11 @@ onMounted(async () => {
       { khachHangId: user.id },
     );
 
+
     if (response.data) {
       conversationId.value = response.data.id;
       chatStatus.value = response.data.trangThai || "BOT";
+
 
       // 🔴 NẾU LOAD LẠI TRANG MÀ ĐÃ CÓ NHÂN VIÊN THÌ BẬT ACTIVE LUÔN
       if (response.data.nhanVien) {
@@ -365,13 +413,16 @@ onMounted(async () => {
         chatStatus.value = "ACTIVE";
       }
 
+
       const history = await axios.get(
         `http://localhost:8080/api/conversations/${response.data.id}/messages`,
       );
       messages.value = history.data;
 
+
       connectAndSubscribe(response.data.id);
       scrollToBottom();
+
 
       if (messages.value.length === 0) {
         messages.value.push({
@@ -390,6 +441,7 @@ onMounted(async () => {
   setInterval(async () => {
     const now = Date.now();
 
+
     if (conversationId.value && now - lastActivity.value > CHAT_TIMEOUT) {
       try {
         await axios.put(
@@ -399,6 +451,7 @@ onMounted(async () => {
         console.log("Timeout API lỗi");
       }
 
+
       messages.value.push({
         id: Date.now(),
         senderType: "SYSTEM",
@@ -407,26 +460,32 @@ onMounted(async () => {
         sentAt: new Date(),
       });
 
+
       conversationId.value = null;
       chatStatus.value = "BOT";
       assignedNhanVien.value = null;
+
 
       if (stompClient.value) {
         stompClient.value.disconnect();
         connected.value = false;
       }
 
+
       scrollToBottom();
     }
   }, 60000);
 });
 
+
 const sendMessage = async () => {
   lastActivity.value = Date.now();
   if (!newMessage.value.trim() || !conversationId.value) return;
 
+
   const content = newMessage.value;
   newMessage.value = "";
+
 
   messages.value.push({
     id: Date.now() + "temp",
@@ -438,12 +497,14 @@ const sendMessage = async () => {
   });
   scrollToBottom();
 
+
   if (chatStatus.value === "BOT") {
     await callAI(content);
   } else {
     attemptSend(content);
   }
 };
+
 
 const attemptSend = (content) => {
   if (connected.value) {
@@ -462,6 +523,7 @@ const attemptSend = (content) => {
   }
 };
 </script>
+
 
 <style scoped>
 /* Giữ nguyên CSS cũ không thay đổi */
@@ -629,6 +691,7 @@ const attemptSend = (content) => {
   color: #ccc;
 }
 
+
 .suggestions {
   display: flex;
   gap: 8px;
@@ -641,6 +704,7 @@ const attemptSend = (content) => {
   position: relative;
 }
 
+
 .suggestions::after {
   content: "";
   position: absolute;
@@ -652,9 +716,11 @@ const attemptSend = (content) => {
   pointer-events: none;
 }
 
+
 .suggestions::-webkit-scrollbar {
   display: none;
 }
+
 
 .suggestion-btn {
   background: #f1f3f5;
@@ -665,12 +731,15 @@ const attemptSend = (content) => {
   cursor: pointer;
   transition: 0.2s;
 
+
   flex-shrink: 0;
 }
+
 
 .suggestion-btn:hover {
   background: #e0e0e0;
 }
+
 
 .end-chat-btn {
   background: #e53935;
@@ -682,7 +751,11 @@ const attemptSend = (content) => {
   font-size: 12px;
 }
 
+
 .end-chat-btn:hover {
   background: #c62828;
 }
 </style>
+
+
+
