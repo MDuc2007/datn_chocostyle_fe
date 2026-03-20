@@ -120,17 +120,7 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
-
 
         <button
           class="nav-btn"
@@ -367,9 +357,43 @@ const closeModal = () => {
   editingId.value = null;
 };
 
+const validateKichCo = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên kích cỡ không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 1) {
+    return "Tên kích cỡ phải có ít nhất 1 ký tự";
+  }
+
+  if (length > 20) {
+    return "Tên kích cỡ không được quá 20 ký tự";
+  }
+
+  if (!/^[a-zA-Z0-9À-ỹ\s]+$/.test(name)) {
+    return "Tên kích cỡ không hợp lệ";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id
+  );
+
+  if (isDuplicate) {
+    return "Tên kích cỡ đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenKichCo.trim()) {
-    showNotification("Tên kích cỡ không được để trống", "warning");
+  const error = validateKichCo(newColor.value.tenKichCo);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -377,12 +401,12 @@ const addColor = async () => {
     await axios.post(
       "http://localhost:8080/api/kich-co",
       {
-        tenKichCo: newColor.value.tenKichCo,
+        tenKichCo: newColor.value.tenKichCo.trim(),
         nguoiTao: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Thêm kích cỡ thành công", "success");
@@ -391,7 +415,7 @@ const addColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Thêm kích cỡ thất bại",
-      "error",
+      "error"
     );
   }
 };
@@ -404,8 +428,13 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenKichCo.trim()) {
-    showNotification("Tên kích cỡ không được để trống", "warning");
+  const error = validateKichCo(
+    newColor.value.tenKichCo,
+    editingId.value
+  );
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -413,12 +442,12 @@ const updateColor = async () => {
     await axios.put(
       `http://localhost:8080/api/kich-co/${editingId.value}`,
       {
-        tenKichCo: newColor.value.tenKichCo,
+        tenKichCo: newColor.value.tenKichCo.trim(),
         nguoiCapNhat: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Cập nhật kích cỡ thành công", "success");
@@ -427,7 +456,7 @@ const updateColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Cập nhật thất bại",
-      "error",
+      "error"
     );
   }
 };

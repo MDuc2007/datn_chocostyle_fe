@@ -120,15 +120,6 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
         <button
           class="nav-btn"
@@ -219,7 +210,7 @@ const currentPage = ref(0);
 const pageSize = ref(8);
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -307,16 +298,14 @@ async function handleModalConfirm() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-
-  currentPage.value = 0;
-
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
 
 const fetchColors = async () => {
@@ -367,9 +356,43 @@ const closeModal = () => {
   editingId.value = null;
 };
 
+const validateLoaiAo = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên loại áo không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên loại áo phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên loại áo không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên loại áo không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id
+  );
+
+  if (isDuplicate) {
+    return "Tên loại áo đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenLoai.trim()) {
-    showNotification("Tên loại áo không được để trống", "warning");
+  const error = validateLoaiAo(newColor.value.tenLoai);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -377,12 +400,12 @@ const addColor = async () => {
     await axios.post(
       "http://localhost:8080/api/loai-ao",
       {
-        tenLoai: newColor.value.tenLoai,
+        tenLoai: newColor.value.tenLoai.trim(),
         nguoiTao: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Thêm loại áo thành công", "success");
@@ -391,7 +414,7 @@ const addColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Thêm loại áo thất bại",
-      "error",
+      "error"
     );
   }
 };
@@ -404,8 +427,13 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenLoai.trim()) {
-    showNotification("Tên loại áo không được để trống", "warning");
+  const error = validateLoaiAo(
+    newColor.value.tenLoai,
+    editingId.value
+  );
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -413,12 +441,12 @@ const updateColor = async () => {
     await axios.put(
       `http://localhost:8080/api/loai-ao/${editingId.value}`,
       {
-        tenLoai: newColor.value.tenLoai,
+        tenLoai: newColor.value.tenLoai.trim(),
         nguoiCapNhat: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Cập nhật loại áo thành công", "success");
@@ -427,7 +455,7 @@ const updateColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Cập nhật thất bại",
-      "error",
+      "error"
     );
   }
 };

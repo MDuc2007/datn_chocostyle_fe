@@ -120,15 +120,6 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
         <button
           class="nav-btn"
@@ -228,7 +219,7 @@ const currentPage = ref(0);
 const pageSize = ref(8);
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -306,16 +297,14 @@ async function handleModalConfirm() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-
-  currentPage.value = 0;
-
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
 
 const fetchColors = async () => {
@@ -333,8 +322,8 @@ const fetchColors = async () => {
     }));
 
     colors.value = [...allColors.value];
-    currentPage.value = 0
-    currentPage.value = 0
+    currentPage.value = 0;
+    currentPage.value = 0;
   } catch {
     showNotification("Không thể tải danh sách chất liệu", "error");
   }
@@ -366,9 +355,43 @@ const closeModal = () => {
   editingId.value = null;
 };
 
+const validateChatLieu = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên chất liệu không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên chất liệu phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên chất liệu không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên chất liệu không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id
+  );
+
+  if (isDuplicate) {
+    return "Tên chất liệu đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenChatLieu.trim()) {
-    showNotification("Tên chất liệu không được để trống", "warning");
+  const error = validateChatLieu(newColor.value.tenChatLieu);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -376,12 +399,12 @@ const addColor = async () => {
     await axios.post(
       "http://localhost:8080/api/chat-lieu",
       {
-        tenChatLieu: newColor.value.tenChatLieu,
+        tenChatLieu: newColor.value.tenChatLieu.trim(),
         nguoiTao: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Thêm chất liệu thành công", "success");
@@ -390,7 +413,7 @@ const addColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Thêm chất liệu thất bại",
-      "error",
+      "error"
     );
   }
 };
@@ -403,8 +426,13 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenChatLieu.trim()) {
-    showNotification("Tên chất liệu không được để trống", "warning");
+  const error = validateChatLieu(
+    newColor.value.tenChatLieu,
+    editingId.value
+  );
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -412,12 +440,12 @@ const updateColor = async () => {
     await axios.put(
       `http://localhost:8080/api/chat-lieu/${editingId.value}`,
       {
-        tenChatLieu: newColor.value.tenChatLieu,
+        tenChatLieu: newColor.value.tenChatLieu.trim(),
         nguoiCapNhat: username,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
+      }
     );
 
     showNotification("Cập nhật chất liệu thành công", "success");
@@ -426,7 +454,7 @@ const updateColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Cập nhật thất bại",
-      "error",
+      "error"
     );
   }
 };

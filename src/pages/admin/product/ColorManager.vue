@@ -120,15 +120,6 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
         <button
           class="nav-btn"
@@ -237,7 +228,7 @@ const currentPage = ref(0);
 const pageSize = ref(8);
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -317,17 +308,16 @@ function closeConfirmModal() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-
-  currentPage.value = 0;
-
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
+
 const fetchColors = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/mau-sac", {
@@ -382,9 +372,44 @@ const closeModal = () => {
   isEdit.value = false;
   editingId.value = null;
 };
+
+const validateColorName = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên màu không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên màu phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên màu không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên màu không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id,
+  );
+
+  if (isDuplicate) {
+    return "Tên màu đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenMauSac.trim()) {
-    showNotification("Tên màu sắc không được để trống", "warning");
+  const error = validateColorName(newColor.value.tenMauSac);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -392,7 +417,7 @@ const addColor = async () => {
     await axios.post(
       "http://localhost:8080/api/mau-sac",
       {
-        tenMauSac: newColor.value.tenMauSac,
+        tenMauSac: newColor.value.tenMauSac.trim(),
         rgb: newColor.value.rgb,
         nguoiTao: username,
       },
@@ -412,6 +437,7 @@ const addColor = async () => {
     showNotification(message, "error");
   }
 };
+
 const editColor = (item) => {
   isEdit.value = true;
   editingId.value = item.id;
@@ -420,8 +446,10 @@ const editColor = (item) => {
   openModal();
 };
 const updateColor = async () => {
-  if (!newColor.value.tenMauSac.trim()) {
-    showNotification("Tên màu sắc không được để trống", "warning");
+  const error = validateColorName(newColor.value.tenMauSac, editingId.value);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -429,7 +457,7 @@ const updateColor = async () => {
     await axios.put(
       `http://localhost:8080/api/mau-sac/${editingId.value}`,
       {
-        tenMauSac: newColor.value.tenMauSac,
+        tenMauSac: newColor.value.tenMauSac.trim(),
         rgb: newColor.value.rgb,
         nguoiCapNhat: username,
       },

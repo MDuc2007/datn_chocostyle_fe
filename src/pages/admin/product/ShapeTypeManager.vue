@@ -120,15 +120,6 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
         <button
           class="nav-btn"
@@ -218,7 +209,7 @@ const currentPage = ref(0);
 const pageSize = ref(8);
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -304,16 +295,14 @@ async function handleModalConfirm() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-
-  currentPage.value = 0;
-
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
 
 const fetchColors = async () => {
@@ -364,12 +353,45 @@ const closeModal = () => {
   editingId.value = null;
 };
 
-const addColor = async () => {
-  if (!newColor.value.tenKieuDang.trim()) {
-    showNotification("Tên kiểu dáng không được để trống", "warning");
-    return;
+const validateKieuDang = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên kiểu dáng không được để trống";
   }
 
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên kiểu dáng phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên kiểu dáng không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên kiểu dáng không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id,
+  );
+
+  if (isDuplicate) {
+    return "Tên kiểu dáng đã tồn tại";
+  }
+
+  return null;
+};
+
+const addColor = async () => {
+  const error = validateKieuDang(newColor.value.tenKieuDang);
+
+  if (error) {
+    showNotification(error, "warning");
+    return;
+  }
   try {
     await axios.post(
       "http://localhost:8080/api/kieu-dang",
@@ -401,8 +423,10 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenKieuDang.trim()) {
-    showNotification("Tên kiểu dáng không được để trống", "warning");
+  const error = validateKieuDang(newColor.value.tenKieuDang, editingId.value);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
