@@ -119,6 +119,7 @@
                   type="checkbox"
                   :checked="isAllSelected"
                   @change="toggleSelectAll"
+                  class="custom-checkbox"
                 />
               </th>
 
@@ -139,7 +140,12 @@
           <tbody>
             <tr v-for="(item, index) in variants" :key="item.id">
               <td>
-                <input type="checkbox" v-model="selectedIds" :value="item.id" />
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="item.id"
+                  class="custom-checkbox"
+                />
               </td>
 
               <td>{{ index + 1 }}</td>
@@ -1627,5 +1633,11 @@ input:checked + .slider::before {
   padding: 3px 6px;
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #a9744f;
 }
 </style>
