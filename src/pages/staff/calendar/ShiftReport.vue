@@ -147,7 +147,6 @@
         <button 
           v-else
           class="btn-primary hover-effect" 
-          style="background-color: #dc2626;"
           @click="handleCheckout"
           :disabled="isViewOnly || isLoading"
         >

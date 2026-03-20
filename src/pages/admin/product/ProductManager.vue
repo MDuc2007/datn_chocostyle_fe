@@ -14,7 +14,7 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm loại áo theo tên"
+              placeholder="Tìm kiếm sản phẩm theo tên"
               v-model="keyword"
               @keyup.enter="handleSearch"
             />
@@ -84,11 +84,10 @@
         <button
           v-if="selectedProducts.length > 0"
           @click="openMultiQuickQuantityModal"
-          style="background: #a9744f; color: white; border: none"
         >
           <img
             src="/src/assets/icon/pencil.svg"
-            style="width: 20px; height: 20px; filter: brightness(0) invert(1)"
+            style="width: 20px; height: 20px"
           />
           Sửa nhanh ({{ selectedProducts.length }})
         </button>
@@ -227,20 +226,6 @@
 
               <td>
                 <div class="action-inner">
-                  <div
-                    class="tooltip-wrapper"
-                    data-tooltip="Sửa nhanh (SL, Giá)"
-                  >
-                    <span
-                      class="icon quick-edit"
-                      @click="openQuickQuantityModal(item.id)"
-                    >
-                      <img
-                        src="/src/assets/icon/pencil.svg"
-                        style="width: 20px; height: 20px"
-                      />
-                    </span>
-                  </div>
                   <div class="tooltip-wrapper" data-tooltip="Xem chi tiết">
                     <span class="icon view" @click="goToDetail(item.id)">
                       <img

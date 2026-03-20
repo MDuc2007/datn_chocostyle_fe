@@ -233,7 +233,7 @@ const cancelRequest = async () => {
 
   try {
     await axios.put(
-      `http://localhost:8080/api/conversations/${conversationId.value}/cancel-request`
+      `http://localhost:8080/api/conversations/${conversationId.value}/cancel-request`,
     );
 
     chatStatus.value = "BOT";
@@ -269,14 +269,11 @@ const endChat = async () => {
       sentAt: new Date(),
     });
 
-    conversationId.value = null;
+    // 🔥 chỉ reset trạng thái, KHÔNG reset conversationId
     chatStatus.value = "BOT";
     assignedNhanVien.value = null;
 
-    if (stompClient.value) {
-      stompClient.value.disconnect();
-      connected.value = false;
-    }
+    // 🔥 KHÔNG disconnect socket
 
     scrollToBottom();
   } catch (error) {

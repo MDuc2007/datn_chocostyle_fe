@@ -15,7 +15,7 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm loại áo theo tên"
+              placeholder="Tìm kiếm kích cỡ theo tên"
             />
           </div>
         </div>
