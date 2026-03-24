@@ -595,41 +595,24 @@ const back = () => router.push("/admin/promotion");
 // 5. Logic Nghiệp vụ & Validation
 const validate = () => {
   let valid = true;
-
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
+  const name = form.tenDotGiamGia.trim();
 
-  if (!form.tenDotGiamGia.trim()) {
+  if (!name) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
     valid = false;
+  } else if (name.length < 3) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
+    valid = false;
   }
-
-  if (form.tenDotGiamGia.trim().length < 3) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá phải ít nhất 3 ký tự";
-    return false;
-  }
-
-  if (form.tenDotGiamGia.trim().length > 100) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
-    return false;
-  }
-
-  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
-
-  if (!regex.test(form.tenDotGiamGia.trim())) {
-    errors.tenDotGiamGia = "Tên không được chứa ký tự đặc biệt";
-    return false;
-  }
-
   if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
   }
-
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Ngày bắt đầu không được để trống";
     valid = false;
   }
-
   if (!form.ngayKetThuc) {
     errors.ngayKetThuc = "Ngày kết thúc không được để trống";
     valid = false;
@@ -637,12 +620,10 @@ const validate = () => {
     errors.ngayKetThuc = "Ngày kết thúc phải ≥ ngày bắt đầu";
     valid = false;
   }
-
   if (selectedChiTietIds.value.length === 0) {
     errors.chiTiet = "Vui lòng chọn ít nhất 1 biến thể sản phẩm";
     valid = false;
   }
-
   return valid;
 };
 
@@ -965,40 +946,12 @@ const getDiscountPrice = (ct: any) => {
   z-index: 2;
 }
 
-/* chỉ body cuộn */
-/* chỉ body cuộn */
-.table tbody {
-  display: block;
-  max-height: 320px;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-/* mỗi row body giữ đúng width */
-.table tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-
-/* cell */
 .table th,
 .table td {
   padding: 14px 8px;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
-
-/* header không xuống dòng */
-.table thead th {
-  white-space: nowrap;
-}
-
-.table td:nth-child(4) {
-  width: 200px;
-  white-space: nowrap;
-}
-
 img {
   width: 50px;
   height: 50px;

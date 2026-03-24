@@ -15,13 +15,15 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm phong cách mặc theo tên"
+              placeholder="Tìm kiếm..."
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -208,6 +210,7 @@ const selectedStatus = ref("");
 
 const currentPage = ref(0);
 const pageSize = ref(8);
+const searchQuery = ref(""); // <--- THÊM DÒNG NÀY
 
 const totalPages = computed(() => {
   return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
@@ -321,12 +324,30 @@ const fetchColors = async () => {
       trangThai: item.trangThai,
     }));
 
-    colors.value = [...allColors.value];
-    currentPage.value = 0;
-    currentPage.value = 0;
+    applyFilters();
   } catch {
     showNotification("Không thể tải danh sách phong cách mặc", "error");
   }
+};
+
+const applyFilters = () => {
+  let temp = allColors.value;
+
+  // 1. Lọc theo chữ tìm kiếm (Không phân biệt hoa/thường)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  // 2. Lọc theo trạng thái
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+
+  // Cập nhật lại list hiển thị và reset về trang 1
+  colors.value = temp;
+  currentPage.value = 0;
 };
 
 const formatDate = (date) => {

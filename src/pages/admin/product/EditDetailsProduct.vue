@@ -16,7 +16,7 @@
         </div>
         <div class="row">
           <div class="col">
-            <label>Màu sắc <span class="required">*</span></label>
+            <label>Màu sắc</label>
             <div class="select-box">
               <select v-model="selectedMauSacList" disabled>
                 <option value="">Chọn màu sắc</option>
@@ -28,7 +28,7 @@
           </div>
 
           <div class="col">
-            <label>Kích cỡ <span class="required">*</span></label>
+            <label>Kích cỡ</label>
             <div class="select-box">
               <select v-model="selectedKichCoList" disabled>
                 <option value="">Chọn kích cỡ</option>
@@ -39,7 +39,7 @@
             </div>
           </div>
           <div class="col">
-            <label>Loại áo <span class="required">*</span></label>
+            <label>Loại áo</label>
             <div class="select-box">
               <select v-model="selectedLoaiAo" disabled>
                 <option value="">Chọn loại áo</option>
@@ -51,7 +51,7 @@
           </div>
 
           <div class="col">
-            <label>Kiểu dáng <span class="required">*</span></label>
+            <label>Kiểu dáng</label>
             <div class="select-box">
               <select v-model="selectedKieuDang" disabled>
                 <option value="">Chọn kiểu dáng</option>
@@ -63,7 +63,7 @@
           </div>
 
           <div class="col">
-            <label>Phong cách mặc <span class="required">*</span></label>
+            <label>Phong cách mặc</label>
             <div class="select-box">
               <select v-model="selectedPhongCach" disabled>
                 <option value="">Chọn phong cách</option>
@@ -79,7 +79,7 @@
             <input type="number" v-model.number="soLuongTon" />
           </div>
           <div class="col">
-            <label>Giá bán:</label>
+            <label>Giá bán <span class="required">*</span></label>
             <div class="money-input">
               <input type="text" :value="formatVNDInput(giaBan)" @input="handlePriceInput($event, 'giaBan')" />
               <span class="currency">đ</span>
@@ -87,7 +87,7 @@
           </div>
 
           <div class="col">
-            <label>Giá nhập:</label>
+            <label>Giá nhập <span class="required">*</span></label>
             <div class="money-input">
               <input type="text" :value="formatVNDInput(giaNhap)" @input="handlePriceInput($event, 'giaNhap')" />
               <span class="currency">đ</span>

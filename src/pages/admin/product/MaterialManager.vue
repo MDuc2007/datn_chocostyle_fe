@@ -15,13 +15,15 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm chất liệu theo tên"
+              placeholder="Tìm kiếm..."
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -204,8 +206,29 @@ const username = user?.username;
 const colors = ref([]);
 const allColors = ref([]);
 const selectedStatus = ref("");
+const searchQuery = ref("");
 
 const notifications = ref([]);
+
+const applyFilters = () => {
+  let temp = allColors.value;
+
+  // 1. Lọc theo chữ tìm kiếm (Không phân biệt hoa/thường)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  // 2. Lọc theo trạng thái
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+
+  // Cập nhật lại list hiển thị và reset về trang 1
+  colors.value = temp;
+  currentPage.value = 0;
+};
 
 const showNotification = (message, type = "success") => {
   const id = Date.now();
@@ -321,9 +344,7 @@ const fetchColors = async () => {
       trangThai: item.trangThai,
     }));
 
-    colors.value = [...allColors.value];
-    currentPage.value = 0;
-    currentPage.value = 0;
+    applyFilters();
   } catch {
     showNotification("Không thể tải danh sách chất liệu", "error");
   }
@@ -377,7 +398,7 @@ const validateChatLieu = (name, id = null) => {
   const isDuplicate = allColors.value.some(
     (item) =>
       item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
-      item.id !== id
+      item.id !== id,
   );
 
   if (isDuplicate) {
@@ -404,7 +425,7 @@ const addColor = async () => {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     showNotification("Thêm chất liệu thành công", "success");
@@ -413,7 +434,7 @@ const addColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Thêm chất liệu thất bại",
-      "error"
+      "error",
     );
   }
 };
@@ -426,10 +447,7 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  const error = validateChatLieu(
-    newColor.value.tenChatLieu,
-    editingId.value
-  );
+  const error = validateChatLieu(newColor.value.tenChatLieu, editingId.value);
 
   if (error) {
     showNotification(error, "warning");
@@ -445,7 +463,7 @@ const updateColor = async () => {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     showNotification("Cập nhật chất liệu thành công", "success");
@@ -454,7 +472,7 @@ const updateColor = async () => {
   } catch (error) {
     showNotification(
       error?.response?.data?.message || "Cập nhật thất bại",
-      "error"
+      "error",
     );
   }
 };
