@@ -15,13 +15,15 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm xuất xứ theo tên"
+              placeholder="Tìm kiếm..."
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -201,6 +203,7 @@ const user = JSON.parse(localStorage.getItem("user") || "{}");
 const token = user?.accessToken;
 const username = user?.username;
 const notifications = ref([]);
+const searchQuery = ref(""); // <--- THÊM DÒNG NÀY
 
 const showNotification = (message, type = "success") => {
   const id = Date.now();
@@ -321,14 +324,32 @@ const fetchColors = async () => {
     trangThai: item.trangThai,
   }));
 
-  colors.value = [...allColors.value];
-  currentPage.value = 0;
-  currentPage.value = 0;
+  applyFilters();
 };
 
 const formatDate = (date) => {
   if (!date) return "";
   return new Date(date).toLocaleDateString("vi-VN");
+};
+
+const applyFilters = () => {
+  let temp = allColors.value;
+
+  // 1. Lọc theo chữ tìm kiếm (Không phân biệt hoa/thường)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  // 2. Lọc theo trạng thái
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+
+  // Cập nhật lại list hiển thị và reset về trang 1
+  colors.value = temp;
+  currentPage.value = 0;
 };
 
 onMounted(fetchColors);
@@ -374,7 +395,7 @@ const validateXuatXu = (name, id = null) => {
   const isDuplicate = allColors.value.some(
     (item) =>
       item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
-      item.id !== id
+      item.id !== id,
   );
 
   if (isDuplicate) {
@@ -425,10 +446,7 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  const error = validateXuatXu(
-    newColor.value.tenXuatXu,
-    editingId.value
-  );
+  const error = validateXuatXu(newColor.value.tenXuatXu, editingId.value);
 
   if (error) {
     showNotification(error, "warning");

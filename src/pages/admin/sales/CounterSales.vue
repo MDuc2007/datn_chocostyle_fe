@@ -649,6 +649,8 @@ import { onBeforeUnmount } from "vue";
 import InvoicePrintTemplate from "../invoice/InvoicePrintTemplate.vue";
 import { Html5Qrcode } from "html5-qrcode";
 import ghnLogo from "../../../assets/logo/ghn.png";
+import SockJS from "sockjs-client/dist/sockjs";
+import Stomp from "stompjs";
 
 const GHN_TOKEN = "31476b34-15db-11f1-9cf9-9efb715b9957";
 const GHN_SHOP_ID = 6296816;
@@ -673,6 +675,39 @@ let hasAutoAppliedOnce = false;
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
+
+let stompClient = null;
+
+const connectWebSocket = () => {
+  const socket = new SockJS("http://localhost:8080/ws-chocostyle"); // Dùng đúng endpoint bạn đã cấu hình bên Backend
+  stompClient = Stomp.over(socket);
+  stompClient.debug = () => {}; // Tắt log cho đỡ rối
+
+  stompClient.connect(
+    {},
+    (frame) => {
+      console.log("POS: Đã kết nối WebSocket thành công!");
+
+      // Lắng nghe kênh cập nhật giá/voucher
+      stompClient.subscribe("/topic/public-updates", (message) => {
+        console.log("POS: Server báo có cập nhật mới, đang tải lại giá...");
+        // Nếu đang mở đơn hàng và có sản phẩm thì mới kiểm tra lại
+        if (currentOrder.value && currentOrder.value.cart.length > 0) {
+          autoRevalidateSystem();
+        }
+      });
+    },
+    (error) => {
+      console.error("Lỗi kết nối WebSocket POS:", error);
+    }
+  );
+};
+
+const disconnectWebSocket = () => {
+  if (stompClient !== null) {
+    stompClient.disconnect();
+  }
+};
 
 const fetchCustomers = async () => {
   const res = await axios.get("http://localhost:8080/api/khach-hang");
@@ -2002,7 +2037,7 @@ watch(
 
 onMounted(async () => {
   isSettingAddress.value = true;
-  await getProvinces(); // Gọi Tỉnh/Thành từ GHN thay vì OpenAPI
+  await getProvinces(); 
 
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -2020,7 +2055,6 @@ onMounted(async () => {
     }),
   );
 
-  // Restore danh sách quận/phường từ GHN cho tab hiện tại nếu đang là DELIVERY
   if (currentOrder.value && currentOrder.value.deliveryType === "DELIVERY") {
     if (currentOrder.value.customer.province) {
       await getDistricts(currentOrder.value.customer.province);
@@ -2037,12 +2071,15 @@ onMounted(async () => {
   isSettingAddress.value = false;
   isReady.value = true;
 
-  autoRevalidateInterval = setInterval(async () => {
-    if (!currentOrder.value) return;
-    if (!currentOrder.value.cart.length) return;
+  // 👉 1. XÓA ĐOẠN SET_INTERVAL CŨ NÀY ĐI
+  // autoRevalidateInterval = setInterval(async () => {
+  //   if (!currentOrder.value) return;
+  //   if (!currentOrder.value.cart.length) return;
+  //   await autoRevalidateSystem();
+  // }, 1000);
 
-    await autoRevalidateSystem();
-  }, 1000);
+  // 👉 2. THÊM DÒNG NÀY ĐỂ MỞ KẾT NỐI WEBSOCKET
+  connectWebSocket(); 
 });
 
 onBeforeUnmount(async () => {
@@ -2051,9 +2088,13 @@ onBeforeUnmount(async () => {
     await qrScanner.clear();
   }
 
-  if (autoRevalidateInterval) {
-    clearInterval(autoRevalidateInterval);
-  }
+  // 👉 3. XÓA ĐOẠN CLEAR_INTERVAL CŨ NÀY ĐI
+  // if (autoRevalidateInterval) {
+  //   clearInterval(autoRevalidateInterval);
+  // }
+
+  // 👉 4. THÊM DÒNG NÀY ĐỂ ĐÓNG WEBSOCKET KHI RỜI TRANG
+  disconnectWebSocket();
 });
 
 watchEffect(() => {

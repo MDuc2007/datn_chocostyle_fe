@@ -16,12 +16,14 @@
               type="text"
               class="search-input"
               placeholder="Tìm kiếm màu sắc theo tên"
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -231,6 +233,23 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
+const searchQuery = ref("");
+
+const applyFilters = () => {
+  let temp = allColors.value;
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+  colors.value = temp;
+  currentPage.value = 0;
+};
+
 const paginatedColors = computed(() => {
   const start = currentPage.value * pageSize.value;
   const end = start + pageSize.value;
@@ -335,9 +354,7 @@ const fetchColors = async () => {
       trangThai: item.trangThai,
     }));
 
-    colors.value = [...allColors.value];
-    currentPage.value = 0;
-    currentPage.value = 0;
+    applyFilters(); // <--- Đổi dòng này
   } catch (error) {
     showNotification("Không thể tải danh sách màu sắc", "error");
   }
