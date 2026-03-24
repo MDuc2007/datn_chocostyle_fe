@@ -227,46 +227,43 @@ import JacketFilter from "./JacketFilter.vue";
 
 const router = useRouter();
 
-// --- Trạng thái Data ---
 const filteredProducts = ref([]);
 const isLoading = ref(true);
 const errorMsg = ref("");
 
-// --- Trạng thái Lọc & Sắp xếp ---
 const searchKeyword = ref("");
 const selectedSort = ref("bestSale"); 
 const advancedFilters = ref({ minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] });
 
-// --- Phân trang Backend ---
 const currentPage = ref(0);
 const itemsPerPage = 12;
 const totalPages = ref(1);
 
-// --- Phân trang Frontend ---
 const visibleCount = ref(itemsPerPage);
 const displayedProducts = computed(() => filteredProducts.value.slice(0, visibleCount.value));
 const hasMore = computed(() => visibleCount.value < filteredProducts.value.length);
 const remainingCount = computed(() => filteredProducts.value.length - visibleCount.value);
 const loadMoreProducts = () => { visibleCount.value += itemsPerPage; };
 
-// --- Toast ---
 const toast = ref({ show: false, message: "", type: "success" });
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type };
   setTimeout(() => (toast.value.show = false), 3000);
 };
 
-// --- Helper ---
 const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(v) + " đ";
 const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png";
 
 // HÀM TÍNH GIÁ ĐÃ GIẢM DÙNG CHO MODAL
-const getDiscountedPrice = (price, discountPercent) => {
-  if (!discountPercent || discountPercent <= 0) return price;
-  return price - (price * discountPercent) / 100;
+const getDiscountPercent = (sp) => {
+  return sp.phanTramGiam || 0;
 };
 
-// HÀM LẤY MÃ MÀU CHUẨN ĐỒNG BỘ CÁC TRANG
+const getOldPrice = (sp) => {
+  return sp.giaGoc || sp.giaMin;
+};
+
+// HÀM ĐỔI TÊN MÀU SANG MÃ MÀU HEX CHO VÒNG TRÒN
 const getColorCode = (name) => {
   if (!name) return '#ddd';
   const n = name.toLowerCase().trim();
@@ -288,22 +285,12 @@ const getColorCode = (name) => {
   return colorMap[n] || '#cccccc'; 
 };
 
-// HÀM CHUYỂN TRANG BẰNG ID
 const goDetail = (id) => {
   if (!id) {
     console.error("Lỗi: Không tìm thấy ID sản phẩm để chuyển trang!");
     return;
   }
   router.push(`/home/product/${id}`);
-};
-
-// LẤY DỮ LIỆU SALE THẬT TỪ BACKEND
-const getDiscountPercent = (sp) => {
-  return sp.phanTramGiam || 0;
-};
-
-const getOldPrice = (sp) => {
-  return sp.giaGoc || sp.giaMin;
 };
 
 const clearSearch = () => {
@@ -318,12 +305,16 @@ const handleAdvancedFilter = (filters) => {
   fetchFilteredData();
 };
 
+let searchTimeout = null;
 const applyFilters = () => {
-  currentPage.value = 0;
-  fetchFilteredData();
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 0;
+    fetchFilteredData();
+  }, 500);
 }
 
-// ================= LOGIC GỌI API TỪ BACKEND =================
+// ================= LOGIC GỌI API TỪ BACKEND VÀ TÌM KIẾM FRONTEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -331,10 +322,7 @@ const fetchFilteredData = async (isAppend = false) => {
   try {
     let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
 
-    if (searchKeyword.value.trim()) {
-      url += `&keyword=${encodeURIComponent(searchKeyword.value.trim())}`;
-    }
-
+    // Vẫn truyền giá và các tham số lọc nếu có
     const adv = advancedFilters.value;
     if (adv.minPrice !== null && adv.minPrice !== "") url += `&minPrice=${adv.minPrice}`;
     if (adv.maxPrice !== null && adv.maxPrice !== "") url += `&maxPrice=${adv.maxPrice}`;
@@ -346,14 +334,28 @@ const fetchFilteredData = async (isAppend = false) => {
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
 
+    // Chuẩn bị từ khóa cho Frontend Filter
+    const keywordLower = searchKeyword.value.trim().toLowerCase();
+
     rawData.forEach(item => {
       let passFilter = true;
+
+      // 👉 ĐÃ THÊM: Lọc tìm kiếm trực tiếp trên Frontend bằng Tên hoặc Mã SP
+      if (keywordLower) {
+        const productName = (item.tenSanPham || item.tenSp || item.sanPham?.tenSanPham || "").toLowerCase();
+        const productCode = (item.maSanPham || item.sanPham?.maSanPham || "").toLowerCase();
+        
+        if (!productName.includes(keywordLower) && !productCode.includes(keywordLower)) {
+          passFilter = false;
+        }
+      }
+
       if (adv.types.length > 0 && !adv.types.includes(item.tenLoaiAo)) passFilter = false;
       if (adv.sizes.length > 0 && !adv.sizes.includes(item.tenKichCo)) passFilter = false;
       if (adv.colors.length > 0 && !adv.colors.includes(item.tenMauSac)) passFilter = false;
 
       if (passFilter) {
-        // 👉 CHỈ LẤY SẢN PHẨM CÓ KHUYẾN MÃI
+        // 👉 CHỈ LẤY SẢN PHẨM CÓ KHUYẾN MÃI (Cho trang Sale)
         const percent = item.phanTramGiam || 0;
 
         if (percent > 0) {
@@ -366,7 +368,7 @@ const fetchFilteredData = async (isAppend = false) => {
             uniqueProductsMap.set(item.maSanPham, {
               id: realProductId,
               maSanPham: item.maSanPham,
-              tenSp: item.tenSanPham,
+              tenSp: item.tenSanPham || item.tenSp,
               hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
               giaMin: item.giaSauGiam || item.giaBan,
               giaMax: item.giaSauGiam || item.giaBan,
@@ -415,7 +417,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// ================= LOGIC MODAL QUICK ADD ĐÃ FIX TỪ TRANG CHỦ =================
+// ================= LOGIC MODAL QUICK ADD CHUẨN TỪ TRANG CHỦ =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -435,9 +437,10 @@ const currentVariantDiscountedPrice = computed(() => {
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find((v) => {
-    // Bao phủ cấu trúc JSON dạng list và object lồng
+    // Bao phủ cấu trúc JSON từ backend (Mảng hoặc Object)
     const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
     const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
+    
     return tenMau === selectedColor.value && tenSize === selectedSize.value;
   });
 });
@@ -448,7 +451,7 @@ const openQuickAddModal = async (sp) => {
   isQuickAddModalOpen.value = true;
 
   try {
-    // 👉 GỌI API SAN-PHAM/{ID} NHƯ TRANG CHỦ
+    // 👉 GỌI ĐÚNG API SAN-PHAM/{ID} NHƯ TRANG CHỦ
     const res = await axios.get(
       `http://localhost:8080/api/san-pham/${sp.id}`
     );
@@ -464,6 +467,7 @@ const openQuickAddModal = async (sp) => {
           ),
         ),
       ].filter(Boolean);
+      
       const sizes = [
         ...new Set(
           productVariants.value.map(
@@ -497,7 +501,7 @@ const confirmAddToCart = () => {
   if (!currentVariant.value)
     return showToast("Phân loại này hiện không tồn tại hoặc đã hết hàng!", "error");
 
-  const tonKhoThucTe = currentVariant.value.soLuongTon ?? currentVariant.value.soLuong ?? 0;
+  const tonKhoThucTe = currentVariant.value.soLuongTon || currentVariant.value.soLuong || 0;
   if (quantity.value > tonKhoThucTe)
     return showToast(`Kho chỉ còn ${tonKhoThucTe} sản phẩm!`, "error");
 
@@ -548,7 +552,9 @@ const resetAllFilters = () => {
   searchKeyword.value = "";
   selectedSort.value = "bestSale";
   advancedFilters.value = { minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] };
-  applyFilters();
+  // Gọi trực tiếp fetchFilteredData thay vì applyFiltersImmediate (để đồng bộ)
+  currentPage.value = 0;
+  fetchFilteredData();
 };
 
 onMounted(() => {

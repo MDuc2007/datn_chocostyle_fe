@@ -648,14 +648,15 @@
                     <td>
                       <strong>{{ item.tenKhachHang }}</strong>
                       <div class="text-muted mt-1">
-                        📞 {{ item.soDienThoai }}
+                         {{ item.soDienThoai }}
                       </div>
                     </td>
                     <td class="address-cell">
+                      {{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
+                      {{ item.diaChi.quan }}, {{ item.diaChi.thanhPho }}
                       <span v-if="item.diaChi.macDinh" class="default-badge"
                         >Mặc định</span
-                      >{{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
-                      {{ item.diaChi.quan }}, {{ item.diaChi.thanhPho }}
+                      >
                     </td>
                     <td class="text-center">
                       <button class="btn-select" @click="selectAddress(item)">

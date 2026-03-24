@@ -46,7 +46,7 @@
           <div class="filter-content">
             <div class="checkbox-list">
               <label v-for="type in jacketTypes" :key="type.value" class="custom-checkbox-label">
-                <input type="checkbox" :value="type.value" v-model="filters.types" class="hidden-checkbox" @change="applyFilter">
+                <input type="checkbox" :value="type.value" v-model="filters.types" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
                 <div class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                 <span class="checkbox-text">{{ type.label }}</span>
               </label>
@@ -65,8 +65,8 @@
           <div class="filter-content">
             <div class="size-grid">
               <label v-for="size in sizes" :key="size" class="size-item">
-                <input type="checkbox" :value="size" v-model="filters.sizes" class="hidden-checkbox" @change="applyFilter">
-                <span class="size-box" :class="{ active: filters.sizes.includes(size) }">{{ size }}</span>
+                <input type="checkbox" :value="String(size)" v-model="filters.sizes" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
+                <span class="size-box" :class="{ active: filters.sizes.includes(String(size)) }">{{ size }}</span>
               </label>
             </div>
           </div>
@@ -83,9 +83,9 @@
           <div class="filter-content">
             <div class="color-grid">
               <label v-for="color in colors" :key="color.value" class="color-item" :title="color.label">
-                <input type="checkbox" :value="color.value" v-model="filters.colors" class="hidden-checkbox" @change="applyFilter">
-                <div class="color-circle" :style="{ backgroundColor: color.hex }" :class="{ active: filters.colors.includes(color.value) }">
-                  <svg v-if="filters.colors.includes(color.value)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <input type="checkbox" :value="String(color.value)" v-model="filters.colors" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
+                <div class="color-circle" :style="{ backgroundColor: color.hex }" :class="{ active: filters.colors.includes(String(color.value)) }">
+                  <svg v-if="filters.colors.includes(String(color.value))" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </label>
             </div>
@@ -103,7 +103,7 @@
           <div class="filter-content">
             <div class="checkbox-list">
               <label v-for="material in materials" :key="material.value" class="custom-checkbox-label">
-                <input type="checkbox" :value="material.value" v-model="filters.materials" class="hidden-checkbox" @change="applyFilter">
+                <input type="checkbox" :value="material.value" v-model="filters.materials" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
                 <div class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                 <span class="checkbox-text">{{ material.label }}</span>
               </label>
@@ -277,9 +277,7 @@ const resetFilter = () => {
   };
   applyFilter();
 };
-</script>
-
-<style scoped>
+</script><style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap');
 
 /* Container chính của Sidebar */
@@ -424,22 +422,23 @@ const resetFilter = () => {
 }
 .filter-content {
   padding-bottom: 20px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 /* =========================================================
-   KHU VỰC NHẬP GIÁ - ĐÃ ĐƯỢC CHỈNH SỬA ĐỂ KHÔNG BỊ ÉP CHỮ
+   KHU VỰC NHẬP GIÁ 
    ========================================================= */
 .price-inputs {
   display: flex;
   align-items: center;
-  gap: 8px; /* Giảm khoảng cách giữa 2 ô để input có thêm diện tích */
+  gap: 8px; 
 }
 .input-wrapper {
   position: relative;
   flex: 1;
 }
 
-/* Ẩn mũi tên lên xuống của thẻ input number trên các trình duyệt */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none; 
@@ -451,12 +450,11 @@ input[type=number] {
 
 .input-wrapper input {
   width: 75px;
-  /* Giảm padding trái/phải để chữ có không gian rộng hơn */
   padding: 10px 24px 10px 8px; 
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px; /* Chữ to lên xíu dễ nhìn */
+  font-size: 14px;
   font-weight: 600;
   outline: none;
   background: #f8fafc;
@@ -469,7 +467,7 @@ input[type=number] {
 }
 .currency {
   position: absolute;
-  right: 8px; /* Đẩy sát chữ 'đ' ra lề phải để nhường chỗ cho số */
+  right: 8px; 
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -477,7 +475,7 @@ input[type=number] {
   font-weight: 700;
 }
 .price-separator svg {
-  width: 12px; /* Thu nhỏ gạch ngang ở giữa */
+  width: 12px; 
   color: #cbd5e1;
 }
 
@@ -513,7 +511,17 @@ input[type=number] {
 .hidden-checkbox:checked ~ .checkbox-text { color: #1a1a1a; font-weight: 700; }
 
 /* --- KHU VỰC KÍCH CỠ --- */
-.size-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.size-grid { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  padding: 4px;
+}
+
+.size-item {
+  cursor: pointer;
+}
+
 .size-box {
   display: flex;
   align-items: center;
@@ -522,47 +530,94 @@ input[type=number] {
   padding: 0 10px;
   height: 38px;
   background-color: #fff;
-  border: 2px solid #e2e8f0;
+  border: 1.5px solid #d1d5db;
   border-radius: 8px;
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
-.size-item:hover .size-box { border-color: #6b3f1e; color: #6b3f1e; }
-.size-box.active { background-color: #6b3f1e; color: #FFF; border-color: #6b3f1e; box-shadow: 0 4px 12px rgba(107, 63, 30, 0.25); transform: translateY(-2px); }
 
-/* --- KHU VỰC MÀU SẮC --- */
-.color-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.size-item:hover .hidden-checkbox:not(:checked) + .size-box { 
+  border-color: #6b3f1e; 
+  color: #6b3f1e; 
+  background-color: #fcf9f7; 
+}
+
+.hidden-checkbox:checked + .size-box { 
+  background-color: #6b3f1e !important; 
+  color: #FFFFFF !important; 
+  border-color: #6b3f1e !important; 
+  box-shadow: 0 4px 10px rgba(107, 63, 30, 0.25);
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   KHU VỰC MÀU SẮC (ĐÃ CĂN GIỮA VÀ TĂNG KHOẢNG CÁCH)
+   ========================================================= */
+.color-grid { 
+  display: flex; 
+  flex-wrap: wrap; 
+  
+  /* 👉 Căn giữa các ô màu */
+  justify-content: center; 
+  
+  /* 👉 Tăng khoảng cách các ô màu ra cho thoáng */
+  gap: 18px; 
+  
+  padding: 6px 4px; 
+}
+
+.color-item {
+  cursor: pointer;
+  display: block;
+}
+
 .color-circle {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative; 
 }
-.color-circle[style*="background-color: #FFFFFF"],
-.color-circle[style*="background-color: rgb(255, 255, 255)"] { 
-  border: 1px solid #cbd5e1; 
+
+.color-item:hover .hidden-checkbox:not(:checked) + .color-circle {
+  border: 2px solid #6b3f1e;
+  padding: 2px;
 }
-.color-circle[style*="background-color: #FFFFFF"] svg,
-.color-circle[style*="background-color: rgb(255, 255, 255)"] svg { 
-  stroke: #333 !important; 
-}
-.color-circle:hover {
-  transform: scale(1.1);
-}
-.color-circle.active { 
+
+.hidden-checkbox:checked + .color-circle { 
+  border: 2px solid #fff; 
+  box-shadow: 0 0 0 2px #6b3f1e; 
   transform: scale(1.15); 
-  box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #6b3f1e; 
 }
-.color-circle svg { width: 16px; height: 16px; stroke: #fff; opacity: 0; transform: scale(0.5); transition: 0.2s; }
-.hidden-checkbox:checked + .color-circle svg { opacity: 1; transform: scale(1); }
+
+.color-circle svg { 
+  width: 16px; 
+  height: 16px; 
+  stroke: #fff; 
+  opacity: 0; 
+  transform: scale(0.5); 
+  transition: 0.2s;
+  filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.5)); 
+}
+
+.color-circle[style*="background-color: #ffffff"] svg,
+.color-circle[style*="background-color: rgb(255, 255, 255)"] svg,
+.color-circle[style*="background-color: #f5f5dc"] svg { 
+  stroke: #334155 !important;
+  filter: none;
+}
+
+.hidden-checkbox:checked + .color-circle svg { 
+  opacity: 1; 
+  transform: scale(1); 
+}
 </style>

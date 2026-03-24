@@ -88,18 +88,18 @@
               
               <div class="service-item">
                 <div class="service-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.2 1.2L3 12l5.8 1.9a2 2 0 0 1 1.2 1.2L12 21l1.9-5.8a2 2 0 0 1-1.2-1.2L21 12l-5.8-1.9a2 2 0 0 1-1.2-1.2L12 3Z"></path></svg>
                 </div>
-                <h4 class="service-title">Đổi trả 7 ngày</h4>
-                <p class="service-desc">Hỗ trợ đổi size hoặc trả hàng trong vòng 7 ngày nếu sản phẩm còn nguyên tem mác.</p>
+                <h4 class="service-title">Tư vấn thông minh AI</h4>
+                <p class="service-desc">Trải nghiệm mua sắm cá nhân hóa với trợ lý AI hỗ trợ gợi ý size và phong cách.</p>
               </div>
               
               <div class="service-item">
                 <div class="service-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                 </div>
-                <h4 class="service-title">Bảo hành 30 ngày</h4>
-                <p class="service-desc">Bảo hành cúc áo, khóa kéo và đường chỉ tận tâm trong vòng 30 ngày sử dụng.</p>
+                <h4 class="service-title">Hỗ trợ trực tuyến 24/7</h4>
+                <p class="service-desc">Nhắn tin trực tiếp với đội ngũ nhân viên chăm sóc khách hàng để được giải đáp ngay.</p>
               </div>
             </div>
           </div>
@@ -117,7 +117,7 @@
                     </div>
                     <div class="text-wrap">
                       <strong>Địa chỉ văn phòng</strong>
-                      <p>Số 123, Đường Thời Trang, Quận Trung Tâm, TP. Hà Nội</p>
+                      <p>36 Phố Huế, Hai Bà Trưng, Hà Nội</p>
                     </div>
                   </li>
                   <li>
@@ -126,7 +126,7 @@
                     </div>
                     <div class="text-wrap">
                       <strong>Hotline hỗ trợ</strong>
-                      <p>0987.654.321 (Zalo OA)</p>
+                      <p>0363 636 366</p>
                     </div>
                   </li>
                   <li>
@@ -135,7 +135,7 @@
                     </div>
                     <div class="text-wrap">
                       <strong>Email liên hệ</strong>
-                      <p>support@chocostyle.com</p>
+                      <p>chocostyle@gmail.com</p>
                     </div>
                   </li>
                   <li>

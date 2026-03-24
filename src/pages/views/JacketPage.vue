@@ -238,7 +238,6 @@
     </transition>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import Header from "../../layout/header/Header.vue";
@@ -337,7 +336,7 @@ const applyFiltersImmediate = () => {
   fetchFilteredData();
 }
 
-// LẤY DỮ LIỆU GRID DANH SÁCH
+// ================= LOGIC GỌI API LỌC TỪ BACKEND & TÌM KIẾM FRONTEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -345,10 +344,7 @@ const fetchFilteredData = async (isAppend = false) => {
   try {
     let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
 
-    if (searchKeyword.value.trim()) {
-      url += `&keyword=${encodeURIComponent(searchKeyword.value.trim())}`;
-    }
-
+    // Vẫn truyền các tham số lọc giá lên Backend nếu có
     const adv = advancedFilters.value;
     if (adv.minPrice !== null && adv.minPrice !== "") url += `&minPrice=${adv.minPrice}`;
     if (adv.maxPrice !== null && adv.maxPrice !== "") url += `&maxPrice=${adv.maxPrice}`;
@@ -359,14 +355,18 @@ const fetchFilteredData = async (isAppend = false) => {
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
 
+    // Chuẩn bị từ khóa cho Frontend Filter
     const keywordLower = searchKeyword.value.trim().toLowerCase();
 
     rawData.forEach(item => {
       let passFilter = true;
 
+      // 👉 ĐÃ CẬP NHẬT: Lọc tìm kiếm trực tiếp trên Frontend bằng Tên hoặc Mã Sản Phẩm
       if (keywordLower) {
-        const productName = (item.tenSanPham || "").toLowerCase();
-        if (!productName.includes(keywordLower)) {
+        const productName = (item.tenSanPham || item.tenSp || item.sanPham?.tenSanPham || "").toLowerCase();
+        const productCode = (item.maSanPham || item.sanPham?.maSanPham || "").toLowerCase();
+        
+        if (!productName.includes(keywordLower) && !productCode.includes(keywordLower)) {
           passFilter = false;
         }
       }
@@ -387,7 +387,7 @@ const fetchFilteredData = async (isAppend = false) => {
           uniqueProductsMap.set(item.maSanPham, {
             id: realProductId,
             maSanPham: item.maSanPham,
-            tenSp: item.tenSanPham,
+            tenSp: item.tenSanPham || item.tenSp,
             hinhAnh: (item.hinhAnh && item.hinhAnh.length > 0) ? item.hinhAnh[0] : null,
             giaMin: item.giaGoc || item.giaBan,
             giaMax: item.giaGoc || item.giaBan,
@@ -435,7 +435,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// ================= LOGIC MODAL QUICK ADD ĐÃ FIX =================
+// ================= LOGIC MODAL QUICK ADD CHUẨN TỪ TRANG CHỦ =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
