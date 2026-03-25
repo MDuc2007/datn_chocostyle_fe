@@ -479,14 +479,20 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (!form.ngaySinh) {
+if (!form.ngaySinh) {
     errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
     isValid = false;
   } else {
     const today = new Date();
     const birthDate = new Date(form.ngaySinh);
-    if (birthDate >= today) {
-      errors.value.ngaySinh = "Ngày sinh không hợp lệ";
+    
+    // Tạo một mốc thời gian cách đây đúng 16 năm
+    const minAgeDate = new Date();
+    minAgeDate.setFullYear(today.getFullYear() - 16);
+
+    // Nếu ngày sinh nhập vào LỚN HƠN mốc 16 năm trước -> Chưa đủ 16 tuổi
+    if (birthDate > minAgeDate) {
+      errors.value.ngaySinh = "Khách hàng phải từ 16 tuổi trở lên";
       isValid = false;
     }
   }

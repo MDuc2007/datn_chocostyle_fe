@@ -218,18 +218,28 @@ const clearError = () => {
   message.value = "";
   isError.value = false;
 };
-
 // ===== BƯỚC 1: GỬI OTP =====
 const handleSendOtp = async () => {
   loading.value = true;
   clearError();
 
   try {
+    // Gọi API của Khách Hàng (Đã truyền cứng 'KHACH_HANG')
     await AuthService.forgotPassword(email.value, accountType.value);
     step.value = 2; // Chuyển sang bước nhập OTP
+    showToast("Mã OTP đã được gửi đến email của bạn!", "success"); // Bổ sung Toast cho mượt
   } catch (err) {
     isError.value = true;
-    message.value = err.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại.";
+    
+    // 👉 ĐÃ SỬA: Bắt chính xác câu lỗi từ Backend
+    if (err.response?.data?.message) {
+      message.value = err.response.data.message;
+    } else if (typeof err.response?.data === 'string') {
+      message.value = err.response.data;
+    } else {
+      message.value = "Không thể gửi OTP. Vui lòng thử lại.";
+    }
+    
     showToast("Lỗi gửi mã OTP!", "error");
   } finally {
     loading.value = false;
@@ -254,6 +264,7 @@ const handleResetPassword = async () => {
   clearError();
 
   try {
+    // Gọi API của Khách Hàng (Đã truyền cứng 'KHACH_HANG')
     await AuthService.resetPassword(
       email.value,
       otp.value,
@@ -261,7 +272,7 @@ const handleResetPassword = async () => {
       accountType.value
     );
 
-    // THÀNH CÔNG: Hiện Toast, xóa input và quay về bước 1 (Không đăng xuất)
+    // THÀNH CÔNG: Hiện Toast, xóa input và quay về bước 1
     showToast("Đổi mật khẩu thành công!", "success");
     otp.value = "";
     newPassword.value = "";
@@ -270,7 +281,15 @@ const handleResetPassword = async () => {
 
   } catch (err) {
     isError.value = true;
-    message.value = err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn.";
+    
+    // 👉 ĐÃ SỬA: Bắt chính xác câu lỗi từ Backend thay vì bị undefined
+    if (err.response?.data?.message) {
+      message.value = err.response.data.message;
+    } else if (typeof err.response?.data === 'string') {
+      message.value = err.response.data;
+    } else {
+      message.value = "Mã OTP không đúng hoặc đã hết hạn.";
+    }
   } finally {
     loading.value = false;
   }

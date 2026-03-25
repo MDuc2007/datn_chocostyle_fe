@@ -508,7 +508,6 @@ const handleAvatarUpload = async (event) => {
     event.target.value = ''; 
   }
 };
-
 // ================= GỬI OTP (BƯỚC 1) =================
 const sendOtpToEmail = async () => {
   if (!userInfo.value.email) {
@@ -517,9 +516,10 @@ const sendOtpToEmail = async () => {
   }
   isSendingOtp.value = true;
   try {
-    await authService.forgotPassword(userInfo.value.email, 'staff');
+    // 👉 ĐÃ ĐỒNG BỘ: Sửa 'staff' thành 'NHAN_VIEN'
+    await authService.forgotPassword(userInfo.value.email, 'NHAN_VIEN');
     showToast("Mã OTP đã được gửi đến email của bạn!", "success");
-    step.value = 2; // Chuyển sang bước 2
+    step.value = 2; 
   } catch (error) {
     showToast(error.response?.data?.message || "Lỗi khi gửi email. Vui lòng thử lại!", "error");
   } finally {
@@ -528,10 +528,6 @@ const sendOtpToEmail = async () => {
 };
 
 // ================= ĐỔI MẬT KHẨU (BƯỚC 2) =================
-const clearError = (field) => {
-  if (errors.value[field]) delete errors.value[field];
-};
-
 const validatePasswordForm = () => {
   errors.value = {};
   let isValid = true;
@@ -556,6 +552,10 @@ const validatePasswordForm = () => {
   return isValid;
 };
 
+const clearError = (field) => {
+  if (errors.value[field]) delete errors.value[field];
+};
+
 const handleChangePassword = async () => {
   if (!validatePasswordForm()) return;
   isSubmitting.value = true;
@@ -564,16 +564,15 @@ const handleChangePassword = async () => {
       userInfo.value.email, 
       passForm.value.otp, 
       passForm.value.newPassword, 
-      'staff' 
+      'NHAN_VIEN' // 👉 ĐÃ ĐỒNG BỘ: Sửa 'staff' thành 'NHAN_VIEN'
     );
     showToast("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "success");
     passForm.value = { newPassword: '', confirmPassword: '', otp: '' };
     step.value = 1;
     
-    // Tự động đăng xuất sau 2s
     setTimeout(() => {
       authService.logout();
-      window.location.reload(); 
+      router.push('/admin/login'); // 👉 ĐÃ SỬA: Đá về trang Đăng nhập Nhân viên
     }, 2000);
   } catch (error) {
     const errorMsg = error.response?.data?.message || error.response?.data || "Mã OTP không chính xác hoặc đã hết hạn!";

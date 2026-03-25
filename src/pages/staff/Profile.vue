@@ -646,7 +646,8 @@ const sendOtpToEmail = async () => {
   }
   isSendingOtp.value = true;
   try {
-    await authService.forgotPassword(userInfo.value.email, 'staff');
+    // 👉 ĐÃ ĐỒNG BỘ: Sửa 'staff' thành 'NHAN_VIEN'
+    await authService.forgotPassword(userInfo.value.email, 'NHAN_VIEN');
     showToast("Mã OTP đã được gửi đến email của bạn!", "success");
     step.value = 2; 
   } catch (error) {
@@ -693,7 +694,7 @@ const handleChangePassword = async () => {
       userInfo.value.email, 
       passForm.value.otp, 
       passForm.value.newPassword, 
-      'staff' 
+      'NHAN_VIEN' // 👉 ĐÃ ĐỒNG BỘ: Sửa 'staff' thành 'NHAN_VIEN'
     );
     showToast("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "success");
     passForm.value = { newPassword: '', confirmPassword: '', otp: '' };
@@ -701,7 +702,7 @@ const handleChangePassword = async () => {
     
     setTimeout(() => {
       authService.logout();
-      router.push('/login'); 
+      router.push('/admin/login'); // 👉 ĐÃ SỬA: Đá về trang Đăng nhập Nhân viên
     }, 2000);
   } catch (error) {
     const errorMsg = error.response?.data?.message || error.response?.data || "Mã OTP không chính xác hoặc đã hết hạn!";
