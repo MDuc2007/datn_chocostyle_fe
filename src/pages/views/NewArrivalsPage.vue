@@ -147,7 +147,7 @@
     <Footer></Footer>
 
     <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast-notification', toast.type]">
+      <div v-if="toast.show" :class="['choco-toast', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
@@ -197,13 +197,15 @@
               <div class="attribute-group" v-if="availableColors.length > 0">
                 <label>Màu sắc: <span class="selected-val">{{ selectedColor || 'Chưa chọn' }}</span></label>
                 <div class="color-options">
-                  <button v-for="color in availableColors" :key="color" 
+                  <button v-for="colorData in availableColors" :key="colorData.tenMau" 
                     class="color-circle" 
-                    :class="{ active: selectedColor === color }"
-                    :style="{ backgroundColor: getColorCode(color) }"
-                    @click="selectedColor = color"
-                    :title="color"
-                  ></button>
+                    :class="{ active: selectedColor === colorData.tenMau }"
+                    :style="{ backgroundColor: colorData.rgb }"
+                    @click="selectedColor = colorData.tenMau"
+                    :title="colorData.tenMau"
+                  >
+                    <div class="swatch-check">✓</div>
+                  </button>
                 </div>
               </div>
 
@@ -273,30 +275,10 @@ const showToast = (msg, type = "success") => {
   setTimeout(() => (toast.value.show = false), 3000);
 };
 
-const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(v) + " đ";
+const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " đ";
 const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png";
 
-// HÀM ĐỔI TÊN MÀU SANG MÃ MÀU HEX CHO VÒNG TRÒN
-const getColorCode = (name) => {
-  if (!name) return '#ddd';
-  const n = name.toLowerCase().trim();
-  const colorMap = {
-    'đen': '#000000',
-    'trắng': '#ffffff',
-    'đỏ': '#dc2626',
-    'xanh dương': '#2563eb',
-    'xanh lá': '#10b981',
-    'vàng': '#eab308',
-    'tím': '#9333ea',
-    'hồng': '#db2777',
-    'cam': '#f97316',
-    'xám': '#64748b',
-    'nâu': '#78350f',
-    'be': '#f5f5dc',
-    'navy': '#1e3a8a'
-  };
-  return colorMap[n] || '#cccccc'; 
-};
+// 👉 ĐÃ XÓA HÀM `getColorCode` tự đoán màu cũ
 
 const goDetail = (id) => {
   if (!id) return;
@@ -337,7 +319,7 @@ const applyFiltersImmediate = () => {
   fetchFilteredData();
 }
 
-// LẤY DỮ LIỆU
+// ================= LOGIC GỌI API LỌC TỪ BACKEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -457,11 +439,9 @@ const currentVariantDiscountedPrice = computed(() => {
   return currentVariant.value.giaSauGiam || Math.round(rawPrice * (1 - discountPercent / 100));
 });
 
-// Bắt chính xác màu/size dựa trên mảng `mauSacList` và `kichCoList`
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find((v) => {
-    // Theo cấu trúc JSON thứ 2 bạn cung cấp
     const tenMau = v.mauSacList?.[0]?.tenMauSac || v.tenMauSac || v.mauSac?.tenMauSac;
     const tenSize = v.kichCoList?.[0] || v.tenKichCo || v.kichCo?.tenKichCo;
     
@@ -475,7 +455,6 @@ const openQuickAddModal = async (sp) => {
   isQuickAddModalOpen.value = true;
 
   try {
-    // 👉 GỌI ĐÚNG API CỦA TRANG CHỦ THEO ID SẢN PHẨM
     const res = await axios.get(
       `http://localhost:8080/api/san-pham/${sp.id}`
     );
@@ -484,28 +463,33 @@ const openQuickAddModal = async (sp) => {
     productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      // Dựa vào JSON trang chủ, bóc tách Màu và Size
-      const colors = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.mauSacList?.[0]?.tenMauSac || v.tenMauSac || v.mauSac?.tenMauSac,
-          ),
-        ),
-      ].filter(Boolean);
-      
-      const sizes = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.kichCoList?.[0] || v.tenKichCo || v.kichCo?.tenKichCo,
-          ),
-        ),
-      ].filter(Boolean);
+      // 👉 Tạo Map để lấy kèm cả mã RGB của màu sắc
+      const colorMap = new Map();
+      const sizeSet = new Set();
 
-      availableColors.value = colors;
-      availableSizes.value = sizes;
+      productVariants.value.forEach(v => {
+        const tenMau = v.mauSacList?.[0]?.tenMauSac || v.tenMauSac || v.mauSac?.tenMauSac;
+        const tenSize = v.kichCoList?.[0] || v.tenKichCo || v.kichCo?.tenKichCo;
+        
+        // Bắt mã RGB từ DB, nếu lỡ ko có trả về màu xám mờ
+        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || '#cccccc';
 
-      if (colors.length > 0) selectedColor.value = colors[0];
-      if (sizes.length > 0) selectedSize.value = sizes[0];
+        if (tenMau && !colorMap.has(tenMau)) {
+          colorMap.set(tenMau, rgbCode);
+        }
+        if (tenSize) sizeSet.add(tenSize);
+      });
+
+      // Chuyển Map thành Mảng [{tenMau: 'Đỏ', rgb: '#FF0000'}]
+      availableColors.value = Array.from(colorMap.entries()).map(([tenMau, rgb]) => ({
+        tenMau,
+        rgb
+      }));
+
+      availableSizes.value = [...sizeSet];
+
+      if (availableColors.value.length > 0) selectedColor.value = availableColors.value[0].tenMau;
+      if (availableSizes.value.length > 0) selectedSize.value = availableSizes.value[0];
     } else {
       availableColors.value = [];
       availableSizes.value = [];
@@ -540,14 +524,18 @@ const confirmAddToCart = () => {
     const hinhAnhSp = selectedProduct.value.hinhAnh;
     const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
+    // Tìm lại Data màu để lấy mã RGB
+    const selectedColorData = availableColors.value.find(c => c.tenMau === selectedColor.value);
+
     const newItem = {
       productId: selectedProduct.value.id,
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: finalImage,
-      mauSac: { tenMau: selectedColor.value, rgb: getColorCode(selectedColor.value) },
+      // Lưu lại thông tin màu gồm tên và mã RGB
+      mauSac: { tenMau: selectedColor.value, rgb: selectedColorData?.rgb || '#cccccc' },
       kichCo: selectedSize.value,
-      giaBan: giaSauGiam, 
+      giaBan: Math.round(giaSauGiam), 
       giaGoc: giaGoc,
       soLuong: quantity.value,
       tonKho: tonKhoThucTe,
@@ -1176,6 +1164,10 @@ onMounted(() => {
   transition: all 0.2s;
   padding: 0;
   position: relative;
+  /* ĐẢM BẢO DẤU CHECK LUÔN NẰM GIỮA */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .color-circle:hover {
@@ -1184,8 +1176,22 @@ onMounted(() => {
 }
 
 .color-circle.active {
-  border-color: #d32f2f;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d32f2f;
+  border-color: #63391F;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #63391F;
+}
+
+/* 👉 Dấu Check hiển thị giữa nút màu */
+.swatch-check {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0;
+  text-shadow: 0px 0px 4px rgba(0,0,0,0.7); 
+  transition: opacity 0.2s;
+}
+
+.color-circle.active .swatch-check {
+  opacity: 1;
 }
 
 /* CSS KÍCH CỠ (Ô VUÔNG) */
@@ -1311,41 +1317,43 @@ onMounted(() => {
   }
 }
 
-/* Toast */
-.toast-notification {
+/* 👉 CSS TOAST NOTIFICATION DẠNG VIỀN DÀY (Đã Đồng Bộ) */
+.choco-toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 25px;
-  border-radius: 8px;
+  top: 30px;
+  right: 30px;
   z-index: 10001;
+  padding: 14px 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-family, 'Inter', sans-serif);
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  font-size: 15px;
+  min-width: 250px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.toast-notification.success {
-  background: #d4edda;
-  color: #155724;
-  border-left: 4px solid #28a745;
+.choco-toast.success {
+  background-color: #E2F5E9; 
+  color: #1A7A32; 
+  border-left: 6px solid #22A042; 
 }
 
-.toast-notification.error {
-  background: #f8d7da;
-  color: #721c24;
-  border-left: 4px solid #dc3545;
+.choco-toast.error {
+  background-color: #fee2e2; 
+  color: #b91c1c; 
+  border-left: 6px solid #dc2626;
 }
 
-.toast-notification.warning {
-  background: #ffc107;
-  color: #333;
-  border-left: 4px solid #ff9800;
+.choco-toast.warning {
+  background-color: #fffbeb; 
+  color: #b45309; 
+  border-left: 6px solid #f59e0b;
 }
 
 .toast-content {
-  font-weight: 600;
-  color: inherit;
-  font-size: 15px;
+  letter-spacing: 0.2px;
 }
 
 .toast-slide-enter-active,

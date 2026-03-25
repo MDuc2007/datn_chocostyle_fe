@@ -197,12 +197,12 @@
               <div class="attribute-group" v-if="availableColors.length > 0">
                 <label>Màu sắc: <span class="selected-val">{{ selectedColor || 'Chưa chọn' }}</span></label>
                 <div class="color-options">
-                  <button v-for="color in availableColors" :key="color" 
+                  <button v-for="colorData in availableColors" :key="colorData.tenMau" 
                     class="color-circle" 
-                    :class="{ active: selectedColor === color }"
-                    :style="{ backgroundColor: getColorCode(color) }"
-                    @click="selectedColor = color"
-                    :title="color"
+                    :class="{ active: selectedColor === colorData.tenMau }"
+                    :style="{ backgroundColor: colorData.rgb }"
+                    @click="selectedColor = colorData.tenMau"
+                    :title="colorData.tenMau"
                   ></button>
                 </div>
               </div>
@@ -238,6 +238,7 @@
     </transition>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import Header from "../../layout/header/Header.vue";
@@ -272,30 +273,8 @@ const showToast = (msg, type = "success") => {
   setTimeout(() => (toast.value.show = false), 3000);
 };
 
-const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(v) + " đ";
+const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " đ";
 const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png";
-
-// HÀM ĐỔI TÊN MÀU SANG MÃ MÀU HEX CHO VÒNG TRÒN
-const getColorCode = (name) => {
-  if (!name) return '#ddd';
-  const n = name.toLowerCase().trim();
-  const colorMap = {
-    'đen': '#000000',
-    'trắng': '#ffffff',
-    'đỏ': '#dc2626',
-    'xanh dương': '#2563eb',
-    'xanh lá': '#10b981',
-    'vàng': '#eab308',
-    'tím': '#9333ea',
-    'hồng': '#db2777',
-    'cam': '#f97316',
-    'xám': '#64748b',
-    'nâu': '#78350f',
-    'be': '#f5f5dc',
-    'navy': '#1e3a8a'
-  };
-  return colorMap[n] || '#cccccc'; 
-};
 
 const goDetail = (id) => {
   if (!id) return;
@@ -336,7 +315,7 @@ const applyFiltersImmediate = () => {
   fetchFilteredData();
 }
 
-// ================= LOGIC GỌI API LỌC TỪ BACKEND & TÌM KIẾM FRONTEND =================
+// ================= LOGIC GỌI API LỌC TỪ BACKEND =================
 const fetchFilteredData = async (isAppend = false) => {
   isLoading.value = true;
   errorMsg.value = "";
@@ -344,7 +323,6 @@ const fetchFilteredData = async (isAppend = false) => {
   try {
     let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
 
-    // Vẫn truyền các tham số lọc giá lên Backend nếu có
     const adv = advancedFilters.value;
     if (adv.minPrice !== null && adv.minPrice !== "") url += `&minPrice=${adv.minPrice}`;
     if (adv.maxPrice !== null && adv.maxPrice !== "") url += `&maxPrice=${adv.maxPrice}`;
@@ -355,13 +333,11 @@ const fetchFilteredData = async (isAppend = false) => {
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
 
-    // Chuẩn bị từ khóa cho Frontend Filter
     const keywordLower = searchKeyword.value.trim().toLowerCase();
 
     rawData.forEach(item => {
       let passFilter = true;
 
-      // 👉 ĐÃ CẬP NHẬT: Lọc tìm kiếm trực tiếp trên Frontend bằng Tên hoặc Mã Sản Phẩm
       if (keywordLower) {
         const productName = (item.tenSanPham || item.tenSp || item.sanPham?.tenSanPham || "").toLowerCase();
         const productCode = (item.maSanPham || item.sanPham?.maSanPham || "").toLowerCase();
@@ -435,7 +411,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// ================= LOGIC MODAL QUICK ADD CHUẨN TỪ TRANG CHỦ =================
+// ================= LOGIC MODAL QUICK ADD (ĐÃ CẬP NHẬT LẤY MÃ RGB) =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -455,7 +431,6 @@ const currentVariantDiscountedPrice = computed(() => {
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find((v) => {
-    // Bao phủ mọi trường hợp JSON từ API trả về (cấu trúc List hoặc Object lồng)
     const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
     const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
     return tenMau === selectedColor.value && tenSize === selectedSize.value;
@@ -468,7 +443,6 @@ const openQuickAddModal = async (sp) => {
   isQuickAddModalOpen.value = true;
 
   try {
-    // SỬ DỤNG API THEO PRODUCT ID NHƯ TRANG CHỦ (FIX MẤT DỮ LIỆU)
     const res = await axios.get(
       `http://localhost:8080/api/san-pham/${sp.id}`
     );
@@ -477,27 +451,33 @@ const openQuickAddModal = async (sp) => {
     productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      const colors = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau,
-          ),
-        ),
-      ].filter(Boolean);
-      
-      const sizes = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize,
-          ),
-        ),
-      ].filter(Boolean);
+      // 👉 Bắt Data từ API có lưu mã RGB màu sắc
+      const colorMap = new Map();
+      const sizeSet = new Set();
 
-      availableColors.value = colors;
-      availableSizes.value = sizes;
+      productVariants.value.forEach(v => {
+        const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
+        const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
+        
+        // Bắt mã RGB từ Data, đề phòng lỗi thì trả về xám #cccccc
+        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || '#cccccc';
 
-      if (colors.length > 0) selectedColor.value = colors[0];
-      if (sizes.length > 0) selectedSize.value = sizes[0];
+        if (tenMau && !colorMap.has(tenMau)) {
+          colorMap.set(tenMau, rgbCode);
+        }
+        if (tenSize) sizeSet.add(tenSize);
+      });
+
+      // Tạo mảng [{tenMau, rgb}]
+      availableColors.value = Array.from(colorMap.entries()).map(([tenMau, rgb]) => ({
+        tenMau,
+        rgb
+      }));
+
+      availableSizes.value = [...sizeSet];
+
+      if (availableColors.value.length > 0) selectedColor.value = availableColors.value[0].tenMau;
+      if (availableSizes.value.length > 0) selectedSize.value = availableSizes.value[0];
     } else {
       availableColors.value = [];
       availableSizes.value = [];
@@ -532,12 +512,16 @@ const confirmAddToCart = () => {
     const hinhAnhSp = selectedProduct.value.hinhAnh;
     const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
+    // Lấy Data màu để có mã RGB lưu vào giỏ hàng
+    const selectedColorData = availableColors.value.find(c => c.tenMau === selectedColor.value);
+
     const newItem = {
       productId: selectedProduct.value.id,
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: finalImage,
-      mauSac: { tenMau: selectedColor.value, rgb: getColorCode(selectedColor.value) },
+      // Lưu lại thông tin màu gồm tên và mã RGB
+      mauSac: { tenMau: selectedColor.value, rgb: selectedColorData?.rgb || '#cccccc' },
       kichCo: selectedSize.value,
       giaBan: Math.round(giaSauGiam), 
       giaGoc: giaGoc,

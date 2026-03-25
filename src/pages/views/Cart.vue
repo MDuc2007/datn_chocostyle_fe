@@ -69,7 +69,7 @@
 
                       <div class="item-price-mobile">
                         <span class="current-price">{{ formatPrice(item.giaBan) }}</span>
-                        <span v-if="item.discountPercent > 0" class="old-price">{{ formatPrice(getOldPrice(item)) }}</span>
+                        <span v-if="item.discountPercent > 0" class="old-price">{{ formatPrice(getOriginalPrice(item)) }}</span>
                       </div>
                     </div>
                   </div>
@@ -77,7 +77,7 @@
                   <div class="item-price desktop-only">
                     <span class="current-price">{{ formatPrice(item.giaBan) }}</span>
                     <div v-if="item.discountPercent > 0" class="old-price">
-                      {{ formatPrice(getOldPrice(item)) }}
+                      {{ formatPrice(getOriginalPrice(item)) }}
                     </div>
                   </div>
 
@@ -120,7 +120,7 @@
             </div>
 
             <div class="summary-row" v-if="totalDiscountSelected > 0">
-              <span class="text-muted">Giảm giá sản phẩm</span>
+              <span class="text-muted">Giỏ hàng đã giảm</span>
               <span class="summary-val text-sale">- {{ formatPrice(totalDiscountSelected) }}</span>
             </div>
 
@@ -236,10 +236,12 @@ const applyPromotionsToCart = () => {
   });
 };
 
-// Sửa logic tính Giá cũ (Vì giá lưu trong giỏ hàng đã là giá giảm)
-const getOldPrice = (item) => {
-  if (!item.discountPercent || item.discountPercent <= 0) return item.giaBan;
-  // Tính ngược lại giá gốc: giaCu = giaBan / (1 - % giảm)
+// 👉 LOGIC GIÁ: Tính ngược lại giá gốc từ giá đã giảm lưu trong giỏ hàng
+const getOriginalPrice = (item) => {
+  if (!item.discountPercent || item.discountPercent <= 0 || item.discountPercent >= 100) {
+    return item.giaBan;
+  }
+  // Ví dụ: Đang bán 25k, giảm 50% => Giá gốc = 25000 / (1 - 0.5) = 50000
   return Math.round(item.giaBan / (1 - item.discountPercent / 100));
 };
 
@@ -257,7 +259,7 @@ onMounted(async () => {
 
 const formatPrice = (v) => {
   if (v == null) return "0 ₫";
-  return new Intl.NumberFormat("vi-VN").format(v) + " ₫";
+  return new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " ₫";
 };
 
 const handleImageError = (event) => {
@@ -281,21 +283,21 @@ const selectedItemsCount = computed(() => {
     .reduce((sum, item) => sum + item.soLuong, 0);
 });
 
-// Sửa: Tính tổng tiền thanh toán dựa trực tiếp trên `item.giaBan`
+// TỔNG TIỀN GỐC (Tổng tiền chưa giảm)
+const totalOriginalPriceSelected = computed(() => {
+  return cartItems.value
+    .filter((item) => item.checked)
+    .reduce((sum, item) => sum + getOriginalPrice(item) * item.soLuong, 0);
+});
+
+// TỔNG TIỀN TẠM TÍNH (Tổng tiền thực trả)
 const totalPriceSelected = computed(() => {
   return cartItems.value
     .filter((item) => item.checked)
     .reduce((sum, item) => sum + item.giaBan * item.soLuong, 0);
 });
 
-// Sửa: Tính tổng tiền gốc (chưa giảm)
-const totalOriginalPriceSelected = computed(() => {
-  return cartItems.value
-    .filter((item) => item.checked)
-    .reduce((sum, item) => sum + getOldPrice(item) * item.soLuong, 0);
-});
-
-// Tổng số tiền tiết kiệm được
+// TỔNG SỐ TIỀN TIẾT KIỆM ĐƯỢC
 const totalDiscountSelected = computed(() => {
   return totalOriginalPriceSelected.value - totalPriceSelected.value;
 });
@@ -390,7 +392,6 @@ const proceedToCheckout = () => {
     return;
   }
 
-  // Đẩy thẳng qua trang thanh toán (Không yêu cầu đăng nhập)
   localStorage.setItem("checkout_items", JSON.stringify(selectedItems));
   router.push({ path: "/payment", query: { fromCart: "true" } });
 };
@@ -400,6 +401,7 @@ const showToast = (msg, type = "success") => {
   setTimeout(() => (toast.value.show = false), 3000);
 };
 </script>
+
 <style scoped>
 /* ================= RESET & CƠ BẢN ================= */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
@@ -408,7 +410,7 @@ const showToast = (msg, type = "success") => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #F7F7F7; /* Màu nền mới */
+  background-color: #F7F7F7;
   font-family: 'Nunito', "Segoe UI", Roboto, sans-serif;
   color: #333;
 }
@@ -483,7 +485,7 @@ const showToast = (msg, type = "success") => {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #63391F; /* Màu nâu chocolate */
+  accent-color: #63391F;
   border-radius: 4px;
   transition: 0.2s;
 }
@@ -966,8 +968,8 @@ const showToast = (msg, type = "success") => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #fee2e2;
-  color: #d32f2f;
+  background-color: #F7F7F7;
+  color: #63391F;
   margin: 0 auto 20px auto;
   display: flex;
   align-items: center;
@@ -975,11 +977,11 @@ const showToast = (msg, type = "success") => {
 }
 
 .confirm-title {
-  color: #1a1a1a;
+  color: #63391F;
   margin-bottom: 12px;
   font-size: 22px;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .confirm-desc {
@@ -995,7 +997,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-confirm {
-  background: #d32f2f;
+  background: #63391F;
   color: #FFFFFF;
   border: none;
   padding: 12px 24px;
@@ -1008,13 +1010,13 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-confirm:hover {
-  background: #b71c1c;
+  background: #4e2c17;
 }
 
 .btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-  border: none;
+  background: #F7F7F7;
+  color: #333;
+  border: 1px solid #ddd;
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -1025,8 +1027,8 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-cancel:hover {
-  background: #e2e8f0;
-  color: #1e293b;
+  background: #ebebeb;
+  color: #111;
 }
 
 .fade-modal-enter-active,

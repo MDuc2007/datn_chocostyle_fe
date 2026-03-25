@@ -21,10 +21,6 @@
               <h2 class="page-title">Kho Voucher</h2>
               <p class="page-subtitle">Quản lý và lưu trữ các mã giảm giá của bạn</p>
             </div>
-            <div class="voucher-input-group">
-              <input type="text" placeholder="Nhập mã voucher..." class="form-input" />
-              <button class="btn-orange hover-effect">Lưu mã</button>
-            </div>
           </div>
 
           <div class="card-body">
@@ -278,64 +274,80 @@ onMounted(() => {
   gap: 20px;
   padding-top: 10px;
 }
+/* ================== VOUCHER GRID ================== */
+.voucher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+  padding-top: 10px;
+}
 
 .voucher-ticket {
   display: flex;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   overflow: hidden;
   position: relative;
   transition: all 0.3s ease;
-  height: 140px;
-}
+  
+  /* 👉 ĐÃ SỬA: Bỏ height cố định, dùng min-height để khung tự co giãn */
+  min-height: 165px; 
+  height: auto; 
+} 
+
 .voucher-ticket:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(107, 63, 30, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(107, 63, 30, 0.1);
   border-color: #d6bda9;
 }
-
 .ticket-left {
   background: linear-gradient(135deg, #6b3f1e 0%, #8b5a2b 100%);
   color: white;
-  width: 110px;
+  width: 115px; /* Cho phần nâu to ra chút xíu */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-right: 2px dashed #fff;
+  /* ĐÃ SỬA: Xóa cái border-right dashed lem nhem đi */
   flex-shrink: 0;
   position: relative;
 }
+
+/* ĐÃ SỬA: Căn lại chấm tròn tạo hiệu ứng xé rách mượt mà */
 .ticket-left::after {
   content: "";
   position: absolute;
-  right: -6px;
+  right: -5px; /* Đẩy ra đúng một nửa hình tròn */
   top: 0;
   bottom: 0;
   width: 10px;
-  background-image: radial-gradient(circle, #fff 4px, transparent 5px);
-  background-size: 10px 15px;
-  background-repeat: repeat-y;
+  background-image: radial-gradient(circle, #fff 5px, transparent 5px);
+  background-size: 100% 16px; /* Khoảng cách giữa các răng cưa */
+  z-index: 1;
 }
+
 .brand-logo {
   font-weight: 800;
   font-size: 18px;
   margin-bottom: 5px;
   letter-spacing: 1px;
 }
+
 .ticket-name {
   font-size: 11px;
   opacity: 0.9;
   text-align: center;
   text-transform: uppercase;
   padding: 0 10px;
+  font-weight: 600;
 }
 
 .ticket-right {
   flex: 1;
-  padding: 12px 16px;
+  /* ĐÃ SỬA: Thêm padding-left để chữ không bị dính vào các chấm răng cưa */
+  padding: 14px 16px 14px 22px; 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -344,74 +356,86 @@ onMounted(() => {
 .top-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .voucher-title {
   font-weight: 700;
   color: #111827;
-  font-size: 15px;
+  font-size: 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
 }
+
+/* ĐÃ SỬA: Làm nổi bật cái Mã Voucher */
 .voucher-code-badge {
   font-size: 11px;
-  background: #f3f4f6;
-  color: #4b5563;
-  padding: 2px 8px;
+  background: #fdf6f0; /* Nền nâu siêu nhạt */
+  color: #6b3f1e; /* Chữ màu nâu đậm */
+  padding: 3px 8px;
   border-radius: 4px;
   display: inline-block;
   width: fit-content;
   margin-bottom: 2px;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px dashed #d6bda9;
 }
 
 .voucher-desc {
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 500;
-}
-.highlight {
-  font-weight: 700;
+  color: #d32f2f;
   font-size: 14px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.highlight {
+  font-weight: 800;
+  font-size: 18px; /* Nhấn mạnh số tiền giảm */
 }
 
 .min-spend,
 .max-reduce {
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
+  line-height: 1.3;
 }
 
 .bottom-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 5px;
-  border-top: 1px dashed #f3f4f6;
-  padding-top: 8px;
+  margin-top: 12px; 
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 12px;
+  padding-bottom: 2px;
 }
+
 .expiry {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
 }
+
+/* ĐÃ SỬA: Nút sao chép bo tròn nhìn hiện đại hơn */
 .btn-use {
   border: 1px solid #6b3f1e;
   color: #6b3f1e;
   background: white;
-  padding: 4px 14px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 5px 16px;
+  border-radius: 20px; 
+  font-size: 13px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.2s;
 }
+
 .btn-use:hover {
   background: #6b3f1e;
   color: white;
+  box-shadow: 0 4px 10px rgba(107, 63, 30, 0.2);
 }
-
 /* ================== TOAST ================== */
 .toast-notification { position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 250px; padding: 12px 15px; border-radius: 6px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); font-size: 14px; font-weight: 500; background: #F0FDF4; color: #111827; }
 .toast-indicator { width: 6px; height: 100%; background-color: #10B981; position: absolute; left: 0; top: 0; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }

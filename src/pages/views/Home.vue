@@ -74,14 +74,7 @@
 
           <div class="slider-row">
             <button class="arrow left" @click="scrollLeft('bestSellerRef')">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
@@ -110,49 +103,26 @@
                   <div class="price-wrapper">
                     <template v-if="sp.phanTramGiam > 0">
                       <p class="old-price">
-                        <span v-if="sp.giaGoc">{{
-                          formatPrice(sp.giaGoc)
-                        }}</span>
+                        <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
                         <span v-else>{{ formatPrice(sp.giaMin) }}</span>
                       </p>
                       <p class="price new-price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{
-                          formatPrice(sp.giaMin)
-                        }}</span>
-                        <span v-else
-                          >{{ formatPrice(sp.giaMin) }} ~
-                          {{ formatPrice(sp.giaMax) }}</span
-                        >
+                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                        <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                       </p>
                     </template>
                     <template v-else>
                       <p class="price current-price">
-                        <span v-if="sp.giaMin === sp.giaMax">{{
-                          formatPrice(sp.giaMin)
-                        }}</span>
-                        <span v-else
-                          >{{ formatPrice(sp.giaMin) }} ~
-                          {{ formatPrice(sp.giaMax) }}</span
-                        >
+                        <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                        <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                       </p>
                     </template>
                   </div>
-                  <button
-                    class="btn-quick-add"
-                    @click.stop="openQuickAddModal(sp)"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      class="cart-icon"
-                    >
+                  <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
                       <circle cx="9" cy="21" r="1"></circle>
                       <circle cx="20" cy="21" r="1"></circle>
-                      <path
-                        d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                      ></path>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
                     Thêm Nhanh
                   </button>
@@ -161,14 +131,7 @@
             </div>
 
             <button class="arrow right" @click="scrollRight('bestSellerRef')">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
             </button>
@@ -177,9 +140,7 @@
 
         <section class="section bg-sale" v-if="saleProducts.length > 0">
           <div class="title-wrapper">
-            <h2 class="section-title styled-title sale-title">
-              ƯU ĐÃI GIẢM GIÁ
-            </h2>
+            <h2 class="section-title styled-title sale-title">ƯU ĐÃI GIẢM GIÁ</h2>
             <p class="section-subtitle text-sale">
               Nhanh tay sở hữu thiết kế cao cấp với giá cực sốc
             </p>
@@ -187,14 +148,7 @@
 
           <div class="slider-row">
             <button class="arrow left" @click="scrollLeft('saleProductRef')">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
@@ -207,11 +161,7 @@
                 @click="goDetail(sp.id)"
               >
                 <div class="image-box">
-                  <img
-                    :src="sp.hinhAnh"
-                    :alt="sp.tenSp"
-                    @error="handleImageError"
-                  />
+                  <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
                   <span class="badge badge-sale">-{{ sp.phanTramGiam }}%</span>
                 </div>
 
@@ -222,31 +172,15 @@
                       <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
                     </p>
                     <p class="price new-price">
-                      <span v-if="sp.giaMin === sp.giaMax">{{
-                        formatPrice(sp.giaMin)
-                      }}</span>
-                      <span v-else
-                        >{{ formatPrice(sp.giaMin) }} ~
-                        {{ formatPrice(sp.giaMax) }}</span
-                      >
+                      <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                     </p>
                   </div>
-                  <button
-                    class="btn-quick-add"
-                    @click.stop="openQuickAddModal(sp)"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      class="cart-icon"
-                    >
+                  <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
                       <circle cx="9" cy="21" r="1"></circle>
                       <circle cx="20" cy="21" r="1"></circle>
-                      <path
-                        d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                      ></path>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
                     Thêm Nhanh
                   </button>
@@ -255,14 +189,7 @@
             </div>
 
             <button class="arrow right" @click="scrollRight('saleProductRef')">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
             </button>
@@ -272,18 +199,12 @@
         <section class="section">
           <div class="title-wrapper">
             <h2 class="section-title styled-title">BỘ SƯU TẬP MỚI</h2>
-            <p class="section-subtitle">
-              Khám phá toàn bộ thiết kế ấn tượng từ ChocoStyle
-            </p>
+            <p class="section-subtitle">Khám phá toàn bộ thiết kế ấn tượng từ ChocoStyle</p>
           </div>
 
           <div v-if="products.length > 0">
             <div class="product-grid">
-              <transition-group
-                name="staggered-fade"
-                tag="div"
-                class="grid-wrapper"
-              >
+              <transition-group name="staggered-fade" tag="div" class="grid-wrapper">
                 <div
                   v-for="(sp, index) in displayedProducts"
                   :key="sp.id"
@@ -292,66 +213,35 @@
                   @click="goDetail(sp.id)"
                 >
                   <div class="image-box">
-                    <img
-                      :src="sp.hinhAnh"
-                      :alt="sp.tenSp"
-                      @error="handleImageError"
-                    />
-                    <span v-if="sp.phanTramGiam > 0" class="badge badge-sale"
-                      >-{{ sp.phanTramGiam }}%</span
-                    >
+                    <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
+                    <span v-if="sp.phanTramGiam > 0" class="badge badge-sale">-{{ sp.phanTramGiam }}%</span>
                   </div>
 
                   <div class="product-info">
-                    <h3 class="product-name" :title="sp.tenSp">
-                      {{ sp.tenSp }}
-                    </h3>
+                    <h3 class="product-name" :title="sp.tenSp">{{ sp.tenSp }}</h3>
                     <div class="price-wrapper">
                       <template v-if="sp.phanTramGiam > 0">
                         <p class="old-price">
-                          <span v-if="sp.giaGoc">{{
-                            formatPrice(sp.giaGoc)
-                          }}</span>
+                          <span v-if="sp.giaGoc">{{ formatPrice(sp.giaGoc) }}</span>
                           <span v-else>{{ formatPrice(sp.giaMin) }}</span>
                         </p>
                         <p class="price new-price">
-                          <span v-if="sp.giaMin === sp.giaMax">{{
-                            formatPrice(sp.giaMin)
-                          }}</span>
-                          <span v-else
-                            >{{ formatPrice(sp.giaMin) }} ~
-                            {{ formatPrice(sp.giaMax) }}</span
-                          >
+                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                          <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                         </p>
                       </template>
                       <template v-else>
                         <p class="price current-price">
-                          <span v-if="sp.giaMin === sp.giaMax">{{
-                            formatPrice(sp.giaMin)
-                          }}</span>
-                          <span v-else
-                            >{{ formatPrice(sp.giaMin) }} ~
-                            {{ formatPrice(sp.giaMax) }}</span
-                          >
+                          <span v-if="sp.giaMin === sp.giaMax">{{ formatPrice(sp.giaMin) }}</span>
+                          <span v-else>{{ formatPrice(sp.giaMin) }} ~ {{ formatPrice(sp.giaMax) }}</span>
                         </p>
                       </template>
                     </div>
-                    <button
-                      class="btn-quick-add"
-                      @click.stop="openQuickAddModal(sp)"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        class="cart-icon"
-                      >
+                    <button class="btn-quick-add" @click.stop="openQuickAddModal(sp)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
-                        <path
-                          d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                        ></path>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                       </svg>
                       Thêm Nhanh
                     </button>
@@ -379,14 +269,7 @@
 
     <transition name="fade">
       <button v-if="showScrollTop" class="scroll-top-btn" @click="scrollToTop">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="19" x2="12" y2="5"></line>
           <polyline points="5 12 12 5 19 12"></polyline>
         </svg>
@@ -395,10 +278,7 @@
 
     <div class="chat-wrapper">
       <button class="chat-toggle-btn" @click="toggleChat">
-        <img
-          src="/src/assets/icon/chat-round-line-svgrepo-com.svg"
-          style="width: 30px; height: 30px"
-        />
+        <img src="/src/assets/icon/chat-round-line-svgrepo-com.svg" style="width: 30px; height: 30px" />
         <span class="chat-badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
       </button>
       <div v-if="isChatOpen" class="chat-popup">
@@ -407,115 +287,50 @@
     </div>
 
     <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast-notification', toast.type]">
-        <div class="toast-icon">
-          <span v-if="toast.type === 'success'"></span>
-          <span v-else-if="toast.type === 'error'"></span>
-          <span v-else></span>
-        </div>
+      <div v-if="toast.show" :class="['choco-toast', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
 
     <transition name="modal-bounce">
-      <div
-        v-if="isQuickAddModalOpen"
-        class="modal-overlay"
-        @click.self="closeQuickAddModal"
-      >
+      <div v-if="isQuickAddModalOpen" class="modal-overlay" @click.self="closeQuickAddModal">
         <div class="quick-add-modal">
           <button class="close-btn" @click="closeQuickAddModal">×</button>
 
           <div class="modal-content" v-if="selectedProduct">
             <div class="modal-left">
-              <img
-                :src="selectedProduct.hinhAnh"
-                :alt="selectedProduct.tenSp"
-                @error="handleImageError"
-              />
+              <img :src="selectedProduct.hinhAnh" :alt="selectedProduct.tenSp" @error="handleImageError" />
             </div>
 
             <div class="modal-right">
-              <span class="modal-tag" v-if="selectedProduct.phanTramGiam > 0"
-                >HOT SALE -{{ selectedProduct.phanTramGiam }}%</span
-              >
+              <span class="modal-tag" v-if="selectedProduct.phanTramGiam > 0">HOT SALE -{{ selectedProduct.phanTramGiam }}%</span>
               <h3 class="modal-product-name">{{ selectedProduct.tenSp }}</h3>
 
               <div class="modal-price-box">
                 <template v-if="currentVariant">
-                  <span
-                    v-if="selectedProduct.phanTramGiam > 0"
-                    class="modal-old-price"
-                  >
-                    {{
-                      formatPrice(currentVariant.giaBan || currentVariant.gia)
-                    }}
+                  <span v-if="selectedProduct.phanTramGiam > 0" class="modal-old-price">
+                    {{ formatPrice(currentVariant.giaBan || currentVariant.gia) }}
                   </span>
                   <span class="modal-current-price">
-                    {{
-                      formatPrice(
-                        getDiscountedPrice(
-                          currentVariant.giaBan || currentVariant.gia,
-                          selectedProduct.phanTramGiam,
-                        ),
-                      )
-                    }}
+                    {{ formatPrice(getDiscountedPrice(currentVariant.giaBan || currentVariant.gia, selectedProduct.phanTramGiam)) }}
                   </span>
                 </template>
                 <template v-else>
                   <template v-if="selectedProduct.phanTramGiam > 0">
                     <span class="modal-old-price">
-                      <span v-if="selectedProduct.giaGoc">{{
-                        formatPrice(selectedProduct.giaGoc)
-                      }}</span>
-                      <span
-                        v-else-if="
-                          selectedProduct.giaMin === selectedProduct.giaMax
-                        "
-                        >{{
-                          formatPrice(
-                            selectedProduct.giaMin /
-                              (1 - selectedProduct.phanTramGiam / 100),
-                          )
-                        }}</span
-                      >
-                      <span v-else
-                        >{{
-                          formatPrice(
-                            selectedProduct.giaMin /
-                              (1 - selectedProduct.phanTramGiam / 100),
-                          )
-                        }}
-                        ~
-                        {{
-                          formatPrice(
-                            selectedProduct.giaMax /
-                              (1 - selectedProduct.phanTramGiam / 100),
-                          )
-                        }}</span
-                      >
+                      <span v-if="selectedProduct.giaGoc">{{ formatPrice(selectedProduct.giaGoc) }}</span>
+                      <span v-else-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin / (1 - selectedProduct.phanTramGiam / 100)) }} ~ {{ formatPrice(selectedProduct.giaMax / (1 - selectedProduct.phanTramGiam / 100)) }}</span>
                     </span>
                     <span class="modal-current-price">
-                      <span
-                        v-if="selectedProduct.giaMin === selectedProduct.giaMax"
-                        >{{ formatPrice(selectedProduct.giaMin) }}</span
-                      >
-                      <span v-else
-                        >{{ formatPrice(selectedProduct.giaMin) }} ~
-                        {{ formatPrice(selectedProduct.giaMax) }}</span
-                      >
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
                     </span>
                   </template>
                   <template v-else>
                     <span class="modal-current-price">
-                      <span
-                        v-if="selectedProduct.giaMin === selectedProduct.giaMax"
-                        >{{ formatPrice(selectedProduct.giaMin) }}</span
-                      >
-                      <span v-else
-                        >{{ formatPrice(selectedProduct.giaMin) }} ~
-                        {{ formatPrice(selectedProduct.giaMax) }}</span
-                      >
+                      <span v-if="selectedProduct.giaMin === selectedProduct.giaMax">{{ formatPrice(selectedProduct.giaMin) }}</span>
+                      <span v-else>{{ formatPrice(selectedProduct.giaMin) }} ~ {{ formatPrice(selectedProduct.giaMax) }}</span>
                     </span>
                   </template>
                 </template>
@@ -524,13 +339,15 @@
               <div class="attribute-group" v-if="availableColors.length > 0">
                 <label>Màu sắc: <span class="selected-val">{{ selectedColor || 'Chưa chọn' }}</span></label>
                 <div class="color-options">
-                  <button v-for="color in availableColors" :key="color" 
+                  <button v-for="colorData in availableColors" :key="colorData.tenMau" 
                     class="color-circle" 
-                    :class="{ active: selectedColor === color }"
-                    :style="{ backgroundColor: getColorCode(color) }"
-                    @click="selectedColor = color"
-                    :title="color"
-                  ></button>
+                    :class="{ active: selectedColor === colorData.tenMau }"
+                    :style="{ backgroundColor: colorData.rgb }"
+                    @click="selectedColor = colorData.tenMau"
+                    :title="colorData.tenMau"
+                  >
+                    <div class="swatch-check">✓</div>
+                  </button>
                 </div>
               </div>
 
@@ -547,12 +364,7 @@
               <div class="attribute-group">
                 <label class="qty-label">
                   Số lượng:
-                  <span v-if="currentVariant" class="stock-badge"
-                    >Kho:
-                    {{
-                      currentVariant.soLuongTon || currentVariant.soLuong || 0
-                    }}</span
-                  >
+                  <span v-if="currentVariant" class="stock-badge">Kho: {{ currentVariant.soLuongTon || currentVariant.soLuong || 0 }}</span>
                 </label>
                 <div class="quantity-control">
                   <button @click="quantity > 1 && quantity--">-</button>
@@ -563,25 +375,14 @@
 
               <div class="modal-actions">
                 <button class="btn-confirm-add" @click="confirmAddToCart">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="cart-icon-btn"
-                  >
-                    <path
-                      d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
-                    ></path>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cart-icon-btn">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                   </svg>
                   Thêm Vào Giỏ
                 </button>
-                <button
-                  class="btn-view-detail"
-                  @click="goDetail(selectedProduct.id)"
-                >
+                <button class="btn-view-detail" @click="goDetail(selectedProduct.id)">
                   Xem Chi Tiết
                 </button>
               </div>
@@ -639,7 +440,7 @@ const goToBanner = (index) => {
 };
 const startSlide = () => {
   slideInterval = setInterval(nextBanner, 5000);
-}; // Chuyển chậm hơn một chút cho sang
+}; 
 const pauseSlide = () => {
   clearInterval(slideInterval);
 };
@@ -663,13 +464,9 @@ const showToast = (msg, type = "success") => {
   setTimeout(() => (toast.value.show = false), 3500);
 };
 
-const displayedProducts = computed(() =>
-  products.value.slice(0, visibleCount.value),
-);
+const displayedProducts = computed(() => products.value.slice(0, visibleCount.value));
 const hasMore = computed(() => visibleCount.value < products.value.length);
-const remainingCount = computed(
-  () => products.value.length - visibleCount.value,
-);
+const remainingCount = computed(() => products.value.length - visibleCount.value);
 
 const loadMoreProducts = () => {
   visibleCount.value += itemsPerPage;
@@ -683,47 +480,49 @@ const formatPrice = (v) => {
   return new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " đ";
 };
 
-// Vẫn giữ getDiscountedPrice cho Modal, vì trong Modal biến thể chỉ có giá gốc (giaBan)
 const getDiscountedPrice = (price, discountPercent) => {
   if (!discountPercent || discountPercent <= 0) return price;
   return price - (price * discountPercent) / 100;
-};
-
-// 👉 HÀM LẤY MÃ MÀU CHUẨN ĐỒNG BỘ CÁC TRANG
-const getColorCode = (name) => {
-  if (!name) return '#ddd';
-  const n = name.toLowerCase().trim();
-  const colorMap = {
-    'đen': '#000000',
-    'trắng': '#ffffff',
-    'đỏ': '#dc2626',
-    'xanh dương': '#2563eb',
-    'xanh lá': '#10b981',
-    'vàng': '#eab308',
-    'tím': '#9333ea',
-    'hồng': '#db2777',
-    'cam': '#f97316',
-    'xám': '#64748b',
-    'nâu': '#78350f',
-    'be': '#f5f5dc',
-    'navy': '#1e3a8a'
-  };
-  return colorMap[n] || '#cccccc'; 
 };
 
 const handleImageError = (event) => {
   event.target.src = "/src/assets/logo/no-image-placeholder.png";
 };
 
+// 👉 HÀM DỰ PHÒNG: Chỉ chạy khi Database bị rỗng hoặc lỗi RGB
+const getBackupColorCode = (name) => {
+  if (!name) return '#cccccc';
+  const n = name.toLowerCase().trim();
+  const colorMap = {
+    'đen': '#222222', 'black': '#222222',
+    'trắng': '#ffffff', 'white': '#ffffff', 'trắng sữa': '#fdfff5', 'trắng kem': '#f5f5dc', 
+    'xám': '#808080', 'gray': '#808080', 'grey': '#808080', 'xám nhạt': '#d3d3d3', 'xám đậm': '#555555',
+    'đỏ': '#dc2626', 'red': '#dc2626', 'đỏ đô': '#800000', 'đỏ rượu': '#722f37',
+    'hồng': '#ffc0cb', 'pink': '#ffc0cb', 'hồng phấn': '#ffb6c1',
+    'tím': '#9333ea', 'purple': '#9333ea', 'tím than': '#191970', 'tím nhạt': '#e6e6fa',
+    'xanh dương': '#2563eb', 'blue': '#2563eb', 'xanh biển': '#0000ff', 'navy': '#1e3a8a', 'xanh đen': '#0a1128',
+    'xanh ngọc': '#00a86b', 'xanh coban': '#0047ab',
+    'xanh lá': '#10b981', 'green': '#10b981', 'xanh rêu': '#4a5d23', 'rêu': '#4a5d23',
+    'vàng': '#eab308', 'yellow': '#eab308', 'vàng bò': '#d2b48c', 'vàng kem': '#f0e68c', 
+    'cam': '#f97316', 'orange': '#f97316', 'cam đất': '#cc7722',
+    'nâu': '#78350f', 'brown': '#78350f', 'nâu bò': '#8b4513', 'nâu tây': '#a0522d',
+    'be': '#f5f5dc', 'beige': '#f5f5dc', 'kem': '#fffdd0'
+  };
+
+  if (colorMap[n]) return colorMap[n];
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (n.includes(key)) return value;
+  }
+  return '#cccccc';
+};
+
 const scrollLeft = (refName) => {
-  const el =
-    refName === "bestSellerRef" ? bestSellerRef.value : saleProductRef.value;
+  const el = refName === "bestSellerRef" ? bestSellerRef.value : saleProductRef.value;
   if (el) el.scrollBy({ left: -350, behavior: "smooth" });
 };
 
 const scrollRight = (refName) => {
-  const el =
-    refName === "bestSellerRef" ? bestSellerRef.value : saleProductRef.value;
+  const el = refName === "bestSellerRef" ? bestSellerRef.value : saleProductRef.value;
   if (el) el.scrollBy({ left: 350, behavior: "smooth" });
 };
 
@@ -732,28 +531,19 @@ const fetchData = async () => {
   errorMsg.value = "";
   try {
     const [bsRes, allRes] = await Promise.all([
-      axios
-        .get("http://localhost:8080/api/san-pham/best-seller")
-        .catch(() => ({ data: [] })),
-      axios
-        .get("http://localhost:8080/api/san-pham/home")
-        .catch(() => ({ data: { content: [] } })),
+      axios.get("http://localhost:8080/api/san-pham/best-seller").catch(() => ({ data: [] })),
+      axios.get("http://localhost:8080/api/san-pham/home").catch(() => ({ data: { content: [] } })),
     ]);
 
-    // Gán dữ liệu tạm để xử lý logic thêm Khuyến Mãi
     let tempBestSellers = bsRes.data || [];
     let tempProducts = allRes.data.content || allRes.data || [];
 
-    // Gọi API chi tiết để lấy chính xác giá gốc / giá min / giá max và phần trăm giảm
-    const saleRes = await axios
-      .get("http://localhost:8080/api/chi-tiet-san-pham?page=0&size=100")
-      .catch(() => ({ data: { content: [] } }));
+    const saleRes = await axios.get("http://localhost:8080/api/chi-tiet-san-pham?page=0&size=100").catch(() => ({ data: { content: [] } }));
     const rawData = saleRes.data.content || [];
     const uniqueProductsMap = new Map();
 
     rawData.forEach((item) => {
       const percent = item.phanTramGiam || 0;
-
       let realProductId = item.sanPham?.id || item.id;
       if (item.maSanPham && item.maSanPham.startsWith("SP")) {
         realProductId = parseInt(item.maSanPham.replace("SP", ""), 10);
@@ -764,8 +554,7 @@ const fetchData = async () => {
           id: realProductId,
           maSanPham: item.maSanPham,
           tenSp: item.tenSanPham,
-          hinhAnh:
-            item.hinhAnh && item.hinhAnh.length > 0 ? item.hinhAnh[0] : null,
+          hinhAnh: item.hinhAnh && item.hinhAnh.length > 0 ? item.hinhAnh[0] : null,
           giaMin: item.giaSauGiam || item.giaBan,
           giaMax: item.giaSauGiam || item.giaBan,
           giaGoc: item.giaGoc || item.giaBan,
@@ -777,7 +566,6 @@ const fetchData = async () => {
         if (currentGia < existing.giaMin) existing.giaMin = currentGia;
         if (currentGia > existing.giaMax) existing.giaMax = currentGia;
         if (percent > existing.phanTramGiam) existing.phanTramGiam = percent;
-        // Luôn cập nhật giá gốc lớn nhất
         if ((item.giaGoc || item.giaBan) > existing.giaGoc) {
           existing.giaGoc = item.giaGoc || item.giaBan;
         }
@@ -786,29 +574,20 @@ const fetchData = async () => {
 
     let uniqueSaleProducts = Array.from(uniqueProductsMap.values());
 
-    // ĐỒNG BỘ: Cập nhật thông tin Giá + Khuyến mãi vào Best Sellers và Products
     bestSellers.value = tempBestSellers.map((sp) => {
       const mappedSp = uniqueSaleProducts.find((m) => m.id === sp.id);
-      if (mappedSp) {
-        return { ...sp, ...mappedSp }; // Lấy đè dữ liệu giá chuẩn từ Map
-      }
-      return sp;
+      return mappedSp ? { ...sp, ...mappedSp } : sp;
     });
 
     products.value = tempProducts.map((sp) => {
       const mappedSp = uniqueSaleProducts.find((m) => m.id === sp.id);
-      if (mappedSp) {
-        return { ...sp, ...mappedSp }; // Lấy đè dữ liệu giá chuẩn từ Map
-      }
-      return sp;
+      return mappedSp ? { ...sp, ...mappedSp } : sp;
     });
 
-    // Lọc ra các sản phẩm sale cho mục riêng
     let onlySaleItems = uniqueSaleProducts.filter((sp) => sp.phanTramGiam > 0);
     onlySaleItems.sort((a, b) => b.phanTramGiam - a.phanTramGiam);
     saleProducts.value = onlySaleItems.slice(0, 10);
   } catch (error) {
-    console.error("Lỗi khi gọi API:", error);
     errorMsg.value = "Hệ thống đang bảo trì. Xin quay lại sau.";
   } finally {
     isLoading.value = false;
@@ -826,12 +605,7 @@ const availableColors = ref([]);
 const availableSizes = ref([]);
 
 const currentVariant = computed(() => {
-  if (
-    !productVariants.value.length ||
-    !selectedColor.value ||
-    !selectedSize.value
-  )
-    return null;
+  if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find((v) => {
     const tenMau = v.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
     const tenSize = v.tenKichCo || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
@@ -851,26 +625,34 @@ const openQuickAddModal = async (sp) => {
     productVariants.value = res.data.content || res.data || [];
 
     if (productVariants.value.length > 0) {
-      const colors = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau,
-          ),
-        ),
-      ].filter(Boolean);
-      const sizes = [
-        ...new Set(
-          productVariants.value.map(
-            (v) => v.tenKichCo || v.kichCo?.tenKichCo || v.kichCo || v.tenSize,
-          ),
-        ),
-      ].filter(Boolean);
+      // 👉 TẠO MAP BẮT MÃ RGB TỪ DATABASE 
+      const colorMap = new Map();
+      const sizeSet = new Set();
 
-      availableColors.value = colors;
-      availableSizes.value = sizes;
+      productVariants.value.forEach(v => {
+        const tenMau = v.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
+        const tenSize = v.tenKichCo || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
+        
+        // 👉 ƯU TIÊN 1: Lấy mã RGB từ DB (v.rgb hoặc v.mauSac.rgb)
+        // 👉 ƯU TIÊN 2: Nếu DB null/undefined, vớt vát bằng getBackupColorCode(tenMau)
+        const rgbCode = v.rgb || v.mauSac?.rgb || getBackupColorCode(tenMau);
 
-      if (colors.length > 0) selectedColor.value = colors[0];
-      if (sizes.length > 0) selectedSize.value = sizes[0];
+        if (tenMau && !colorMap.has(tenMau)) {
+          colorMap.set(tenMau, rgbCode);
+        }
+        if (tenSize) sizeSet.add(tenSize);
+      });
+
+      // Chuyển Map thành mảng [{tenMau, rgb}]
+      availableColors.value = Array.from(colorMap.entries()).map(([tenMau, rgb]) => ({
+        tenMau,
+        rgb
+      }));
+
+      availableSizes.value = [...sizeSet];
+
+      if (availableColors.value.length > 0) selectedColor.value = availableColors.value[0].tenMau;
+      if (availableSizes.value.length > 0) selectedSize.value = availableSizes.value[0];
     } else {
       availableColors.value = [];
       availableSizes.value = [];
@@ -897,8 +679,7 @@ const confirmAddToCart = () => {
       "error",
     );
 
-  const tonKhoThucTe =
-    currentVariant.value.soLuongTon || currentVariant.value.soLuong || 0;
+  const tonKhoThucTe = currentVariant.value.soLuongTon || currentVariant.value.soLuong || 0;
   if (quantity.value > tonKhoThucTe)
     return showToast(`Kho chỉ còn ${tonKhoThucTe} sản phẩm!`, "error");
 
@@ -906,15 +687,16 @@ const confirmAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
     const giaGoc = currentVariant.value.giaBan || currentVariant.value.gia || 0;
     const phanTram = selectedProduct.value.phanTramGiam || 0;
-    const giaSauGiam =
-      phanTram > 0 ? giaGoc - (giaGoc * phanTram) / 100 : giaGoc;
+    const giaSauGiam = phanTram > 0 ? giaGoc - (giaGoc * phanTram) / 100 : giaGoc;
+
+    const selectedColorData = availableColors.value.find(c => c.tenMau === selectedColor.value);
 
     const newItem = {
       productId: selectedProduct.value.id,
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: currentVariant.value.hinhAnh || selectedProduct.value.hinhAnh,
-      mauSac: { tenMau: selectedColor.value, rgb: getColorCode(selectedColor.value) },
+      mauSac: { tenMau: selectedColor.value, rgb: selectedColorData?.rgb || '#cccccc' },
       kichCo: selectedSize.value,
       giaBan: giaSauGiam, // Lưu giá ĐÃ GIẢM vào giỏ hàng
       soLuong: quantity.value,
@@ -956,7 +738,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Import Phông chữ cao cấp */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
 
 .app-container {
@@ -1483,43 +1264,43 @@ onBeforeUnmount(() => {
   transform: translateY(-2px);
 }
 
-/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) KHÔNG ICON ================= */
-.toast-notification {
+/* 👉 ĐÃ CẬP NHẬT: TOAST MỚI (CHỌN MÀU CHOCOLATE - TRẮNG) */
+.choco-toast {
   position: fixed;
   top: 30px;
   right: 30px;
   z-index: 10001;
-  min-width: 300px;
-  padding: 18px 24px;
-  border-radius: 8px;
+  padding: 14px 20px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  min-width: 250px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.toast-notification.success {
+.choco-toast.success {
   background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
 }
 
-.toast-notification.error {
-  background: #f8d7da;
-  color: #721c24;
-  border-left: 4px solid #dc3545;
+.choco-toast.error {
+  background-color: #fee2e2; 
+  color: #b91c1c; 
+  border-left: 6px solid #dc2626;
 }
 
-.toast-notification.warning {
-  background: #ffc107;
-  color: #333;
-  border-left: 4px solid #ff9800;
+.choco-toast.warning {
+  background-color: #fffbeb; 
+  color: #b45309; 
+  border-left: 6px solid #f59e0b;
 }
 
 .toast-content {
-  font-weight: 600;
-  color: inherit;
-  font-size: 15px;
+  letter-spacing: 0.2px;
 }
 
 .toast-slide-enter-active,
@@ -1622,7 +1403,7 @@ onBeforeUnmount(() => {
   transform: scale(0.95) translateY(10px);
 }
 
-/* ================= MODAL QUICK ADD (Nâng Cấp VIP) ================= */
+/* ================= MODAL QUICK ADD ================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1799,6 +1580,9 @@ onBeforeUnmount(() => {
   transition: all 0.2s;
   padding: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .color-circle:hover {
@@ -1809,6 +1593,19 @@ onBeforeUnmount(() => {
 .color-circle.active {
   border-color: #d32f2f;
   box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d32f2f;
+}
+
+.swatch-check {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0;
+  text-shadow: 0px 0px 4px rgba(0,0,0,0.7); 
+  transition: opacity 0.2s;
+}
+
+.color-circle.active .swatch-check {
+  opacity: 1;
 }
 
 /* CSS KÍCH CỠ (Ô VUÔNG) */
@@ -2063,4 +1860,6 @@ onBeforeUnmount(() => {
     height: 220px;
   }
 }
+
+
 </style>
