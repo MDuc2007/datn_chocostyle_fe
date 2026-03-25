@@ -139,47 +139,31 @@ const materials = ref([]);
 const sizes = ref([]);
 const colors = ref([]);
 
-// 👉 ĐÃ NÂNG CẤP BỘ LỌC MÀU CHUẨN ĐẦY ĐỦ CÁC MÀU
-const getColorCode = (name) => {
-  if (!name) return '#E5E7EB';
+// 👉 ĐÃ THÊM LẠI: Hàm backup màu thông minh để chống lỗi xám
+const getBackupColorCode = (name) => {
+  if (!name) return '#cccccc';
   const n = name.toLowerCase().trim();
-  
-  // Ánh xạ chính xác tên màu
   const colorMap = {
-    'đen': '#000000',
-    'trắng': '#ffffff',
-    'đỏ': '#dc2626',
-    'xanh dương': '#2563eb',
-    'xanh lá': '#10b981',
-    'vàng': '#eab308',
-    'tím': '#9333ea',
-    'hồng': '#db2777',
-    'cam': '#f97316',
-    'xám': '#64748b',
-    'ghi': '#9ca3af',
-    'nâu': '#78350f',
-    'be': '#f5f5dc',
-    'navy': '#1e3a8a',
-    'rêu': '#4B5320',
+    'đen': '#222222', 'black': '#222222',
+    'trắng': '#ffffff', 'white': '#ffffff', 'trắng sữa': '#fdfff5', 'trắng kem': '#f5f5dc', 
+    'xám': '#808080', 'gray': '#808080', 'grey': '#808080', 'xám nhạt': '#d3d3d3', 'xám đậm': '#555555',
+    'đỏ': '#dc2626', 'red': '#dc2626', 'đỏ đô': '#800000', 'đỏ rượu': '#722f37',
+    'hồng': '#ffc0cb', 'pink': '#ffc0cb', 'hồng phấn': '#ffb6c1',
+    'tím': '#9333ea', 'purple': '#9333ea', 'tím than': '#191970', 'tím nhạt': '#e6e6fa',
+    'xanh dương': '#2563eb', 'blue': '#2563eb', 'xanh biển': '#0000ff', 'navy': '#1e3a8a', 'xanh đen': '#0a1128',
+    'xanh ngọc': '#00a86b', 'xanh coban': '#0047ab',
+    'xanh lá': '#10b981', 'green': '#10b981', 'xanh rêu': '#4a5d23', 'rêu': '#4a5d23',
+    'vàng': '#eab308', 'yellow': '#eab308', 'vàng bò': '#d2b48c', 'vàng kem': '#f0e68c', 
+    'cam': '#f97316', 'orange': '#f97316', 'cam đất': '#cc7722',
+    'nâu': '#78350f', 'brown': '#78350f', 'nâu bò': '#8b4513', 'nâu tây': '#a0522d',
+    'be': '#f5f5dc', 'beige': '#f5f5dc', 'kem': '#fffdd0'
   };
 
   if (colorMap[n]) return colorMap[n];
-
-  // Nếu tên màu dài (VD: "Đen nhạt", "Tím than"), dùng fallback:
-  if (n.includes('đen')) return '#000000';
-  if (n.includes('trắng')) return '#ffffff';
-  if (n.includes('đỏ')) return '#dc2626';
-  if (n.includes('tím')) return '#9333ea';
-  if (n.includes('vàng')) return '#eab308';
-  if (n.includes('hồng')) return '#db2777';
-  if (n.includes('cam')) return '#f97316';
-  if (n.includes('nâu')) return '#78350f';
-  if (n.includes('rêu')) return '#4B5320';
-  if (n.includes('xanh navy') || n.includes('xanh sẫm')) return '#1E3A8A';
-  if (n.includes('xanh')) return '#2563EB';
-  if (n.includes('xám') || n.includes('ghi')) return '#9CA3AF';
-
-  return '#E5E7EB'; // Màu mặc định nếu không khớp
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (n.includes(key)) return value;
+  }
+  return '#cccccc'; // Nếu vẫn không tìm được mới ra màu xám
 };
 
 const fetchDynamicFilters = async () => {
@@ -201,17 +185,18 @@ const fetchDynamicFilters = async () => {
       const materialName = item.tenChatLieu || item.chatLieu?.tenChatLieu;
       if (materialName) uniqueMaterials.add(materialName);
 
-      // 3. Kích cỡ (Bao phủ cấu trúc mảng và object)
+      // 3. Kích cỡ
       const sizeName = item.tenKichCo || item.kichCo?.tenKichCo || item.kichCoList?.[0] || item.kichCo;
       if (sizeName) uniqueSizes.add(sizeName);
 
-      // 4. Màu sắc (Bao phủ cấu trúc mảng và object)
+      // 4. Màu sắc
       const colorName = item.tenMauSac || item.mauSac?.tenMau || item.mauSac?.tenMauSac || item.mauSacList?.[0]?.tenMauSac;
-      const rgb = item.rgb || item.mauSac?.rgb || item.mauSacList?.[0]?.rgb;
+      
+      // 👉 ĐÃ SỬA: Lấy RGB từ DB. NẾU RỖNG THÌ DÙNG HÀM BACKUP ĐỂ DỊCH CHỮ THÀNH MÀU
+      const rgbCode = item.rgb || item.mauSac?.rgb || item.mauSacList?.[0]?.rgb || getBackupColorCode(colorName);
 
       if (colorName && !uniqueColorsMap.has(colorName)) {
-        // Nếu backend trả về mã màu rgb thì lấy, không thì dùng hàm getColorCode
-        uniqueColorsMap.set(colorName, rgb || getColorCode(colorName));
+        uniqueColorsMap.set(colorName, rgbCode);
       }
     });
 
@@ -228,11 +213,11 @@ const fetchDynamicFilters = async () => {
       return indexA === indexB ? String(a).localeCompare(String(b)) : indexA - indexB;
     });
 
-    // Sắp xếp Màu sắc
+    // Đẩy dữ liệu Màu sắc ra View
     colors.value = Array.from(uniqueColorsMap, ([name, hex]) => ({
       label: name,
       value: name,
-      hex: hex
+      hex: hex // hex này lúc này chắc chắn đã có màu xịn (từ DB hoặc từ Backup)
     }));
 
   } catch (error) {
@@ -277,7 +262,9 @@ const resetFilter = () => {
   };
   applyFilter();
 };
-</script><style scoped>
+</script>
+
+<style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Nunito:wght@400;600;700&display=swap');
 
 /* Container chính của Sidebar */
@@ -554,18 +541,13 @@ input[type=number] {
 }
 
 /* =========================================================
-   KHU VỰC MÀU SẮC (ĐÃ CĂN GIỮA VÀ TĂNG KHOẢNG CÁCH)
+   KHU VỰC MÀU SẮC
    ========================================================= */
 .color-grid { 
   display: flex; 
   flex-wrap: wrap; 
-  
-  /* 👉 Căn giữa các ô màu */
   justify-content: center; 
-  
-  /* 👉 Tăng khoảng cách các ô màu ra cho thoáng */
   gap: 18px; 
-  
   padding: 6px 4px; 
 }
 
@@ -609,6 +591,7 @@ input[type=number] {
   filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.5)); 
 }
 
+/* Cân nhắc màu nền quá sáng -> dấu tick thành màu đen/sẫm để hiển thị rõ */
 .color-circle[style*="background-color: #ffffff"] svg,
 .color-circle[style*="background-color: rgb(255, 255, 255)"] svg,
 .color-circle[style*="background-color: #f5f5dc"] svg { 

@@ -361,8 +361,6 @@ const setDefault = async (idDiaChi) => {
   }
 };
 
-// ĐÃ BỎ HÀM DELETE THEO YÊU CẦU
-
 const openModal = () => {
   resetForm();
   showModal.value = true;
@@ -413,7 +411,7 @@ onMounted(() => {
   gap: 8px;
 }
 .breadcrumb span { cursor: pointer; transition: color 0.2s; }
-.breadcrumb span:hover { color: #6b3f1e; }
+.breadcrumb span:hover { color: #63391F; } /* ĐÃ ĐỔI MÀU */
 .breadcrumb .separator svg { width: 14px; height: 14px; margin-top: 3px; }
 .breadcrumb .current { font-weight: 500; color: #111827; cursor: default; }
 
@@ -449,7 +447,7 @@ onMounted(() => {
 .page-subtitle { margin: 0; font-size: 14px; color: #6b7280; }
 
 .btn-orange { 
-  background: linear-gradient(135deg, #6b3f1e, #b8895d); 
+  background: linear-gradient(135deg, #63391F, #8b5328); /* ĐÃ ĐỔI MÀU */
   color: #fff; 
   border: none; 
   padding: 10px 20px; 
@@ -459,7 +457,7 @@ onMounted(() => {
   transition: all 0.3s ease; 
 }
 .btn-orange:hover:not(:disabled) { 
-  box-shadow: 0 6px 12px rgba(107, 63, 30, 0.25); 
+  box-shadow: 0 6px 12px rgba(99, 57, 31, 0.25); 
   transform: translateY(-2px);
 }
 .btn-orange:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -482,15 +480,20 @@ onMounted(() => {
   padding: 20px;
   transition: all 0.3s;
 }
-.address-card:hover { border-color: #d6bda9; box-shadow: 0 4px 12px rgba(107, 63, 30, 0.05); }
-.address-card.is-default { border: 1px solid #6b3f1e; background: #fdf8f6; }
+.address-card:hover { border-color: #d6bda9; box-shadow: 0 4px 12px rgba(99, 57, 31, 0.05); }
+
+/* 👉 ĐÃ SỬA: Card Mặc định có viền nâu chuẩn và nền siêu nhạt */
+.address-card.is-default { 
+  border: 1.5px solid #63391F; 
+  background: #fdfaf8; 
+}
 
 .address-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  border-bottom: 1px dashed #f3f4f6;
+  border-bottom: 1px dashed #e5e7eb;
   padding-bottom: 12px;
 }
 
@@ -499,25 +502,34 @@ onMounted(() => {
 .divider { margin: 0 12px; color: #d1d5db; }
 .addr-phone { color: #6b7280; font-size: 15px; }
 
+/* 👉 ĐÃ SỬA: Badge mặc định đổi màu sang tone Nâu Chocolate */
 .default-badge {
-  background: #fdf3ea;
-  color: #b45309;
+  background: #FDF8F5;
+  color: #63391F;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px 12px;
   border-radius: 20px;
-  border: 1px solid #fed7aa;
+  border: 1px solid #E8D3C3;
 }
 
 .address-card-body {
   margin-bottom: 15px;
 }
 .addr-row { display: flex; gap: 12px; align-items: flex-start; }
-.icon-location { width: 20px; height: 20px; color: #9ca3af; margin-top: 2px; flex-shrink: 0;}
+
+/* 👉 ĐÃ SỬA: Icon location thẳng hàng chuẩn với dòng chữ đầu tiên */
+.icon-location { 
+  width: 18px; 
+  height: 18px; 
+  color: #6b7280; 
+  margin-top: 2px; 
+  flex-shrink: 0;
+}
 
 .addr-text p { margin: 0; line-height: 1.5; color: #4b5563; }
 .addr-detail { font-size: 15px; font-weight: 500; color: #111827 !important; margin-bottom: 4px !important; }
-.addr-sub { font-size: 14px; }
+.addr-sub { font-size: 14px; color: #6b7280;}
 
 .address-card-footer {
   display: flex;
@@ -525,11 +537,7 @@ onMounted(() => {
   align-items: center;
 }
 
-.action-links { display: flex; gap: 16px; }
-.btn-text { background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 600; padding: 0; transition: opacity 0.2s; }
-.btn-text:hover { opacity: 0.7; }
-.text-primary { color: #0284c7; }
-
+/* 👉 ĐÃ SỬA: Nút thiết lập mặc định */
 .btn-outline {
   background: #fff;
   border: 1px solid #d1d5db;
@@ -541,18 +549,27 @@ onMounted(() => {
   border-radius: 6px;
   transition: all 0.2s;
 }
-.btn-outline:hover:not(.btn-disabled) { border-color: #6b3f1e; color: #6b3f1e; }
-.btn-disabled { opacity: 0.5; cursor: not-allowed; border-color: #e5e7eb; background: #f9fafb;}
+.btn-outline:hover:not(.btn-disabled) { 
+  border-color: #63391F; 
+  color: #63391F; 
+}
+/* Làm mờ hẳn nút đi khi ở trạng thái disabled để nhìn sang trọng hơn */
+.btn-disabled { 
+  opacity: 0.4; 
+  cursor: not-allowed; 
+  border-color: #e5e7eb; 
+  background: #f9fafb;
+}
 
 /* ================== TRẠNG THÁI EMPTY & LOADING ================== */
 .loading-state, .empty-state { text-align: center; padding: 60px 0; color: #6b7280; }
-.spinner { border: 3px solid #f3f3f3; border-top: 3px solid #6b3f1e; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+.spinner { border: 3px solid #f3f3f3; border-top: 3px solid #63391F; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 16px; } /* ĐÃ ĐỔI MÀU */
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .empty-state { background: #fafafa; border-radius: 8px; border: 1px dashed #e5e7eb; }
 .empty-icon { width: 48px; height: 48px; color: #d1d5db; margin-bottom: 15px; }
 
-/* ================== MODAL THÊM ĐỊA CHỈ (NÂNG CẤP GIAO DIỆN) ================== */
+/* ================== MODAL THÊM ĐỊA CHỈ ================== */
 .modal-overlay { 
   position: fixed; 
   top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -571,11 +588,11 @@ onMounted(() => {
 .modal-header { 
   display: flex; justify-content: space-between; align-items: center; 
   padding: 20px 24px; border-bottom: 1px solid #f3f4f6; 
-  background: #fafafa;
+  background: #ffffff; /* Nền trắng sạch sẽ */
 }
 .modal-title { margin: 0; font-size: 18px; font-weight: 700; color: #111827; }
 .btn-close { 
-  background: #e2e8f0; border: none; 
+  background: #f1f5f9; border: none; 
   font-size: 20px; color: #64748b; cursor: pointer; 
   width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -597,7 +614,8 @@ onMounted(() => {
   transition: all 0.2s; box-sizing: border-box; 
 }
 .form-input::placeholder { color: #9ca3af; }
-.form-input:focus { outline: none; border-color: #6b3f1e; box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1); }
+/* ĐÃ ĐỔI MÀU FOCUS */
+.form-input:focus { outline: none; border-color: #63391F; box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); } 
 .form-textarea { resize: vertical; min-height: 90px; }
 
 select.custom-select {
