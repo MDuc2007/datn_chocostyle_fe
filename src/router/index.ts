@@ -103,50 +103,49 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/LoginView.vue"),
   },
 
-  // LOGIN NHÂN VIÊN / ADMIN
+// =================================================================
+  // AUTHENTICATION ROUTES (Đăng nhập / Đăng ký / Quên Mật Khẩu)
+  // =================================================================
+  
+  // 👉 LUỒNG KHÁCH HÀNG
+  {
+    path: "/login",
+    name: "LoginCustomer",
+    component: () => import("../views/LoginView.vue"),
+  },
+  {
+    path: "/register",
+    name: "Register",
+    component: () => import("../views/RegisterView.vue"),
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPasswordCustomer",
+    // Trỏ đến file mới dành riêng cho Khách Hàng
+    component: () => import("../views/ForgotPasswordView.vue"), 
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: () => import("../views/ResetPasswordView.vue"), 
+  },
+  {
+    path: "/oauth2/redirect",
+    component: () => import("../views/OAuth2Redirect.vue"),
+  },
+
+  // 👉 LUỒNG NHÂN VIÊN / ADMIN
   {
     path: "/admin/login",
+    alias: "/login-admin", // Bí danh (alias) hỗ trợ nếu người dùng nhập url /login-admin
     name: "LoginStaff",
     component: () => import("../views/AdminLogin.vue"),
   },
-
   {
-    path: "/register",
-    name: "Register",
-    component: () => import("../views/RegisterView.vue"),
-  },
-  {
-    path: "/forgot-password",
-    name: "ForgotPassword",
-    component: () => import("../views/ForgotPasswordView.vue"),
-  },
-  {
-    path: "/reset-password",
-    name: "ResetPassword",
-    component: () => import("../views/ResetPasswordView.vue"),
-  },
-  {
-    path: "/oauth2/redirect",
-    component: () => import("../views/OAuth2Redirect.vue"),
-  },
-  {
-    path: "/register",
-    name: "Register",
-    component: () => import("../views/RegisterView.vue"),
-  },
-  {
-    path: "/forgot-password",
-    name: "ForgotPassword",
-    component: () => import("../views/ForgotPasswordView.vue"),
-  },
-  {
-    path: "/reset-password",
-    name: "ResetPassword",
-    component: () => import("../views/ResetPasswordView.vue"),
-  },
-  {
-    path: "/oauth2/redirect",
-    component: () => import("../views/OAuth2Redirect.vue"),
+    path: "/admin/forgot-password",
+    name: "ForgotPasswordStaff",
+    // Trỏ đến file mới dành riêng cho Nhân viên
+    component: () => import("../views/ForgotPasswordStaff.vue"),
   },
   // =================================================================
   // 2. ADMIN ROUTES (Sử dụng Layout chung & Phân quyền)
@@ -441,14 +440,16 @@ router.beforeEach((to, from, next) => {
     "/thong-tin",
     "/moi-ve",
     "/forgot-password",
+    "/admin/forgot-password", 
     "/reset-password",
     "/oauth2/redirect",
     "/admin/login",
+    "/login-admin", 
     "/uu-dai",
     "/payment",
-    "/ao-khoac", // <--- Thêm trang Áo khoác
-    "/tra-cuu", // <--- Thêm trang Tra cứu đơn hàng
-    "/payment-result", // <--- Thêm trang Kết quả thanh toán
+    "/ao-khoac", 
+    "/tra-cuu", 
+    "/payment-result", 
     "/my-orders",
   ];
 
@@ -483,8 +484,8 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 3. Đã login mà cố tình vào lại trang Login -> Đẩy vào Dashboard tương ứng
-  if (user && ["/login", "/register", "/admin/login"].includes(to.path)) {
+// 3. Đã login mà cố tình vào lại trang Login -> Đẩy vào Dashboard tương ứng
+  if (user && ["/login", "/register", "/admin/login", "/login-admin"].includes(to.path)) {
     switch (user.role) {
       case "ROLE_ADMIN":
         return next("/admin/dashboard");
