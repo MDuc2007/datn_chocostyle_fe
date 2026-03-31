@@ -46,7 +46,7 @@
                   </svg>
                 </span>
                 <span class="sort-label">Sắp xếp:</span>
-                <select v-model="selectedSort" @change="applyFilters" class="sort-select">
+                <select v-model="selectedSort" @change="applyFiltersImmediate" class="sort-select">
                   <option value="bestSale">Giảm nhiều nhất</option>
                   <option value="priceAsc">Giá thấp đến cao</option>
                   <option value="priceDesc">Giá cao đến thấp</option>
@@ -67,10 +67,10 @@
           </div>
 
           <div v-else>
-            <div v-if="filteredProducts.length > 0">
+            <div v-if="paginatedProducts.length > 0">
               <div class="product-grid">
                 <transition-group name="list">
-                  <div v-for="sp in displayedProducts" :key="sp.id" class="product-card">
+                  <div v-for="sp in paginatedProducts" :key="sp.id" class="product-card">
 
                     <div class="image-box" @click="goDetail(sp.id)">
                       <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
@@ -107,9 +107,33 @@
                 </transition-group>
               </div>
 
-              <div v-if="hasMore" class="load-more-container">
-                <button class="btn-load-more" @click="loadMoreProducts">
-                  Xem thêm (Còn {{ remainingCount }} ưu đãi)
+              <div class="pagination-wrapper" v-if="totalPages > 1">
+                <button 
+                  class="page-btn prev-btn" 
+                  :disabled="currentPage === 1" 
+                  @click="changePage(currentPage - 1)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+
+                <div class="page-numbers">
+                  <button 
+                    v-for="page in visiblePages" 
+                    :key="page"
+                    class="page-num" 
+                    :class="{ active: currentPage === page }"
+                    @click="changePage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <button 
+                  class="page-btn next-btn" 
+                  :disabled="currentPage === totalPages" 
+                  @click="changePage(currentPage + 1)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
             </div>
@@ -208,7 +232,7 @@
               </div>
 
               <div class="modal-actions">
-                <button class="btn-confirm-add" @click="confirmAddToCart">Xác nhận Thêm</button>
+                <button class="btn-confirm-add" @click="confirmAddToCart">Thêm vào giỏ</button>
                 <button class="btn-view-detail" @click="goDetail(selectedProduct.id)">Xem chi tiết</button>
               </div>
             </div>
@@ -237,15 +261,46 @@ const searchKeyword = ref("");
 const selectedSort = ref("bestSale"); 
 const advancedFilters = ref({ minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] });
 
-const currentPage = ref(0);
-const itemsPerPage = 12;
-const totalPages = ref(1);
+// ================= LOGIC PHÂN TRANG (PAGINATION) =================
+const currentPage = ref(1); 
+const itemsPerPage = 12; 
 
-const visibleCount = ref(itemsPerPage);
-const displayedProducts = computed(() => filteredProducts.value.slice(0, visibleCount.value));
-const hasMore = computed(() => visibleCount.value < filteredProducts.value.length);
-const remainingCount = computed(() => filteredProducts.value.length - visibleCount.value);
-const loadMoreProducts = () => { visibleCount.value += itemsPerPage; };
+const totalPages = computed(() => Math.ceil(filteredProducts.value.length / itemsPerPage));
+
+// Lấy sản phẩm của trang hiện tại (Đã ép kiểu Number chống lỗi chuyển trang)
+const paginatedProducts = computed(() => {
+  const page = Number(currentPage.value);
+  const limit = Number(itemsPerPage);
+  
+  const start = (page - 1) * limit;
+  const end = start + limit;
+  
+  return filteredProducts.value.slice(start, end);
+});
+
+const visiblePages = computed(() => {
+  let pages = [];
+  const maxVisibleButtons = 5;
+  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisibleButtons / 2));
+  let endPage = startPage + maxVisibleButtons - 1;
+
+  if (endPage > totalPages.value) {
+    endPage = totalPages.value;
+    startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    window.scrollTo({ top: 300, behavior: 'smooth' }); // Tự động cuộn lên đầu danh sách
+  }
+};
 
 const toast = ref({ show: false, message: "", type: "success" });
 const showToast = (msg, type = "success") => {
@@ -265,7 +320,43 @@ const getOldPrice = (sp) => {
   return sp.giaGoc || sp.giaMin;
 };
 
-// 👉 ĐÃ XÓA: Hàm getColorCode()
+// HÀM DỰ PHÒNG MÀU SẮC (Chống lỗi ô màu xám)
+const getBackupColorCode = (name) => {
+  if (!name) return '#cccccc';
+  const n = name.toLowerCase().trim();
+  
+  const colorMap = {
+    'đen': '#222222', 'black': '#222222', 'trắng': '#ffffff', 'white': '#ffffff', 'trắng sữa': '#fdfff5', 'trắng kem': '#f5f5dc', 
+    'xám': '#808080', 'gray': '#808080', 'grey': '#808080', 'xám nhạt': '#d3d3d3', 'xám đậm': '#555555',
+    'đỏ': '#dc2626', 'red': '#dc2626', 'đỏ đô': '#800000', 'đỏ rượu': '#722f37',
+    'hồng': '#ffc0cb', 'pink': '#ffc0cb', 'hồng phấn': '#ffb6c1',
+    'tím': '#9333ea', 'purple': '#9333ea', 'tím than': '#191970', 'tím nhạt': '#e6e6fa',
+    'xanh dương': '#2563eb', 'blue': '#2563eb', 'xanh biển': '#0000ff', 'navy': '#1e3a8a', 'xanh đen': '#0a1128',
+    'xanh ngọc': '#00a86b', 'xanh coban': '#0047ab',
+    'xanh lá': '#10b981', 'green': '#10b981', 'xanh rêu': '#4a5d23', 'rêu': '#4a5d23',
+    'vàng': '#eab308', 'yellow': '#eab308', 'vàng bò': '#d2b48c', 'vàng kem': '#f0e68c', 
+    'cam': '#f97316', 'orange': '#f97316', 'cam đất': '#cc7722',
+    'nâu': '#78350f', 'brown': '#78350f', 'nâu bò': '#8b4513', 'nâu tây': '#a0522d',
+    'be': '#f5f5dc', 'beige': '#f5f5dc', 'kem': '#fffdd0'
+  };
+
+  if (colorMap[n]) return colorMap[n];
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (n.includes(key)) return value;
+  }
+
+  // Tự động băm tạo mã màu nếu tên quá dị
+  let hash = 0;
+  for (let i = 0; i < n.length; i++) {
+    hash = n.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xFF;
+    color += ('00' + value.toString(16)).slice(-2);
+  }
+  return color;
+};
 
 const goDetail = (id) => {
   if (!id) {
@@ -277,13 +368,13 @@ const goDetail = (id) => {
 
 const clearSearch = () => {
   searchKeyword.value = "";
-  currentPage.value = 0;
+  currentPage.value = 1; // Reset trang
   fetchFilteredData();
 };
 
 const handleAdvancedFilter = (filters) => {
   advancedFilters.value = filters;
-  currentPage.value = 0;
+  currentPage.value = 1; // Reset trang
   fetchFilteredData();
 };
 
@@ -291,20 +382,25 @@ let searchTimeout = null;
 const applyFilters = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    currentPage.value = 0;
+    currentPage.value = 1; // Reset trang
     fetchFilteredData();
   }, 500);
 }
 
+const applyFiltersImmediate = () => {
+  currentPage.value = 1; // Reset trang
+  fetchFilteredData();
+}
+
 // ================= LOGIC GỌI API TỪ BACKEND VÀ TÌM KIẾM FRONTEND =================
-const fetchFilteredData = async (isAppend = false) => {
+const fetchFilteredData = async () => {
   isLoading.value = true;
   errorMsg.value = "";
 
   try {
-    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
+    // Để phân trang trên Frontend hoạt động, ta phải gọi size=1000 để lấy mảng bự
+    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=0&size=1000`;
 
-    // Vẫn truyền giá và các tham số lọc nếu có
     const adv = advancedFilters.value;
     if (adv.minPrice !== null && adv.minPrice !== "") url += `&minPrice=${adv.minPrice}`;
     if (adv.maxPrice !== null && adv.maxPrice !== "") url += `&maxPrice=${adv.maxPrice}`;
@@ -312,17 +408,15 @@ const fetchFilteredData = async (isAppend = false) => {
     const res = await axios.get(url);
     const data = res.data;
 
-    // GOM NHÓM SẢN PHẨM TRÙNG
     const rawData = data.content || [];
     const uniqueProductsMap = new Map();
 
-    // Chuẩn bị từ khóa cho Frontend Filter
     const keywordLower = searchKeyword.value.trim().toLowerCase();
 
     rawData.forEach(item => {
       let passFilter = true;
 
-      // 👉 Lọc tìm kiếm trực tiếp trên Frontend bằng Tên hoặc Mã SP
+      // Lọc tìm kiếm trực tiếp trên Frontend bằng Tên hoặc Mã SP
       if (keywordLower) {
         const productName = (item.tenSanPham || item.tenSp || item.sanPham?.tenSanPham || "").toLowerCase();
         const productCode = (item.maSanPham || item.sanPham?.maSanPham || "").toLowerCase();
@@ -337,7 +431,7 @@ const fetchFilteredData = async (isAppend = false) => {
       if (adv.colors.length > 0 && !adv.colors.includes(item.tenMauSac)) passFilter = false;
 
       if (passFilter) {
-        // 👉 CHỈ LẤY SẢN PHẨM CÓ KHUYẾN MÃI (Cho trang Sale)
+        // 👉 TRANG ƯU ĐÃI: CHỈ LẤY SẢN PHẨM CÓ KHUYẾN MÃI
         const percent = item.phanTramGiam || 0;
 
         if (percent > 0) {
@@ -373,8 +467,8 @@ const fetchFilteredData = async (isAppend = false) => {
     });
 
     let uniqueProducts = Array.from(uniqueProductsMap.values());
-    uniqueProducts = uniqueProducts.slice(0, 30);
 
+    // Sắp xếp đặc thù của trang Khuyến Mãi
     if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMin - b.giaMin);
     else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMin - a.giaMin);
     else if (selectedSort.value === "bestSale") {
@@ -382,14 +476,7 @@ const fetchFilteredData = async (isAppend = false) => {
     }
     else uniqueProducts.sort((a, b) => b.id - a.id); // newest
 
-    if (isAppend) {
-      filteredProducts.value = [...filteredProducts.value, ...uniqueProducts];
-    } else {
-      filteredProducts.value = uniqueProducts;
-    }
-
-    visibleCount.value = itemsPerPage;
-    totalPages.value = data.totalPages || 1;
+    filteredProducts.value = uniqueProducts;
 
   } catch (error) {
     console.error("Lỗi lấy dữ liệu:", error);
@@ -399,7 +486,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// ================= LOGIC MODAL QUICK ADD CHUẨN TỪ TRANG CHỦ =================
+// ================= LOGIC MODAL QUICK ADD =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -419,10 +506,8 @@ const currentVariantDiscountedPrice = computed(() => {
 const currentVariant = computed(() => {
   if (!productVariants.value.length || !selectedColor.value || !selectedSize.value) return null;
   return productVariants.value.find((v) => {
-    // Bao phủ cấu trúc JSON từ backend (Mảng hoặc Object)
-    const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
-    const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
-    
+    const tenMau = v.mauSacList?.[0]?.tenMauSac || v.tenMauSac || v.mauSac?.tenMauSac;
+    const tenSize = v.kichCoList?.[0] || v.tenKichCo || v.kichCo?.tenKichCo;
     return tenMau === selectedColor.value && tenSize === selectedSize.value;
   });
 });
@@ -433,7 +518,6 @@ const openQuickAddModal = async (sp) => {
   isQuickAddModalOpen.value = true;
 
   try {
-    // 👉 GỌI ĐÚNG API SAN-PHAM/{ID} NHƯ TRANG CHỦ
     const res = await axios.get(
       `http://localhost:8080/api/san-pham/${sp.id}`
     );
@@ -442,16 +526,15 @@ const openQuickAddModal = async (sp) => {
     productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      // 👉 TẠO MAP BẮT KÈM MÃ RGB TỪ DATABASE
       const colorMap = new Map();
       const sizeSet = new Set();
 
       productVariants.value.forEach(v => {
-        const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
-        const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
+        const tenMau = v.mauSacList?.[0]?.tenMauSac || v.tenMauSac || v.mauSac?.tenMauSac;
+        const tenSize = v.kichCoList?.[0] || v.tenKichCo || v.kichCo?.tenKichCo;
         
-        // Bắt mã RGB từ DB, nếu lỡ ko có trả về màu xám mờ
-        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || '#cccccc';
+        // Bắt mã RGB từ DB, nếu lỡ ko có trả về hàm Backup (Không bị lỗi xám)
+        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || getBackupColorCode(tenMau);
 
         if (tenMau && !colorMap.has(tenMau)) {
           colorMap.set(tenMau, rgbCode);
@@ -459,7 +542,6 @@ const openQuickAddModal = async (sp) => {
         if (tenSize) sizeSet.add(tenSize);
       });
 
-      // Chuyển Map thành Mảng [{tenMau: 'Đỏ', rgb: '#FF0000'}]
       availableColors.value = Array.from(colorMap.entries()).map(([tenMau, rgb]) => ({
         tenMau,
         rgb
@@ -503,7 +585,6 @@ const confirmAddToCart = () => {
     const hinhAnhSp = selectedProduct.value.hinhAnh;
     const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
-    // Tìm Data màu để lấy mã RGB lưu vào giỏ
     const selectedColorData = availableColors.value.find(c => c.tenMau === selectedColor.value);
 
     const newItem = {
@@ -511,7 +592,6 @@ const confirmAddToCart = () => {
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: finalImage,
-      // Lưu lại thông tin màu gồm tên và mã RGB
       mauSac: { tenMau: selectedColor.value, rgb: selectedColorData?.rgb || '#cccccc' },
       kichCo: selectedSize.value,
       giaBan: giaSauGiam, 
@@ -544,8 +624,7 @@ const resetAllFilters = () => {
   searchKeyword.value = "";
   selectedSort.value = "bestSale";
   advancedFilters.value = { minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] };
-  // Gọi trực tiếp fetchFilteredData thay vì applyFiltersImmediate (để đồng bộ)
-  currentPage.value = 0;
+  currentPage.value = 1; // Reset trang
   fetchFilteredData();
 };
 
@@ -864,23 +943,23 @@ onMounted(() => {
   margin: 0;
 }
 
-.btn-quick-add{
-    width: 100%;
-    background: #FFF;
-    border: 1px solid #63391F;
-    color: #63391F;
-    padding: 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.4s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    opacity: 0;
-    transform: translateY(10px);
+.btn-quick-add {
+  width: 100%;
+  background: #FFF;
+  border: 1px solid #63391F;
+  color: #63391F;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 .cart-icon {
@@ -897,43 +976,154 @@ onMounted(() => {
   background: #63391F;
   color: #FFF;
 }
-.load-more-container {
+
+/* 👉 PHÂN TRANG (PAGINATION) */
+.pagination-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 50px;
+  padding-bottom: 20px;
 }
 
-.btn-load-more {
-  background: transparent;
-  border: 1px solid #63391F;
-  color: #63391F;
-  padding: 12px 30px;
+.page-btn, .page-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.2s;
 }
 
-.btn-load-more:hover {
+.page-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.page-btn:hover:not(:disabled), .page-num:hover:not(.active) {
+  border-color: #63391F;
+  color: #63391F;
+}
+
+.page-btn:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.page-num.active {
   background: #63391F;
-  color: #FFF;
+  color: #fff;
+  border-color: #63391F;
 }
 
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+/* STATES */
+.loading-state,
+.error-state,
 .empty-state {
   text-align: center;
-  padding: 50px;
-  color: #888;
+  padding: 60px 20px;
+  border-radius: 12px;
+  background-color: #fafafa;
+  border: 1px dashed #e5e7eb;
+  margin-top: 20px;
 }
 
-.btn-retry {
-  margin-top: 15px;
-  background: #d0021b;
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #63391F;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-icon svg {
+  width: 48px;
+  height: 48px;
+  color: #d32f2f;
+  margin-bottom: 15px;
+}
+
+.error-state p {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.empty-icon-wrapper {
+  margin-bottom: 20px;
+  display: inline-block;
+  padding: 20px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+}
+
+.empty-icon-wrapper svg {
+  width: 64px;
+  height: 64px;
+  color: #9ca3af;
+}
+
+.empty-state h4 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.empty-state p {
+  color: #6b7280;
+  font-size: 15px;
+  margin-bottom: 25px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.btn-clear-filter {
+  background: #63391F;
   color: white;
-  padding: 10px 20px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
+}
+
+.btn-clear-filter:hover {
+  background: #4a2a17;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(99, 57, 31, 0.3);
 }
 
 /* Modal Quick Add */
@@ -1067,7 +1257,6 @@ onMounted(() => {
   transition: all 0.2s;
   padding: 0;
   position: relative;
-  /* Cho dấu tick nằm giữa */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1080,7 +1269,7 @@ onMounted(() => {
 
 .color-circle.active {
   border-color: #63391F;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #63391F;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #63391F;
 }
 
 .swatch-check {
@@ -1088,7 +1277,6 @@ onMounted(() => {
   font-size: 14px;
   font-weight: bold;
   opacity: 0;
-  /* Bóng mờ để dấu trắng nổi bật cả trên màu sáng */
   text-shadow: 0px 0px 4px rgba(0,0,0,0.7); 
   transition: opacity 0.2s;
 }
@@ -1132,6 +1320,7 @@ onMounted(() => {
   background-color: #fff5f0;
 }
 
+
 .quantity-control {
   display: inline-flex;
   align-items: center;
@@ -1173,17 +1362,17 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.btn-confirm-add{
-    flex: 2;
-    background: #63391F;
-    color: #FFF;
-    border: none;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
+.btn-confirm-add {
+  flex: 2;
+  background: #63391F;
+  color: #FFF;
+  border: none;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
 .btn-confirm-add:hover {
@@ -1207,19 +1396,7 @@ onMounted(() => {
   background: #F9F9F9;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(40px) scale(0.95);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* 👉 ĐÃ CẬP NHẬT TOAST SANG DẠNG VIỀN DÀY */
+/* 👉 ĐÃ SỬA: TOAST DẠNG VIỀN DÀY */
 .choco-toast {
   position: fixed;
   top: 30px;
@@ -1229,7 +1406,7 @@ onMounted(() => {
   border-radius: 6px;
   display: flex;
   align-items: center;
-  font-family: var(--font-family, 'Inter', sans-serif);
+  font-family: "Inter", sans-serif;
   font-weight: 500;
   font-size: 15px;
   min-width: 250px;
@@ -1310,11 +1487,31 @@ onMounted(() => {
   .modal-actions {
     flex-direction: column;
   }
+  
+  .pagination-wrapper {
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 480px) {
   .product-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ================= HIỆU ỨNG CHUYỂN TRANG MƯỢT MÀ ================= */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s ease;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.list-leave-active {
+  display: none !important; 
+  position: absolute;
 }
 </style>
