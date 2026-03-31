@@ -215,6 +215,7 @@ import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
 
+const noSpecialCharRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
@@ -469,9 +470,12 @@ const validateForm = () => {
   if (!form.tenKhachHang?.trim()) {
     errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
     isValid = false;
-  }
+  }else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
-  const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+  const phoneRegex = /(84|0)(3|5|7|8|9)[0-9]{8}\b/;
   if (!form.soDienThoai) {
     errors.value.soDienThoai = "Vui lòng nhập số điện thoại";
     isValid = false;
@@ -490,22 +494,41 @@ const validateForm = () => {
   }
 
 if (!form.ngaySinh) {
-    errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+  errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+  isValid = false;
+} else {
+  const birthDate = new Date(form.ngaySinh);
+  const today = new Date();
+
+  // ❌ Check date invalid (NaN)
+  if (isNaN(birthDate.getTime())) {
+    errors.value.ngaySinh = "Ngày sinh không hợp lệ";
     isValid = false;
-  } else {
-    const today = new Date();
-    const birthDate = new Date(form.ngaySinh);
-    
-    // Tạo một mốc thời gian cách đây đúng 16 năm
+  } 
+  // ❌ Không cho chọn ngày tương lai
+  else if (birthDate > today) {
+    errors.value.ngaySinh = "Ngày sinh không được lớn hơn ngày hiện tại";
+    isValid = false;
+  } 
+  else {
+    // ✅ Check đủ 16 tuổi
     const minAgeDate = new Date();
     minAgeDate.setFullYear(today.getFullYear() - 16);
 
-    // Nếu ngày sinh nhập vào LỚN HƠN mốc 16 năm trước -> Chưa đủ 16 tuổi
     if (birthDate > minAgeDate) {
       errors.value.ngaySinh = "Khách hàng phải từ 16 tuổi trở lên";
       isValid = false;
     }
   }
+}
+
+if (!form.tenKhachHang?.trim()) {
+  errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
+  isValid = false;
+} else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
   const hasValidAddr = form.listDiaChi.some(
     (a) => a.provinceId && a.districtId && a.wardCode && a.detail?.trim(),
@@ -513,7 +536,13 @@ if (!form.ngaySinh) {
   if (form.listDiaChi.length === 0 || !hasValidAddr) {
     errors.value.address = "Vui lòng nhập đầy đủ ít nhất 1 địa chỉ";
     isValid = false;
-  }
+  }if (!form.tenKhachHang?.trim()) {
+  errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
+  isValid = false;
+} else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
   return isValid;
 };

@@ -71,10 +71,10 @@
           </div>
 
           <div v-else>
-            <div v-if="filteredProducts.length > 0">
+            <div v-if="paginatedProducts.length > 0">
               <div class="product-grid">
                 <transition-group name="list">
-                  <div v-for="sp in displayedProducts" :key="sp.id" class="product-card">
+                  <div v-for="sp in paginatedProducts" :key="sp.id" class="product-card">
                     <div class="image-box" @click="goDetail(sp.id)">
                       <img :src="sp.hinhAnh" :alt="sp.tenSp" @error="handleImageError" />
                       <div class="badge-group">
@@ -120,9 +120,33 @@
                 </transition-group>
               </div>
 
-              <div v-if="hasMore" class="load-more-container">
-                <button class="btn-load-more" @click="loadMoreProducts">
-                  Xem thêm (Còn {{ remainingCount }} sản phẩm)
+              <div class="pagination-wrapper" v-if="totalPages > 1">
+                <button 
+                  class="page-btn prev-btn" 
+                  :disabled="currentPage === 1" 
+                  @click="changePage(currentPage - 1)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+
+                <div class="page-numbers">
+                  <button 
+                    v-for="page in visiblePages" 
+                    :key="page"
+                    class="page-num" 
+                    :class="{ active: currentPage === page }"
+                    @click="changePage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <button 
+                  class="page-btn next-btn" 
+                  :disabled="currentPage === totalPages" 
+                  @click="changePage(currentPage + 1)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
             </div>
@@ -147,7 +171,7 @@
     <Footer></Footer>
 
     <transition name="toast-slide">
-      <div v-if="toast.show" :class="['toast-notification', toast.type]">
+      <div v-if="toast.show" :class="['choco-toast', toast.type]">
         <div class="toast-content">{{ toast.message }}</div>
       </div>
     </transition>
@@ -203,7 +227,9 @@
                     :style="{ backgroundColor: colorData.rgb }"
                     @click="selectedColor = colorData.tenMau"
                     :title="colorData.tenMau"
-                  ></button>
+                  >
+                    <div class="swatch-check">✓</div>
+                  </button>
                 </div>
               </div>
 
@@ -257,15 +283,48 @@ const searchKeyword = ref("");
 const selectedSort = ref("newest");
 const advancedFilters = ref({ minPrice: null, maxPrice: null, types: [], materials: [], sizes: [], colors: [] });
 
-const currentPage = ref(0);
-const itemsPerPage = 12;
-const totalPages = ref(1);
+// 👉 THAY ĐỔI: Phân trang (Pagination)
+const currentPage = ref(1); 
+const itemsPerPage = 12; 
+const totalPages = computed(() => Math.ceil(filteredProducts.value.length / itemsPerPage));
 
-const visibleCount = ref(itemsPerPage);
-const displayedProducts = computed(() => filteredProducts.value.slice(0, visibleCount.value));
-const hasMore = computed(() => visibleCount.value < filteredProducts.value.length);
-const remainingCount = computed(() => filteredProducts.value.length - visibleCount.value);
-const loadMoreProducts = () => { visibleCount.value += itemsPerPage; };
+// Lấy sản phẩm của trang hiện tại
+// Lấy sản phẩm của trang hiện tại (Đã ép kiểu Number an toàn tuyệt đối)
+const paginatedProducts = computed(() => {
+  const page = Number(currentPage.value);
+  const limit = Number(itemsPerPage);
+  
+  const start = (page - 1) * limit;
+  const end = start + limit;
+  
+  return filteredProducts.value.slice(start, end);
+});
+
+// Tính toán các nút số trang hiển thị (giới hạn hiển thị để không bị quá dài)
+const visiblePages = computed(() => {
+  let pages = [];
+  const maxVisibleButtons = 5;
+  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisibleButtons / 2));
+  let endPage = startPage + maxVisibleButtons - 1;
+
+  if (endPage > totalPages.value) {
+    endPage = totalPages.value;
+    startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+// Xử lý chuyển trang
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    window.scrollTo({ top: 300, behavior: 'smooth' }); // Cuộn lên đầu danh sách khi chuyển trang
+  }
+};
 
 const toast = ref({ show: false, message: "", type: "success" });
 const showToast = (msg, type = "success") => {
@@ -275,6 +334,31 @@ const showToast = (msg, type = "success") => {
 
 const formatPrice = (v) => v == null ? "0 đ" : new Intl.NumberFormat("vi-VN").format(Math.round(v)) + " đ";
 const handleImageError = (e) => e.target.src = "/src/assets/logo/no-image-placeholder.png";
+
+// HÀM DỰ PHÒNG MÀU SẮC
+const getBackupColorCode = (name) => {
+  if (!name) return '#cccccc';
+  const n = name.toLowerCase().trim();
+  const colorMap = {
+    'đen': '#222222', 'black': '#222222', 'trắng': '#ffffff', 'white': '#ffffff', 'trắng sữa': '#fdfff5', 'trắng kem': '#f5f5dc', 
+    'xám': '#808080', 'gray': '#808080', 'grey': '#808080', 'xám nhạt': '#d3d3d3', 'xám đậm': '#555555',
+    'đỏ': '#dc2626', 'red': '#dc2626', 'đỏ đô': '#800000', 'đỏ rượu': '#722f37',
+    'hồng': '#ffc0cb', 'pink': '#ffc0cb', 'hồng phấn': '#ffb6c1',
+    'tím': '#9333ea', 'purple': '#9333ea', 'tím than': '#191970', 'tím nhạt': '#e6e6fa',
+    'xanh dương': '#2563eb', 'blue': '#2563eb', 'xanh biển': '#0000ff', 'navy': '#1e3a8a', 'xanh đen': '#0a1128',
+    'xanh ngọc': '#00a86b', 'xanh coban': '#0047ab',
+    'xanh lá': '#10b981', 'green': '#10b981', 'xanh rêu': '#4a5d23', 'rêu': '#4a5d23',
+    'vàng': '#eab308', 'yellow': '#eab308', 'vàng bò': '#d2b48c', 'vàng kem': '#f0e68c', 
+    'cam': '#f97316', 'orange': '#f97316', 'cam đất': '#cc7722',
+    'nâu': '#78350f', 'brown': '#78350f', 'nâu bò': '#8b4513', 'nâu tây': '#a0522d',
+    'be': '#f5f5dc', 'beige': '#f5f5dc', 'kem': '#fffdd0'
+  };
+  if (colorMap[n]) return colorMap[n];
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (n.includes(key)) return value;
+  }
+  return '#cccccc';
+};
 
 const goDetail = (id) => {
   if (!id) return;
@@ -291,13 +375,13 @@ const isNew = (dateString) => {
 
 const clearSearch = () => {
   searchKeyword.value = "";
-  currentPage.value = 0;
+  currentPage.value = 1;
   fetchFilteredData();
 };
 
 const handleAdvancedFilter = (filters) => {
   advancedFilters.value = filters;
-  currentPage.value = 0;
+  currentPage.value = 1;
   fetchFilteredData();
 };
 
@@ -305,23 +389,24 @@ let searchTimeout = null;
 const applyFilters = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    currentPage.value = 0;
+    currentPage.value = 1;
     fetchFilteredData();
   }, 500);
 }
 
 const applyFiltersImmediate = () => {
-  currentPage.value = 0;
+  currentPage.value = 1;
   fetchFilteredData();
 }
 
 // ================= LOGIC GỌI API LỌC TỪ BACKEND =================
-const fetchFilteredData = async (isAppend = false) => {
+const fetchFilteredData = async () => {
   isLoading.value = true;
   errorMsg.value = "";
 
   try {
-    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=${currentPage.value}&size=100`;
+    // Lấy một lượng lớn Data về để Frontend tự lọc và phân trang
+    let url = `http://localhost:8080/api/chi-tiet-san-pham?page=0&size=1000`;
 
     const adv = advancedFilters.value;
     if (adv.minPrice !== null && adv.minPrice !== "") url += `&minPrice=${adv.minPrice}`;
@@ -353,7 +438,6 @@ const fetchFilteredData = async (isAppend = false) => {
 
       if (passFilter) {
         if (!uniqueProductsMap.has(item.maSanPham)) {
-
           let realProductId = item.sanPham?.id;
           if (!realProductId && item.maSanPham && item.maSanPham.startsWith('SP')) {
             realProductId = parseInt(item.maSanPham.replace('SP', ''), 10);
@@ -390,19 +474,13 @@ const fetchFilteredData = async (isAppend = false) => {
 
     let uniqueProducts = Array.from(uniqueProductsMap.values());
 
+    // Sắp xếp
     if (selectedSort.value === "priceAsc") uniqueProducts.sort((a, b) => a.giaMinSauGiam - b.giaMinSauGiam);
     else if (selectedSort.value === "priceDesc") uniqueProducts.sort((a, b) => b.giaMinSauGiam - a.giaMinSauGiam);
-    else uniqueProducts.sort((a, b) => b.id - a.id);
+    else uniqueProducts.sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
 
-    if (isAppend) {
-      filteredProducts.value = [...filteredProducts.value, ...uniqueProducts];
-    } else {
-      filteredProducts.value = uniqueProducts;
-    }
-
-    visibleCount.value = itemsPerPage;
-    totalPages.value = data.totalPages || 1;
-
+    filteredProducts.value = uniqueProducts;
+    
   } catch (error) {
     console.error("Lỗi lấy dữ liệu:", error);
     errorMsg.value = "Hệ thống đang bảo trì. Vui lòng thử lại sau.";
@@ -411,7 +489,7 @@ const fetchFilteredData = async (isAppend = false) => {
   }
 };
 
-// ================= LOGIC MODAL QUICK ADD (ĐÃ CẬP NHẬT LẤY MÃ RGB) =================
+// ================= LOGIC MODAL QUICK ADD CHUẨN TỪ TRANG CHỦ =================
 const isQuickAddModalOpen = ref(false);
 const selectedProduct = ref(null);
 const quantity = ref(1);
@@ -451,7 +529,6 @@ const openQuickAddModal = async (sp) => {
     productVariants.value = prod.bienTheList || prod.sanPhamChiTietList || [];
 
     if (productVariants.value.length > 0) {
-      // 👉 Bắt Data từ API có lưu mã RGB màu sắc
       const colorMap = new Map();
       const sizeSet = new Set();
 
@@ -459,8 +536,8 @@ const openQuickAddModal = async (sp) => {
         const tenMau = v.tenMauSac || v.mauSacList?.[0]?.tenMauSac || v.mauSac?.tenMauSac || v.mauSac || v.tenMau;
         const tenSize = v.tenKichCo || v.kichCoList?.[0] || v.kichCo?.tenKichCo || v.kichCo || v.tenSize;
         
-        // Bắt mã RGB từ Data, đề phòng lỗi thì trả về xám #cccccc
-        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || '#cccccc';
+        // 👉 Ưu tiên RGB Database, fallback dùng hàm backup
+        const rgbCode = v.rgb || v.mauSacList?.[0]?.rgb || v.mauSac?.rgb || getBackupColorCode(tenMau);
 
         if (tenMau && !colorMap.has(tenMau)) {
           colorMap.set(tenMau, rgbCode);
@@ -468,7 +545,6 @@ const openQuickAddModal = async (sp) => {
         if (tenSize) sizeSet.add(tenSize);
       });
 
-      // Tạo mảng [{tenMau, rgb}]
       availableColors.value = Array.from(colorMap.entries()).map(([tenMau, rgb]) => ({
         tenMau,
         rgb
@@ -512,7 +588,6 @@ const confirmAddToCart = () => {
     const hinhAnhSp = selectedProduct.value.hinhAnh;
     const finalImage = (hinhAnhVariant && hinhAnhVariant.length > 0) ? hinhAnhVariant : hinhAnhSp;
 
-    // Lấy Data màu để có mã RGB lưu vào giỏ hàng
     const selectedColorData = availableColors.value.find(c => c.tenMau === selectedColor.value);
 
     const newItem = {
@@ -520,7 +595,6 @@ const confirmAddToCart = () => {
       variantId: currentVariant.value.id,
       tenSp: selectedProduct.value.tenSp,
       hinhAnh: finalImage,
-      // Lưu lại thông tin màu gồm tên và mã RGB
       mauSac: { tenMau: selectedColor.value, rgb: selectedColorData?.rgb || '#cccccc' },
       kichCo: selectedSize.value,
       giaBan: Math.round(giaSauGiam), 
@@ -905,26 +979,58 @@ onMounted(() => {
   color: #FFF;
 }
 
-.load-more-container {
+/* 👉 PHÂN TRANG (PAGINATION) */
+.pagination-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 50px;
+  padding-bottom: 20px;
 }
 
-.btn-load-more {
-  background: transparent;
-  border: 1px solid #63391F;
-  color: #63391F;
-  padding: 12px 30px;
+.page-btn, .page-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
   border-radius: 6px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.2s;
 }
 
-.btn-load-more:hover {
+.page-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.page-btn:hover:not(:disabled), .page-num:hover:not(.active) {
+  border-color: #63391F;
+  color: #63391F;
+}
+
+.page-btn:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.page-num.active {
   background: #63391F;
-  color: #FFF;
+  color: #fff;
+  border-color: #63391F;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
 }
 
 /* STATES */
@@ -1153,6 +1259,9 @@ onMounted(() => {
   transition: all 0.2s;
   padding: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .color-circle:hover {
@@ -1161,8 +1270,21 @@ onMounted(() => {
 }
 
 .color-circle.active {
-  border-color: #d32f2f;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d32f2f;
+  border-color: #63391F;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #63391F;
+}
+
+.swatch-check {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0;
+  text-shadow: 0px 0px 4px rgba(0,0,0,0.7); 
+  transition: opacity 0.2s;
+}
+
+.color-circle.active .swatch-check {
+  opacity: 1;
 }
 
 /* CSS KÍCH CỠ (Ô VUÔNG) */
@@ -1276,53 +1398,43 @@ onMounted(() => {
   background: #F9F9F9;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(40px) scale(0.95);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* Toast */
-.toast-notification {
+/* 👉 ĐÃ SỬA: TOAST DẠNG VIỀN DÀY */
+.choco-toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 25px;
-  border-radius: 8px;
+  top: 30px;
+  right: 30px;
   z-index: 10001;
+  padding: 14px 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-family: "Inter", sans-serif;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  font-size: 15px;
+  min-width: 250px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.toast-notification.success {
-  background: #d4edda;
-  color: #155724;
-  border-left: 4px solid #28a745;
+.choco-toast.success {
+  background-color: #F7F7F7; 
+  color: #63391F; 
+  border-left: 6px solid #63391F; 
 }
 
-.toast-notification.error {
-  background: #f8d7da;
-  color: #721c24;
-  border-left: 4px solid #dc3545;
+.choco-toast.error {
+  background-color: #fee2e2; 
+  color: #b91c1c; 
+  border-left: 6px solid #dc2626;
 }
 
-.toast-notification.warning {
-  background: #ffc107;
-  color: #333;
-  border-left: 4px solid #ff9800;
+.choco-toast.warning {
+  background-color: #fffbeb; 
+  color: #b45309; 
+  border-left: 6px solid #f59e0b;
 }
 
 .toast-content {
-  font-weight: 600;
-  color: inherit;
-  font-size: 15px;
+  letter-spacing: 0.2px;
 }
 
 .toast-slide-enter-active,
@@ -1377,11 +1489,32 @@ onMounted(() => {
   .modal-actions {
     flex-direction: column;
   }
+  
+  .pagination-wrapper {
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 480px) {
   .product-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ================= HIỆU ỨNG CHUYỂN TRANG MƯỢT MÀ ================= */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s ease;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* RẤT QUAN TRỌNG: Ép các sản phẩm của trang cũ biến mất ngay lập tức để nhường chỗ cho trang mới, không bị dồn cục */
+.list-leave-active {
+  display: none !important; 
+  position: absolute;
 }
 </style>

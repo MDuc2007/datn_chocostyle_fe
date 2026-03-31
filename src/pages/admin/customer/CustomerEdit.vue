@@ -213,18 +213,17 @@ import { ref, onMounted, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
-
+const specialCharRegex = /[^a-zA-Z0-9À-ỹ\s]/;
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
-
+const addressRegex = /^[a-zA-Z0-9À-ỹ\s,./#()-]+$/;
 // --- STATE ---
 const loadingData = ref(true);
 const isLoading = ref(false);
 const listProvinces = ref([]);
 const previewImage = ref(null);
 const selectedFile = ref(null);
-
 const editForm = ref({
   maKhachHang: "",
   tenTaiKhoan: "",
@@ -456,10 +455,14 @@ const validateForm = () => {
   let isValid = true;
   const form = editForm.value;
 
+  form.tenKhachHang = form.tenKhachHang.trim().replace(/\s+/g, " ");
   if (!form.tenKhachHang?.trim()) {
-    errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
-    isValid = false;
-  }
+  errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
+  isValid = false;
+} else if (specialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
   const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
   if (!form.soDienThoai) {
@@ -497,15 +500,35 @@ if (!form.ngaySinh) {
     }
   }
 
-  const hasValidAddr = form.listDiaChi.some(
-    (a) => a.provinceId && a.districtId && a.wardCode && a.detail?.trim(),
-  );
-  if (form.listDiaChi.length === 0 || !hasValidAddr) {
-    errors.value.address = "Vui lòng nhập đầy đủ ít nhất 1 địa chỉ";
+const hasValidAddr = form.listDiaChi.some(
+  (a) =>
+    a.provinceId &&
+    a.districtId &&
+    a.wardCode &&
+    a.detail?.trim() &&
+    addressRegex.test(a.detail)
+);
+
+if (form.listDiaChi.length === 0 || !hasValidAddr) {
+  errors.value.address = "Vui lòng nhập đầy đủ ít nhất 1 địa chỉ hợp lệ";
+  isValid = false;
+}
+form.listDiaChi.forEach((a, index) => {
+  if (
+    !a.provinceId ||
+    !a.districtId ||
+    !a.wardCode ||
+    !a.detail?.trim()
+  ) {
+    errors.value.address = `Địa chỉ ${index + 1} chưa đầy đủ`;
+    isValid = false;
+  } else if (!addressRegex.test(a.detail)) {
+    errors.value.address = `Địa chỉ ${index + 1} chứa ký tự không hợp lệ`;
     isValid = false;
   }
+});
 
-  return isValid;
+return isValid;
 };
 
 const clearError = (field) => {

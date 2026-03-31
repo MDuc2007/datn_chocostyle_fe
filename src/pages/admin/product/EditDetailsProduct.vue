@@ -170,6 +170,13 @@ const handlePriceInput = (e, field) => {
   }
 
   e.target.value = formatVNDInput(value);
+
+  // 👉 HÀM MỚI: Chặn mọi ký tự đặc biệt (e, -, +, .) khi gõ vào ô Số lượng
+const handleStockInput = (e) => {
+  const raw = e.target.value.replace(/\D/g, ""); // Xóa sạch mọi thứ không phải là số (0-9)
+  soLuongTon.value = raw ? parseInt(raw, 10) : 0;
+  e.target.value = soLuongTon.value;
+};
 };
 
 const formatVNDInput = (value) => {
@@ -386,27 +393,83 @@ const onFileChange = async (e) => {
 };
 
 /* ===== VALIDATE ===== */
+/* ===== VALIDATE HOÀN CHỈNH VÀ CHẶT CHẼ ===== */
 const validateForm = () => {
-  if (!selectedMauSacList.value)
-    return (showNotification("Vui lòng chọn màu sắc", "warning"), false);
-  if (!selectedKichCoList.value)
-    return (showNotification("Vui lòng chọn kích cỡ", "warning"), false);
-  if (!selectedLoaiAo.value)
-    return (showNotification("Vui lòng chọn loại áo", "warning"), false);
-  if (!selectedKieuDang.value)
-    return (showNotification("Vui lòng chọn kiểu dáng", "warning"), false);
-  if (!selectedPhongCach.value)
-    return (showNotification("Vui lòng chọn phong cách mặc", "warning"), false);
-  if (soLuongTon.value < 0)
-    return (showNotification("Số lượng tồn phải ≥ 0", "warning"), false);
-  if (giaNhap.value <= 0)
-    return (showNotification("Giá nhập phải > 0", "warning"), false);
-  if (giaBan.value <= 0)
-    return (showNotification("Giá bán phải > 0", "warning"), false);
-  if (giaBan.value < giaNhap.value)
-    return (showNotification("Giá bán < giá nhập", "warning"), false);
-  if (!imageUrl.value)
-    return (showNotification("Vui lòng chọn ảnh", "warning"), false);
+  // 1. Kiểm tra các trường Select (Dropdown)
+  if (!selectedMauSacList.value) {
+    showNotification("Vui lòng chọn màu sắc", "warning");
+    return false;
+  }
+  if (!selectedKichCoList.value) {
+    showNotification("Vui lòng chọn kích cỡ", "warning");
+    return false;
+  }
+  if (!selectedLoaiAo.value) {
+    showNotification("Vui lòng chọn loại áo", "warning");
+    return false;
+  }
+  if (!selectedKieuDang.value) {
+    showNotification("Vui lòng chọn kiểu dáng", "warning");
+    return false;
+  }
+  if (!selectedPhongCach.value) {
+    showNotification("Vui lòng chọn phong cách mặc", "warning");
+    return false;
+  }
+
+  // 2. Kiểm tra Số Lượng (Bắt buộc, không âm, không quá lớn)
+  if (soLuongTon.value === null || soLuongTon.value === "" || isNaN(soLuongTon.value)) {
+    showNotification("Vui lòng nhập số lượng tồn", "warning");
+    return false;
+  }
+  if (Number(soLuongTon.value) < 0) {
+    showNotification("Số lượng tồn không được là số âm", "warning");
+    return false;
+  }
+  if (Number(soLuongTon.value) > 1000000) {
+    showNotification("Số lượng tồn không hợp lý (Vượt quá 1,000,000)", "warning");
+    return false;
+  }
+
+  // 3. Kiểm tra Giá Nhập (Bắt buộc, lớn hơn 0, giới hạn tối đa)
+  if (giaNhap.value === null || giaNhap.value === "" || isNaN(giaNhap.value)) {
+    showNotification("Vui lòng nhập giá nhập", "warning");
+    return false;
+  }
+  if (Number(giaNhap.value) <= 0) {
+    showNotification("Giá nhập phải lớn hơn 0", "warning");
+    return false;
+  }
+  if (Number(giaNhap.value) > 2000000000) { // Tối đa 2 Tỷ
+    showNotification("Giá nhập quá lớn (Tối đa 2 tỷ VNĐ)", "warning");
+    return false;
+  }
+
+  // 4. Kiểm tra Giá Bán (Bắt buộc, lớn hơn 0, lớn hơn giá nhập)
+  if (giaBan.value === null || giaBan.value === "" || isNaN(giaBan.value)) {
+    showNotification("Vui lòng nhập giá bán", "warning");
+    return false;
+  }
+  if (Number(giaBan.value) <= 0) {
+    showNotification("Giá bán phải lớn hơn 0", "warning");
+    return false;
+  }
+  if (Number(giaBan.value) > 2000000000) { // Tối đa 2 Tỷ
+    showNotification("Giá bán quá lớn (Tối đa 2 tỷ VNĐ)", "warning");
+    return false;
+  }
+  
+  // Logic cốt lõi: Giá nhập không bao giờ được cao hơn Giá bán
+  if (Number(giaBan.value) < Number(giaNhap.value)) {
+    showNotification("Lỗi: Giá bán không được nhỏ hơn giá nhập!", "error");
+    return false;
+  }
+
+  // 5. Kiểm tra Hình Ảnh
+  if (!imageUrl.value) {
+    showNotification("Vui lòng tải lên ảnh minh họa cho sản phẩm", "warning");
+    return false;
+  }
 
   return true;
 };
