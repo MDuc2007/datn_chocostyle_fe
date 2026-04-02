@@ -24,6 +24,7 @@ const isEditing = ref(false);
 const filterStatus = ref<string | number>("all");
 const filterStartTime = ref("");
 const filterEndTime = ref("");
+const filterSearch = ref("");
 
 // Pagination State
 const perPage = ref(8);
@@ -147,25 +148,24 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // Check Logic thời gian (Đã hỗ trợ Ca đêm)
-    if (form.gioBatDau && form.gioKetThuc) {
+  // Check Logic thời gian (Chặn tuyệt đối)
+  if (form.gioBatDau && form.gioKetThuc) {
+    // Nếu giờ bắt đầu lớn hơn hoặc bằng giờ kết thúc (VD: 17:00 -> 16:00)
+    if (form.gioBatDau >= form.gioKetThuc) {
+      errors.gioKetThuc = "Giờ kết thúc phải lớn hơn giờ bắt đầu";
+      isValid = false;
+    } else {
       const startMins = timeToMinutes(form.gioBatDau);
       const endMins = timeToMinutes(form.gioKetThuc);
-      
-      // Tính thời lượng ca làm việc
-      let duration = endMins - startMins;
-      
-      // Nếu thời lượng <= 0, nghĩa là ca làm việc vắt qua ngày hôm sau (Ca đêm)
-      if (duration <= 0) {
-        duration += 24 * 60; // Cộng thêm 24 giờ (1440 phút)
-      }
+      const duration = endMins - startMins;
 
-      // Chỉ kiểm tra thời lượng tối thiểu 30 phút (Xóa bỏ việc chặn giờ kết thúc < giờ bắt đầu)
+      // Kiểm tra thời lượng tối thiểu 30 phút
       if (duration < 30) {
         errors.gioKetThuc = "Ca làm việc quá ngắn (Tối thiểu 30 phút)";
         isValid = false;
       }
-
+    }
+    
     // Check trùng khung giờ (Frontend bắt trên page hiện tại)
     if (isValid) {
       const isDuplicateTime = shifts.value.some((s) => {
@@ -206,6 +206,11 @@ const fetchShifts = async () => {
     }
     if (filterEndTime.value) {
       params.gioKetThuc = filterEndTime.value + ":00";
+    }
+
+    // Thêm param tìm kiếm theo mã ca hoặc tên ca
+    if (filterSearch.value.trim()) {
+      params.keyword = filterSearch.value.trim();
     }
 
     const res = await axios.get(`${API_URL}/search`, { params });
@@ -369,21 +374,45 @@ const closeModal = async () => {
   showModal.value = false;
   originalForm.value = null; // Reset
 };
-
+// --- HÀM KIỂM TRA THỜI GIAN LỌC ---
+const validateTimeFilter = () => {
+  if (filterStartTime.value && filterEndTime.value) {
+    if (filterStartTime.value > filterEndTime.value) {
+      showToast("Giờ bắt đầu không được lớn hơn Giờ kết thúc", "warning");
+      
+      // Xóa trắng giờ kết thúc để người dùng chọn lại, tránh kẹt lỗi
+      filterEndTime.value = ""; 
+      return false; // Trả về false để chặn việc gọi API
+    }
+  }
+  return true;
+};
 // --- 6. Filters & Pagination ---
+// --- LÀM MỚI BỘ LỌC ---
 const resetFilters = () => {
   filterStatus.value = "all";
   filterStartTime.value = "";
   filterEndTime.value = "";
-  // Watcher sẽ tự bắt và gọi lại API, set page về 0
+  filterSearch.value = "";
+  
+  // Gọi trực tiếp API mà không cần validate vì các trường đã bị xóa trắng
+  page.value = 0;
+  fetchShifts();
 };
 
-// THEO DÕI THAY ĐỔI FILTER ĐỂ GỌI API LẠI TỪ BACKEND
+// --- THEO DÕI THAY ĐỔI ĐỂ GỌI API ---
 watch([filterStatus, filterStartTime, filterEndTime], () => {
+  // Kiểm tra thời gian trước, nếu không hợp lệ thì dừng lại (không gọi API)
+  if (!validateTimeFilter()) return;
+  
   page.value = 0;
   fetchShifts();
 });
-
+// THÊM hàm xử lý tìm kiếm khi ấn Enter
+const handleSearch = () => {
+  page.value = 0;
+  fetchShifts();
+};
 watch(page, () => {
   fetchShifts();
 });
@@ -451,16 +480,34 @@ onMounted(fetchShifts);
 
       <div class="filter-row">
         <div class="left-filters">
-          <div class="input-wrapper">
-            <span class="label-inside">Trạng thái</span>
+          <div class="filter-group">
+            <label class="filter-label">Tìm kiếm</label>
+            <div class="search-box">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                v-model="filterSearch"
+                @keyup.enter="handleSearch" 
+                class="form-input custom-search-input"
+                placeholder="Mã ca hoặc tên ca..."
+              />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Trạng thái</label>
             <select class="form-select" v-model="filterStatus">
               <option value="all">Tất cả</option>
               <option :value="1">Hoạt động</option>
-              <option :value="0">Ngưng hoạt động</option>
+              <option :value="0">Ngưng</option>
             </select>
           </div>
-          <div class="input-wrapper">
-            <span class="label-inside">Khung giờ</span>
+
+          <div class="filter-group">
+            <label class="filter-label">Khung giờ</label>
             <div class="time-range-box">
               <input type="time" v-model="filterStartTime" />
               <span class="arrow">➝</span>
@@ -468,8 +515,9 @@ onMounted(fetchShifts);
             </div>
           </div>
         </div>
-        <button class="btn btn-outline" @click="resetFilters">Làm mới</button>
+
         <div class="header-actions">
+          <button class="btn btn-outline" @click="resetFilters">Làm mới</button>
           <button class="btn btn-add hover-effect" @click="openAddModal">
             <span>+</span> Thiết lập ca
           </button>
@@ -739,9 +787,7 @@ onMounted(fetchShifts);
   box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   overflow: hidden;
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .card-section:hover {
@@ -822,7 +868,6 @@ onMounted(fetchShifts);
   background: #fdf8f6;
 }
 
-/* Add button style - matching EmployeeManager */
 .btn-add {
   background: #fff;
   color: #484848;
@@ -845,33 +890,71 @@ onMounted(fetchShifts);
   background: #fdf8f6;
 }
 
-/* === FILTER BAR === */
+/* === FILTER BAR CHUẨN ĐÃ FIX LỖI === */
 .filter-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end; /* Ép các ô input thẳng hàng ở đáy */
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .left-filters {
   display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  flex: 1;
+  gap: 16px;
+  align-items: flex-end; 
 }
 
-.input-wrapper {
+.filter-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.label-inside {
+.filter-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
+  text-align: left;
 }
 
+/* --- SEARCH BOX --- */
+.search-box {
+  position: relative;
+  width: 250px; 
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none; 
+}
+
+.custom-search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px 0 38px !important; 
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.custom-search-input:focus {
+  border-color: var(--primary-brown);
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
+}
+
+.custom-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* --- COMBOBOX & TIME --- */
 .form-select {
   height: 42px;
   border: 1px solid #d1d5db;
@@ -880,12 +963,13 @@ onMounted(fetchShifts);
   font-size: 14px;
   outline: none;
   background-color: #fff;
-  min-width: 160px;
+  min-width: 140px;
+  box-sizing: border-box;
 }
 
 .form-select:focus {
   border-color: var(--primary-brown);
-  box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1);
 }
 
 .time-range-box {
@@ -893,16 +977,18 @@ onMounted(fetchShifts);
   align-items: center;
   gap: 8px;
   background: white;
-  padding: 8px 12px;
+  height: 42px; 
+  padding: 0 12px;
   border: 1px solid #d1d5db;
   border-radius: 10px;
-  min-width: 200px;
+  box-sizing: border-box;
 }
+
 .time-range-box input {
   border: none;
-  padding: 4px;
   background: transparent;
   font-size: 14px;
+  outline: none;
 }
 
 /* === TABLE STYLES === */
@@ -987,52 +1073,18 @@ onMounted(fetchShifts);
 }
 
 /* === ACTION GROUP === */
-.action-group.center-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-}
-.action-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn svg {
-  display: block;
-}
-
-.action-btn:hover {
-  border-color: #63391f;
-  color: #63391f;
-  background: #fff8f5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(99, 57, 31, 0.15);
-}
-
-/* Tooltip wrapper - matching EmployeeManager */
-.tooltip-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Action buttons wrapper for alignment */
 .action-buttons-wrapper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   vertical-align: middle;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
 .tooltip-wrapper::after {
@@ -1050,9 +1102,7 @@ onMounted(fetchShifts);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   z-index: 100;
 }
 
@@ -1066,9 +1116,7 @@ onMounted(fetchShifts);
   border-top-color: #333;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .tooltip-wrapper:hover::after,
@@ -1077,7 +1125,6 @@ onMounted(fetchShifts);
   visibility: visible;
 }
 
-/* Icon styles - matching EmployeeManager */
 .icon {
   display: inline-flex;
   align-items: center;
@@ -1093,6 +1140,50 @@ onMounted(fetchShifts);
 
 .icon.edit {
   color: #63391f;
+}
+
+/* === SWITCH STYLING === */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+  margin: 0;
+  cursor: pointer;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d9534f;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+input:checked + .slider {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d) !important;
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
 }
 
 /* === PAGINATION === */
@@ -1158,16 +1249,11 @@ onMounted(fetchShifts);
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
 }
 @keyframes modalSlideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 .modal-header {
   background: #63391f;
@@ -1190,15 +1276,9 @@ onMounted(fetchShifts);
   cursor: pointer;
   opacity: 0.8;
 }
-.close-btn:hover {
-  opacity: 1;
-}
-.modal-body {
-  padding: 24px;
-}
-.form-group {
-  margin-bottom: 20px;
-}
+.close-btn:hover { opacity: 1; }
+.modal-body { padding: 24px; }
+.form-group { margin-bottom: 20px; }
 .form-group label {
   display: block;
   margin-bottom: 8px;
@@ -1206,10 +1286,7 @@ onMounted(fetchShifts);
   color: #374151;
   font-size: 14px;
 }
-.required {
-  color: #dc2626;
-  margin-left: 2px;
-}
+.required { color: #dc2626; margin-left: 2px; }
 .form-control {
   width: 100%;
   padding: 10px 12px;
@@ -1223,13 +1300,8 @@ onMounted(fetchShifts);
   box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.15);
   outline: none;
 }
-.form-row {
-  display: flex;
-  gap: 20px;
-}
-.col {
-  flex: 1;
-}
+.form-row { display: flex; gap: 20px; }
+.col { flex: 1; }
 .modal-footer {
   padding: 16px 24px;
   background: #f9fafb;
@@ -1239,125 +1311,14 @@ onMounted(fetchShifts);
   gap: 12px;
 }
 
-/* TOAST */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  pointer-events: none;
-}
-.toast {
-  pointer-events: auto;
-  min-width: 250px;
-  max-width: 350px;
-  padding: 12px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  background: #fff;
-  animation: slideInRight 0.3s forwards;
-}
-.toast.success {
-  background-color: #f0f9eb;
-  border-left: 5px solid #67c23a;
-  color: #67c23a;
-}
-.toast.error {
-  background-color: #fef0f0;
-  border-left: 5px solid #f56c6c;
-  color: #f56c6c;
-}
-.toast.warning {
-  background-color: #fdf6ec;
-  border-left: 5px solid #e6a23c;
-  color: #e6a23c;
-}
-.toast-msg {
-  color: #333;
-}
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* === SWITCH STYLING === */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 46px;
-  height: 24px;
-  margin: 0;
-  cursor: pointer;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d9534f;
-  transition: 0.4s;
-  border-radius: 24px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-input:checked + .slider {
-  background: linear-gradient(135deg, #6b3f23, #c89b6d) !important;
-}
-input:checked + .slider:before {
-  transform: translateX(22px);
-}
-
-/* Tooltip */
-.tooltip-wrapper[data-tooltip] {
-  position: relative;
-}
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
 /* --- VALIDATION STYLES --- */
 .red-border {
   border-color: #dc2626 !important;
   background-color: #fff5f5;
 }
-
 .red-border:focus {
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
 }
-
 .error-msg {
   color: #dc2626;
   font-size: 13px;
@@ -1366,16 +1327,9 @@ input:checked + .slider:before {
   display: block;
   animation: fadeIn 0.3s ease-in-out;
 }
-
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* === CONFIRM DIALOG STYLES === */
@@ -1395,9 +1349,7 @@ input:checked + .slider:before {
   border-radius: 20px;
   width: 400px;
   text-align: center;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
 .confirm-icon-wrapper {
@@ -1412,24 +1364,9 @@ input:checked + .slider:before {
   justify-content: center;
   line-height: 1;
 }
-.confirm-icon-wrapper svg {
-  display: block;
-  margin: 0;
-}
-.confirm-title {
-  color: #63391f;
-  margin-bottom: 10px;
-  font-size: 20px;
-}
-.confirm-desc {
-  color: #666;
-  margin-bottom: 25px;
-  line-height: 1.5;
-}
-.confirm-actions {
-  display: flex;
-  gap: 20px;
-}
+.confirm-title { color: #63391f; margin-bottom: 10px; font-size: 20px; }
+.confirm-desc { color: #666; margin-bottom: 25px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 20px; }
 .btn-confirm {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: #fff;
@@ -1458,25 +1395,41 @@ input:checked + .slider:before {
   flex: 1;
   height: 42px;
 }
-.btn-cancel:hover {
-  background: #e5e7eb;
+.btn-cancel:hover { background: #e5e7eb; }
+.fade-modal-enter-active, .fade-modal-leave-active { transition: opacity 0.3s ease; }
+.fade-modal-enter-from, .fade-modal-leave-to { opacity: 0; }
+
+/* === TOAST === */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
 }
-.fade-modal-enter-active,
-.fade-modal-leave-active {
-  transition: opacity 0.3s ease;
+.toast {
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 350px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  animation: slideInRight 0.3s forwards;
 }
-.fade-modal-enter-from,
-.fade-modal-leave-to {
-  opacity: 0;
-}
-@keyframes zoomIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+.toast.success { background-color: #f0f9eb; border-left: 5px solid #67c23a; color: #67c23a; }
+.toast.error { background-color: #fef0f0; border-left: 5px solid #f56c6c; color: #f56c6c; }
+.toast.warning { background-color: #fdf6ec; border-left: 5px solid #e6a23c; color: #e6a23c; }
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 </style>
