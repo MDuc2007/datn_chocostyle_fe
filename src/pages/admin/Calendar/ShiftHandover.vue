@@ -3,6 +3,10 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 import axios from "axios";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
+import { computed } from 'vue';
+const currentPage = ref(0);
+const pageSize = ref(8);
+const totalPages = ref(0);
 // --- STATE ---
 const loading = ref(false);
 const filters = reactive({ keyword: "", fromDate: "", toDate: "" });
@@ -54,7 +58,9 @@ const formatCurrency = (value: number) => {
 };
 // Hàm tách Mã NV và Tên NV từ chuỗi "[NV001] Nguyễn Văn A"
 const formatStaffName = (rawName: string) => {
-  if (!rawName) return { code: "", name: "" };
+  // Thêm dòng check an toàn, nếu dữ liệu null hoặc không phải chuỗi thì không bị crash web
+  if (!rawName || typeof rawName !== 'string') return { code: '', name: 'Chưa xác định' };
+  
   const match = rawName.match(/^\[(.*?)\]\s*(.*)$/);
   if (match) {
     return { code: match[1], name: match[2] }; // Trả về code: NV001, name: Nguyễn Văn A
@@ -99,12 +105,15 @@ const fetchHandovers = async () => {
       keyword: filters.keyword || "",
       fromDate: filters.fromDate || "",
       toDate: filters.toDate || "",
+      page: currentPage.value,
+      size: pageSize.value
     };
 
     const res = await axios.get("http://localhost:8080/api/cham-cong/giao-ca", {
       params,
     });
-    handovers.value = res.data;
+    handovers.value = res.data.content;
+    totalPages.value = res.data.totalPages;
   } catch (error) {
     console.error("Lỗi lấy danh sách giao ca:", error);
     showToast("Lỗi kết nối server hoặc dữ liệu", "error");
@@ -112,14 +121,52 @@ const fetchHandovers = async () => {
     loading.value = false;
   }
 };
-const applyFilter = () => fetchHandovers();
+const applyFilter = () => {
+    currentPage.value = 0;
+    fetchHandovers();
+};
 const resetFilters = () => {
   filters.keyword = "";
   filters.fromDate = "";
   filters.toDate = "";
+  currentPage.value = 0;
   fetchHandovers();
 };
+// Hàm chuyển trang
+const changePage = (pageIndex: number) => {
+  if (pageIndex >= 0 && pageIndex < totalPages.value) {
+    currentPage.value = pageIndex;
+    fetchHandovers();
+  }
+};
+const visiblePages = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value + 1;
+  const delta = 1; // Số trang hiển thị 2 bên trang hiện tại
+  const range: number[] = [];
+  const rangeWithDots: (number | string)[] = [];
+  let l: number | undefined;
 
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    }
+  }
+
+  range.forEach((i) => {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  });
+
+  return rangeWithDots;
+});
 onMounted(() => {
   fetchHandovers();
   connectWebSocket(); // Khởi động WebSocket khi mở trang
@@ -147,7 +194,7 @@ onUnmounted(() => {
 
     <div class="card-section filter-card form-page-animation">
       <div class="filter-card-header">
-        <h2 class="card-title">GIAO CA & KẾT TOÁN</h2>
+        <h2 class="card-title">LỊCH SỬ HOẠT ĐỘNG</h2>
       </div>
 
       <div class="filter-controls">
@@ -233,105 +280,57 @@ onUnmounted(() => {
               </td>
             </tr>
             <tr v-else v-for="(item, index) in handovers" :key="item.id">
+              
               <td class="text-center" style="color: #333333">
-                {{ index + 1 }}
+                {{ currentPage * pageSize + index + 1 }}
               </td>
+              
               <td>
-                <div
-                  style="font-weight: 500; color: #333"
-                  title="Nhân viên được phân công"
-                >
-                  {{ item.nhanVien }}
+                <div style="font-weight: 500; color: #333; line-height: 1.4" title="Nhân viên được phân công">
+                  <span v-if="formatStaffName(item.nhanVien).code" class="staff-code-badge" style="margin-right: 6px; margin-bottom: 2px; display: inline-block;">
+                    {{ formatStaffName(item.nhanVien).code }}
+                  </span>
+                  <span style="font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block;">
+                    {{ formatStaffName(item.nhanVien).name }}
+                  </span>
                 </div>
                 <div class="shift-badge" style="margin-top: 4px">
-                  {{ item.ca }}
+                  {{ item.ca || 'Chưa xếp ca' }}
                 </div>
               </td>
+
               <td>
                 <div style="margin-bottom: 8px">
-                  <span
-                    style="
-                      color: #64748b;
-                      font-size: 12px;
-                      display: block;
-                      margin-bottom: 4px;
-                    "
-                    >Mở ca:</span
-                  >
+                  <span style="color: #64748b; font-size: 12px; display: block; margin-bottom: 4px;">Mở ca:</span>
                   <template v-if="item.nguoiMoCa">
                     <div style="line-height: 1.4">
-                      <span
-                        v-if="formatStaffName(item.nguoiMoCa).code"
-                        class="staff-code-badge"
-                        style="
-                          margin-right: 6px;
-                          margin-bottom: 2px;
-                          display: inline-block;
-                        "
-                      >
+                      <span v-if="formatStaffName(item.nguoiMoCa).code" class="staff-code-badge" style="margin-right: 6px; margin-bottom: 2px; display: inline-block;">
                         {{ formatStaffName(item.nguoiMoCa).code }}
                       </span>
-                      <span
-                        style="
-                          font-weight: 600;
-                          color: #1e293b;
-                          font-size: 13px;
-                          display: inline-block;
-                        "
-                      >
+                      <span style="font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block;">
                         {{ formatStaffName(item.nguoiMoCa).name }}
                       </span>
                     </div>
                   </template>
-                  <span
-                    v-else
-                    style="font-weight: 600; color: #1e293b; font-size: 13px"
-                    >Chưa xác định</span
-                  >
+                  <span v-else style="font-weight: 600; color: #1e293b; font-size: 13px">Chưa xác định</span>
                 </div>
 
                 <div>
-                  <span
-                    style="
-                      color: #64748b;
-                      font-size: 12px;
-                      display: block;
-                      margin-bottom: 4px;
-                    "
-                    >Đóng ca:</span
-                  >
+                  <span style="color: #64748b; font-size: 12px; display: block; margin-bottom: 4px;">Đóng ca:</span>
                   <template v-if="item.nguoiDongCa">
                     <div style="line-height: 1.4">
-                      <span
-                        v-if="formatStaffName(item.nguoiDongCa).code"
-                        class="staff-code-badge"
-                        style="
-                          margin-right: 6px;
-                          margin-bottom: 2px;
-                          display: inline-block;
-                        "
-                      >
+                      <span v-if="formatStaffName(item.nguoiDongCa).code" class="staff-code-badge" style="margin-right: 6px; margin-bottom: 2px; display: inline-block;">
                         {{ formatStaffName(item.nguoiDongCa).code }}
                       </span>
-                      <span
-                        style="
-                          font-weight: 600;
-                          color: #1e293b;
-                          font-size: 13px;
-                          display: inline-block;
-                        "
-                      >
+                      <span style="font-weight: 600; color: #1e293b; font-size: 13px; display: inline-block;">
                         {{ formatStaffName(item.nguoiDongCa).name }}
                       </span>
                     </div>
                   </template>
-                  <span
-                    v-else
-                    style="font-weight: 600; color: #1e293b; font-size: 13px"
-                    >Chưa đóng</span
-                  >
+                  <span v-else style="font-weight: 600; color: #1e293b; font-size: 13px">Chưa đóng</span>
                 </div>
               </td>
+
               <td>
                 <div style="font-size: 12px; color: #4b5563">
                   Vào: <span class="time-text">{{ item.thoiGianMo }}</span>
@@ -340,81 +339,88 @@ onUnmounted(() => {
                   Ra: <span class="time-text">{{ item.thoiGianDong }}</span>
                 </div>
               </td>
+
               <td>
                 <div style="font-size: 13px; margin-bottom: 2px">
-                  Bán:
-                  <span style="color: #000000">{{
-                    formatCurrency(item.doanhThuTienMat)
-                  }}</span>
+                  Bán: <span style="color: #000000">{{ formatCurrency(item.doanhThuTienMat) }}</span>
                 </div>
                 <div style="font-size: 13px; margin-bottom: 2px">
                   Két: <span>{{ formatCurrency(item.tienMat) }}</span>
                 </div>
                 <div style="font-size: 13px">
-                  Lệch:
-                  <span :class="getDiffClass(item.chenhLechTienMat)">
-                    {{ item.chenhLechTienMat > 0 ? "+" : ""
-                    }}{{ formatCurrency(item.chenhLechTienMat) }}
+                  Lệch: <span :class="getDiffClass(item.chenhLechTienMat)">
+                    {{ item.chenhLechTienMat > 0 ? "+" : "" }}{{ formatCurrency(item.chenhLechTienMat) }}
                   </span>
                 </div>
               </td>
+
               <td>
                 <div style="font-size: 13px; margin-bottom: 2px">
-                  Bán:
-                  <span style="color: #000000">{{
-                    formatCurrency(item.doanhThuCk)
-                  }}</span>
+                  Bán: <span style="color: #000000">{{ formatCurrency(item.doanhThuCk) }}</span>
                 </div>
                 <div style="font-size: 13px; margin-bottom: 2px">
                   Két: <span>{{ formatCurrency(item.tienChuyenKhoan) }}</span>
                 </div>
                 <div style="font-size: 13px">
-                  Lệch:
-                  <span :class="getDiffClass(item.chenhLechCk)">
-                    {{ item.chenhLechCk > 0 ? "+" : ""
-                    }}{{ formatCurrency(item.chenhLechCk) }}
+                  Lệch: <span :class="getDiffClass(item.chenhLechCk)">
+                    {{ item.chenhLechCk > 0 ? "+" : "" }}{{ formatCurrency(item.chenhLechCk) }}
                   </span>
                 </div>
               </td>
+
               <td>
-                <div
-                  style="font-size: 14px; color: #000000; margin-bottom: 2px"
-                >
+                <div style="font-size: 14px; color: #000000; margin-bottom: 2px">
                   DT: {{ formatCurrency(item.tongDoanhThu) }}
                 </div>
                 <div style="font-size: 13px">
-                  Lệch:
-                  <span :class="getDiffClass(item.tienChenhLech)">
-                    {{ item.tienChenhLech > 0 ? "+" : ""
-                    }}{{ formatCurrency(item.tienChenhLech) }}
+                  Lệch: <span :class="getDiffClass(item.tienChenhLech)">
+                    {{ item.tienChenhLech > 0 ? "+" : "" }}{{ formatCurrency(item.tienChenhLech) }}
                   </span>
                 </div>
               </td>
+
               <td class="text-center">
-                <span
-                  class="status-badge"
-                  :class="getStatusClass(item.trangThai)"
-                  >{{ getStatusText(item.trangThai) }}</span
-                >
+                <span class="status-badge" :class="getStatusClass(item.trangThai)">{{ getStatusText(item.trangThai) }}</span>
               </td>
+
               <td class="text-center">
-                <div
-                  class="tooltip-wrapper"
-                  data-tooltip="Xem chi tiết đối soát"
-                >
+                <div class="tooltip-wrapper" data-tooltip="Xem chi tiết đối soát">
                   <span class="icon view" @click="viewDetails(item)">
-                    <img
-                      src="/src/assets/icon/eye.svg"
-                      style="width: 20px; height: 20px"
-                    />
+                    <img src="/src/assets/icon/eye.svg" style="width: 20px; height: 20px" />
                   </span>
                 </div>
               </td>
             </tr>
           </tbody>
-        </table>
+        </table>
+      </div> <div class="pagination-footer" v-if="totalPages > 1">
+        <button
+          class="p-btn"
+          :disabled="currentPage === 0"
+          @click="changePage(currentPage - 1)"
+        >
+          &lt;
+        </button>
+        <template v-for="(p, index) in visiblePages" :key="index">
+          <button
+            v-if="p !== '...'"
+            class="p-btn number"
+            :class="{ active: p === currentPage + 1 }"
+            @click="changePage(Number(p) - 1)"
+          >
+            {{ p }}
+          </button>
+          <span v-else class="dots">...</span>
+        </template>
+        <button
+          class="p-btn"
+          :disabled="currentPage >= totalPages - 1"
+          @click="changePage(currentPage + 1)"
+        >
+          &gt;
+        </button>
       </div>
-    </div>
+          </div>
 
     <Transition name="fade-modal">
       <div v-if="selectedShift" class="modal-overlay" @click.self="closeModal">
@@ -1150,5 +1156,54 @@ onUnmounted(() => {
   border: 1px solid #cbd5e1;
   font-weight: 700;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+/* =========================================
+   PAGINATION (Gradient Active - Matching ScheduleManager)
+   ========================================= */
+.pagination-footer {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.p-btn {
+  min-width: 38px;
+  height: 38px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-btn.active {
+  background: linear-gradient(135deg, #6b3f23, #c89b6d);
+  border-color: #6b3f23;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(99, 57, 31, 0.2);
+}
+
+.p-btn:hover:not(.active):not(:disabled) {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+}
+
+.p-btn:disabled {
+  background: #f9f9f9;
+  color: #ccc;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+
+.dots {
+  color: #999;
+  padding: 0 5px;
+  font-weight: bold;
 }
 </style>

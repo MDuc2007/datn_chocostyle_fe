@@ -51,7 +51,7 @@
                 type="text"
                 class="form-control disabled-input"
                 disabled
-                :value="`${ca.caLamViec.tenCa} (${ca.caLamViec.gioBatDau} - ${ca.caLamViec.gioKetThuc})`"
+                :value="`${ca.caLamViec.tenCa} (${ca.caLamViec.gioBatDau?.substring(0, 5)} - ${ca.caLamViec.gioKetThuc?.substring(0, 5)})`"
               />
             </div>
 
@@ -241,6 +241,27 @@
               </div>
             </div>
 
+            <div v-else-if="shiftTimeError" class="alert-box error" style="margin-top: 15px;">
+              <span class="alert-icon">⏰</span>
+              <p>{{ shiftTimeError }}</p>
+              <div class="custom-swal-actions" style="margin-top: 20px">
+                <button
+                  @click="handleLogout"
+                  class="custom-swal-confirm-btn"
+                  style="background-color: #c53030 !important"
+                >
+                  Đăng xuất
+                </button>
+                <button
+                  @click="closeModal"
+                  class="custom-swal-confirm-btn"
+                  style="background-color: #718096 !important"
+                >
+                  Chỉ xem
+                </button>
+              </div>
+            </div>
+
             <div v-else-if="!chamCong">
               <div style="background-color: #e6fffa; border-left: 4px solid #319795; padding: 12px; margin-bottom: 20px; border-radius: 6px; text-align: left;">
                  <p style="margin: 0 0 6px 0; font-size: 14px; color: #234e52; font-weight: bold;">🔄 Bàn giao từ ca trước:</p>
@@ -296,7 +317,7 @@
                   Ca được mở bởi: <strong>{{ chamCong.tenNguoiMoCa }}</strong>
                 </p>
                 <p class="status-time" style="margin: 5px 0;">
-                  Check-in lúc: <strong>{{ chamCong.gioCheckIn }}</strong>
+                  Check-in lúc: <strong>{{ chamCong.gioCheckIn?.substring(0, 5) }}</strong>
                 </p>
               </div>
 
@@ -358,7 +379,10 @@
           </div>
         </div>
 
-        <div class="modal-footer">
+        <div 
+  class="modal-footer" 
+  v-if="ca && ca.caLamViec && !isShiftClosed && !shiftTimeError && (!chamCong || isClosingShift)"
+>
           <template v-if="isShiftClosed || !ca || !ca.caLamViec">
           </template>
 
@@ -396,11 +420,69 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup >
 import axios from "axios";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import Swal from "sweetalert2";
+// --- 1. HÀM CHUYỂN ĐỔI GIỜ (Bất chấp định dạng từ Backend) ---
+const timeToMinutes = (timeData) => { // Xóa bỏ : any
+  if (!timeData) return 0;
+  
+  if (Array.isArray(timeData)) {
+    const h = timeData[0] || 0;
+    const m = timeData[1] || 0;
+    return h * 60 + m;
+  }
+  
+  if (typeof timeData === 'string') {
+    const parts = timeData.split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
+    return h * 60 + m;
+  }
+  
+  return 0;
+};
+// --- 2. HÀM FORMAT GIỜ ĐỂ HIỂN THỊ ĐẸP ---
+const formatTimeDisplay = (timeData) => { // Xóa bỏ : any
+  if (!timeData) return '';
+  if (Array.isArray(timeData)) {
+    return `${String(timeData[0]).padStart(2, '0')}:${String(timeData[1]).padStart(2, '0')}`;
+  }
+  return typeof timeData === 'string' ? timeData.substring(0, 5) : '';
+};
 
+// --- 3. BIẾN KIỂM TRA LỖI GIỜ GIẤC (Có try-catch bắt lỗi) ---
+// --- 3. BIẾN KIỂM TRA LỖI GIỜ GIẤC ---
+const shiftTimeError = computed(() => {
+  try {
+    // ĐỔI THÀNH props.chamCong VÀ props.ca
+    if (!props.chamCong && props.ca && props.ca.caLamViec) {
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      
+      const startMins = timeToMinutes(props.ca.caLamViec.gioBatDau);
+      const endMins = timeToMinutes(props.ca.caLamViec.gioKetThuc);
+
+      const startStr = formatTimeDisplay(props.ca.caLamViec.gioBatDau);
+      const endStr = formatTimeDisplay(props.ca.caLamViec.gioKetThuc);
+
+      // 3.1 - Đã quá giờ kết thúc ca
+      if (currentMins > endMins) {
+        return `Ca làm việc đã kết thúc vào lúc ${endStr}. Bạn không thể mở ca lúc này.`;
+      }
+
+      // 3.2 - Chưa đến giờ (Cho phép mở trước tối đa 30 phút)
+      if (currentMins < startMins - 30) {
+        return `Chưa đến giờ làm. Chỉ được mở ca trước giờ bắt đầu (${startStr}) tối đa 30 phút.`;
+      }
+    }
+    return null; // Không có lỗi, thời gian hợp lệ
+  } catch (error) {
+    console.error("Lỗi khi tính toán thời gian ca:", error);
+    return "Hệ thống gặp lỗi khi kiểm tra thời gian ca làm việc. Vui lòng báo quản lý!";
+  }
+});
 // ==========================================
 // HÀM HELPER FORMAT TIỀN TỆ VND
 // ==========================================
