@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const AUTH_URL = "/auth/"; // Nhớ cấu hình baseURL trong axios ở chỗ khác nhé, hoặc ghi full "http://localhost:8080/api/auth/"
+// Nhớ cấu hình baseURL trong axios ở chỗ khác nhé, hoặc ghi full "http://localhost:8080/api/auth/"
+const AUTH_URL = "/auth/"; 
 
 class AuthService {
   // ==========================
@@ -12,7 +13,7 @@ class AuthService {
       password: user.password,
     });
 
-    // SỬA Ở ĐÂY: Bao phủ trường hợp backend trả về 'token' hoặc 'accessToken'
+    // Bao phủ trường hợp backend trả về 'token' hoặc 'accessToken'
     const jwtToken = response.data.accessToken || response.data.token;
 
     if (jwtToken) {
@@ -43,7 +44,7 @@ class AuthService {
       password: user.password,
     });
 
-    // SỬA Ở ĐÂY: Chặn lỗi lưu 'undefined' vào Local Storage
+    // Chặn lỗi lưu 'undefined' vào Local Storage
     const jwtToken = response.data.accessToken || response.data.token;
 
     if (jwtToken) {
@@ -79,20 +80,27 @@ class AuthService {
   }
 
   // ==========================
-  // 5. QUÊN MẬT KHẨU & ĐỔI MẬT KHẨU
+  // 5. QUÊN MẬT KHẨU & ĐỔI MẬT KHẨU (ĐÃ ĐỒNG BỘ CÁCH 2)
   // ==========================
   forgotPassword(email, type) {
-    return axios.post(AUTH_URL + "forgot-password", null, {
-      params: { email: email, type: type },
+    // Dựa vào biến type truyền vào để trỏ đúng URL API
+    const endpoint = (type === 'KHACH_HANG') ? "customer/forgot-password" : "staff/forgot-password";
+    
+    return axios.post(AUTH_URL + endpoint, null, {
+      params: { email: email },
+      // Backend không cần nhận type nữa vì đã rẽ nhánh ngay từ đường dẫn API
     });
   }
 
   resetPassword(email, otp, newPassword, type) {
-    return axios.post(AUTH_URL + "reset-password", {
+    // Dựa vào biến type truyền vào để trỏ đúng URL API
+    const endpoint = (type === 'KHACH_HANG') ? "customer/reset-password" : "staff/reset-password";
+
+    return axios.post(AUTH_URL + endpoint, {
       email: email, 
       otp: otp, 
       newPassword: newPassword, 
-      type: type,
+      // Backend không cần nhận type trong Request Body nữa
     });
   }
 }

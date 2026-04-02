@@ -181,9 +181,7 @@
       </div>
     </transition>
   </div>
-</template>
-
-<script setup>
+</template><script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import axios from "axios";
 import Header from "../../layout/header/Header.vue";
@@ -217,21 +215,17 @@ const getUserInitial = (name) => {
   return words[words.length - 1].charAt(0).toUpperCase();
 };
 
-// 👉 ĐÃ SỬA LỖI TRẮNG ẢNH: Xử lý thông minh mọi loại link
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return "";
   
-  // 1. Nếu là chuỗi Base64 (Ảnh tự up)
   if (imagePath.startsWith("data:image")) {
     return imagePath;
   }
   
-  // 2. Nếu là link Google Login
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
   
-  // 3. Fallback (Nếu bạn lưu file cứng vào server)
   return `http://localhost:8080/images/${imagePath}?t=${imageCacheBuster.value}`;
 };
 
@@ -297,7 +291,6 @@ const fetchUserProfile = async () => {
     currentUser.value = res.data;
     syncForm(res.data);
 
-    // Cập nhật lại localStorage để đồng bộ Header
     const updatedLocalUser = {
       ...localUser,
       tenKhachHang: res.data.tenKhachHang,
@@ -357,18 +350,30 @@ const onFileChange = (e) => {
   avatarPreview.value = URL.createObjectURL(file);
 };
 
+// --- LOGIC KIỂM TRA DỮ LIỆU (VALIDATION) ---
 const validateForm = () => {
   errors.value = {};
   let isValid = true;
   
+  // 1. Kiểm tra HỌ VÀ TÊN (Bắt buộc, không số, không ký tự đặc biệt)
   if (!form.tenKhachHang || !form.tenKhachHang.trim()) {
     errors.value.tenKhachHang = "Họ tên không được để trống";
     isValid = false;
   } else if (form.tenKhachHang.trim().length < 2) {
-    errors.value.tenKhachHang = "Họ tên quá ngắn";
+    errors.value.tenKhachHang = "Họ tên quá ngắn (phải có ít nhất 2 ký tự)";
     isValid = false;
+  } else {
+    // Regex siêu chặt: Chỉ cho phép chữ cái Tiếng Việt (có dấu & không dấu) và dấu cách. 
+    // Tuyệt đối CẤM số (0-9) và các ký tự đặc biệt (@, #, $, <, >, /, *, ...)
+    const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/;
+    
+    if (!nameRegex.test(form.tenKhachHang.trim())) {
+      errors.value.tenKhachHang = "Họ tên không được chứa số hoặc ký tự đặc biệt";
+      isValid = false;
+    }
   }
   
+  // 2. Kiểm tra SỐ ĐIỆN THOẠI (Bắt buộc, phải đúng đầu số nhà mạng VN và đủ 10 số)
   const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
   if (!form.soDienThoai || !form.soDienThoai.trim()) {
     errors.value.soDienThoai = "Số điện thoại không được để trống";
@@ -378,23 +383,31 @@ const validateForm = () => {
     isValid = false;
   }
 
+  // 3. Kiểm tra NGÀY SINH (Bắt buộc, phải đủ 16 tuổi)
   if (!form.ngaySinh) {
     errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
     isValid = false;
   } else {
-    const selectedDate = new Date(form.ngaySinh);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDate >= today) {
-      errors.value.ngaySinh = "Ngày sinh phải nhỏ hơn ngày hiện tại";
+    const birthDate = new Date(form.ngaySinh);
+    
+    // Mốc thời gian 16 năm trước so với hiện tại
+    const minAgeDate = new Date();
+    minAgeDate.setFullYear(today.getFullYear() - 16);
+
+    // Nếu ngày sinh nhập vào lớn hơn mốc 16 năm -> Tức là chưa đủ 16 tuổi
+    if (birthDate > minAgeDate) {
+      errors.value.ngaySinh = "Tài khoản phải dành cho người từ 16 tuổi trở lên";
       isValid = false;
     }
   }
 
+  // LƯU Ý: Trường Email đã được khóa (disabled) trong HTML để không cho người dùng tự ý đổi email đăng nhập, 
+  // do đó chúng ta không cần check Regex cho trường Email ở đây nữa.
+
   return isValid;
 };
 
-// GỘP CHUNG FILE VÀ JSON GỬI 1 LẦN
 const submitUpdate = async () => {
   if (!validateForm()) return;
 
@@ -444,11 +457,26 @@ const submitUpdate = async () => {
 
   } catch (error) {
     console.error("Lỗi cập nhật:", error);
-    if (error.response?.status === 401) {
-      showToast("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!", "error");
+    
+    // 👉 ĐÃ THÊM: Logic check trùng từ Backend
+    if (error.response) {
+      const serverMsg = error.response.data?.message || error.response.data || "";
+      const msgStr = typeof serverMsg === 'string' ? serverMsg.toLowerCase() : "";
+
+      if (error.response.status === 401) {
+        showToast("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!", "error");
+      } 
+      // Kiểm tra xem Backend có trả về lỗi trùng SĐT không
+      else if (msgStr.includes("điện thoại") || msgStr.includes("tồn tại") || msgStr.includes("phone")) {
+        errors.value.soDienThoai = "Số điện thoại này đã được sử dụng bởi người khác";
+        showToast("Số điện thoại đã tồn tại!", "error");
+      } 
+      // Các lỗi khác
+      else {
+        showToast(typeof serverMsg === 'string' ? serverMsg : "Vui lòng kiểm tra lại thông tin", "error");
+      }
     } else {
-      const msg = error.response?.data?.message || error.response?.data || "Có lỗi xảy ra khi cập nhật!";
-      showToast(typeof msg === 'string' ? msg : "Vui lòng kiểm tra lại thông tin", "error");
+      showToast("Lỗi kết nối Server!", "error");
     }
   } finally {
     isSubmitting.value = false;

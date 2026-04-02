@@ -70,7 +70,7 @@
             />
           </div>
           <div class="forgot-wrapper">
-            <router-link to="/forgot-password" class="forgot-link">
+            <router-link to="/admin/forgot-password" class="forgot-link">
               Quên mật khẩu?
             </router-link>
           </div>

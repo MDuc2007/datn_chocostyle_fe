@@ -562,7 +562,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #F7F7F7; /* Màu nền xám nhạt theo chuẩn */
+  background-color: #F7F7F7;
   font-family: 'Nunito', sans-serif;
   color: #111827;
 }
@@ -585,7 +585,7 @@ onUnmounted(() => {
 }
 
 .breadcrumb span:hover {
-  color: #63391F; /* Màu nâu chủ đạo */
+  color: #63391F;
 }
 
 .breadcrumb .separator svg {
@@ -630,10 +630,11 @@ onUnmounted(() => {
 }
 
 .main-display {
-  background: #F7F7F7; /* Nền khung ảnh */
+  background: #F7F7F7;
   border-radius: 12px;
   width: 100%;
-  height: 600px;
+  aspect-ratio: 1 / 1;
+  max-height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -661,7 +662,7 @@ onUnmounted(() => {
 .main-image {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* QUAN TRỌNG: Ép ảnh nằm gọn trong box, không thay đổi kích thước box */
+  object-fit: contain;
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -698,13 +699,13 @@ onUnmounted(() => {
 }
 
 .thumb.active {
-  border-color: #63391F; /* Màu chủ đạo */
+  border-color: #63391F;
 }
 
 .thumb-image {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Đồng bộ với ảnh lớn */
+  object-fit: contain;
 }
 
 /* ================== RIGHT: PRODUCT INFO ================== */
@@ -751,7 +752,7 @@ onUnmounted(() => {
   font-family: 'Montserrat', sans-serif;
   font-size: 28px;
   font-weight: 800;
-  color: #d32f2f; /* Màu đỏ cho giá khuyến mãi */
+  color: #d32f2f;
 }
 
 .sale-tag {
@@ -825,7 +826,7 @@ onUnmounted(() => {
 
 .variant-selected-text {
   font-size: 15px;
-  color: #63391F; /* Nhấn mạnh text đã chọn */
+  color: #63391F;
   font-weight: 700;
 }
 
@@ -874,7 +875,7 @@ onUnmounted(() => {
 }
 
 .color-circle.selected {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #63391F; /* Viền bao quanh màu nâu */
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #63391F;
   border: none;
 }
 
@@ -904,7 +905,8 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.size-box:hover:not(.disabled) {
+/* 👉 ĐÃ SỬA LỖI MẤT CHỮ Ở ĐÂY: Không đổi màu chữ thành nâu nếu ô đang được Active */
+.size-box:hover:not(.disabled):not(.active) {
   border-color: #63391F;
   color: #63391F !important;
 }
@@ -1007,7 +1009,7 @@ onUnmounted(() => {
 }
 
 .stock-hint strong {
-  color: #059669; /* Đổi màu xanh cho số lượng tồn */
+  color: #059669; 
 }
 
 /* ================== NÚT HÀNH ĐỘNG ================== */
@@ -1096,7 +1098,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* ================== MODAL & TOAST ================== */
+/* ================== MODAL ================== */
 .loading-full-page {
   height: 60vh;
   display: flex;
@@ -1192,7 +1194,7 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
-/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) KHÔNG ICON ================= */
+/* ================= TOAST MỚI (SUCCESS, ERROR, WARNING) ================= */
 .modern-toast {
   position: fixed;
   top: 30px;
@@ -1205,30 +1207,47 @@ onUnmounted(() => {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   min-width: 300px;
   transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-.modern-toast.toast-success {
-  background: #d4edda;
-  color: #155724;
-  border-left: 4px solid #28a745;
+.toast-success {
+  background: #d4edda !important;
+  color: #155724 !important;
+  border-left: 4px solid #28a745 !important;
 }
 
-.modern-toast.toast-error {
-  background: #f8d7da;
-  color: #721c24;
-  border-left: 4px solid #dc3545;
+.toast-error {
+  background: #f8d7da !important;
+  color: #721c24 !important;
+  border-left: 4px solid #dc3545 !important;
 }
 
-.modern-toast.toast-warning {
-  background: #ffc107;
-  color: #333;
-  border-left: 4px solid #ff9800;
+.toast-warning {
+  background: #ffc107 !important;
+  color: #333 !important;
+  border-left: 4px solid #ff9800 !important;
 }
 
 .toast-text {
   font-size: 15px;
   font-weight: 600;
-  color: inherit; /* Chữ tự động lấy màu đúng theo khung cảnh báo */
+  color: inherit;
+  margin-left: 10px;
+}
+
+.toast-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.toast-icon-wrap svg {
+  width: 100%;
+  height: 100%;
+  color: inherit;
 }
 
 .toast-slide-enter-active,
@@ -1249,14 +1268,11 @@ onUnmounted(() => {
     gap: 30px;
   }
   .main-display {
-    height: 500px;
+    height: auto;
   }
 }
 
 @media (max-width: 480px) {
-  .main-display {
-    height: 350px;
-  }
   .title {
     font-size: 24px;
   }

@@ -331,10 +331,16 @@
               type="button"
               class="btn-submit-order"
               @click="confirmOrder"
-              :disabled="isProcessing"
+              :disabled="isProcessing || checkoutItems.length === 0"
             >
               <span v-if="isProcessing" class="loader-spinner"></span>
-              <span v-else>HOÀN TẤT ĐẶT HÀNG</span>
+              <span v-else>
+                {{
+                  checkoutItems.length === 0
+                    ? "GIỎ HÀNG TRỐNG"
+                    : "HOÀN TẤT ĐẶT HÀNG"
+                }}
+              </span>
             </button>
           </div>
         </div>
@@ -648,14 +654,15 @@
                     <td>
                       <strong>{{ item.tenKhachHang }}</strong>
                       <div class="text-muted mt-1">
-                        📞 {{ item.soDienThoai }}
+                        {{ item.soDienThoai }}
                       </div>
                     </td>
                     <td class="address-cell">
+                      {{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
+                      {{ item.diaChi.quan }}, {{ item.diaChi.thanhPho }}
                       <span v-if="item.diaChi.macDinh" class="default-badge"
                         >Mặc định</span
-                      >{{ item.diaChi.diaChiCuThe }}, {{ item.diaChi.phuong }},
-                      {{ item.diaChi.quan }}, {{ item.diaChi.thanhPho }}
+                      >
                     </td>
                     <td class="text-center">
                       <button class="btn-select" @click="selectAddress(item)">
@@ -716,10 +723,20 @@
 <script setup>
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
-import { ref, onMounted, computed, reactive, nextTick, watch } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  computed,
+  reactive,
+  nextTick,
+  watch,
+} from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import ghnLogo from "../../../src/assets/logo/ghn.png";
+import SockJS from "sockjs-client/dist/sockjs";
+import Stomp from "stompjs";
 
 const GHN_TOKEN = "31476b34-15db-11f1-9cf9-9efb715b9957";
 const GHN_SHOP_ID = 6296816;
@@ -756,6 +773,40 @@ const wards = ref([]);
 const selectedProvince = ref(null);
 const selectedDistrict = ref(null);
 const selectedWard = ref(null);
+
+const validationInterval = ref(null);
+
+let stompClient = null;
+
+const connectWebSocket = () => {
+  // Thay đổi endpoint '/ws' hoặc '/ws-endpoint' tùy theo cấu hình file WebSocketConfig.java ở backend của bạn
+  const socket = new SockJS("http://localhost:8080/ws-chocostyle");
+  stompClient = Stomp.over(socket);
+  stompClient.debug = () => {}; // Tắt log cho đỡ rối console
+
+  stompClient.connect(
+    {},
+    (frame) => {
+      console.log("Đã kết nối WebSocket thành công!");
+
+      // LẮNG NGHE KÊNH THÔNG BÁO CHUNG (Dành cho Giá, Tồn kho, Voucher, Sale)
+      stompClient.subscribe("/topic/public-updates", (message) => {
+        console.log("Server báo có cập nhật mới, đang tải lại giá...");
+        // Gọi hàm check ngầm, tự động nhảy giá mới
+        checkPriceAndVoucherUpdates(true);
+      });
+    },
+    (error) => {
+      console.error("Lỗi kết nối WebSocket:", error);
+    },
+  );
+};
+
+const disconnectWebSocket = () => {
+  if (stompClient !== null) {
+    stompClient.disconnect();
+  }
+};
 
 const form = ref({
   tenKhachHang: "",
@@ -979,15 +1030,147 @@ const fetchPromotions = async () => {
   }
 };
 
+const fetchLatestPrices = async () => {
+  try {
+    // Tạo mảng chứa các request gọi thẳng vào API chi tiết sản phẩm
+    const requests = checkoutItems.value.map((item) =>
+      axios.get(
+        `http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`,
+      ),
+    );
+
+    // Promise.all giúp bắn tất cả API cùng lúc, chờ xong hết mới đi tiếp
+    const responses = await Promise.all(requests);
+
+    // Map dữ liệu trả về tương ứng với từng item trong giỏ
+    responses.forEach((res, index) => {
+      const variantData = res.data;
+      const item = checkoutItems.value[index];
+
+      if (variantData) {
+        item.giaBan = variantData.giaBan; // Cập nhật giá gốc mới nhất
+        item.trangThai = variantData.trangThai; // Cập nhật trạng thái
+        item.tonKho = variantData.soLuongTon; // Lấy luôn tồn kho hiện tại để đối chiếu
+      }
+    });
+  } catch (e) {
+    console.error("Lỗi cập nhật giá và trạng thái sản phẩm:", e);
+  }
+};
+
 const fetchVouchers = async (khId) => {
   try {
+    // Truyền khId nếu có, không có thì bỏ trống để lấy Voucher public
+    const params = khId ? { idKhachHang: khId } : {};
     const res = await axios.get(`http://localhost:8080/admin/voucher/pos`, {
-      params: { idKhachHang: khId },
+      params,
     });
     availableVouchers.value = res.data;
   } catch (err) {
     console.error("Lỗi lấy danh sách voucher:", err);
   }
+};
+
+const checkPriceAndVoucherUpdates = async () => {
+  if (isProcessing.value) return false;
+
+  const oldSubTotal = subTotal.value;
+  const oldVoucherId = selectedVoucher.value?.id;
+  let hasChanged = false;
+
+  // 1. Quét Giá Gốc, Trạng thái và Tồn kho mới nhất trước
+  await fetchLatestPrices();
+
+  // 2. CHẶN VÀ TỰ ĐỘNG XÓA: Ngưng bán, hết hàng, hoặc mua lố tồn kho
+  const unavailableItems = checkoutItems.value.filter(
+    (item) =>
+      item.trangThai === 0 ||
+      item.trangThai === 2 ||
+      item.soLuong > item.tonKho,
+  );
+
+  if (unavailableItems.length > 0) {
+    addNotification(
+      `Sản phẩm [${unavailableItems.map((i) => i.tenSp).join(", ")}] đã hết hàng hoặc ngừng bán và bị xóa khỏi đơn!`,
+      "error",
+    );
+    hasChanged = true;
+
+    // Tự động gạn lọc lại danh sách: Chỉ giữ những thằng còn bán và đủ kho
+    checkoutItems.value = checkoutItems.value.filter(
+      (item) => item.trangThai === 1 && item.soLuong <= item.tonKho,
+    );
+
+    // Cập nhật lại Storage để F5 không bị lỗi
+    localStorage.setItem("checkout_items", JSON.stringify(checkoutItems.value));
+
+    // Nếu xóa xong mà giỏ hàng trống trơn -> Đá về trang cart
+    if (checkoutItems.value.length === 0) {
+      setTimeout(() => {
+        router.push("/cart"); // Sửa lại route giỏ hàng của bạn nếu khác
+      }, 2000);
+      return true; // Kết thúc luôn
+    }
+  }
+
+  // 3. Quét Đợt giảm giá (Sale)
+  await fetchPromotions();
+
+  // 4. Quét lại Voucher
+  await fetchVouchers(customer.value?.id || null);
+
+  // 5. KIỂM TRA TỔNG TIỀN
+  if (oldSubTotal !== subTotal.value && oldSubTotal > 0 && !hasChanged) {
+    addNotification(
+      "Giá sản phẩm hoặc khuyến mãi vừa thay đổi, hệ thống đã cập nhật lại!",
+      "warning",
+    );
+    hasChanged = true;
+  }
+
+  // 6. Logic Voucher Thông Minh
+  if (processedVouchers.value && processedVouchers.value.length > 0) {
+    const bestVoucher = processedVouchers.value[0];
+
+    if (!selectedVoucher.value && bestVoucher.simulatedDiscount > 0) {
+      selectedVoucher.value = bestVoucher;
+      addNotification(
+        `Đã tự động áp dụng mã ${bestVoucher.maPgg} tiết kiệm nhất!`,
+        "success",
+      );
+      hasChanged = true;
+    } else if (selectedVoucher.value) {
+      const currentValidVoucher = processedVouchers.value.find(
+        (v) => v.id === oldVoucherId,
+      );
+
+      if (!currentValidVoucher || currentValidVoucher.simulatedDiscount === 0) {
+        selectedVoucher.value =
+          bestVoucher.simulatedDiscount > 0 ? bestVoucher : null;
+        addNotification(
+          "Mã giảm giá cũ không còn hợp lệ, hệ thống đã tự động cập nhật!",
+          "warning",
+        );
+        hasChanged = true;
+      } else if (
+        bestVoucher.id !== oldVoucherId &&
+        bestVoucher.simulatedDiscount > currentValidVoucher.simulatedDiscount
+      ) {
+        selectedVoucher.value = bestVoucher;
+        addNotification(
+          `Đã tự động đổi sang mã ${bestVoucher.maPgg} vì có mức giảm tốt hơn!`,
+          "success",
+        );
+        hasChanged = true;
+      }
+    }
+  } else if (selectedVoucher.value) {
+    selectedVoucher.value = null;
+    addNotification("Mã giảm giá đã hết hạn hoặc bị gỡ bỏ.", "error");
+    hasChanged = true;
+  }
+
+  return hasChanged;
 };
 
 const totalItemCount = computed(() =>
@@ -1065,7 +1248,7 @@ const addNotification = (m, t = "success") => {
   }, 3000);
 };
 
-const confirmOrder = () => {
+const confirmOrder = async () => {
   if (!form.value.tenKhachHang?.trim())
     return addNotification("Vui lòng nhập Họ và tên!", "warning");
   if (!form.value.soDienThoai?.trim())
@@ -1075,6 +1258,22 @@ const confirmOrder = () => {
   if (!form.value.diaChiCuThe?.trim())
     return addNotification("Vui lòng nhập Địa chỉ cụ thể!", "warning");
 
+  // QUÉT MỌI ĐỔI THAY TỪ BACKEND NGAY TẠI THỜI ĐIỂM BẤM NÚT
+  isProcessing.value = true;
+  const hasChanged = await checkPriceAndVoucherUpdates();
+  isProcessing.value = false;
+
+  // Nếu giỏ hàng trống (do hệ thống vừa đá sản phẩm lỗi ra)
+  if (checkoutItems.value.length === 0) {
+    return; // Dừng lại, code bên trong hàm Check đã lo việc redirect về giỏ hàng
+  }
+
+  // Nếu Giá/Voucher vừa đổi hoặc có sản phẩm bị văng khỏi giỏ, dừng lại cho khách xem
+  if (hasChanged) {
+    return;
+  }
+
+  // Chạy mượt mà, gọi Modal
   if (paymentMethod.value === "COD") {
     modal.show = true;
     modal.action = () => handleCheckout("COD");
@@ -1150,7 +1349,6 @@ const handleCheckout = async (gatewayType) => {
     }
 
     localStorage.setItem("pending_order_id", hoaDonId);
-
     if (gatewayType === "COD") {
       localStorage.removeItem("pending_order_id");
       updateOriginalCartAfterPurchase();
@@ -1429,6 +1627,16 @@ onMounted(async () => {
         console.error(err);
       }
     }
+  }
+  connectWebSocket();
+  // validationInterval.value = setInterval(() => {
+  //   checkPriceAndVoucherUpdates();
+  // }, 1000);
+});
+onUnmounted(() => {
+  // Clear interval khi rời khỏi trang để tránh rò rỉ bộ nhớ
+  if (validationInterval.value) {
+    clearInterval(validationInterval.value);
   }
 });
 

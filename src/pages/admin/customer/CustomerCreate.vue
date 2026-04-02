@@ -215,6 +215,7 @@ import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { customerService } from "../../../services/customerService";
 
+const noSpecialCharRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
 const router = useRouter();
 const route = useRoute();
 const customerId = route.params.id;
@@ -469,9 +470,12 @@ const validateForm = () => {
   if (!form.tenKhachHang?.trim()) {
     errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
     isValid = false;
-  }
+  }else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
-  const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+  const phoneRegex = /(84|0)(3|5|7|8|9)[0-9]{8}\b/;
   if (!form.soDienThoai) {
     errors.value.soDienThoai = "Vui lòng nhập số điện thoại";
     isValid = false;
@@ -489,17 +493,42 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (!form.ngaySinh) {
-    errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+if (!form.ngaySinh) {
+  errors.value.ngaySinh = "Vui lòng chọn ngày sinh";
+  isValid = false;
+} else {
+  const birthDate = new Date(form.ngaySinh);
+  const today = new Date();
+
+  // ❌ Check date invalid (NaN)
+  if (isNaN(birthDate.getTime())) {
+    errors.value.ngaySinh = "Ngày sinh không hợp lệ";
     isValid = false;
-  } else {
-    const today = new Date();
-    const birthDate = new Date(form.ngaySinh);
-    if (birthDate >= today) {
-      errors.value.ngaySinh = "Ngày sinh không hợp lệ";
+  } 
+  // ❌ Không cho chọn ngày tương lai
+  else if (birthDate > today) {
+    errors.value.ngaySinh = "Ngày sinh không được lớn hơn ngày hiện tại";
+    isValid = false;
+  } 
+  else {
+    // ✅ Check đủ 16 tuổi
+    const minAgeDate = new Date();
+    minAgeDate.setFullYear(today.getFullYear() - 16);
+
+    if (birthDate > minAgeDate) {
+      errors.value.ngaySinh = "Khách hàng phải từ 16 tuổi trở lên";
       isValid = false;
     }
   }
+}
+
+if (!form.tenKhachHang?.trim()) {
+  errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
+  isValid = false;
+} else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
   const hasValidAddr = form.listDiaChi.some(
     (a) => a.provinceId && a.districtId && a.wardCode && a.detail?.trim(),
@@ -507,7 +536,13 @@ const validateForm = () => {
   if (form.listDiaChi.length === 0 || !hasValidAddr) {
     errors.value.address = "Vui lòng nhập đầy đủ ít nhất 1 địa chỉ";
     isValid = false;
-  }
+  }if (!form.tenKhachHang?.trim()) {
+  errors.value.tenKhachHang = "Vui lòng nhập họ và tên";
+  isValid = false;
+} else if (!noSpecialCharRegex.test(form.tenKhachHang)) {
+  errors.value.tenKhachHang = "Tên không được chứa ký tự đặc biệt";
+  isValid = false;
+}
 
   return isValid;
 };
@@ -530,37 +565,45 @@ const handleUpdateClick = () => {
       : `Bạn có chắc chắn muốn thêm khách hàng mới này?`,
   };
 };
-
 const confirmUpdateAction = async () => {
   modal.value.show = false;
   isLoading.value = true;
 
   try {
+    // 1. Kiểm tra xem Email hoặc SĐT có bị thay đổi so với dữ liệu gốc không
     const isEmailChanged = editForm.value.email !== originalData.value.email;
-    const isPhoneChanged =
-      editForm.value.soDienThoai !== originalData.value.soDienThoai;
+    const isPhoneChanged = editForm.value.soDienThoai !== originalData.value.soDienThoai;
 
+    // 2. Nếu có thay đổi (hoặc đang thêm mới), tiến hành gọi API check trùng
     if (isEmailChanged || isPhoneChanged) {
       const checkRes = await customerService.checkUnique({
         email: isEmailChanged ? editForm.value.email : null,
         sdt: isPhoneChanged ? editForm.value.soDienThoai : null,
       });
+      
       const result = checkRes.data;
 
-      if (
-        (isEmailChanged && result.isEmailExist) ||
-        (isPhoneChanged && result.isPhoneExist)
-      ) {
-        if (result.isEmailExist)
-          errors.value.email = "Email đã tồn tại trên hệ thống!";
-        if (result.isPhoneExist)
-          errors.value.soDienThoai = "Số điện thoại đã tồn tại!";
+      // 👉 ĐÃ SỬA: Tách logic check lỗi ra rõ ràng, chỉ cần 1 trong 2 cái trùng là chặn ngay
+      let hasDuplicate = false;
+
+      if (isEmailChanged && result.isEmailExist) {
+        errors.value.email = "Email đã tồn tại trên hệ thống!";
+        hasDuplicate = true;
+      }
+      
+      if (isPhoneChanged && result.isPhoneExist) {
+        errors.value.soDienThoai = "Số điện thoại đã tồn tại!";
+        hasDuplicate = true;
+      }
+
+      if (hasDuplicate) {
         showToast("Thông tin bị trùng lặp!", "error");
         isLoading.value = false;
-        return;
+        return; // Chặn đứng tại đây, không cho gọi API Create/Update
       }
     }
 
+    // 3. Chuẩn bị payload dữ liệu gửi đi
     const payload = { ...editForm.value };
     payload.listDiaChi = payload.listDiaChi.map((a) => ({
       id: a.id || null,
@@ -571,6 +614,7 @@ const confirmUpdateAction = async () => {
       macDinh: a.macDinh,
     }));
 
+    // 4. Gọi API Lưu trữ
     if (customerId) {
       await customerService.update(customerId, payload, selectedFile.value);
       showToast("Cập nhật thành công!", "success");
@@ -579,12 +623,16 @@ const confirmUpdateAction = async () => {
       showToast("Thêm mới thành công!", "success");
     }
 
-    setTimeout(() => router.push("/admin/customer"), 1500);
+    // 👉 ĐÃ SỬA: Chỉ khi gọi API thành công 100% thì mới nhảy trang
+    setTimeout(() => {
+      const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+      router.push(`${basePath}/customer`);
+    }, 1500);
+
   } catch (error) {
     console.error("Lỗi:", error);
     if (error.response && error.response.data) {
-      const msg =
-        typeof error.response.data === "string"
+      const msg = typeof error.response.data === "string"
           ? error.response.data
           : error.response.data.message;
       showToast(msg || "Có lỗi xảy ra", "error");
@@ -599,11 +647,7 @@ const confirmUpdateAction = async () => {
 const closeModal = () => (modal.value.show = false);
 const showToast = (msg, type = "success") => {
   toast.value = { show: true, message: msg, type: type };
-  // 👉 ĐÃ SỬA: Tự động kiểm tra xem đang ở /staff hay /admin để quay về cho đúng
-    setTimeout(() => {
-      const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
-      router.push(`${basePath}/customer`);
-    }, 1500);
+  setTimeout(() => (toast.value.show = false), 3000);
 };
 </script>
 

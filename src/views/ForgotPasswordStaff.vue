@@ -5,7 +5,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <h1 class="brand-title">CHOCOSTYLE</h1>
-        <p class="subtitle">Khôi phục mật khẩu Khách Hàng</p>
+        <p class="subtitle">Khôi phục mật khẩu Nhân Viên</p>
       </div>
 
       <transition name="fade" mode="out-in">
@@ -216,7 +216,7 @@
       </transition>
 
       <div class="auth-footer">
-        <router-link to="/login" class="back-link">
+        <router-link to="/login-admin" class="back-link">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -231,12 +231,13 @@
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          Quay lại đăng nhập
+          Quay lại đăng nhập Nhân Viên
         </router-link>
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
@@ -253,15 +254,15 @@ const loading = ref(false);
 const message = ref("");
 const isError = ref(false);
 
-// Biến quản lý thời gian đếm ngược
+// 👉 MỚI THÊM: Biến quản lý thời gian đếm ngược
 const countdown = ref(0);
 let timer = null;
 
 const router = useRouter();
 
-// ===== HÀM ĐẾM NGƯỢC 30 GIÂY =====
+// 👉 MỚI THÊM: Hàm đếm ngược 30 giây
 const startCountdown = () => {
-  countdown.value = 30; // Chỉnh 30s ở đây
+  countdown.value = 30; // Chỉnh thời gian đếm ngược tại đây
   clearInterval(timer);
   timer = setInterval(() => {
     if (countdown.value > 0) {
@@ -272,7 +273,7 @@ const startCountdown = () => {
   }, 1000);
 };
 
-// ===== GỬI OTP LẦN ĐẦU HOẶC GỬI LẠI =====
+// ===== GỬI OTP =====
 const handleSendOtp = async () => {
   // Validate ngay trên Frontend
   if (!email.value || email.value.trim() === "") {
@@ -288,23 +289,19 @@ const handleSendOtp = async () => {
     return;
   }
 
-  // Khởi tạo trạng thái loading
   loading.value = true;
   message.value = "";
   isError.value = false;
 
   try {
-    await AuthService.forgotPassword(email.value, 'KHACH_HANG'); 
+    // Truyền 'NHAN_VIEN'
+    await AuthService.forgotPassword(email.value, 'NHAN_VIEN'); 
     
-    // Nếu API trả về thành công -> Qua bước 2 và Kích hoạt bộ đếm 30s
     step.value = 2;
     message.value = "";
-    startCountdown(); // Bắt đầu đếm ngược
-
+    startCountdown(); // 👉 MỚI THÊM: Bắt đầu đếm ngược sau khi gửi thành công
   } catch (err) {
     isError.value = true;
-    
-    // Bắt chính xác câu chữ lỗi từ Backend gửi về
     if (err.response?.data?.message) {
       message.value = err.response.data.message;
     } else if (typeof err.response?.data === 'string') {
@@ -336,16 +333,18 @@ const handleResetPassword = async () => {
   isError.value = false;
 
   try {
+    // Truyền 'NHAN_VIEN'
     await AuthService.resetPassword(
       email.value,
       otp.value,
       newPassword.value,
-      'KHACH_HANG'
+      'NHAN_VIEN'
     );
 
     message.value = "Đổi mật khẩu thành công! Đang chuyển hướng...";
     isError.value = false;
-    setTimeout(() => router.push("/login"), 2000); 
+    // Chuyển hướng về login admin
+    setTimeout(() => router.push("/login-admin"), 2000); 
   } catch (err) {
     isError.value = true;
     if (err.response?.data?.message) {
@@ -358,7 +357,8 @@ const handleResetPassword = async () => {
   }
 };
 </script>
-<style>
+
+<style >
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap");
 
 :root {
@@ -373,293 +373,42 @@ const handleResetPassword = async () => {
   --radius: 12px;
 }
 
-.auth-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #f7f7f7;
-  font-family: "Nunito", "Segoe UI", sans-serif;
-  position: relative;
-  overflow: hidden;
-}
+.auth-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f7f7f7; font-family: "Nunito", "Segoe UI", sans-serif; position: relative; overflow: hidden; }
+.bg-pattern { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient( circle, rgba(99, 57, 31, 0.04) 0%, transparent 70% ); pointer-events: none; z-index: 0; }
+.auth-card { position: relative; z-index: 1; width: 100%; max-width: 440px; background-color: var(--white-color); padding: 45px 40px; border-radius: 20px; box-shadow: var(--shadow-card); transition: all 0.3s ease; }
+.auth-header { text-align: center; margin-bottom: 30px; }
+.brand-title { color: var(--primary-color); font-size: 30px; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
+.subtitle { color: #888; font-size: 15px; margin-top: 6px; font-weight: 600; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--text-main); font-weight: 700; font-size: 14px; }
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 16px; color: #b0b0b0; display: flex; align-items: center; transition: color 0.3s; pointer-events: none; }
+.input-wrapper input { width: 100%; padding: 14px 14px 14px 48px; border: 2px solid transparent; background-color: #f9f9f9; border-radius: var(--radius); font-size: 15px; color: #333; transition: all 0.25s ease; box-sizing: border-box; }
+.input-wrapper input:focus { background-color: #fff; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1); outline: none; }
+.input-wrapper input:focus + .input-icon, .input-wrapper:focus-within .input-icon { color: var(--primary-color); }
+.otp-input { text-align: center; padding-left: 14px !important; letter-spacing: 5px; font-weight: 700; font-size: 18px !important; }
+.btn-auth { width: 100%; padding: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 15px rgba(99, 57, 31, 0.2); display: flex; justify-content: center; align-items: center; }
+.btn-auth:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 57, 31, 0.3); }
+.btn-auth:active { transform: translateY(1px); }
+.btn-auth:disabled { background-color: #bdc3c7; box-shadow: none; cursor: not-allowed; transform: none; }
+.info-box { background-color: #fff8f3; color: var(--primary-color); padding: 12px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; border: 1px dashed rgba(99, 57, 31, 0.3); }
 
-.bg-pattern {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(99, 57, 31, 0.04) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
+/* 👉 MỚI THÊM: CSS cho nút Gửi lại OTP đếm ngược */
+.retry-link { margin-top: 20px; text-align: center; font-size: 14px; color: #888; }
+.retry-link .disabled-text { color: #a0a0a0; cursor: not-allowed; font-weight: 600; }
+.retry-link .active-text { color: var(--primary-color); font-weight: 700; cursor: pointer; }
+.retry-link .active-text:hover { text-decoration: underline; }
 
-.auth-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 440px;
-  background-color: var(--white-color);
-  padding: 45px 40px;
-  border-radius: 20px;
-  box-shadow: var(--shadow-card);
-  transition: all 0.3s ease;
-}
-
-.auth-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.brand-title {
-  color: #63391f;
-  color: var(--primary-color);
-  font-size: 30px;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-
-.subtitle {
-  color: #888;
-  font-size: 15px;
-  margin-top: 6px;
-  font-weight: 600;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-main);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 16px;
-  color: #b0b0b0;
-  display: flex;
-  align-items: center;
-  transition: color 0.3s;
-  pointer-events: none;
-}
-
-.input-wrapper input {
-  width: 100%;
-  padding: 14px 14px 14px 48px;
-  border: 2px solid transparent;
-  background-color: #f9f9f9;
-  border-radius: var(--radius);
-  font-size: 15px;
-  color: #333;
-  transition: all 0.25s ease;
-  box-sizing: border-box;
-}
-
-.input-wrapper input:focus {
-  background-color: #fff;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 57, 31, 0.1);
-  outline: none;
-}
-
-.input-wrapper input:focus + .input-icon,
-.input-wrapper:focus-within .input-icon {
-  color: var(--primary-color);
-}
-
-.otp-input {
-  text-align: center;
-  padding-left: 14px !important;
-  letter-spacing: 5px;
-  font-weight: 700;
-  font-size: 18px !important;
-}
-
-.btn-auth {
-  width: 100%;
-  padding: 15px;
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 15px rgba(99, 57, 31, 0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.btn-auth:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(99, 57, 31, 0.3);
-}
-
-.btn-auth:active {
-  transform: translateY(1px);
-}
-
-.btn-auth:disabled {
-  background-color: #bdc3c7;
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.info-box {
-  background-color: #fff8f3;
-  color: var(--primary-color);
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  border: 1px dashed rgba(99, 57, 31, 0.3);
-}
-
-.retry-link {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 14px;
-  color: #888;
-}
-
-.retry-link span {
-  color: var(--primary-color);
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-}
-.retry-link span:hover {
-  text-decoration: underline;
-}
-
-.msg-box {
-  margin-top: 20px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: slideUp 0.3s ease;
-}
-
-.success-msg {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-}
-
-.error-msg {
-  background-color: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
-}
-
-.msg-icon {
-  display: flex;
-  align-items: center;
-}
-
-.auth-footer {
-  margin-top: 30px;
-  text-align: center;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 20px;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #888;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  transition: color 0.3s;
-}
-
-.back-link:hover {
-  color: var(--primary-color);
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateX(10px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-.retry-link .disabled-text {
-  color: #a0a0a0;
-  cursor: not-allowed;
-  font-weight: 600;
-}
-.retry-link .active-text {
-  color: var(--primary-color);
-  font-weight: 700;
-  cursor: pointer;
-}
-.retry-link .active-text:hover {
-  text-decoration: underline;
-}
+.msg-box { margin-top: 20px; padding: 12px 16px; border-radius: 10px; font-size: 14px; display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
+.success-msg { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.error-msg { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+.msg-icon { display: flex; align-items: center; }
+.auth-footer { margin-top: 30px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 20px; }
+.back-link { display: inline-flex; align-items: center; gap: 8px; color: #888; text-decoration: none; font-weight: 600; font-size: 14px; transition: color 0.3s; }
+.back-link:hover { color: var(--primary-color); }
+.spinner { width: 20px; height: 20px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateX(10px); }
 </style>

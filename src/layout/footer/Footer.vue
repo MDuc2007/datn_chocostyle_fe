@@ -59,18 +59,25 @@
         <form class="feedback-form" @submit.prevent="handleSubmit">
           <input 
             type="email" 
+            v-model="userEmail"
             class="form-input" 
             placeholder="Email của bạn..." 
             required 
+            :disabled="isSubmitting"
           />
           <textarea 
+            v-model="userMessage"
             class="form-input form-textarea" 
             placeholder="Nhập nội dung góp ý..." 
             rows="2" 
             required
+            :disabled="isSubmitting"
           ></textarea>
-          <button type="submit" class="btn-submit">
-            Gửi góp ý <span class="arrow">→</span>
+          <button type="submit" class="btn-submit" :disabled="isSubmitting">
+            <span v-if="isSubmitting">Đang gửi...</span>
+            <template v-else>
+              Gửi góp ý <span class="arrow">→</span>
+            </template>
           </button>
         </form>
       </div>
@@ -80,49 +87,93 @@
     <div class="footer-bottom">
       <p>© 2026 CHOCOSTYLE. All rights reserved.</p>
     </div>
+
+    <transition name="toast-slide">
+      <div v-if="toast.show" :class="['choco-toast', toast.type]">
+        <div class="toast-content">{{ toast.message }}</div>
+      </div>
+    </transition>
   </footer>
 </template>
 
 <script setup lang="ts">
-const handleSubmit = () => {
-  alert('Cảm ơn bạn đã góp ý. Chúng tôi sẽ ghi nhận thông tin này!');
+import { ref } from 'vue';
+
+const userEmail = ref('');
+const userMessage = ref('');
+const isSubmitting = ref(false);
+
+const toast = ref({ show: false, message: '', type: 'success' });
+
+const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+  toast.value = { show: true, message: msg, type: type };
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 3500); 
+};
+
+const handleSubmit = async () => {
+  isSubmitting.value = true;
+  try {
+    await fetch("https://formsubmit.co/ajax/hungbe0of@gmail.com", {
+      method: "POST",
+      headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+          _subject: "Góp ý mới từ website ChocoStyle",
+          email: userEmail.value,
+          message: userMessage.value
+      })
+    });
+    
+    showToast('Cảm ơn bạn! Chúng tôi đã ghi nhận góp ý.', 'success');
+    
+    userEmail.value = '';
+    userMessage.value = '';
+  } catch (error) {
+    showToast('Có lỗi xảy ra. Vui lòng thử lại sau.', 'error');
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>
 
 <style scoped>
 /* Biến màu sắc và Typography cho sang trọng */
 :root {
-  --footer-bg: #5a3825; /* Nâu trầm */
+  --footer-bg: #5a3825; 
   --footer-bottom: #42281a;
   --text-white: #ffffff; 
   --text-muted: rgba(255, 255, 255, 0.7); 
-  --accent-color: #e28743; /* Chỉnh màu cam nhấn cho tươi hơn một chút để nổi trên nền tối */
+  --accent-color: #e28743; 
   --input-bg: rgba(255, 255, 255, 0.08);
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .footer {
-  /* Thay dòng gradient cũ bằng dòng này */
   background: linear-gradient(135deg, #4b2c1f, #2e1810);
   color: var(--text-white, #fff);
   font-family: var(--font-family);
-  border-top: 1px solid rgba(255, 255, 255, 0.08); /* Viền mờ cho tinh tế */
+  border-top: 1px solid rgba(255, 255, 255, 0.08); 
 }
 
 .footer-container {
-  max-width: 1200px; /* Thu hẹp max-width một chút */
+  max-width: 1200px; 
   margin: 0 auto;
-  padding: 40px 20px; /* GIẢM padding từ 70px xuống 40px */
+  padding: 40px 20px; 
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr; 
-  gap: 30px; /* GIẢM gap từ 50px xuống 30px */
+  gap: 30px; 
 }
 
 /* ===== TIÊU ĐỀ CHUNG ===== */
 .footer-heading {
-  font-size: 16px; /* Giảm size chữ */
+  font-size: 16px; 
   font-weight: 600;
-  margin-bottom: 16px; /* Giảm khoảng cách */
+  margin-bottom: 16px; 
   text-transform: uppercase;
   letter-spacing: 0.5px;
   position: relative;
@@ -150,7 +201,7 @@ const handleSubmit = () => {
 }
 
 .logo-wrap {
-  width: 65px; /* GIẢM size logo từ 90px xuống 65px */
+  width: 65px; 
   height: 65px;
   background: #fff;
   border-radius: 50%;
@@ -169,7 +220,7 @@ const handleSubmit = () => {
 }
 
 .brand-name {
-  font-size: 18px; /* Giảm size tên thương hiệu */
+  font-size: 18px; 
   font-weight: 700;
   color: var(--text-white);
   margin: 0 0 2px 0;
@@ -183,7 +234,7 @@ const handleSubmit = () => {
 }
 
 .brand-desc {
-  font-size: 13px; /* Giảm size mô tả */
+  font-size: 13px; 
   color: var(--text-white); 
   line-height: 1.5;
   margin-bottom: 15px;
@@ -199,17 +250,16 @@ const handleSubmit = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px; /* Tinh chỉnh lại size một chút cho SVG */
+  width: 34px; 
   height: 34px;
   border-radius: 50%;
   background: var(--input-bg);
-  color: var(--text-white); /* Đổi màu SVG thành trắng */
+  color: var(--text-white); 
   text-decoration: none;
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Kích thước SVG cho Social */
 .social-icon svg {
   width: 16px;
   height: 16px;
@@ -233,19 +283,18 @@ const handleSubmit = () => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 12px; /* Giảm khoảng cách giữa các dòng */
-  font-size: 13px; /* Thu nhỏ chữ liên hệ */
+  margin-bottom: 12px; 
+  font-size: 13px; 
   color: var(--text-white); 
   line-height: 1.5;
 }
 
-/* CSS CHUẨN CHO SVG ICON LIÊN HỆ */
 .contact-list .icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
   margin-top: 1px;
-  color: var(--accent-color, #e28743); /* Cho icon màu cam nổi bật */
+  color: var(--accent-color, #e28743); 
 }
 
 /* ===== CỘT 3: GÓP Ý ===== */
@@ -258,31 +307,33 @@ const handleSubmit = () => {
 .feedback-form {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Thu hẹp form */
+  gap: 10px; 
 }
 
 .form-input {
   width: 100%;
   padding: 10px 14px;
   border-radius: 6px;
-  /* ĐỔI VIỀN THÀNH MÀU TRẮNG Ở ĐÂY */
   border: 1px solid #ffffff; 
-  /* Để nền trong suốt giúp hiệu ứng gradient ăn luôn vào ô input */
   background: transparent; 
-  color: #fff; /* GIỮ NGUYÊN MÀU CHỮ LÀ TRẮNG */
+  color: #fff; 
   font-size: 13px;
   outline: none;
   transition: all 0.3s ease;
   font-family: inherit;
+  box-sizing: border-box; /* Đảm bảo input và button bằng nhau */
 }
 
-/* Chỉnh lại phần chữ mờ (placeholder) cho dễ nhìn hơn trên viền trắng */
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-input::placeholder {
   color: rgba(255, 255, 255, 0.8);
 }
 
 .form-input:focus {
-  /* Khi click vào ô sẽ sáng hơn một chút */
   background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
@@ -290,14 +341,16 @@ const handleSubmit = () => {
   resize: none;
 }
 
+/* 👉 ĐÃ SỬA: Nút "Gửi góp ý" rộng 100% bằng form input */
 .btn-submit {
+  width: 100%; 
   background: var(--accent-color, #e59866);
   color: #fff;
   border: none;
-  padding: 10px 20px; /* Thu nhỏ nút gửi */
+  padding: 12px 20px; 
   border-radius: 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px; 
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -305,9 +358,15 @@ const handleSubmit = () => {
   gap: 8px;
   transition: all 0.3s ease;
   margin-top: 2px;
+  box-sizing: border-box; 
 }
 
-.btn-submit:hover {
+.btn-submit:disabled {
+  background: #a87250;
+  cursor: not-allowed;
+}
+
+.btn-submit:hover:not(:disabled) {
   background: #d37e4c;
   transform: translateY(-1px);
 }
@@ -316,13 +375,13 @@ const handleSubmit = () => {
   transition: transform 0.3s ease;
 }
 
-.btn-submit:hover .arrow {
+.btn-submit:hover:not(:disabled) .arrow {
   transform: translateX(4px);
 }
 
 /* ===== BOTTOM BAR ===== */
 .footer-bottom {
-  background: #2e1810; /* Màu đồng nhất với phần đuôi của gradient ở trên */
+  background: #2e1810; 
   text-align: center;
   padding: 15px 20px;
   font-size: 12px;
@@ -332,6 +391,53 @@ const handleSubmit = () => {
 
 .footer-bottom p {
   margin: 0;
+}
+
+/* 👉 ĐÃ SỬA: TOAST MỚI (giống y hệt ảnh) */
+.choco-toast {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 10001;
+  padding: 14px 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-family);
+  font-weight: 500;
+  font-size: 15px;
+  min-width: 250px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Màu xanh y chang hình "Đã thêm vào giỏ hàng thành công!" */
+.choco-toast.success {
+  background-color: #E2F5E9; /* Xanh nền nhạt */
+  color: #1A7A32; /* Chữ xanh đậm */
+  border-left: 6px solid #22A042; /* Viền trái xanh đậm, dày */
+}
+
+/* Trong trường hợp lỗi */
+.choco-toast.error {
+  background-color: #fee2e2; 
+  color: #b91c1c; 
+  border-left: 6px solid #dc2626;
+}
+
+.toast-content {
+  letter-spacing: 0.2px;
+}
+
+/* Hiệu ứng Toast trượt ra/vào */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
 }
 
 /* ===== RESPONSIVE ===== */

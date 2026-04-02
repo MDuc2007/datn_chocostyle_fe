@@ -46,7 +46,7 @@
           <div class="filter-content">
             <div class="checkbox-list">
               <label v-for="type in jacketTypes" :key="type.value" class="custom-checkbox-label">
-                <input type="checkbox" :value="type.value" v-model="filters.types" class="hidden-checkbox" @change="applyFilter">
+                <input type="checkbox" :value="type.value" v-model="filters.types" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
                 <div class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                 <span class="checkbox-text">{{ type.label }}</span>
               </label>
@@ -65,8 +65,8 @@
           <div class="filter-content">
             <div class="size-grid">
               <label v-for="size in sizes" :key="size" class="size-item">
-                <input type="checkbox" :value="size" v-model="filters.sizes" class="hidden-checkbox" @change="applyFilter">
-                <span class="size-box" :class="{ active: filters.sizes.includes(size) }">{{ size }}</span>
+                <input type="checkbox" :value="String(size)" v-model="filters.sizes" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
+                <span class="size-box" :class="{ active: filters.sizes.includes(String(size)) }">{{ size }}</span>
               </label>
             </div>
           </div>
@@ -83,9 +83,9 @@
           <div class="filter-content">
             <div class="color-grid">
               <label v-for="color in colors" :key="color.value" class="color-item" :title="color.label">
-                <input type="checkbox" :value="color.value" v-model="filters.colors" class="hidden-checkbox" @change="applyFilter">
-                <div class="color-circle" :style="{ backgroundColor: color.hex }" :class="{ active: filters.colors.includes(color.value) }">
-                  <svg v-if="filters.colors.includes(color.value)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <input type="checkbox" :value="String(color.value)" v-model="filters.colors" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
+                <div class="color-circle" :style="{ backgroundColor: color.hex }" :class="{ active: filters.colors.includes(String(color.value)) }">
+                  <svg v-if="filters.colors.includes(String(color.value))" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </label>
             </div>
@@ -103,7 +103,7 @@
           <div class="filter-content">
             <div class="checkbox-list">
               <label v-for="material in materials" :key="material.value" class="custom-checkbox-label">
-                <input type="checkbox" :value="material.value" v-model="filters.materials" class="hidden-checkbox" @change="applyFilter">
+                <input type="checkbox" :value="material.value" v-model="filters.materials" class="hidden-checkbox" @change="() => $nextTick(applyFilter)">
                 <div class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
                 <span class="checkbox-text">{{ material.label }}</span>
               </label>
@@ -139,47 +139,31 @@ const materials = ref([]);
 const sizes = ref([]);
 const colors = ref([]);
 
-// 👉 ĐÃ NÂNG CẤP BỘ LỌC MÀU CHUẨN ĐẦY ĐỦ CÁC MÀU
-const getColorCode = (name) => {
-  if (!name) return '#E5E7EB';
+// 👉 ĐÃ THÊM LẠI: Hàm backup màu thông minh để chống lỗi xám
+const getBackupColorCode = (name) => {
+  if (!name) return '#cccccc';
   const n = name.toLowerCase().trim();
-  
-  // Ánh xạ chính xác tên màu
   const colorMap = {
-    'đen': '#000000',
-    'trắng': '#ffffff',
-    'đỏ': '#dc2626',
-    'xanh dương': '#2563eb',
-    'xanh lá': '#10b981',
-    'vàng': '#eab308',
-    'tím': '#9333ea',
-    'hồng': '#db2777',
-    'cam': '#f97316',
-    'xám': '#64748b',
-    'ghi': '#9ca3af',
-    'nâu': '#78350f',
-    'be': '#f5f5dc',
-    'navy': '#1e3a8a',
-    'rêu': '#4B5320',
+    'đen': '#222222', 'black': '#222222',
+    'trắng': '#ffffff', 'white': '#ffffff', 'trắng sữa': '#fdfff5', 'trắng kem': '#f5f5dc', 
+    'xám': '#808080', 'gray': '#808080', 'grey': '#808080', 'xám nhạt': '#d3d3d3', 'xám đậm': '#555555',
+    'đỏ': '#dc2626', 'red': '#dc2626', 'đỏ đô': '#800000', 'đỏ rượu': '#722f37',
+    'hồng': '#ffc0cb', 'pink': '#ffc0cb', 'hồng phấn': '#ffb6c1',
+    'tím': '#9333ea', 'purple': '#9333ea', 'tím than': '#191970', 'tím nhạt': '#e6e6fa',
+    'xanh dương': '#2563eb', 'blue': '#2563eb', 'xanh biển': '#0000ff', 'navy': '#1e3a8a', 'xanh đen': '#0a1128',
+    'xanh ngọc': '#00a86b', 'xanh coban': '#0047ab',
+    'xanh lá': '#10b981', 'green': '#10b981', 'xanh rêu': '#4a5d23', 'rêu': '#4a5d23',
+    'vàng': '#eab308', 'yellow': '#eab308', 'vàng bò': '#d2b48c', 'vàng kem': '#f0e68c', 
+    'cam': '#f97316', 'orange': '#f97316', 'cam đất': '#cc7722',
+    'nâu': '#78350f', 'brown': '#78350f', 'nâu bò': '#8b4513', 'nâu tây': '#a0522d',
+    'be': '#f5f5dc', 'beige': '#f5f5dc', 'kem': '#fffdd0'
   };
 
   if (colorMap[n]) return colorMap[n];
-
-  // Nếu tên màu dài (VD: "Đen nhạt", "Tím than"), dùng fallback:
-  if (n.includes('đen')) return '#000000';
-  if (n.includes('trắng')) return '#ffffff';
-  if (n.includes('đỏ')) return '#dc2626';
-  if (n.includes('tím')) return '#9333ea';
-  if (n.includes('vàng')) return '#eab308';
-  if (n.includes('hồng')) return '#db2777';
-  if (n.includes('cam')) return '#f97316';
-  if (n.includes('nâu')) return '#78350f';
-  if (n.includes('rêu')) return '#4B5320';
-  if (n.includes('xanh navy') || n.includes('xanh sẫm')) return '#1E3A8A';
-  if (n.includes('xanh')) return '#2563EB';
-  if (n.includes('xám') || n.includes('ghi')) return '#9CA3AF';
-
-  return '#E5E7EB'; // Màu mặc định nếu không khớp
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (n.includes(key)) return value;
+  }
+  return '#cccccc'; // Nếu vẫn không tìm được mới ra màu xám
 };
 
 const fetchDynamicFilters = async () => {
@@ -201,17 +185,18 @@ const fetchDynamicFilters = async () => {
       const materialName = item.tenChatLieu || item.chatLieu?.tenChatLieu;
       if (materialName) uniqueMaterials.add(materialName);
 
-      // 3. Kích cỡ (Bao phủ cấu trúc mảng và object)
+      // 3. Kích cỡ
       const sizeName = item.tenKichCo || item.kichCo?.tenKichCo || item.kichCoList?.[0] || item.kichCo;
       if (sizeName) uniqueSizes.add(sizeName);
 
-      // 4. Màu sắc (Bao phủ cấu trúc mảng và object)
+      // 4. Màu sắc
       const colorName = item.tenMauSac || item.mauSac?.tenMau || item.mauSac?.tenMauSac || item.mauSacList?.[0]?.tenMauSac;
-      const rgb = item.rgb || item.mauSac?.rgb || item.mauSacList?.[0]?.rgb;
+      
+      // 👉 ĐÃ SỬA: Lấy RGB từ DB. NẾU RỖNG THÌ DÙNG HÀM BACKUP ĐỂ DỊCH CHỮ THÀNH MÀU
+      const rgbCode = item.rgb || item.mauSac?.rgb || item.mauSacList?.[0]?.rgb || getBackupColorCode(colorName);
 
       if (colorName && !uniqueColorsMap.has(colorName)) {
-        // Nếu backend trả về mã màu rgb thì lấy, không thì dùng hàm getColorCode
-        uniqueColorsMap.set(colorName, rgb || getColorCode(colorName));
+        uniqueColorsMap.set(colorName, rgbCode);
       }
     });
 
@@ -228,11 +213,11 @@ const fetchDynamicFilters = async () => {
       return indexA === indexB ? String(a).localeCompare(String(b)) : indexA - indexB;
     });
 
-    // Sắp xếp Màu sắc
+    // Đẩy dữ liệu Màu sắc ra View
     colors.value = Array.from(uniqueColorsMap, ([name, hex]) => ({
       label: name,
       value: name,
-      hex: hex
+      hex: hex // hex này lúc này chắc chắn đã có màu xịn (từ DB hoặc từ Backup)
     }));
 
   } catch (error) {
@@ -424,22 +409,23 @@ const resetFilter = () => {
 }
 .filter-content {
   padding-bottom: 20px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 /* =========================================================
-   KHU VỰC NHẬP GIÁ - ĐÃ ĐƯỢC CHỈNH SỬA ĐỂ KHÔNG BỊ ÉP CHỮ
+   KHU VỰC NHẬP GIÁ 
    ========================================================= */
 .price-inputs {
   display: flex;
   align-items: center;
-  gap: 8px; /* Giảm khoảng cách giữa 2 ô để input có thêm diện tích */
+  gap: 8px; 
 }
 .input-wrapper {
   position: relative;
   flex: 1;
 }
 
-/* Ẩn mũi tên lên xuống của thẻ input number trên các trình duyệt */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none; 
@@ -451,12 +437,11 @@ input[type=number] {
 
 .input-wrapper input {
   width: 75px;
-  /* Giảm padding trái/phải để chữ có không gian rộng hơn */
   padding: 10px 24px 10px 8px; 
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-family: 'Nunito', sans-serif;
-  font-size: 14px; /* Chữ to lên xíu dễ nhìn */
+  font-size: 14px;
   font-weight: 600;
   outline: none;
   background: #f8fafc;
@@ -469,7 +454,7 @@ input[type=number] {
 }
 .currency {
   position: absolute;
-  right: 8px; /* Đẩy sát chữ 'đ' ra lề phải để nhường chỗ cho số */
+  right: 8px; 
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -477,7 +462,7 @@ input[type=number] {
   font-weight: 700;
 }
 .price-separator svg {
-  width: 12px; /* Thu nhỏ gạch ngang ở giữa */
+  width: 12px; 
   color: #cbd5e1;
 }
 
@@ -513,7 +498,17 @@ input[type=number] {
 .hidden-checkbox:checked ~ .checkbox-text { color: #1a1a1a; font-weight: 700; }
 
 /* --- KHU VỰC KÍCH CỠ --- */
-.size-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.size-grid { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  padding: 4px;
+}
+
+.size-item {
+  cursor: pointer;
+}
+
 .size-box {
   display: flex;
   align-items: center;
@@ -522,47 +517,90 @@ input[type=number] {
   padding: 0 10px;
   height: 38px;
   background-color: #fff;
-  border: 2px solid #e2e8f0;
+  border: 1.5px solid #d1d5db;
   border-radius: 8px;
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
-.size-item:hover .size-box { border-color: #6b3f1e; color: #6b3f1e; }
-.size-box.active { background-color: #6b3f1e; color: #FFF; border-color: #6b3f1e; box-shadow: 0 4px 12px rgba(107, 63, 30, 0.25); transform: translateY(-2px); }
 
-/* --- KHU VỰC MÀU SẮC --- */
-.color-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.size-item:hover .hidden-checkbox:not(:checked) + .size-box { 
+  border-color: #6b3f1e; 
+  color: #6b3f1e; 
+  background-color: #fcf9f7; 
+}
+
+.hidden-checkbox:checked + .size-box { 
+  background-color: #6b3f1e !important; 
+  color: #FFFFFF !important; 
+  border-color: #6b3f1e !important; 
+  box-shadow: 0 4px 10px rgba(107, 63, 30, 0.25);
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   KHU VỰC MÀU SẮC
+   ========================================================= */
+.color-grid { 
+  display: flex; 
+  flex-wrap: wrap; 
+  justify-content: center; 
+  gap: 18px; 
+  padding: 6px 4px; 
+}
+
+.color-item {
+  cursor: pointer;
+  display: block;
+}
+
 .color-circle {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative; 
 }
-.color-circle[style*="background-color: #FFFFFF"],
-.color-circle[style*="background-color: rgb(255, 255, 255)"] { 
-  border: 1px solid #cbd5e1; 
+
+.color-item:hover .hidden-checkbox:not(:checked) + .color-circle {
+  border: 2px solid #6b3f1e;
+  padding: 2px;
 }
-.color-circle[style*="background-color: #FFFFFF"] svg,
-.color-circle[style*="background-color: rgb(255, 255, 255)"] svg { 
-  stroke: #333 !important; 
-}
-.color-circle:hover {
-  transform: scale(1.1);
-}
-.color-circle.active { 
+
+.hidden-checkbox:checked + .color-circle { 
+  border: 2px solid #fff; 
+  box-shadow: 0 0 0 2px #6b3f1e; 
   transform: scale(1.15); 
-  box-shadow: 0 0 0 2px #FFF, 0 0 0 4px #6b3f1e; 
 }
-.color-circle svg { width: 16px; height: 16px; stroke: #fff; opacity: 0; transform: scale(0.5); transition: 0.2s; }
-.hidden-checkbox:checked + .color-circle svg { opacity: 1; transform: scale(1); }
+
+.color-circle svg { 
+  width: 16px; 
+  height: 16px; 
+  stroke: #fff; 
+  opacity: 0; 
+  transform: scale(0.5); 
+  transition: 0.2s;
+  filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.5)); 
+}
+
+/* Cân nhắc màu nền quá sáng -> dấu tick thành màu đen/sẫm để hiển thị rõ */
+.color-circle[style*="background-color: #ffffff"] svg,
+.color-circle[style*="background-color: rgb(255, 255, 255)"] svg,
+.color-circle[style*="background-color: #f5f5dc"] svg { 
+  stroke: #334155 !important;
+  filter: none;
+}
+
+.hidden-checkbox:checked + .color-circle svg { 
+  opacity: 1; 
+  transform: scale(1); 
+}
 </style>

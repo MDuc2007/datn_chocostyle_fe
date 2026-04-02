@@ -15,13 +15,15 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm loại áo theo tên"
+              placeholder="Tìm kiếm..."
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -120,17 +122,7 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
-
 
         <button
           class="nav-btn"
@@ -218,9 +210,10 @@ const selectedStatus = ref("");
 
 const currentPage = ref(0);
 const pageSize = ref(8);
+const searchQuery = ref(""); // <--- THÊM DÒNG NÀY
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -307,14 +300,14 @@ async function handleModalConfirm() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-  currentPage.value = 0;
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
 
 const fetchColors = async () => {
@@ -331,12 +324,30 @@ const fetchColors = async () => {
       trangThai: item.trangThai,
     }));
 
-    colors.value = [...allColors.value];
-    currentPage.value = 0;
-    currentPage.value = 0;
+    applyFilters();
   } catch {
     showNotification("Không thể tải danh sách phong cách mặc", "error");
   }
+};
+
+const applyFilters = () => {
+  let temp = allColors.value;
+
+  // 1. Lọc theo chữ tìm kiếm (Không phân biệt hoa/thường)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  // 2. Lọc theo trạng thái
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+
+  // Cập nhật lại list hiển thị và reset về trang 1
+  colors.value = temp;
+  currentPage.value = 0;
 };
 
 const formatDate = (date) => {
@@ -365,9 +376,43 @@ const closeModal = () => {
   editingId.value = null;
 };
 
+const validatePhongCach = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên phong cách mặc không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên phong cách mặc phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên phong cách mặc không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên phong cách mặc không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id,
+  );
+
+  if (isDuplicate) {
+    return "Tên phong cách mặc đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenPhongCach.trim()) {
-    showNotification("Tên phong cách mặc không được để trống", "warning");
+  const error = validatePhongCach(newColor.value.tenPhongCach);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -402,8 +447,10 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenPhongCach.trim()) {
-    showNotification("Tên phong cách mặc không được để trống", "warning");
+  const error = validatePhongCach(newColor.value.tenPhongCach, editingId.value);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 

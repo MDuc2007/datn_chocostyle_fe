@@ -76,6 +76,14 @@
                   >
                     Thiết lập mặc định
                   </button>
+                  
+                  <button class="btn-text-edit" @click="openEditModal(addr)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Sửa
+                  </button>
                 </div>
               </div>
             </div>
@@ -88,7 +96,7 @@
       <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
         <div class="modal-card">
           <div class="modal-header">
-            <h3 class="modal-title">Thêm địa chỉ mới</h3>
+            <h3 class="modal-title">{{ isEditingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới' }}</h3>
             <button class="btn-close" @click="closeModal">×</button>
           </div>
 
@@ -167,8 +175,8 @@
             <div class="modal-actions">
               <button type="button" class="btn-cancel-clean" @click="closeModal">Hủy bỏ</button>
               <button type="submit" class="btn-orange" :disabled="isSubmitting">
-                <span v-if="isSubmitting"><i class="fa fa-spinner fa-spin"></i> Đang lưu...</span>
-                <span v-else>Lưu địa chỉ</span>
+                <span v-if="isSubmitting"><i class="fa fa-spinner fa-spin"></i> Đang tải...</span>
+                <span v-else>{{ isEditingAddress ? 'Cập nhật' : 'Lưu địa chỉ' }}</span>
               </button>
             </div>
           </form>
@@ -202,6 +210,10 @@ const loading = ref(false);
 const showModal = ref(false);
 const isSubmitting = ref(false);
 
+const isEditingAddress = ref(false);
+const editingAddressId = ref(null);
+const currentEditingMacDinh = ref(false);
+
 const listProvinces = ref([]);
 const districtOptions = ref([]);
 const wardOptions = ref([]);
@@ -218,6 +230,22 @@ const form = reactive({
   wardName: "",
   diaChiCuThe: "",
 });
+
+// 👉 HÀM LẤY TOKEN ĐỂ GẮN VÀO API
+const getToken = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return (
+      user?.accessToken ||
+      user?.access_token ||
+      user?.token ||
+      user?.jwt ||
+      localStorage.getItem("token")
+    );
+  } catch {
+    return null;
+  }
+};
 
 const loadUser = () => {
   const userStr = localStorage.getItem("user");
@@ -239,7 +267,6 @@ const fetchProvinces = async () => {
   }
 };
 
-// Xử lý khi đổi Tỉnh/TP
 const onProvinceChange = async () => {
   clearError('provinceId');
   form.districtId = "";
@@ -259,7 +286,6 @@ const onProvinceChange = async () => {
   }
 };
 
-// Xử lý khi đổi Quận/Huyện
 const onDistrictChange = async () => {
   clearError('districtId');
   form.wardCode = "";
@@ -277,39 +303,71 @@ const onDistrictChange = async () => {
   }
 };
 
-// Xử lý khi đổi Phường/Xã
 const onWardChange = () => {
   clearError('wardCode');
   form.wardName = wardOptions.value.find((w) => String(w.code) === String(form.wardCode))?.name || "";
 };
 
-// 2. Lấy danh sách địa chỉ của User
+// 2. Lấy danh sách địa chỉ của User (Đã gài Token)
 const fetchAddresses = async () => {
   if (!currentUser.value) return;
+  const token = getToken();
+  
   loading.value = true;
   try {
     const res = await axios.get(
       `http://localhost:8080/api/dia-chi/khach-hang/${currentUser.value.id}`,
+      { headers: { Authorization: `Bearer ${token}` } } // Gài token vào đây
     );
-    // Sắp xếp mặc định lên đầu
     addresses.value = res.data.sort((a, b) => b.macDinh - a.macDinh);
   } catch (e) {
     console.error(e);
-    showToast("Lỗi tải danh sách địa chỉ", "error");
+    if (e.response?.status === 401) {
+      showToast("Phiên đăng nhập hết hạn!", "error");
+    } else {
+      showToast("Lỗi tải danh sách địa chỉ", "error");
+    }
   } finally {
     loading.value = false;
   }
 };
 
-// Validate form
 const validateAddress = () => {
   errors.value = {};
   let isValid = true;
   
-  if (!form.provinceId) { errors.value.provinceId = "Vui lòng chọn Tỉnh/Thành phố"; isValid = false; }
-  if (!form.districtId) { errors.value.districtId = "Vui lòng chọn Quận/Huyện"; isValid = false; }
-  if (!form.wardCode) { errors.value.wardCode = "Vui lòng chọn Phường/Xã"; isValid = false; }
-  if (!form.diaChiCuThe?.trim()) { errors.value.diaChiCuThe = "Vui lòng nhập địa chỉ cụ thể"; isValid = false; }
+  if (!form.provinceId) { 
+    errors.value.provinceId = "Vui lòng chọn Tỉnh/Thành phố"; 
+    isValid = false; 
+  }
+  
+  if (!form.districtId) { 
+    errors.value.districtId = "Vui lòng chọn Quận/Huyện"; 
+    isValid = false; 
+  }
+  
+  if (!form.wardCode) { 
+    errors.value.wardCode = "Vui lòng chọn Phường/Xã"; 
+    isValid = false; 
+  }
+  
+  if (!form.diaChiCuThe?.trim()) { 
+    errors.value.diaChiCuThe = "Vui lòng nhập địa chỉ cụ thể"; 
+    isValid = false; 
+  } else {
+    // Biểu thức Regex kiểm tra địa chỉ:
+    // Cho phép: Chữ cái Tiếng Việt, số, khoảng trắng, dấu phẩy, dấu chấm, gạch ngang, gạch chéo
+    // Chặn: Các ký tự đặc biệt như @, #, $, %, ^, &, *, !, ?, <, >, {, }, [, ]...
+    const addressRegex = /^[a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s,.\-\/]+$/;
+    
+    if (!addressRegex.test(form.diaChiCuThe.trim())) {
+      errors.value.diaChiCuThe = "Địa chỉ không được chứa ký tự đặc biệt (chỉ cho phép dấu phẩy, chấm, gạch ngang, gạch chéo)";
+      isValid = false;
+    } else if (form.diaChiCuThe.trim().length < 5) {
+      errors.value.diaChiCuThe = "Địa chỉ cụ thể quá ngắn (phải có ít nhất 5 ký tự)";
+      isValid = false;
+    }
+  }
 
   return isValid;
 };
@@ -318,9 +376,15 @@ const clearError = (field) => {
   if (errors.value[field]) delete errors.value[field];
 };
 
-// 3. Thêm địa chỉ mới
+// 3. Thêm hoặc Cập nhật địa chỉ (Đã vá lỗi bảo mật 401)
 const saveAddress = async () => {
   if (!validateAddress()) return;
+
+  const token = getToken();
+  if (!token) {
+    showToast("Phiên đăng nhập hết hạn, vui lòng tải lại trang!", "error");
+    return;
+  }
 
   isSubmitting.value = true;
   try {
@@ -332,40 +396,111 @@ const saveAddress = async () => {
       khachHangId: currentUser.value.id, 
       tenDiaChi: currentUser.value.tenKhachHang || "Khách hàng",
       sdt: currentUser.value.soDienThoai || "",
-      macDinh: addresses.value.length === 0, // Nếu chưa có địa chỉ nào thì cái đầu tiên là mặc định
+      macDinh: isEditingAddress.value ? currentEditingMacDinh.value : addresses.value.length === 0, 
     };
 
-    await axios.post("http://localhost:8080/api/dia-chi", payload);
+    // Đính kèm token vào Header
+    const config = {
+      headers: { Authorization: `Bearer ${token}` }
+    };
+
+    if (isEditingAddress.value) {
+      await axios.put(`http://localhost:8080/api/dia-chi/${editingAddressId.value}`, payload, config);
+      showToast("Cập nhật địa chỉ thành công!", "success");
+    } else {
+      await axios.post("http://localhost:8080/api/dia-chi", payload, config);
+      showToast("Thêm địa chỉ thành công!", "success");
+    }
+
     closeModal();
     await fetchAddresses();
-    showToast("Thêm địa chỉ thành công!", "success");
   } catch (e) {
     console.error(e);
-    showToast("Lỗi khi thêm địa chỉ", "error");
+    if (e.response?.status === 401) {
+      showToast("Tài khoản của bạn đã bị đăng xuất!", "error");
+    } else {
+      showToast("Lỗi khi lưu địa chỉ", "error");
+    }
   } finally {
     isSubmitting.value = false;
   }
 };
 
-// 4. Đặt mặc định
+// 4. Đặt mặc định (Đã gài Token)
 const setDefault = async (idDiaChi) => {
+  const token = getToken();
+  if (!token) {
+    showToast("Vui lòng đăng nhập lại!", "error");
+    return;
+  }
+
   try {
     await axios.put(
       `http://localhost:8080/api/dia-chi/${idDiaChi}/mac-dinh?khachHangId=${currentUser.value.id}`,
+      {}, // Body trống
+      { headers: { Authorization: `Bearer ${token}` } } // Gài token vào
     );
     await fetchAddresses();
     showToast("Đã thay đổi địa chỉ mặc định!", "success");
   } catch (e) {
     console.error(e);
-    showToast("Lỗi thiết lập mặc định", "error");
+    if (e.response?.status === 401) {
+      showToast("Tài khoản đã bị đăng xuất!", "error");
+    } else {
+      showToast("Lỗi thiết lập mặc định", "error");
+    }
   }
 };
 
-// ĐÃ BỎ HÀM DELETE THEO YÊU CẦU
-
 const openModal = () => {
   resetForm();
+  isEditingAddress.value = false;
   showModal.value = true;
+};
+
+const openEditModal = async (addr) => {
+  resetForm();
+  isEditingAddress.value = true;
+  editingAddressId.value = addr.id;
+  currentEditingMacDinh.value = addr.macDinh;
+  form.diaChiCuThe = addr.diaChiCuThe;
+  
+  showModal.value = true;
+  isSubmitting.value = true; 
+
+  try {
+    if (listProvinces.value.length === 0) {
+      await fetchProvinces();
+    }
+
+    const matchedProvince = listProvinces.value.find(p => p.name.includes(addr.thanhPho) || addr.thanhPho.includes(p.name));
+    if (matchedProvince) {
+      form.provinceId = matchedProvince.code;
+      form.provinceName = matchedProvince.name;
+      
+      const resD = await axios.get(`${PROVINCE_API_URL}/p/${form.provinceId}?depth=2`);
+      districtOptions.value = resD.data.districts;
+
+      const matchedDistrict = districtOptions.value.find(d => d.name.includes(addr.quan) || addr.quan.includes(d.name));
+      if (matchedDistrict) {
+        form.districtId = matchedDistrict.code;
+        form.districtName = matchedDistrict.name;
+
+        const resW = await axios.get(`${PROVINCE_API_URL}/d/${form.districtId}?depth=2`);
+        wardOptions.value = resW.data.wards;
+
+        const matchedWard = wardOptions.value.find(w => w.name.includes(addr.phuong) || addr.phuong.includes(w.name));
+        if (matchedWard) {
+          form.wardCode = matchedWard.code;
+          form.wardName = matchedWard.name;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi khi khớp địa chỉ cũ:", error);
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 const closeModal = () => {
@@ -384,6 +519,9 @@ const resetForm = () => {
   districtOptions.value = [];
   wardOptions.value = [];
   errors.value = {};
+  isEditingAddress.value = false;
+  editingAddressId.value = null;
+  currentEditingMacDinh.value = false;
 };
 
 onMounted(() => {
@@ -413,7 +551,7 @@ onMounted(() => {
   gap: 8px;
 }
 .breadcrumb span { cursor: pointer; transition: color 0.2s; }
-.breadcrumb span:hover { color: #6b3f1e; }
+.breadcrumb span:hover { color: #63391F; } 
 .breadcrumb .separator svg { width: 14px; height: 14px; margin-top: 3px; }
 .breadcrumb .current { font-weight: 500; color: #111827; cursor: default; }
 
@@ -449,7 +587,7 @@ onMounted(() => {
 .page-subtitle { margin: 0; font-size: 14px; color: #6b7280; }
 
 .btn-orange { 
-  background: linear-gradient(135deg, #6b3f1e, #b8895d); 
+  background: linear-gradient(135deg, #63391F, #8b5328); 
   color: #fff; 
   border: none; 
   padding: 10px 20px; 
@@ -459,7 +597,7 @@ onMounted(() => {
   transition: all 0.3s ease; 
 }
 .btn-orange:hover:not(:disabled) { 
-  box-shadow: 0 6px 12px rgba(107, 63, 30, 0.25); 
+  box-shadow: 0 6px 12px rgba(99, 57, 31, 0.25); 
   transform: translateY(-2px);
 }
 .btn-orange:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -482,15 +620,19 @@ onMounted(() => {
   padding: 20px;
   transition: all 0.3s;
 }
-.address-card:hover { border-color: #d6bda9; box-shadow: 0 4px 12px rgba(107, 63, 30, 0.05); }
-.address-card.is-default { border: 1px solid #6b3f1e; background: #fdf8f6; }
+.address-card:hover { border-color: #d6bda9; box-shadow: 0 4px 12px rgba(99, 57, 31, 0.05); }
+
+.address-card.is-default { 
+  border: 1.5px solid #63391F; 
+  background: #fdfaf8; 
+}
 
 .address-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  border-bottom: 1px dashed #f3f4f6;
+  border-bottom: 1px dashed #e5e7eb;
   padding-bottom: 12px;
 }
 
@@ -500,35 +642,37 @@ onMounted(() => {
 .addr-phone { color: #6b7280; font-size: 15px; }
 
 .default-badge {
-  background: #fdf3ea;
-  color: #b45309;
+  background: #FDF8F5;
+  color: #63391F;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px 12px;
   border-radius: 20px;
-  border: 1px solid #fed7aa;
+  border: 1px solid #E8D3C3;
 }
 
 .address-card-body {
   margin-bottom: 15px;
 }
 .addr-row { display: flex; gap: 12px; align-items: flex-start; }
-.icon-location { width: 20px; height: 20px; color: #9ca3af; margin-top: 2px; flex-shrink: 0;}
+
+.icon-location { 
+  width: 18px; 
+  height: 18px; 
+  color: #6b7280; 
+  margin-top: 2px; 
+  flex-shrink: 0;
+}
 
 .addr-text p { margin: 0; line-height: 1.5; color: #4b5563; }
 .addr-detail { font-size: 15px; font-weight: 500; color: #111827 !important; margin-bottom: 4px !important; }
-.addr-sub { font-size: 14px; }
+.addr-sub { font-size: 14px; color: #6b7280;}
 
 .address-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
-.action-links { display: flex; gap: 16px; }
-.btn-text { background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 600; padding: 0; transition: opacity 0.2s; }
-.btn-text:hover { opacity: 0.7; }
-.text-primary { color: #0284c7; }
 
 .btn-outline {
   background: #fff;
@@ -541,18 +685,41 @@ onMounted(() => {
   border-radius: 6px;
   transition: all 0.2s;
 }
-.btn-outline:hover:not(.btn-disabled) { border-color: #6b3f1e; color: #6b3f1e; }
-.btn-disabled { opacity: 0.5; cursor: not-allowed; border-color: #e5e7eb; background: #f9fafb;}
+.btn-outline:hover:not(.btn-disabled) { 
+  border-color: #63391F; 
+  color: #63391F; 
+}
+.btn-disabled { 
+  opacity: 0.4; 
+  cursor: not-allowed; 
+  border-color: #e5e7eb; 
+  background: #f9fafb;
+}
+
+.btn-text-edit {
+  background: none;
+  border: none;
+  color: #63391F;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s;
+}
+.btn-text-edit svg { width: 16px; height: 16px; }
+.btn-text-edit:hover { opacity: 0.7; }
 
 /* ================== TRẠNG THÁI EMPTY & LOADING ================== */
 .loading-state, .empty-state { text-align: center; padding: 60px 0; color: #6b7280; }
-.spinner { border: 3px solid #f3f3f3; border-top: 3px solid #6b3f1e; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+.spinner { border: 3px solid #f3f3f3; border-top: 3px solid #63391F; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 16px; } 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .empty-state { background: #fafafa; border-radius: 8px; border: 1px dashed #e5e7eb; }
 .empty-icon { width: 48px; height: 48px; color: #d1d5db; margin-bottom: 15px; }
 
-/* ================== MODAL THÊM ĐỊA CHỈ (NÂNG CẤP GIAO DIỆN) ================== */
+/* ================== MODAL THÊM/SỬA ĐỊA CHỈ ================== */
 .modal-overlay { 
   position: fixed; 
   top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -571,11 +738,11 @@ onMounted(() => {
 .modal-header { 
   display: flex; justify-content: space-between; align-items: center; 
   padding: 20px 24px; border-bottom: 1px solid #f3f4f6; 
-  background: #fafafa;
+  background: #ffffff; 
 }
 .modal-title { margin: 0; font-size: 18px; font-weight: 700; color: #111827; }
 .btn-close { 
-  background: #e2e8f0; border: none; 
+  background: #f1f5f9; border: none; 
   font-size: 20px; color: #64748b; cursor: pointer; 
   width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -597,7 +764,7 @@ onMounted(() => {
   transition: all 0.2s; box-sizing: border-box; 
 }
 .form-input::placeholder { color: #9ca3af; }
-.form-input:focus { outline: none; border-color: #6b3f1e; box-shadow: 0 0 0 3px rgba(107, 63, 30, 0.1); }
+.form-input:focus { outline: none; border-color: #63391F; box-shadow: 0 0 0 3px rgba(99, 57, 31, 0.1); } 
 .form-textarea { resize: vertical; min-height: 90px; }
 
 select.custom-select {

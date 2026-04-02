@@ -15,13 +15,15 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Tìm kiếm loại áo theo tên"
+              placeholder="Tìm kiếm..."
+              v-model="searchQuery"
+              @input="applyFilters"
             />
           </div>
         </div>
         <div class="filter-item">
           <label for="">Trạng thái:</label>
-          <select v-model="selectedStatus" @change="handleFilterChange">
+          <select v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả</option>
             <option value="1">Đang hoạt động</option>
             <option value="0">Ngừng hoạt động</option>
@@ -120,15 +122,6 @@
           >
             {{ page }}
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            class="page-btn"
-            :class="{ active: page - 1 === currentPage }"
-            @click="currentPage = page - 1"
-          >
-            {{ page }}
-          </button>
         </div>
         <button
           class="nav-btn"
@@ -210,6 +203,7 @@ const user = JSON.parse(localStorage.getItem("user") || "{}");
 const token = user?.accessToken;
 const username = user?.username;
 const notifications = ref([]);
+const searchQuery = ref(""); // <--- THÊM DÒNG NÀY
 
 const showNotification = (message, type = "success") => {
   const id = Date.now();
@@ -228,7 +222,7 @@ const currentPage = ref(0);
 const pageSize = ref(8);
 
 const totalPages = computed(() => {
-  return Math.ceil(colors.value.length / pageSize.value);
+  return Math.max(1, Math.ceil(colors.value.length / pageSize.value));
 });
 
 const paginatedColors = computed(() => {
@@ -305,16 +299,14 @@ async function handleModalConfirm() {
 }
 
 const handleFilterChange = () => {
-  currentPage.value = 0;
-
-  currentPage.value = 0;
-
   if (selectedStatus.value === "") {
     colors.value = [...allColors.value];
   } else {
     const status = Number(selectedStatus.value);
     colors.value = allColors.value.filter((item) => item.trangThai === status);
   }
+
+  currentPage.value = 0;
 };
 
 const fetchColors = async () => {
@@ -332,14 +324,32 @@ const fetchColors = async () => {
     trangThai: item.trangThai,
   }));
 
-  colors.value = [...allColors.value];
-  currentPage.value = 0;
-  currentPage.value = 0;
+  applyFilters();
 };
 
 const formatDate = (date) => {
   if (!date) return "";
   return new Date(date).toLocaleDateString("vi-VN");
+};
+
+const applyFilters = () => {
+  let temp = allColors.value;
+
+  // 1. Lọc theo chữ tìm kiếm (Không phân biệt hoa/thường)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    temp = temp.filter((item) => item.name.toLowerCase().includes(q));
+  }
+
+  // 2. Lọc theo trạng thái
+  if (selectedStatus.value !== "") {
+    const status = Number(selectedStatus.value);
+    temp = temp.filter((item) => item.trangThai === status);
+  }
+
+  // Cập nhật lại list hiển thị và reset về trang 1
+  colors.value = temp;
+  currentPage.value = 0;
 };
 
 onMounted(fetchColors);
@@ -363,9 +373,43 @@ const closeModal = () => {
   editingId.value = null;
 };
 
+const validateXuatXu = (name, id = null) => {
+  if (!name || !name.trim()) {
+    return "Tên xuất xứ không được để trống";
+  }
+
+  const length = name.trim().length;
+
+  if (length < 2) {
+    return "Tên xuất xứ phải từ 2 ký tự trở lên";
+  }
+
+  if (length > 50) {
+    return "Tên xuất xứ không được quá 50 ký tự";
+  }
+
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên xuất xứ không được chứa số hoặc ký tự đặc biệt";
+  }
+
+  const isDuplicate = allColors.value.some(
+    (item) =>
+      item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      item.id !== id,
+  );
+
+  if (isDuplicate) {
+    return "Tên xuất xứ đã tồn tại";
+  }
+
+  return null;
+};
+
 const addColor = async () => {
-  if (!newColor.value.tenXuatXu.trim()) {
-    showNotification("Tên xuất xứ không được để trống", "warning");
+  const error = validateXuatXu(newColor.value.tenXuatXu);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -373,7 +417,7 @@ const addColor = async () => {
     await axios.post(
       "http://localhost:8080/api/xuat-xu",
       {
-        tenXuatXu: newColor.value.tenXuatXu,
+        tenXuatXu: newColor.value.tenXuatXu.trim(),
         nguoiTao: username,
       },
       {
@@ -402,8 +446,10 @@ const editColor = (item) => {
 };
 
 const updateColor = async () => {
-  if (!newColor.value.tenXuatXu.trim()) {
-    showNotification("Tên xuất xứ không được để trống", "warning");
+  const error = validateXuatXu(newColor.value.tenXuatXu, editingId.value);
+
+  if (error) {
+    showNotification(error, "warning");
     return;
   }
 
@@ -411,7 +457,7 @@ const updateColor = async () => {
     await axios.put(
       `http://localhost:8080/api/xuat-xu/${editingId.value}`,
       {
-        tenXuatXu: newColor.value.tenXuatXu,
+        tenXuatXu: newColor.value.tenXuatXu.trim(),
         nguoiCapNhat: username,
       },
       {
@@ -421,7 +467,7 @@ const updateColor = async () => {
       },
     );
 
-    showNotification("Cập nhật xuất xứ thành công ", "success");
+    showNotification("Cập nhật xuất xứ thành công", "success");
     closeModal();
     fetchColors();
   } catch (error) {
