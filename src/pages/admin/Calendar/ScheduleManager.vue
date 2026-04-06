@@ -3,7 +3,6 @@ import { ref, computed, onMounted, reactive, watch } from 'vue';
 import axios from 'axios';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-
 // --- IMPORT EXCEL LOGIC ---
 const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -658,10 +657,14 @@ const generateDates = () => {
 
 const handleSave = async () => {
   if (!validateForm()) return;
+
+  // --- 1. XỬ LÝ CẬP NHẬT LỊCH (SỬA) ---
   if (isEditing.value && form.id) {
       const originalItem = schedules.value.find(s => s.id === form.id);
       if (originalItem && originalItem.maLapLai) {
-          updateOption.value = 'one'; showUpdateOptionModal.value = true; return; 
+          updateOption.value = 'one'; 
+          showUpdateOptionModal.value = true; 
+          return; 
       }
       const confirmMsg = `Bạn có chắc chắn muốn cập nhật lịch làm việc?`;
       if(!await showConfirmDialog(confirmMsg)) return;
@@ -677,41 +680,81 @@ const handleSave = async () => {
       closeModal();
       refreshData();
     } catch (e: any) {
-      showToast(e.response?.data?.message || "Lỗi", "error");
+      const msg = e.response?.data?.message || "Lỗi cập nhật lịch";
+      showToast(msg, "error");
+      refreshData(); // Xóa nháp trên UI nếu lỗi
     }
     return;
   }
 
+  // --- 2. XỬ LÝ THÊM MỚI LỊCH ---
   try {
     if (isRepeatEnabled.value) {
+        // TẠO HÀNG LOẠT (CÓ LẶP)
         const dates = generateDates();
-        if (dates.length === 0) { showToast('Không có ngày nào được chọn', 'warning'); return; }
+        if (dates.length === 0) { 
+            showToast('Không có ngày nào được chọn', 'warning'); 
+            return; 
+        }
+
+        // 👉 ĐOẠN THÊM MỚI: KIỂM TRA GIỚI HẠN LẶP TỐI ĐA 365 NGÀY
+        const firstDate = new Date(dates[0]);
+        const lastDate = new Date(dates[dates.length - 1]);
+        const diffTime = lastDate.getTime() - firstDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 365) {
+            showToast("Vượt quá giới hạn! Hệ thống chỉ cho phép lặp lịch tối đa 1 năm (365 ngày).", "warning");
+            return; // Dừng lại, không cho gọi API
+        }
+        // ==========================================================
+
         const confirmMsg = `Bạn có chắc chắn muốn tạo ${dates.length} lịch làm việc?`;
         if (!await showConfirmDialog(confirmMsg)) return;
-        const payloads = dates.map(date => ({ ngayLamViec: date, idNhanVien: Number(form.idNhanVien), idCa: Number(form.idCa), ghiChu: form.ghiChu, trangThai: form.trangThai }));
+
+        const payloads = dates.map(date => ({ 
+            ngayLamViec: date, 
+            idNhanVien: Number(form.idNhanVien), 
+            idCa: Number(form.idCa), 
+            ghiChu: form.ghiChu, 
+            trangThai: form.trangThai 
+        }));
         await axios.post(`${API_URL}/batch`, payloads);
         showToast(`Đã tạo thành công ${dates.length} lịch`, 'success');
+
     } else {
-        // Thêm xác nhận trước khi lưu lịch mới
+        // TẠO 1 LỊCH DUY NHẤT
         const confirmMsg = `Bạn có chắc chắn muốn phân lịch cho nhân viên này?`;
         if (!await showConfirmDialog(confirmMsg)) return;
         
-        await axios.post(API_URL, { ngayLamViec: form.ngayLamViec, idNhanVien: Number(form.idNhanVien), idCa: Number(form.idCa), ghiChu: form.ghiChu, trangThai: form.trangThai });
+        await axios.post(API_URL, { 
+            ngayLamViec: form.ngayLamViec, 
+            idNhanVien: Number(form.idNhanVien), 
+            idCa: Number(form.idCa), 
+            ghiChu: form.ghiChu, 
+            trangThai: form.trangThai 
+        });
         showToast('Phân lịch thành công', 'success');
     }
+
     originalForm.value = null;
     closeModal();
     refreshData();
-} catch (error: any) {
+
+  } catch (error: any) {
     // Ưu tiên lấy câu thông báo lỗi chính xác từ Backend trả về
-    const msg = error.response?.data || error.response?.data?.message || "Có lỗi xảy ra khi phân lịch!";
+    const msg = error.response?.data?.message 
+             || (typeof error.response?.data === 'string' ? error.response.data : null)
+             || "Có lỗi xảy ra khi lưu lịch!";
     
-    // Gộp chung cách xử lý: BẤT KỲ LỖI NÀO (Kể cả trùng ca) cũng show Toast Error đỏ lên góc phải màn hình
-    // Không nhét chữ vào dưới ô Select nữa để giao diện Modal luôn sạch sẽ
+    // Gộp chung cách xử lý: BẤT KỲ LỖI NÀO (Kể cả trùng ca) cũng show Toast Error đỏ
     showToast(msg, "error");
     
     // Xóa dòng lỗi cũ ở dưới ô Select nếu có
     errors.idCa = ""; 
+
+    // 👉 QUAN TRỌNG: Phải gọi lại hàm load dữ liệu để dọn dẹp các ô "Lịch Nháp" vẽ sai trên giao diện
+    refreshData(); 
   }
 };
 
@@ -744,9 +787,23 @@ const confirmUpdateSeries = async () => {
 
 const handleDelete = async (item: Schedule) => {
   const today = getTodayStr();
-  if (item.ngayLamViec < today) { showToast('Không thể xóa lịch đã qua!', 'error'); return; }
-        const confirmMsg = `Bạn có chắc chắn muốn xóa lịch làm việc?`;
+  if (item.ngayLamViec < today) { 
+    showToast('Không thể xóa lịch đã qua!', 'error'); 
+    return; 
+  }
+
+  // 👉 THÊM VÀO ĐÂY: Nếu có mã lặp lại, mở Modal hỏi xóa 1 hay xóa chuỗi
+  if (item.maLapLai) {
+    contextMenu.item = item; // Lưu lại item để Modal sử dụng
+    deleteOption.value = "one"; // Mặc định tick vào "Chỉ ca này"
+    showDeleteOptionModal.value = true;
+    return; // Dừng tại đây, chờ người dùng chọn trong Modal
+  }
+
+  // Nếu lịch đơn (không lặp), hiện xác nhận bình thường
+  const confirmMsg = `Bạn có chắc chắn muốn xóa lịch làm việc?`;
   if(!await showConfirmDialog(confirmMsg)) return;
+  
   try {
     await axios.delete(`${API_URL}/${item.id}`);
     showToast("Đã xóa", "success");
@@ -760,18 +817,9 @@ const handleRightClickDelete = (itemOverride?: Schedule) => {
   closeContextMenu();
   const item = itemOverride || contextMenu.item;
   if (!item) return;
-  const today = getTodayStr();
-  if (item.ngayLamViec < today) {
-    showToast("Không thể xóa lịch quá khứ!", "error");
-    return;
-  }
-  if (item.maLapLai) {
-    contextMenu.item = item;
-    deleteOption.value = "one";
-    showDeleteOptionModal.value = true;
-  } else {
-    handleDelete(item);
-  }
+  
+  // Dùng chung hàm handleDelete ở trên để logic luôn đồng nhất
+  handleDelete(item);
 };
 
 const confirmDeleteSeries = async () => {
@@ -1142,7 +1190,8 @@ const editFromDetail = () => {
 };
 const deleteFromDetail = () => {
   if (selectedSchedule.value) {
-    handleRightClickDelete(selectedSchedule.value);
+    // Dùng chung hàm handleDelete ở trên
+    handleDelete(selectedSchedule.value);
     closeDetailPopup();
   }
 };
@@ -1159,6 +1208,28 @@ const saveRepeat = () => {
     showToast("Vui lòng chọn ngày kết thúc", "warning");
     return;
   }
+
+  // 👉 THÊM MỚI: Tính toán và kiểm tra giới hạn 365 ngày ngay tại đây
+  const startDate = new Date(form.ngayLamViec); // Ngày gốc đang chọn phân lịch
+  const endDate = new Date(repeatConfig.endDate); // Ngày kết thúc lặp
+
+  // Kiểm tra nếu ngày kết thúc < ngày bắt đầu
+  if (endDate < startDate) {
+      showToast("Ngày kết thúc không được nhỏ hơn ngày làm việc ban đầu!", "warning");
+      return; 
+  }
+
+  // Tính số ngày chênh lệch
+  const diffTime = endDate.getTime() - startDate.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Nếu quá 365 ngày -> Báo Toast vàng và KHÔNG đóng modal
+  if (diffDays > 365) {
+      showToast("Vượt quá giới hạn! Chỉ được phép lặp lịch tối đa 1 năm (365 ngày).", "warning");
+      return; 
+  }
+
+  // Nếu hợp lệ thì mới cho phép đóng Modal
   showRepeatModal.value = false;
 };
 const cancelRepeat = () => {
