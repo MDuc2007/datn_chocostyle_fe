@@ -598,13 +598,22 @@ const validate = () => {
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
   const name = form.tenDotGiamGia.trim();
 
+  const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
+
   if (!name) {
     errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
     valid = false;
   } else if (name.length < 3) {
     errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
     valid = false;
+  } else if (name.length > 100) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
+    valid = false;
+  } else if (!regex.test(form.tenDotGiamGia.trim())) {
+    errors.tenDotGiamGia = "Tên không được chứa ký tự đặc biệt";
+    valid = false;
   }
+
   if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
@@ -805,7 +814,7 @@ const getDiscountPrice = (ct: any) => {
 
 /* === CARD === */
 .card {
-  height: 510px;
+  min-height: 510px;
   background: #fff;
   border-radius: 20px;
   border: 1px solid #ddd;

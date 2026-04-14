@@ -3,7 +3,6 @@
   <div class="header">
     <h2 class="title">QUẢN LÝ ĐỢT GIẢM GIÁ</h2>
 
-
     <div class="top-bar" style="margin-top: 30px">
       <!-- LEFT -->
       <div class="left-actions">
@@ -21,26 +20,23 @@
         </div>
         <!-- SEARCH -->
 
-
         <!-- FILTER -->
         <div class="filters">
           <div class="filter-item">
             <label>Trạng thái</label>
-          <select v-model="filter.trangThai">
-  <option value="">Tất cả</option>
-  <option :value="1">Đang áp dụng</option>
-  <option :value="2">Sắp diễn ra</option>
-  <option :value="3">Ngừng hoạt động</option>
-  <option :value="0">Đã kết thúc</option>
-</select>
+            <select v-model="filter.trangThai">
+              <option value="">Tất cả</option>
+              <option :value="1">Đang áp dụng</option>
+              <option :value="2">Sắp diễn ra</option>
+              <option :value="3">Ngừng hoạt động</option>
+              <option :value="0">Đã kết thúc</option>
+            </select>
           </div>
-
 
           <div class="filter-item">
             <label>Từ ngày</label>
             <input type="date" v-model="filter.start" />
           </div>
-
 
           <div class="filter-item">
             <label>Đến ngày</label>
@@ -58,14 +54,12 @@
         </div>
       </div>
 
-
       <div class="add-btn">
         <button @click="$router.push('/admin/promotion/create')">
           <span>＋</span> Thêm đợt giảm
         </button>
       </div>
     </div>
-
 
     <!-- RIGHT -->
   </div>
@@ -87,16 +81,14 @@
           </tr>
         </thead>
 
-
         <tbody>
           <tr v-for="(p, index) in promotions" :key="p.id">
             <td>{{ pagination.page * pagination.size + index + 1 }}</td>
             <td>{{ p.maDotGiamGia }}</td>
-            <td>{{ p.tenDotGiamGia }}</td>
+            <td class="name-col">{{ p.tenDotGiamGia }}</td>
             <td>{{ formatGiaTri(p.giaTriGiam) }}</td>
             <td>{{ formatDate(p.ngayBatDau) }}</td>
             <td>{{ formatDate(p.ngayKetThuc) }}</td>
-
 
             <td>
               <span
@@ -107,10 +99,9 @@
                   stopped: p.trangThai === 0,
                 }"
               >
-             {{ statusText(p) }}
+                {{ statusText(p) }}
               </span>
             </td>
-
 
             <td class="action">
               <label
@@ -120,9 +111,8 @@
                 <input
                   type="checkbox"
                   :checked="p.trangThai !== 0"
-                  @click.prevent="toggleTrangThai(p.id)"
+                  @click.prevent="toggleTrangThai(p)"
                 />
-
 
                 <span class="slider"></span>
               </label>
@@ -140,7 +130,6 @@
             </td>
           </tr>
 
-
           <tr v-if="promotions.length === 0">
             <td colspan="8">Không có dữ liệu</td>
           </tr>
@@ -156,7 +145,6 @@
           &lt;
         </button>
 
-
         <!-- PAGE NUMBERS -->
         <button
           v-for="p in visiblePages"
@@ -168,7 +156,6 @@
         >
           {{ p }}
         </button>
-
 
         <!-- NEXT -->
         <button
@@ -214,10 +201,8 @@
           </svg>
         </div>
 
-
         <h3 class="confirm-title">{{ modal.title }}</h3>
         <p class="confirm-desc">{{ modal.message }}</p>
-
 
         <div class="confirm-actions">
           <button class="btn-cancel hover-effect" @click="closeConfirmModal">
@@ -232,14 +217,11 @@
   </transition>
 </template>
 
-
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from "vue";
 import axios from "axios";
 
-
 const promotions = ref<any[]>([]);
-
 
 const pagination = reactive({
   page: 0,
@@ -252,39 +234,31 @@ const visiblePages = computed(() => {
   const total = pagination.totalPages;
   const current = pagination.page + 1;
 
-
   if (total <= 7) {
     for (let i = 1; i <= total; i++) pages.push(i);
   } else {
     pages.push(1);
 
-
     if (current > 4) pages.push("...");
-
 
     const start = Math.max(2, current - 1);
     const end = Math.min(total - 1, current + 1);
-
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-
     if (current < total - 3) pages.push("...");
-
 
     pages.push(total);
   }
 
-
   return pages;
 });
 
-
 const filter = reactive({
   keyword: "",
- trangThai: "" as number | "",
+  trangThai: "" as number | "",
   start: "",
   end: "",
 });
@@ -294,42 +268,39 @@ const clearFilter = () => {
   filter.start = "";
   filter.end = "";
 
-
   pagination.page = 0;
   fetchData(); // reload lại
 };
 const fetchData = async () => {
-  const params: any = {
-    page: pagination.page,
-    size: pagination.size,
-  };
+  const isSpecialFilter = filter.trangThai === 0 || filter.trangThai === 3;
 
+  const params: any = {
+    page: isSpecialFilter ? 0 : pagination.page,
+    size: isSpecialFilter ? 1000 : pagination.size, // 👈 lấy nhiều lên để filter
+  };
 
   if (filter.keyword.trim()) params.keyword = filter.keyword.trim();
 
-
   // chỉ gửi 0,1,2 lên backend
-  if (filter.trangThai !== "" && filter.trangThai !== 3) {
+  if (
+    filter.trangThai !== "" &&
+    filter.trangThai !== 3 &&
+    filter.trangThai !== 0
+  ) {
     params.trangThai = filter.trangThai;
   }
 
-
   if (filter.start) params.start = filter.start;
   if (filter.end) params.end = filter.end;
-
 
   const res = await axios.get("http://localhost:8080/api/promotions/filter", {
     params,
   });
 
-
   let data = res.data.content;
-
-
   const today = new Date();
 
-
-  // filter NGỪNG HOẠT ĐỘNG
+  // 🔥 filter NGỪNG HOẠT ĐỘNG
   if (filter.trangThai === 3) {
     data = data.filter((p: any) => {
       const end = new Date(p.ngayKetThuc);
@@ -337,8 +308,7 @@ const fetchData = async () => {
     });
   }
 
-
-  // filter ĐÃ KẾT THÚC
+  // 🔥 filter ĐÃ KẾT THÚC
   if (filter.trangThai === 0) {
     data = data.filter((p: any) => {
       const end = new Date(p.ngayKetThuc);
@@ -346,12 +316,21 @@ const fetchData = async () => {
     });
   }
 
+  // 🔥 nếu là filter đặc biệt → tự phân trang lại ở FE
+  if (isSpecialFilter) {
+    pagination.totalElements = data.length;
+    pagination.totalPages = Math.ceil(data.length / pagination.size);
 
-  promotions.value = data;
-  pagination.totalPages = res.data.totalPages;
-  pagination.totalElements = res.data.totalElements;
+    const start = pagination.page * pagination.size;
+    const end = start + pagination.size;
+
+    promotions.value = data.slice(start, end);
+  } else {
+    promotions.value = data;
+    pagination.totalPages = res.data.totalPages;
+    pagination.totalElements = res.data.totalElements;
+  }
 };
-
 
 let debounceTimer: any = null;
 watch(
@@ -364,13 +343,20 @@ watch(
   { deep: true },
 );
 
-
 onMounted(fetchData);
 
+const toggleTrangThai = (p: any) => {
+  const today = new Date();
+  const end = new Date(p.ngayKetThuc);
 
-const toggleTrangThai = (id: number) => {
+  // 🔥 nếu đã kết thúc → chặn luôn
+  if (p.trangThai === 0 && end < today) {
+    showNotification("Đã hết đợt, không thể cập nhật", "error");
+    return;
+  }
+
   modal.show = true;
-  modal.id = id;
+  modal.id = p.id;
   modal.title = "Xác nhận thay đổi";
   modal.message = "Bạn có chắc chắn muốn thay đổi trạng thái đợt giảm giá này?";
 };
@@ -379,16 +365,13 @@ const closeConfirmModal = () => {
   modal.id = null;
 };
 
-
 const handleModalConfirm = async () => {
   if (!modal.id) return;
-
 
   try {
     await axios.patch(
       `http://localhost:8080/api/promotions/${modal.id}/toggle`,
     );
-
 
     showNotification("Cập nhật trạng thái thành công");
     await fetchData();
@@ -396,10 +379,8 @@ const handleModalConfirm = async () => {
     showNotification("Cập nhật thất bại", "error");
   }
 
-
   closeConfirmModal();
 };
-
 
 const modal = reactive({
   show: false,
@@ -408,18 +389,15 @@ const modal = reactive({
   id: null as number | null,
 });
 
-
 const notifications = ref<{ id: number; message: string; type?: string }[]>([]);
 const showNotification = (message: string, type = "success") => {
   const id = Date.now();
   notifications.value.push({ id, message, type });
 
-
   setTimeout(() => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   }, 2500);
 };
-
 
 const changePage = (p: number) => {
   if (p < 0 || p >= pagination.totalPages) return;
@@ -427,30 +405,23 @@ const changePage = (p: number) => {
   fetchData();
 };
 
-
 const formatDate = (d?: string) =>
   d ? new Date(d).toLocaleDateString("vi-VN") : "";
 
-
 const formatGiaTri = (v: number) => `${v}%`;
-
 
 const statusText = (p: any) => {
   if (p.trangThai === 1) return "Đang áp dụng";
   if (p.trangThai === 2) return "Sắp diễn ra";
 
-
   const today = new Date();
   const end = new Date(p.ngayKetThuc);
 
-
   if (end < today) return "Đã kết thúc";
-
 
   return "Ngừng hoạt động";
 };
 </script>
-
 
 <style scoped>
 /* ===== HEADER PANEL ===== */
@@ -462,12 +433,10 @@ const statusText = (p: any) => {
   margin-bottom: 12px;
 }
 
-
 .title {
   margin: 15px;
   color: #63391f;
 }
-
 
 .top-bar {
   display: flex;
@@ -476,16 +445,15 @@ const statusText = (p: any) => {
   padding: 0 15px 12px;
 }
 
-
 .left-actions {
   gap: 12px;
 }
+
 .left-actions label {
   font-size: 15px;
   font-weight: 600;
   color: #484848;
 }
-
 
 /* ===== SEARCH ===== */
 .search-wrapper {
@@ -494,13 +462,13 @@ const statusText = (p: any) => {
   margin-top: 10px;
 }
 
-
 .search-icon {
   position: absolute;
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
 }
+
 .search-input {
   width: 100%;
   height: 40px;
@@ -510,15 +478,14 @@ const statusText = (p: any) => {
   box-sizing: border-box;
 }
 
-
 /* ===== FILTER ===== */
 .filters {
   display: flex;
-  gap: 12px; /* 👈 GỌN HƠN */
+  gap: 12px;
+  /* 👈 GỌN HƠN */
   align-items: flex-end;
   margin-top: 20px;
 }
-
 
 .filter-item {
   display: flex;
@@ -527,17 +494,16 @@ const statusText = (p: any) => {
   width: 160px;
 }
 
-
 .filter-item label {
   font-size: 15px;
   font-weight: 600;
   color: #484848;
 }
 
-
 .filter-item select,
 .filter-item input {
-  height: 40px; /* 👈 BẰNG SEARCH */
+  height: 40px;
+  /* 👈 BẰNG SEARCH */
   padding: 0 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -545,7 +511,6 @@ const statusText = (p: any) => {
   color: #555555a4;
   background: #fff;
 }
-
 
 /* ===== ADD ===== */
 .add-btn {
@@ -555,35 +520,34 @@ const statusText = (p: any) => {
   gap: 10px;
 }
 
-
 .add-btn button {
-  height: 40px; /* 👈 bằng input */
-  padding: 0 16px; /* ngang vừa tay */
+  height: 40px;
+  /* 👈 bằng input */
+  padding: 0 16px;
+  /* ngang vừa tay */
   border: 1px solid #ccc;
-  border-radius: 10px; /* 👈 bo y hệt */
+  border-radius: 10px;
+  /* 👈 bo y hệt */
   background: #fff;
   cursor: pointer;
-
 
   font-size: 14px;
   font-weight: 600;
   color: #484848;
 
-
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 /* ===== TABLE PANEL ===== */
 .product-page {
   background: transparent;
 }
 
-
 .product-table thead tr {
   border-bottom: 1.5px solid #e0e0e0;
 }
-
 
 .table-panel {
   background: #fff;
@@ -593,43 +557,44 @@ const statusText = (p: any) => {
   /* 👈 viền nhẹ */
 }
 
+.name-col {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .product-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-
 .product-table th {
   color: #000000;
   padding: 20px 12px;
 }
 
-
 .product-table td {
   padding: 18px 12px;
 
-
   text-align: center;
 }
-
 
 .product-table tbody tr {
   border-bottom: 1px solid #ddd;
 }
 
-
 /* Base badge */
 .status {
   display: inline-block;
   padding: 6px 14px;
-  border-radius: 999px; /* bo tròn full */
+  border-radius: 999px;
+  /* bo tròn full */
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
   border: 1px solid transparent;
 }
-
 
 /* Đang áp dụng */
 .status.selling {
@@ -639,7 +604,6 @@ const statusText = (p: any) => {
   font-size: 10px;
 }
 
-
 /* Sắp diễn ra */
 .status.upcoming {
   color: #ea580c;
@@ -647,7 +611,6 @@ const statusText = (p: any) => {
   border-color: #fdba74;
   font-size: 10px;
 }
-
 
 /* Đã kết thúc */
 .status.stopped {
@@ -657,7 +620,6 @@ const statusText = (p: any) => {
   font-size: 10px;
 }
 
-
 .action {
   display: flex;
   justify-content: center;
@@ -665,18 +627,15 @@ const statusText = (p: any) => {
   gap: 20px;
 }
 
-
 .switch {
   position: relative;
   width: 50px;
   height: 24px;
 }
 
-
 .switch input {
   display: none;
 }
-
 
 .slider {
   position: absolute;
@@ -685,7 +644,6 @@ const statusText = (p: any) => {
   border-radius: 24px;
   transition: 0.3s;
 }
-
 
 .slider::before {
   content: "";
@@ -699,16 +657,13 @@ const statusText = (p: any) => {
   transition: 0.3s;
 }
 
-
 input:checked + .slider {
   background: #63391f;
 }
 
-
 input:checked + .slider::before {
   transform: translateX(26px);
 }
-
 
 .pagination {
   display: flex;
@@ -717,11 +672,9 @@ input:checked + .slider::before {
   margin: 15px 0;
 }
 
-
 .pagination button {
   padding: 6px 12px;
 }
-
 
 .page-btn {
   min-width: 34px;
@@ -735,11 +688,9 @@ input:checked + .slider::before {
   width: 40px;
 }
 
-
 .page-btn:hover:not(:disabled):not(.active) {
   background: #f0f0f0;
 }
-
 
 .page-btn.active {
   background: #63391f;
@@ -748,11 +699,9 @@ input:checked + .slider::before {
   font-weight: 600;
 }
 
-
 .page-btn.active:hover {
   background: #63391f;
 }
-
 
 .page-btn:disabled {
   cursor: default;
@@ -761,18 +710,15 @@ input:checked + .slider::before {
   color: #999;
 }
 
-
 .switch input:disabled + .slider {
   background-color: #e74c3ccc !important;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-
 .switch input:disabled ~ .slider {
   pointer-events: none;
 }
-
 
 .nav-btn {
   min-width: 40px;
@@ -785,17 +731,14 @@ input:checked + .slider::before {
   font-weight: 600;
   color: #63391f;
 
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-
 .nav-btn:hover:not(:disabled) {
   background: #f0f0f0;
 }
-
 
 .nav-btn:disabled {
   cursor: default;
@@ -803,12 +746,10 @@ input:checked + .slider::before {
   background: #fff;
 }
 
-
 /* ===== TOOLTIP ===== */
 .tooltip {
   position: relative;
 }
-
 
 /* box */
 .tooltip::after {
@@ -817,7 +758,6 @@ input:checked + .slider::before {
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-
 
   background: #333;
   color: #fff;
@@ -829,7 +769,6 @@ input:checked + .slider::before {
   pointer-events: none;
   transition: 0.2s ease;
 }
-
 
 Stashed changes
 
@@ -849,19 +788,16 @@ Stashed changes
   transition: 0.2s ease;
 }
 
-
 /* show */
 .tooltip:hover::after,
 .tooltip:hover::before {
   opacity: 1;
 }
 
-
 /* ===== CLEAR FILTER BUTTON ===== */
 .clear-wrap {
   justify-content: flex-end;
 }
-
 
 .btn-clear {
   height: 42px;
@@ -877,6 +813,7 @@ Stashed changes
   align-items: center;
   justify-content: center;
 }
+
 /* ===== TOAST CONTAINER ===== */
 .toast-container {
   position: fixed;
@@ -888,36 +825,30 @@ Stashed changes
   gap: 10px;
 }
 
-
 .toast {
   min-width: 280px;
   padding: 14px 20px;
   border-radius: 8px;
 
-
   background-color: #dcfce7;
   color: #166534;
-
 
   font-size: 14px;
   font-weight: 500;
 
-
   border-left: 6px solid #22c55e;
-
 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-
   animation: slideIn 0.3s ease-out;
 }
-
 
 .toast.error {
   background-color: #fee2e2;
   color: #991b1b;
   border-left: 6px solid #ef4444;
 }
+
 .modal-confirm {
   position: fixed;
   inset: 0;
@@ -926,6 +857,7 @@ Stashed changes
   align-items: center;
   z-index: 999;
 }
+
 .confirm-box {
   background: #fff;
   padding: 30px;
@@ -937,6 +869,7 @@ Stashed changes
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.3s ease-out;
 }
+
 /* Tìm đoạn này trong phần 8. MODAL & TOAST */
 /* Sửa lại đoạn này */
 .confirm-icon-wrapper {
@@ -947,47 +880,44 @@ Stashed changes
   color: #ff9800;
   margin: 0 auto 15px auto;
 
-
   /* Dùng flex thay vì inline-flex để kiểm soát khung tốt hơn */
   display: flex;
   align-items: center;
   justify-content: center;
 
-
   font-size: 40px;
-
 
   /* QUAN TRỌNG: Reset line-height về 1 hoặc 0 để icon không bị đẩy lên cao */
   line-height: 1;
-
 
   /* Nếu vẫn thấy lệch, bỏ comment dòng dưới để tắt hiệu ứng nhún nhảy cho dễ căn */
   /* animation: none; */
 }
 
-
 /* THÊM MỚI: Đảm bảo icon bên trong không bị margin thừa */
 .confirm-icon-wrapper i,
 .confirm-icon-wrapper svg,
 .confirm-icon-wrapper span {
-  display: block; /* Chuyển thành block để flex căn chuẩn hơn */
-  margin: 0; /* Xóa margin mặc định nếu có */
-
+  display: block;
+  /* Chuyển thành block để flex căn chuẩn hơn */
+  margin: 0;
+  /* Xóa margin mặc định nếu có */
 
   /* MẸO: Nếu icon vẫn cảm giác hơi cao, hãy thêm dòng dưới để đẩy nhẹ xuống */
   /* transform: translateY(2px); */
 }
+
 .confirm-title {
   color: #63391f;
   margin-bottom: 10px;
   font-size: 20px;
 }
+
 .confirm-desc {
   color: #666;
   margin-bottom: 25px;
   line-height: 1.5;
 }
-
 
 .btn-confirm {
   background: #63391f;
@@ -1001,15 +931,16 @@ Stashed changes
   flex: 1;
   height: 42px;
 }
+
 .btn-confirm:hover {
   background: #4e2c17;
   box-shadow: 0 4px 10px rgba(78, 44, 23, 0.3);
 }
+
 .confirm-actions {
   display: flex;
   gap: 20px;
 }
-
 
 .btn-cancel {
   background: #f3f4f6;
@@ -1023,17 +954,18 @@ Stashed changes
   flex: 1;
   height: 42px;
 }
+
 .btn-cancel:hover {
   background: #e5e7eb;
 }
+
 .fade-modal-enter-active,
 .fade-modal-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .fade-modal-enter-from,
 .fade-modal-leave-to {
   opacity: 0;
 }
 </style>
-
-

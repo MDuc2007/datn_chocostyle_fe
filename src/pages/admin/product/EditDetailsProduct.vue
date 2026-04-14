@@ -3,7 +3,12 @@
     <h2 class="title">SỬA BIẾN THỂ</h2>
 
     <div class="toast-container">
-      <div v-for="notif in notifications" :key="notif.id" class="toast" :class="notif.type">
+      <div
+        v-for="notif in notifications"
+        :key="notif.id"
+        class="toast"
+        :class="notif.type"
+      >
         {{ notif.message }}
       </div>
     </div>
@@ -20,7 +25,11 @@
             <div class="select-box">
               <select v-model="selectedMauSacList" disabled>
                 <option value="">Chọn màu sắc</option>
-                <option v-for="item in mauSacList" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in mauSacList"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenMauSac }}
                 </option>
               </select>
@@ -32,7 +41,11 @@
             <div class="select-box">
               <select v-model="selectedKichCoList" disabled>
                 <option value="">Chọn kích cỡ</option>
-                <option v-for="item in kichCoList" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in kichCoList"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenKichCo }}
                 </option>
               </select>
@@ -43,7 +56,11 @@
             <div class="select-box">
               <select v-model="selectedLoaiAo" disabled>
                 <option value="">Chọn loại áo</option>
-                <option v-for="item in loaiAoList" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in loaiAoList"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenLoai }}
                 </option>
               </select>
@@ -55,7 +72,11 @@
             <div class="select-box">
               <select v-model="selectedKieuDang" disabled>
                 <option value="">Chọn kiểu dáng</option>
-                <option v-for="item in kieuDangList" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in kieuDangList"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenKieuDang }}
                 </option>
               </select>
@@ -67,7 +88,11 @@
             <div class="select-box">
               <select v-model="selectedPhongCach" disabled>
                 <option value="">Chọn phong cách</option>
-                <option v-for="item in phongCachList" :key="item.id" :value="item.id">
+                <option
+                  v-for="item in phongCachList"
+                  :key="item.id"
+                  :value="item.id"
+                >
                   {{ item.tenPhongCach }}
                 </option>
               </select>
@@ -76,22 +101,47 @@
 
           <div class="col">
             <label>Số lượng tồn <span class="required">*</span></label>
-            <input type="number" v-model.number="soLuongTon" />
+            <input
+              type="number"
+              v-model.number="soLuongTon"
+              :class="{ 'is-invalid': errors.soLuongTon }"
+              @input="errors.soLuongTon = ''"
+            />
+            <span v-if="errors.soLuongTon" class="error-text">{{
+              errors.soLuongTon
+            }}</span>
           </div>
+
           <div class="col">
             <label>Giá bán <span class="required">*</span></label>
             <div class="money-input">
-              <input type="text" :value="formatVNDInput(giaBan)" @input="handlePriceInput($event, 'giaBan')" />
+              <input
+                type="text"
+                :value="formatVNDInput(giaBan)"
+                @input="handlePriceInput($event, 'giaBan')"
+                :class="{ 'is-invalid': errors.giaBan }"
+              />
               <span class="currency">đ</span>
             </div>
+            <span v-if="errors.giaBan" class="error-text">{{
+              errors.giaBan
+            }}</span>
           </div>
 
           <div class="col">
             <label>Giá nhập <span class="required">*</span></label>
             <div class="money-input">
-              <input type="text" :value="formatVNDInput(giaNhap)" @input="handlePriceInput($event, 'giaNhap')" />
+              <input
+                type="text"
+                :value="formatVNDInput(giaNhap)"
+                @input="handlePriceInput($event, 'giaNhap')"
+                :class="{ 'is-invalid': errors.giaNhap }"
+              />
               <span class="currency">đ</span>
             </div>
+            <span v-if="errors.giaNhap" class="error-text">{{
+              errors.giaNhap
+            }}</span>
           </div>
         </div>
         <div class="qr-form-section" v-if="qrImageUrl">
@@ -103,33 +153,67 @@
 
           <div class="qr-actions">
             <button type="button" class="btn-download-qr" @click="downloadQR">
-              <img src="/src/assets/icon/dowload-white.svg" style="width: 20px; height: 20px" alt="" />
+              <img
+                src="/src/assets/icon/dowload-white.svg"
+                style="width: 20px; height: 20px"
+                alt=""
+              />
               Tải mã QR
             </button>
           </div>
         </div>
       </div>
       <div class="right">
-        <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" style="display: none" />
-        <div class="image-box" @click="triggerUpload">
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          @change="onFileChange"
+          style="display: none"
+        />
+        <div
+          class="image-box"
+          :class="{ 'is-invalid': errors.hinhAnh }"
+          @click="triggerUpload"
+        >
           <img v-if="imageUrl" :src="imageUrl" />
           <div v-else class="plus">+</div>
         </div>
         <p v-if="isUploadingImage" style="font-size: 12px; color: #666">
           Đang tải lên...
         </p>
+        <span
+          v-if="errors.hinhAnh"
+          class="error-text"
+          style="display: block; margin-top: 10px"
+          >{{ errors.hinhAnh }}</span
+        >
       </div>
     </div>
     <div class="save-action">
+      <button type="button" class="btn-cancel-main" @click="goBack">Huỷ</button>
       <button class="save-btn" @click="handleOpenConfirm">Lưu sản phẩm</button>
     </div>
   </div>
   <transition name="fade-modal">
-    <div v-if="modal.show" class="modal-confirm" @click.self="closeConfirmModal">
+    <div
+      v-if="modal.show"
+      class="modal-confirm"
+      @click.self="closeConfirmModal"
+    >
       <div class="confirm-box">
         <div class="confirm-icon-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="none"
-            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="36"
+            height="36"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M8 12l3 3 5-5"></path>
           </svg>
@@ -156,17 +240,40 @@ import axios from "axios";
 
 const priceInput = ref("");
 const priceValue = ref(null);
+const errors = ref({});
+
+const goBack = () => {
+  if (route.params.sanPhamId) {
+    // Trở về trang details của ID sản phẩm cụ thể
+    router.push(`/admin/product/${route.params.sanPhamId}/details`);
+  } else {
+    // Hoặc quay lại trang trước đó nếu không tìm thấy ID
+    router.back();
+  }
+};
 
 const handlePriceInput = (e, field) => {
   const raw = e.target.value.replace(/\D/g, "");
-  const value = raw ? parseInt(raw) : 0;
+  const value = raw ? parseInt(raw) : null;
 
   if (field === "giaBan") {
     giaBan.value = value;
+    errors.value.giaBan = ""; // Tắt lỗi khi đang nhập
+
+    // Nếu đang bị lỗi check chéo Giá Nhập/Giá Bán thì tắt đỏ cả ô kia
+    if (errors.value.giaNhap === "Giá nhập phải nhỏ hơn giá bán") {
+      errors.value.giaNhap = "";
+    }
   }
 
   if (field === "giaNhap") {
     giaNhap.value = value;
+    errors.value.giaNhap = ""; // Tắt lỗi khi đang nhập
+
+    // Nếu đang bị lỗi check chéo Giá Nhập/Giá Bán thì tắt đỏ cả ô kia
+    if (errors.value.giaBan === "Giá bán phải lớn hơn giá nhập") {
+      errors.value.giaBan = "";
+    }
   }
 
   e.target.value = formatVNDInput(value);
@@ -381,6 +488,7 @@ const onFileChange = async (e) => {
 
   imageUrl.value = URL.createObjectURL(file);
   isUploadingImage.value = true;
+  errors.value.hinhAnh = ""; // Xoá lỗi hình ảnh nếu có
 
   try {
     imageUrl.value = await uploadImageToCloudinaryReturnUrl(file);
@@ -392,86 +500,83 @@ const onFileChange = async (e) => {
   isUploadingImage.value = false;
 };
 
-/* ===== VALIDATE ===== */
-/* ===== VALIDATE HOÀN CHỈNH VÀ CHẶT CHẼ ===== */
 const validateForm = () => {
-  // 1. Kiểm tra các trường Select (Dropdown)
-  if (!selectedMauSacList.value) {
-    showNotification("Vui lòng chọn màu sắc", "warning");
-    return false;
-  }
-  if (!selectedKichCoList.value) {
-    showNotification("Vui lòng chọn kích cỡ", "warning");
-    return false;
-  }
-  if (!selectedLoaiAo.value) {
-    showNotification("Vui lòng chọn loại áo", "warning");
-    return false;
-  }
-  if (!selectedKieuDang.value) {
-    showNotification("Vui lòng chọn kiểu dáng", "warning");
-    return false;
-  }
-  if (!selectedPhongCach.value) {
-    showNotification("Vui lòng chọn phong cách mặc", "warning");
-    return false;
+  errors.value = {}; // Reset toàn bộ lỗi
+  let isValid = true;
+  let isMissingData = false; // Biến check xem có bị trống dữ liệu không
+
+  // 1. Validate Số lượng tồn
+  if (soLuongTon.value === null || soLuongTon.value === "") {
+    errors.value.soLuongTon = "Vui lòng nhập số lượng tồn";
+    isValid = false;
+    isMissingData = true;
+  } else if (!Number.isInteger(Number(soLuongTon.value))) {
+    errors.value.soLuongTon = "Số lượng tồn phải là số nguyên";
+    isValid = false;
+  } else if (soLuongTon.value <= 0) {
+    errors.value.soLuongTon = "Số lượng tồn phải lớn hơn 0";
+    isValid = false;
+  } else if (soLuongTon.value > 100000) {
+    errors.value.soLuongTon = "Số lượng tồn tối đa là 100.000";
+    isValid = false;
   }
 
-  // 2. Kiểm tra Số Lượng (Bắt buộc, không âm, không quá lớn)
-  if (soLuongTon.value === null || soLuongTon.value === "" || isNaN(soLuongTon.value)) {
-    showNotification("Vui lòng nhập số lượng tồn", "warning");
-    return false;
-  }
-  if (Number(soLuongTon.value) < 0) {
-    showNotification("Số lượng tồn không được là số âm", "warning");
-    return false;
-  }
-  if (Number(soLuongTon.value) > 1000000) {
-    showNotification("Số lượng tồn không hợp lý (Vượt quá 1,000,000)", "warning");
-    return false;
-  }
-
-  // 3. Kiểm tra Giá Nhập (Bắt buộc, lớn hơn 0, giới hạn tối đa)
-  if (giaNhap.value === null || giaNhap.value === "" || isNaN(giaNhap.value)) {
-    showNotification("Vui lòng nhập giá nhập", "warning");
-    return false;
-  }
-  if (Number(giaNhap.value) <= 0) {
-    showNotification("Giá nhập phải lớn hơn 0", "warning");
-    return false;
-  }
-  if (Number(giaNhap.value) > 2000000000) { // Tối đa 2 Tỷ
-    showNotification("Giá nhập quá lớn (Tối đa 2 tỷ VNĐ)", "warning");
-    return false;
+  // 2. Validate Giá bán
+  if (giaBan.value === null || giaBan.value === "") {
+    errors.value.giaBan = "Vui lòng nhập giá bán";
+    isValid = false;
+    isMissingData = true;
+  } else if (giaBan.value <= 0) {
+    errors.value.giaBan = "Giá bán phải lớn hơn 0";
+    isValid = false;
+  } else if (giaBan.value > 999999999) {
+    errors.value.giaBan = "Giá bán tối đa 999.999.999đ";
+    isValid = false;
   }
 
-  // 4. Kiểm tra Giá Bán (Bắt buộc, lớn hơn 0, lớn hơn giá nhập)
-  if (giaBan.value === null || giaBan.value === "" || isNaN(giaBan.value)) {
-    showNotification("Vui lòng nhập giá bán", "warning");
-    return false;
-  }
-  if (Number(giaBan.value) <= 0) {
-    showNotification("Giá bán phải lớn hơn 0", "warning");
-    return false;
-  }
-  if (Number(giaBan.value) > 2000000000) { // Tối đa 2 Tỷ
-    showNotification("Giá bán quá lớn (Tối đa 2 tỷ VNĐ)", "warning");
-    return false;
-  }
-  
-  // Logic cốt lõi: Giá nhập không bao giờ được cao hơn Giá bán
-  if (Number(giaBan.value) < Number(giaNhap.value)) {
-    showNotification("Lỗi: Giá bán không được nhỏ hơn giá nhập!", "error");
-    return false;
+  // 3. Validate Giá nhập
+  if (giaNhap.value === null || giaNhap.value === "") {
+    errors.value.giaNhap = "Vui lòng nhập giá nhập";
+    isValid = false;
+    isMissingData = true;
+  } else if (giaNhap.value <= 0) {
+    errors.value.giaNhap = "Giá nhập phải lớn hơn 0";
+    isValid = false;
+  } else if (giaNhap.value > 999999999) {
+    errors.value.giaNhap = "Giá nhập tối đa 999.999.999đ";
+    isValid = false;
   }
 
-  // 5. Kiểm tra Hình Ảnh
+  // 4. Validate Giá nhập & Giá bán (Chỉ chạy khi 2 ô trên đã nhập hợp lệ)
+  if (!errors.value.giaBan && !errors.value.giaNhap) {
+    if (giaNhap.value >= giaBan.value) {
+      // Gán text lỗi cho cả 2 ô để giao diện bôi đỏ cả 2
+      errors.value.giaNhap = "Giá nhập phải nhỏ hơn giá bán";
+      errors.value.giaBan = "Giá bán phải lớn hơn giá nhập";
+      isValid = false;
+    }
+  }
+
+  // 5. Validate Ảnh
   if (!imageUrl.value) {
-    showNotification("Vui lòng tải lên ảnh minh họa cho sản phẩm", "warning");
-    return false;
+    errors.value.hinhAnh = "Vui lòng tải ảnh biến thể";
+    isValid = false;
+    isMissingData = true;
   }
 
-  return true;
+  // HIỂN THỊ TOAST DỰA VÀO LOẠI LỖI
+  if (!isValid) {
+    if (isMissingData) {
+      showNotification("Vui lòng nhập đủ thông tin!", "error");
+    } else {
+      showNotification(
+        "Vui lòng kiểm tra lại các thông tin không hợp lệ!",
+        "error",
+      );
+    }
+  }
+
+  return isValid;
 };
 
 const handleOpenConfirm = () => {
@@ -694,8 +799,26 @@ input[type="number"] {
 .save-action {
   display: flex;
   justify-content: flex-end;
+  gap: 15px; /* Thêm dòng này để cách 2 nút ra */
+}
+.btn-cancel-main {
+  background: #e5e7eb;
+  color: #374151;
+  padding: 12px 28px; /* Kích thước chuẩn với save-btn bên Edit */
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px; /* Căn bằng với nút Thêm */
 }
 
+.btn-cancel-main:hover {
+  background: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
 .save-btn {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
   color: white;
@@ -802,19 +925,22 @@ input[type="number"] {
   }
 }
 
-.toast.success {
-  background: #e8f5e9;
-  color: #2e7d32;
+.toast.warning {
+  background: #ffc107;
+  color: #333;
+  border-left: 4px solid #ff9800;
 }
 
 .toast.error {
-  background: #ffebee;
-  color: #c62828;
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
 }
 
-.toast.warning {
-  background: #fff8e1;
-  color: #f57f17;
+.toast.success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
 }
 
 /* ================= QR ================= */
@@ -1003,5 +1129,28 @@ input[type="number"] {
   color: #666;
   font-size: 14px;
   pointer-events: none;
+}
+/* Styling cho các input bị lỗi */
+input.is-invalid {
+  border-color: #d9534f !important;
+  background-color: #fff9f9 !important;
+}
+
+input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.15) !important;
+}
+
+/* Styling cho khung Upload ảnh bị lỗi */
+.image-box.is-invalid {
+  border-color: #d9534f !important;
+  background-color: #fff9f9 !important;
+}
+
+/* Đoạn text thông báo lỗi */
+.error-text {
+  color: #d9534f;
+  font-size: 13px;
+  margin-top: 5px;
+  display: block;
 }
 </style>

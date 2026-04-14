@@ -419,7 +419,13 @@
                                   )
                                 }}</span>
                                 →
-                                <span>{{ formatCurrency(p.donGia) }}</span>
+                                <!-- Gọi thẳng newPrice từ hàm để lấy đúng giá mới -->
+                                <span>{{
+                                  formatCurrency(
+                                    getPriceChangeInfo(p.idSpct, p.donGia)
+                                      .newPrice,
+                                  )
+                                }}</span>
                               </div>
                             </div>
                           </div>
@@ -700,12 +706,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from "vue";
+import { ref, onMounted, computed, reactive, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 import ClientSidebar from "../../pages/views/ClientSidebar.vue";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+
+let stompClient: Client | null = null;
+
+const connectWebSocket = () => {
+  stompClient = new Client({
+    // Đường dẫn này phụ thuộc vào cách bạn cấu hình registry.addEndpoint() ở Backend
+    // Ví dụ: http://localhost:8080/ws
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log("Đã kết nối WebSocket thành công!");
+
+      // Lắng nghe đúng kênh bạn đã bắn từ Backend
+      stompClient?.subscribe("/topic/public-updates", (message) => {
+        if (message.body === "UPDATED") {
+          console.log(
+            "Phát hiện thay đổi dữ liệu từ Backend, đang load lại...",
+          );
+
+          // Gọi lại hàm lấy dữ liệu để cập nhật giá mới ngay lập tức
+          fetchDetail();
+
+          // Bạn có thể hiển thị thêm thông báo cho người dùng
+          showToast("Dữ liệu đơn hàng/sản phẩm vừa được cập nhật!", "success");
+        }
+      });
+    },
+    onStompError: (frame) => {
+      console.error("Lỗi STOMP: " + frame.headers["message"]);
+    },
+  });
+
+  stompClient.activate();
+};
+
 
 // --- INTERFACES ---
 interface InvoiceProduct {
@@ -1407,8 +1450,7 @@ const canEditProducts = computed(() => {
 
   // Kiểm tra xem có phải là tiền mặt hoặc COD không
   const isCashOrCOD =
-    invoice.value.loaiDon === 1 ||
-    paymentMethod.includes("khi nhận hàng");
+    invoice.value.loaiDon === 1 || paymentMethod.includes("khi nhận hàng");
 
   // Chỉ cho phép sửa nếu là trạng thái Chờ xác nhận (0) VÀ là Tiền mặt/COD
   return invoice.value.trangThai === 0 && isCashOrCOD;
@@ -1422,8 +1464,7 @@ const canEditCustomerInfo = computed(() => {
 
   const paymentMethod = getPaymentMethodName().toLowerCase();
   const isCashOrCOD =
-    invoice.value.loaiDon === 1 ||
-    paymentMethod.includes("khi nhận hàng");
+    invoice.value.loaiDon === 1 || paymentMethod.includes("khi nhận hàng");
 
   // Chỉ cho phép sửa địa chỉ ở trạng thái 0 và phải là Tiền mặt/COD
   return invoice.value.trangThai === 0 && isCashOrCOD;
@@ -1439,6 +1480,12 @@ onMounted(() => {
   }
 
   fetchDetail();
+  connectWebSocket();
+});
+onUnmounted(() => {
+  if (stompClient) {
+    stompClient.deactivate();
+  }
 });
 </script>
 
