@@ -390,8 +390,45 @@
                     <span class="variant-badge size-badge">{{ p.kichCo }}</span>
                   </div>
                 </td>
-                <td class="light-text">{{ formatCurrency(p.donGia) }}</td>
+                <td class="light-text" style="vertical-align: middle">
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                    "
+                  >
+                    <div
+                      v-if="getPriceChangeInfo(p.idSpct, p.donGia)"
+                      class="price-changed-wrapper"
+                    >
+                      <div class="current-price-red">
+                        {{ formatCurrency(p.donGia) }}
+                      </div>
 
+                      <div class="price-warning-box">
+                        <div class="box-title">Giá gốc đã thay đổi:</div>
+                        <div class="box-compare">
+                          <span class="old-price-strike">{{
+                            formatCurrency(
+                              getPriceChangeInfo(p.idSpct, p.donGia).oldPrice,
+                            )
+                          }}</span>
+                          →
+                          <span>{{
+                            formatCurrency(
+                              getPriceChangeInfo(p.idSpct, p.donGia).newPrice,
+                            )
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-else>
+                      <span>{{ formatCurrency(p.donGia) }}</span>
+                    </div>
+                  </div>
+                </td>
                 <td>
                   <div class="quantity-control" v-if="invoice.trangThai === 0">
                     <button
@@ -642,12 +679,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from "vue";
+import { ref, onMounted, computed, reactive, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import InvoicePrintTemplate from "./InvoicePrintTemplate.vue";
 import checkIcon from "../../../assets/icon/check.svg";
 import cancelIcon from "../../../assets/icon/cancel-svgrepo-com.svg";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+
+let stompClient: Client | null = null;
+
+// HÀM KẾT NỐI WEBSOCKET
+const connectWebSocket = () => {
+  const idHoaDon = route.params.id; // Lấy ID hóa đơn từ URL
+
+  stompClient = new Client({
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws"), // Đổi port nếu cần
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log(
+        `Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`,
+      );
+
+      // Backend đang bắn dữ liệu vào kênh: /topic/order/{id}
+      stompClient?.subscribe(`/topic/order/${idHoaDon}`, (message) => {
+        console.log("Đã nhận được cập nhật realtime từ Backend!");
+
+        // Backend của bạn truyền thẳng Object dataMoiNhat sang, nên ta có thể parse luôn
+        // hoặc gọi lại fetchDetail() cho chắc chắn. Ở đây mình gọi lại fetchDetail.
+        fetchDetail();
+
+        showToast("Trạng thái đơn hàng vừa được cập nhật tự động!", "success");
+      });
+    },
+    onStompError: (frame) => {
+      console.error("Lỗi WebSocket STOMP: " + frame.headers["message"]);
+    },
+  });
+
+  stompClient.activate();
+};
+
+const getPriceChangeInfo = (idSpct, currentPrice) => {
+  if (!invoice.value?.lichSuList) return null;
+  // Tìm các lịch sử liên quan đến thay đổi giá của idSpct này
+  const logs = [...invoice.value.lichSuList].filter((l) =>
+    l.ghiChu.includes(`[PRICE_CHANGE] ID ${idSpct}:`),
+  );
+
+  if (logs.length > 0) {
+    const match = logs[0].ghiChu.match(/Từ ([\d.]+) thành ([\d.]+)/);
+    if (match) {
+      const oldPrice = parseFloat(match[1]);
+      const newPrice = parseFloat(match[2]);
+
+      // Chỉ trả về info nếu dòng sản phẩm này đang mang mức GIÁ CŨ (giá gốc)
+      if (currentPrice === oldPrice) {
+        return { oldPrice, newPrice };
+      }
+    }
+  }
+  return null;
+};
 
 // --- INTERFACES ---
 interface InvoiceProduct {
@@ -1166,6 +1260,13 @@ const handlePrint = () => {
 
 onMounted(() => {
   fetchDetail();
+  connectWebSocket();
+});
+onUnmounted(() => {
+  if (stompClient) {
+    stompClient.deactivate();
+    console.log("Đã ngắt kết nối WebSocket chi tiết hóa đơn.");
+  }
 });
 </script>
 
@@ -2255,5 +2356,39 @@ onMounted(() => {
   font-size: 10px;
   border: 1px solid #e0e0e0;
   flex-shrink: 0;
+}
+/* Giao diện thay đổi giá */
+.price-changed-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.current-price-red {
+  color: red;
+  font-weight: bold;
+  font-size: 16px;
+}
+.price-warning-box {
+  background: #fff8eb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+.price-warning-box .box-title {
+  color: #d97706;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.price-warning-box .box-compare {
+  color: #d97706;
+  font-size: 13px;
+  font-weight: 600;
+}
+.old-price-strike {
+  text-decoration: line-through;
+  opacity: 0.9;
 }
 </style>

@@ -24,10 +24,15 @@
               v-model="tenSanPham"
               type="text"
               placeholder="Nhập tên sản phẩm"
+              :class="{ 'is-invalid': errors.tenSanPham }"
+              @input="errors.tenSanPham = ''"
             />
+            <span v-if="errors.tenSanPham" class="error-text">{{
+              errors.tenSanPham
+            }}</span>
           </div>
 
-          <div class="col">
+          <div class="col" :class="{ 'has-error': errors.xuatXu }">
             <label>Xuất xứ <span class="required">*</span></label>
             <div class="select-box">
               <select
@@ -52,9 +57,12 @@
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
+            <span v-if="errors.xuatXu" class="error-text">{{
+              errors.xuatXu
+            }}</span>
           </div>
 
-          <div class="col">
+          <div class="col" :class="{ 'has-error': errors.loaiAo }">
             <label>Loại áo <span class="required">*</span></label>
             <div class="select-box">
               <select
@@ -79,9 +87,12 @@
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
+            <span v-if="errors.loaiAo" class="error-text">{{
+              errors.loaiAo
+            }}</span>
           </div>
 
-          <div class="col">
+          <div class="col" :class="{ 'has-error': errors.kieuDang }">
             <label>Kiểu dáng <span class="required">*</span></label>
             <div class="select-box">
               <select
@@ -106,9 +117,12 @@
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
+            <span v-if="errors.kieuDang" class="error-text">{{
+              errors.kieuDang
+            }}</span>
           </div>
 
-          <div class="col">
+          <div class="col" :class="{ 'has-error': errors.phongCach }">
             <label>Phong cách mặc <span class="required">*</span></label>
             <div class="select-box">
               <select
@@ -133,9 +147,12 @@
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
+            <span v-if="errors.phongCach" class="error-text">{{
+              errors.phongCach
+            }}</span>
           </div>
 
-          <div class="col">
+          <div class="col" :class="{ 'has-error': errors.chatLieu }">
             <label>Chất liệu <span class="required">*</span></label>
             <div class="select-box">
               <select
@@ -160,6 +177,9 @@
                 <img src="/src/assets/icon/plus.svg" />
               </button>
             </div>
+            <span v-if="errors.chatLieu" class="error-text">{{
+              errors.chatLieu
+            }}</span>
           </div>
         </div>
 
@@ -174,12 +194,7 @@
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
             <label>Màu sắc <span class="required">*</span></label>
-            <button
-              type="button"
-              :disabled="isEditMode"
-              class="add-btn"
-              @click="openModal('mau-sac')"
-            >
+            <button type="button" class="add-btn" @click="openModal('mau-sac')">
               <img src="/src/assets/icon/plus.svg" />
             </button>
           </div>
@@ -194,12 +209,7 @@
         <div class="col" style="margin-top: 10px">
           <div style="display: flex; align-items: center; gap: 10px">
             <label>Kích cỡ <span class="required">*</span></label>
-            <button
-              type="button"
-              :disabled="isEditMode"
-              class="add-btn"
-              @click="openModal('kich-co')"
-            >
+            <button type="button" class="add-btn" @click="openModal('kich-co')">
               <img src="/src/assets/icon/plus.svg" />
             </button>
           </div>
@@ -219,13 +229,23 @@
           @change="onFileChange"
           style="display: none"
         />
-        <div class="image-box" @click="triggerUpload">
+        <div
+          class="image-box"
+          :class="{ 'is-invalid': errors.hinhAnh }"
+          @click="triggerUpload"
+        >
           <img v-if="imageUrl" :src="imageUrl" />
           <div v-else class="plus">+</div>
         </div>
         <p v-if="isUploadingImage" style="font-size: 12px; color: #666">
           Đang tải lên...
         </p>
+        <span
+          v-if="errors.hinhAnh"
+          class="error-text"
+          style="display: block; margin-top: 10px"
+          >{{ errors.hinhAnh }}</span
+        >
       </div>
     </div>
 
@@ -241,11 +261,7 @@
     <div v-if="showBienThe" class="variants-section">
       <div class="variants-header">
         <h3>Danh sách biến thể</h3>
-        <button
-          class="save-fast-btn"
-          @click="openQuickAllModal"
-          :disabled="isEditMode"
-        >
+        <button class="save-fast-btn" @click="openQuickAllModal">
           <span>+</span> Thêm nhanh
         </button>
       </div>
@@ -304,16 +320,12 @@
               <td>
                 <input
                   type="number"
-                  v-model="s.soLuongTon"
+                  v-model.number="s.soLuongTon"
                   class="input-field"
                 />
               </td>
               <td class="action-cell">
-                <button
-                  class="btn-delete"
-                  @click="removeSize(mIndex, sIndex)"
-                  :disabled="isEditMode"
-                >
+                <button class="btn-delete" @click="removeSize(mIndex, sIndex)">
                   ✕
                 </button>
               </td>
@@ -359,14 +371,14 @@
           </div>
         </div>
       </div>
-      <button
-        style="margin-top: 10px"
-        class="save-btn"
-        @confirm="submit"
-        @click="handleOpenConfirm"
-      >
-        Lưu sản phẩm
-      </button>
+      <div class="save-action">
+        <button type="button" class="btn-cancel-main" @click="goBack">
+          Huỷ
+        </button>
+        <button class="save-btn" @click="handleOpenConfirm">
+          Lưu sản phẩm
+        </button>
+      </div>
     </div>
   </div>
 
@@ -386,7 +398,10 @@
             v-for="m in mauSacDaChon.filter((x) => x.trangThai === 1)"
             :key="m.id"
             class="color-item"
-            :class="{ selected: tempMauSacList.some((x) => x.id === m.id) }"
+            :class="{
+              selected: tempMauSacList.some((x) => x.id === m.id),
+              locked: isEditMode && originalMauSacIds.includes(m.id),
+            }"
             @click="toggleTempMauSac(m)"
           >
             <span class="dot" :style="{ backgroundColor: m.rgb }"></span>
@@ -411,7 +426,10 @@
             v-for="k in kichCoList.filter((x) => x.trangThai === 1)"
             :key="k.id"
             class="color-item"
-            :class="{ selected: tempKichCoList.some((x) => x.id === k.id) }"
+            :class="{
+              selected: tempKichCoList.some((x) => x.id === k.id),
+              locked: isEditMode && originalKichCoIds.includes(k.id),
+            }"
             @click="toggleTempKichCo(k)"
           >
             <span>{{ k.tenKichCo }}</span>
@@ -463,6 +481,7 @@
       </div>
     </div>
   </div>
+
   <transition name="fade-modal">
     <div
       v-if="modal.show"
@@ -543,9 +562,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+
+const regexNoSpecialChar = /^[\p{L}\p{N}\s\-._()]+$/u;
+const originalMauSacIds = ref([]);
+const originalKichCoIds = ref([]);
 
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 const token = user?.accessToken;
@@ -558,6 +581,7 @@ const showQuickAllModal = ref(false);
 const quickAllGiaBan = ref(null);
 const quickAllGiaNhap = ref(null);
 const quickAllSoLuong = ref(null);
+const errors = ref({});
 
 const showConfirmModal = ref(false);
 const modal = ref({
@@ -566,6 +590,10 @@ const modal = ref({
   message: "",
   action: null,
 });
+
+const goBack = () => {
+  router.push("/admin/product");
+};
 
 const formatMoney = (value) => {
   if (!value && value !== 0) return "";
@@ -610,35 +638,37 @@ const openQuickAllModal = () => {
 const pageTitle = computed(() => {
   return productId ? "SỬA SẢN PHẨM" : "THÊM SẢN PHẨM";
 });
+
 const applyQuickAll = () => {
-  if (quickAllGiaBan.value === null && quickAllGiaNhap.value === null && quickAllSoLuong.value === null) {
-    showNotification("Vui lòng nhập ít nhất 1 trường để áp dụng", "warning");
+  if (
+    quickAllGiaBan.value === null &&
+    quickAllGiaNhap.value === null &&
+    quickAllSoLuong.value === null
+  ) {
+    showNotification("Vui lòng nhập ít nhất 1 trường", "warning");
     return;
   }
 
-  if (quickAllGiaBan.value !== null && Number(quickAllGiaBan.value) <= 0) {
-    return showNotification("Giá bán phải lớn hơn 0", "warning");
-  }
-  if (quickAllGiaNhap.value !== null && Number(quickAllGiaNhap.value) < 0) {
+  if (quickAllGiaBan.value !== null && quickAllGiaBan.value <= 0)
+    return showNotification("Giá bán phải lớn 0", "warning");
+
+  if (quickAllGiaNhap.value !== null && quickAllGiaNhap.value < 0)
     return showNotification("Giá nhập không được âm", "warning");
-  }
-  if (quickAllGiaBan.value !== null && quickAllGiaNhap.value !== null && Number(quickAllGiaNhap.value) > Number(quickAllGiaBan.value)) {
-    return showNotification("Giá nhập không được lớn hơn giá bán", "warning");
-  }
-  if (quickAllSoLuong.value !== null && Number(quickAllSoLuong.value) < 0) {
+
+  if (quickAllSoLuong.value !== null && quickAllSoLuong.value < 0)
     return showNotification("Số lượng không được âm", "warning");
-  }
 
   bienTheList.value.forEach((color) => {
     color.sizeList.forEach((size) => {
-      if (quickAllGiaBan.value !== null) size.giaBan = Number(quickAllGiaBan.value);
-      if (quickAllGiaNhap.value !== null) size.giaNhap = Number(quickAllGiaNhap.value);
-      if (quickAllSoLuong.value !== null) size.soLuongTon = Number(quickAllSoLuong.value);
+      if (quickAllGiaBan.value !== null) size.giaBan = quickAllGiaBan.value;
+      if (quickAllGiaNhap.value !== null) size.giaNhap = quickAllGiaNhap.value;
+      if (quickAllSoLuong.value !== null)
+        size.soLuongTon = quickAllSoLuong.value;
     });
   });
 
   showQuickAllModal.value = false;
-  showNotification("Đã áp dụng thông tin cho tất cả biến thể");
+  showNotification("Đã áp dụng cho tất cả biến thể");
 };
 
 const openConfirmModal = () => {
@@ -710,28 +740,20 @@ const fetchProductDetail = async () => {
     // 2. Xử lý Tags Màu sắc và Kích cỡ từ bienTheList
     const uniqueColors = [];
     const uniqueSizes = [];
-
-    // Map dữ liệu để hiển thị bảng (Group theo màu sắc để đúng logic template của bạn)
     const groupedByColor = {};
 
     data.bienTheList.forEach((variant) => {
-      // Lấy thông tin màu sắc (API trả về mảng mauSacList)
       const colorData = variant.mauSacList[0];
-      // Tìm ID màu sắc từ danh sách master đã fetch
       const colorObj = mauSacDaChon.value.find(
         (c) => c.tenMauSac === colorData.tenMauSac,
       );
-
-      // Lấy thông tin kích cỡ (API trả về mảng kichCoList chứa string)
       const sizeName = variant.kichCoList[0];
       const sizeObj = kichCoList.value.find((s) => s.tenKichCo === sizeName);
 
       if (colorObj) {
-        // Thu thập màu sắc duy nhất cho Tag
         if (!uniqueColors.find((c) => c.id === colorObj.id))
           uniqueColors.push(colorObj);
 
-        // Nhóm biến thể theo màu sắc để hiển thị bảng
         if (!groupedByColor[colorObj.id]) {
           groupedByColor[colorObj.id] = {
             mauSacId: colorObj.id,
@@ -741,11 +763,8 @@ const fetchProductDetail = async () => {
         }
 
         if (sizeObj) {
-          // Thu thập kích cỡ duy nhất cho Tag
           if (!uniqueSizes.find((s) => s.id === sizeObj.id))
             uniqueSizes.push(sizeObj);
-
-          // Thêm size vào nhóm màu tương ứng
           groupedByColor[colorObj.id].sizeList.push({
             idKichCo: sizeObj.id,
             soLuongTon: variant.soLuongTon,
@@ -756,15 +775,59 @@ const fetchProductDetail = async () => {
       }
     });
 
-    // Gán dữ liệu vào các biến hiển thị
     selectedMauSacList.value = uniqueColors;
     selectedKichCoList.value = uniqueSizes;
     bienTheList.value = Object.values(groupedByColor);
     showBienThe.value = true;
+
+    // --- THÊM MỚI: LƯU LẠI ID GỐC ĐỂ KHÓA ---
+    originalMauSacIds.value = uniqueColors.map((c) => c.id);
+    originalKichCoIds.value = uniqueSizes.map((s) => s.id);
   } catch (error) {
     console.error("Error fetching product details:", error);
     showNotification("Failed to fetch product details", "error");
   }
+};
+const syncVariantsTable = () => {
+  // Chỉ đồng bộ khi bảng biến thể đã hiện (Ở màn Sửa hoặc đã bấm Tạo biến thể)
+  if (!showBienThe.value) return;
+
+  // 1. QUÉT VÀ XOÁ: Loại bỏ các Màu sắc đã bị bỏ chọn (huỷ) khỏi bảng
+  bienTheList.value = bienTheList.value.filter((bt) =>
+    selectedMauSacList.value.some((m) => m.id === bt.mauSacId),
+  );
+
+  // 2. QUÉT VÀ XOÁ: Loại bỏ các Kích cỡ đã bị bỏ chọn (huỷ) khỏi bảng
+  bienTheList.value.forEach((bt) => {
+    bt.sizeList = bt.sizeList.filter((s) =>
+      selectedKichCoList.value.some((k) => k.id === s.idKichCo),
+    );
+  });
+
+  // 3. THÊM MỚI: Bổ sung các Màu & Size vừa được chọn thêm vào
+  selectedMauSacList.value.forEach((m) => {
+    let colorGroup = bienTheList.value.find((bt) => bt.mauSacId === m.id);
+    if (!colorGroup) {
+      colorGroup = {
+        mauSacId: m.id,
+        hinhAnhUrls: [],
+        sizeList: [],
+      };
+      bienTheList.value.push(colorGroup);
+    }
+
+    selectedKichCoList.value.forEach((k) => {
+      const sizeExists = colorGroup.sizeList.some((s) => s.idKichCo === k.id);
+      if (!sizeExists) {
+        colorGroup.sizeList.push({
+          idKichCo: k.id,
+          soLuongTon: 0,
+          giaNhap: 0,
+          giaBan: 0,
+        });
+      }
+    });
+  });
 };
 
 const API_BASE = "http://localhost:8080/api";
@@ -852,58 +915,97 @@ const closeModal = () => {
 const saveModal = async () => {
   if (modalType.value === "mau-sac") {
     selectedMauSacList.value = [...tempMauSacList.value];
+    syncVariantsTable(); // Gọi merge
     closeModal();
   } else if (modalType.value === "kich-co") {
     selectedKichCoList.value = [...tempKichCoList.value];
+    syncVariantsTable(); // Gọi merge
     closeModal();
+  } else if (modalType.value === "kich-co-add") {
+    if (!modalInput.value.trim()) return;
+
+    if (!regexNoSpecialChar.test(modalInput.value.trim())) {
+      return showNotification(
+        "Tên kích cỡ không được chứa ký tự đặc biệt",
+        "warning",
+      );
+    }
+
+    try {
+      const res = await axios.post(
+        `${API_BASE}/kich-co`,
+        { tenKichCo: modalInput.value, nguoiTao: username },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const newSize = res.data.data || res.data;
+      showNotification("Thêm kích cỡ thành công");
+      kichCoList.value.unshift(newSize);
+      tempKichCoList.value.push(newSize);
+      modalType.value = "kich-co";
+      modalInput.value = "";
+    } catch (e) {
+      showNotification(
+        e.response?.data?.message || "Lỗi khi thêm kích cỡ",
+        "error",
+      );
+    }
   } else {
-    const inputVal = modalInput.value.trim();
-    if (!inputVal) {
-      showNotification("Vui lòng không để trống thông tin", "warning");
-      return;
+    if (!modalInput.value.trim()) return;
+
+    if (!regexNoSpecialChar.test(modalInput.value.trim())) {
+      return showNotification(
+        "Tên thuộc tính không được chứa ký tự đặc biệt",
+        "warning",
+      );
     }
 
-    // Regex khắt khe cho Thuộc tính: Chỉ cho phép chữ, số, khoảng trắng và gạch ngang
-    const attrRegex = /^[a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\-]+$/;
-    if (!attrRegex.test(inputVal)) {
-      showNotification("Tên thuộc tính không được chứa ký tự đặc biệt (chỉ dùng chữ, số, gạch ngang)", "warning");
-      return;
-    }
-
-    if (modalType.value === "kich-co-add") {
-      try {
-        const res = await axios.post(`${API_BASE}/kich-co`, { tenKichCo: inputVal, nguoiTao: username }, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } });
-        const newSize = res.data.data || res.data;
-        showNotification("Thêm kích cỡ thành công");
-        kichCoList.value.unshift(newSize);
-        tempKichCoList.value.push(newSize);
-        modalType.value = "kich-co";
-        modalInput.value = "";
-      } catch (e) {
-        showNotification(e.response?.data?.message || "Lỗi khi thêm kích cỡ", "error");
+    const fieldMap = {
+      "xuat-xu": "tenXuatXu",
+      "loai-ao": "tenLoai",
+      "kieu-dang": "tenKieuDang",
+      "phong-cach-mac": "tenPhongCach",
+      "chat-lieu": "tenChatLieu",
+    };
+    try {
+      const res = await axios.post(
+        `${API_BASE}/${modalType.value}`,
+        { [fieldMap[modalType.value]]: modalInput.value, nguoiTao: username },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      showNotification("Thêm dữ liệu thành công");
+      switch (modalType.value) {
+        case "xuat-xu":
+          xuatXuList.value.push(res.data);
+          break;
+        case "loai-ao":
+          loaiAoList.value.push(res.data);
+          break;
+        case "kieu-dang":
+          kieuDangList.value.push(res.data);
+          break;
+        case "phong-cach-mac":
+          phongCachList.value.push(res.data);
+          break;
+        case "chat-lieu":
+          chatLieuList.value.push(res.data);
+          break;
       }
-    } else {
-      const fieldMap = {
-        "xuat-xu": "tenXuatXu",
-        "loai-ao": "tenLoai",
-        "kieu-dang": "tenKieuDang",
-        "phong-cach-mac": "tenPhongCach",
-        "chat-lieu": "tenChatLieu",
-      };
-      try {
-        const res = await axios.post(`${API_BASE}/${modalType.value}`, { [fieldMap[modalType.value]]: inputVal, nguoiTao: username }, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } });
-        showNotification("Thêm dữ liệu thành công");
-        switch (modalType.value) {
-          case "xuat-xu": xuatXuList.value.push(res.data); break;
-          case "loai-ao": loaiAoList.value.push(res.data); break;
-          case "kieu-dang": kieuDangList.value.push(res.data); break;
-          case "phong-cach-mac": phongCachList.value.push(res.data); break;
-          case "chat-lieu": chatLieuList.value.push(res.data); break;
-        }
-        closeModal();
-      } catch (e) {
-        showNotification(e.response?.data?.message || "Lỗi khi lưu dữ liệu", "error");
-      }
+      closeModal();
+    } catch (e) {
+      showNotification(
+        e.response?.data?.message || "Lỗi khi lưu dữ liệu",
+        "error",
+      );
     }
   }
 };
@@ -915,28 +1017,40 @@ const openColorModal = () => {
 };
 const closeColorModal = () => (showColorModal.value = false);
 const saveColorModal = async () => {
-  const inputVal = modalInput.value.trim();
-  if (!inputVal) {
+  if (!modalInput.value.trim()) {
     showNotification("Vui lòng nhập tên màu", "warning");
     return;
   }
-
-  // Regex khắt khe cho Màu sắc: Chỉ cho phép chữ, số, khoảng trắng và gạch ngang
-  const attrRegex = /^[a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\-]+$/;
-  if (!attrRegex.test(inputVal)) {
-    showNotification("Tên màu không được chứa ký tự đặc biệt", "warning");
+  if (!regexNoSpecialChar.test(modalInput.value.trim())) {
+    showNotification("Tên màu sắc không được chứa ký tự đặc biệt", "warning");
     return;
   }
 
   try {
-    const res = await axios.post(`${API_BASE}/mau-sac`, { tenMauSac: inputVal, rgb: modalColorRgb.value, nguoiTao: username }, { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } });
+    const res = await axios.post(
+      `${API_BASE}/mau-sac`,
+      {
+        tenMauSac: modalInput.value,
+        rgb: modalColorRgb.value,
+        nguoiTao: username,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
     const newColor = res.data.data || res.data;
     mauSacDaChon.value.unshift(newColor);
     tempMauSacList.value.push(newColor);
     showNotification("Thêm màu sắc thành công");
     closeColorModal();
   } catch (error) {
-    showNotification(error.response?.data?.message || "Lỗi khi thêm màu sắc", "error");
+    showNotification(
+      error.response?.data?.message || "Lỗi khi thêm màu sắc",
+      "error",
+    );
   }
 };
 
@@ -1013,6 +1127,22 @@ const handleCreateVariant = () => {
 };
 
 const removeSize = (mIndex, sIndex) => {
+  const mauSacId = bienTheList.value[mIndex].mauSacId;
+  const idKichCo = bienTheList.value[mIndex].sizeList[sIndex].idKichCo;
+
+  // Nếu đang sửa và cố xóa màu/size gốc -> Chặn
+  if (
+    isEditMode.value &&
+    originalMauSacIds.value.includes(mauSacId) &&
+    originalKichCoIds.value.includes(idKichCo)
+  ) {
+    showNotification(
+      "Không thể xóa biến thể đã tồn tại sẵn khi Sửa sản phẩm",
+      "warning",
+    );
+    return;
+  }
+
   bienTheList.value[mIndex].sizeList.splice(sIndex, 1);
   if (bienTheList.value[mIndex].sizeList.length === 0) {
     bienTheList.value.splice(mIndex, 1);
@@ -1023,10 +1153,33 @@ const removeSize = (mIndex, sIndex) => {
 const getMauSacName = (id) =>
   mauSacDaChon.value.find((m) => m.id === id)?.tenMauSac || "Màu";
 const toggleTempMauSac = (m) => {
+  const isCurrentlySelected = tempMauSacList.value.some((x) => x.id === m.id);
+  // Nếu đang Sửa, màu này là màu gốc, và hành động là "bỏ chọn" -> Chặn
+  if (
+    isEditMode.value &&
+    originalMauSacIds.value.includes(m.id) &&
+    isCurrentlySelected
+  ) {
+    showNotification("Không thể bỏ chọn màu sắc đã có sẵn khi sửa", "warning");
+    return;
+  }
+
   const idx = tempMauSacList.value.findIndex((x) => x.id === m.id);
   idx > -1 ? tempMauSacList.value.splice(idx, 1) : tempMauSacList.value.push(m);
 };
+
 const toggleTempKichCo = (k) => {
+  const isCurrentlySelected = tempKichCoList.value.some((x) => x.id === k.id);
+  // Nếu đang Sửa, size này là size gốc, và hành động là "bỏ chọn" -> Chặn
+  if (
+    isEditMode.value &&
+    originalKichCoIds.value.includes(k.id) &&
+    isCurrentlySelected
+  ) {
+    showNotification("Không thể bỏ chọn kích cỡ đã có sẵn khi sửa", "warning");
+    return;
+  }
+
   const idx = tempKichCoList.value.findIndex((x) => x.id === k.id);
   idx > -1 ? tempKichCoList.value.splice(idx, 1) : tempKichCoList.value.push(k);
 };
@@ -1090,80 +1243,150 @@ const fetchKichCo = async () => {
 };
 
 const validateBeforeSubmit = () => {
+  // Reset lỗi mỗi lần bấm lưu
+  errors.value = {};
+  let isValid = true;
+
   // ==== THÔNG TIN CƠ BẢN ====
-  if (!tenSanPham.value || !tenSanPham.value.trim()) {
-    showNotification("Vui lòng nhập tên sản phẩm", "warning");
+  if (!tenSanPham.value.trim()) {
+    errors.value.tenSanPham = "Vui lòng nhập tên sản phẩm";
+    isValid = false;
+  } else if (tenSanPham.value.trim().length < 3) {
+    errors.value.tenSanPham = "Tên sản phẩm tối thiểu 3 ký tự";
+    isValid = false;
+  } else if (tenSanPham.value.length > 150) {
+    errors.value.tenSanPham = "Tên sản phẩm tối đa 150 ký tự";
+    isValid = false;
+  } else if (!regexNoSpecialChar.test(tenSanPham.value.trim())) {
+    errors.value.tenSanPham = "Tên sản phẩm không được chứa ký tự đặc biệt";
+    isValid = false;
+  }
+
+  if (!selectedXuatXu.value) {
+    errors.value.xuatXu = "Vui lòng chọn xuất xứ";
+    isValid = false;
+  }
+  if (!selectedLoaiAo.value) {
+    errors.value.loaiAo = "Vui lòng chọn loại áo";
+    isValid = false;
+  }
+  if (!selectedKieuDang.value) {
+    errors.value.kieuDang = "Vui lòng chọn kiểu dáng";
+    isValid = false;
+  }
+  if (!selectedPhongCach.value) {
+    errors.value.phongCach = "Vui lòng chọn phong cách mặc";
+    isValid = false;
+  }
+  if (!selectedChatLieu.value) {
+    errors.value.chatLieu = "Vui lòng chọn chất liệu";
+    isValid = false;
+  }
+
+  if (!hinhAnhCloud.value) {
+    errors.value.hinhAnh = "Vui lòng tải ảnh đại diện sản phẩm";
+    isValid = false;
+  }
+
+  if (!isValid) {
+    showNotification("Vui lòng nhập đầy đủ thông tin bắt buộc!", "error");
     return false;
   }
 
-  const trimmedName = tenSanPham.value.trim();
-  if (trimmedName.length < 3 || trimmedName.length > 150) {
-    showNotification("Tên sản phẩm phải từ 3 đến 150 ký tự", "warning");
-    return false;
-  }
+  // ==== MÀU SẮC & KÍCH CỠ ====
+  if (!selectedMauSacList.value.length)
+    return (
+      showNotification("Vui lòng chọn ít nhất 1 màu sắc", "warning"),
+      false
+    );
+  if (!selectedKichCoList.value.length)
+    return (
+      showNotification("Vui lòng chọn ít nhất 1 kích cỡ", "warning"),
+      false
+    );
+  if (!bienTheList.value.length)
+    return (
+      showNotification("Vui lòng tạo ít nhất 1 biến thể", "warning"),
+      false
+    );
 
-  // Regex cho Tên Sản Phẩm: Cho phép chữ, số, khoảng trắng và các dấu cơ bản (- . , + ())
-  // CHẶN các ký tự đặc biệt lạ như @ # $ % ^ & * < > { } [ ] \ ! ?
-  const productNameRegex = /^[a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\-\.,+()]+$/;
-  if (!productNameRegex.test(trimmedName)) {
-    showNotification("Tên sản phẩm không được chứa ký tự đặc biệt lạ (@, #, $, %, <, >...)", "warning");
-    return false;
-  }
-
-  if (!selectedXuatXu.value) return (showNotification("Vui lòng chọn xuất xứ", "warning"), false);
-  if (!selectedLoaiAo.value) return (showNotification("Vui lòng chọn loại áo", "warning"), false);
-  if (!selectedKieuDang.value) return (showNotification("Vui lòng chọn kiểu dáng", "warning"), false);
-  if (!selectedPhongCach.value) return (showNotification("Vui lòng chọn phong cách mặc", "warning"), false);
-  if (!selectedChatLieu.value) return (showNotification("Vui lòng chọn chất liệu", "warning"), false);
-
-  if (!moTa.value || !moTa.value.trim()) return (showNotification("Vui lòng nhập mô tả sản phẩm", "warning"), false);
-  if (!hinhAnhCloud.value) return (showNotification("Vui lòng tải ảnh chính cho sản phẩm", "warning"), false);
-
-  // ==== DANH SÁCH BIẾN THỂ ====
-  if (!bienTheList.value || bienTheList.value.length === 0) {
-    showNotification("Vui lòng chọn màu, kích cỡ và ấn 'Tạo biến thể'", "warning");
-    return false;
-  }
-
-  // ==== VALIDATE CHI TIẾT TỪNG BIẾN THỂ ====
+  // ==== VALIDATE BIẾN THỂ TỪNG DÒNG (Giữ nguyên logic cũ của bạn) ====
   for (const color of bienTheList.value) {
-    const colorName = getMauSacName(color.mauSacId);
-
-    // Bắt buộc có ảnh cho từng màu
+    if (!color.sizeList.length) {
+      showNotification(
+        `Màu ${getMauSacName(color.mauSacId)} chưa có kích cỡ`,
+        "warning",
+      );
+      return false;
+    }
     if (!color.hinhAnhUrls || color.hinhAnhUrls.length === 0) {
-      showNotification(`Vui lòng tải ảnh cho màu: ${colorName}`, "warning");
+      showNotification(
+        `Vui lòng thêm ảnh biến thể cho màu ${getMauSacName(color.mauSacId)}`,
+        "warning",
+      );
       return false;
     }
 
-    if (!color.sizeList || color.sizeList.length === 0) {
-      showNotification(`Màu ${colorName} chưa có kích cỡ nào`, "warning");
-      return false;
-    }
-
+    const sizeSet = new Set();
     for (const size of color.sizeList) {
-      const sizeName = getKichCoName(size.idKichCo);
-      
-      // Kiểm tra Giá bán
-      if (size.giaBan === null || size.giaBan === "" || size.giaBan <= 0) {
-        showNotification(`Màu ${colorName} (Size ${sizeName}): Giá bán phải lớn hơn 0`, "error");
+      if (sizeSet.has(size.idKichCo)) {
+        showNotification(
+          `Màu ${getMauSacName(color.mauSacId)} bị trùng kích cỡ`,
+          "error",
+        );
         return false;
       }
-      
-      // Kiểm tra Giá nhập
-      if (size.giaNhap === null || size.giaNhap === "" || size.giaNhap < 0) {
-        showNotification(`Màu ${colorName} (Size ${sizeName}): Giá nhập không được để trống hoặc âm`, "error");
+      sizeSet.add(size.idKichCo);
+
+      if (size.giaBan === null || size.giaBan === "") {
+        showNotification(
+          `Vui lòng nhập giá bán cho màu ${getMauSacName(color.mauSacId)}`,
+          "warning",
+        );
+        return false;
+      }
+      if (size.giaNhap === null || size.giaNhap === "") {
+        showNotification(
+          `Vui lòng nhập giá nhập cho màu ${getMauSacName(color.mauSacId)}`,
+          "warning",
+        );
+        return false;
+      }
+      if (size.soLuongTon === null || size.soLuongTon === "") {
+        showNotification(
+          `Vui lòng nhập số lượng cho màu ${getMauSacName(color.mauSacId)}`,
+          "warning",
+        );
         return false;
       }
 
-      // Logic: Giá nhập không được lớn hơn Giá bán
-      if (Number(size.giaNhap) > Number(size.giaBan)) {
-        showNotification(`Màu ${colorName} (Size ${sizeName}): Giá nhập KHÔNG ĐƯỢC LỚN HƠN giá bán`, "error");
+      if (size.giaBan <= 0) {
+        showNotification("Giá bán phải lớn hơn 0", "error");
+        return false;
+      }
+      if (size.giaBan > 999999999 || size.giaNhap > 999999999) {
+        showNotification("Giá tiền vượt quá giới hạn hệ thống", "error");
+        return false;
+      }
+      if (size.giaNhap <= 0) {
+        showNotification("Giá nhập phải lớn hơn 0", "error");
+        return false;
+      }
+      if (size.giaNhap >= size.giaBan) {
+        showNotification("Giá nhập phải nhỏ hơn giá bán", "error");
         return false;
       }
 
-      // Kiểm tra Số lượng
-      if (size.soLuongTon === null || size.soLuongTon === "" || size.soLuongTon < 0) {
-        showNotification(`Màu ${colorName} (Size ${sizeName}): Số lượng không được để trống hoặc âm`, "error");
+      if (size.soLuongTon < 0) {
+        showNotification("Số lượng tồn không được âm", "error");
+        return false;
+      }
+      if (size.soLuongTon > 100000) {
+        showNotification("Số lượng tồn quá lớn (Max: 100.000)", "error");
+        return false;
+      }
+      if (!Number.isInteger(Number(size.soLuongTon))) {
+        showNotification("Số lượng tồn phải là số nguyên", "error");
         return false;
       }
     }
@@ -1264,6 +1487,24 @@ onMounted(async () => {
     initSelect2(".select2-phongcach", "Chọn phong cách", selectedPhongCach);
     initSelect2(".select2-chatlieu", "Chọn chất liệu", selectedChatLieu);
   }, 0);
+});
+watch(selectedXuatXu, (val) => {
+  if (val) errors.value.xuatXu = "";
+});
+watch(selectedLoaiAo, (val) => {
+  if (val) errors.value.loaiAo = "";
+});
+watch(selectedKieuDang, (val) => {
+  if (val) errors.value.kieuDang = "";
+});
+watch(selectedPhongCach, (val) => {
+  if (val) errors.value.phongCach = "";
+});
+watch(selectedChatLieu, (val) => {
+  if (val) errors.value.chatLieu = "";
+});
+watch(hinhAnhCloud, (val) => {
+  if (val) errors.value.hinhAnh = "";
 });
 </script>
 
@@ -2200,5 +2441,77 @@ input[type="number"] {
   transform: translateY(-50%);
   color: #666;
   font-size: 14px;
+}
+.save-action {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px; /* Thêm dòng này để cách 2 nút ra */
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-cancel-main {
+  background: #e5e7eb; /* Màu xám nhạt */
+  color: #374151;
+  padding: 12px 24px; /* Kích thước y hệt save-btn */
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel-main:hover {
+  background: #d1d5db; /* Đậm hơn một chút khi di chuột vào */
+  transform: translateY(-2px); /* Hiệu ứng nảy lên giống nút Thêm */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Đổ bóng giống nút Thêm */
+}
+/* Styling cho các input thông thường bị lỗi */
+input.is-invalid,
+textarea.is-invalid {
+  border-color: #d9534f !important;
+  background-color: #fff9f9 !important; /* Màu nền hơi hồng */
+}
+input.is-invalid:focus,
+textarea.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.15) !important;
+}
+
+/* Styling cho Select2 bị lỗi */
+.has-error :deep(.select2-selection--single) {
+  border-color: #d9534f !important;
+  background-color: #fff9f9 !important;
+}
+
+/* Styling cho khung Upload ảnh bị lỗi */
+.image-box.is-invalid {
+  border-color: #d9534f !important;
+  background-color: #fff9f9 !important;
+}
+
+/* Đoạn text thông báo lỗi giống trong hình */
+.error-text {
+  color: #d9534f;
+  font-size: 13px;
+  margin-top: 5px;
+  display: block;
+}
+.color-item.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: all;
+  background: #e9ecef;
+  border-color: #ced4da;
+  color: #6c757d;
+}
+
+.color-item.locked.selected {
+  background: #6b3f23;
+  color: white;
+  opacity: 0.7;
 }
 </style>

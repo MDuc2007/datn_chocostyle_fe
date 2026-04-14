@@ -689,17 +689,21 @@ const connectWebSocket = () => {
       console.log("POS: Đã kết nối WebSocket thành công!");
 
       // Lắng nghe kênh cập nhật giá/voucher
-      stompClient.subscribe("/topic/public-updates", (message) => {
+      stompClient.subscribe("/topic/public-updates", async (message) => {
         console.log("POS: Server báo có cập nhật mới, đang tải lại giá...");
         // Nếu đang mở đơn hàng và có sản phẩm thì mới kiểm tra lại
         if (currentOrder.value && currentOrder.value.cart.length > 0) {
-          autoRevalidateSystem();
+          console.log("WS: Có cập nhật voucher");
+
+          await fetchVouchers(); // 🔥 QUAN TRỌNG
+          lastSuggestedVoucherCode = null;
+          await autoRevalidateSystem();
         }
       });
     },
     (error) => {
       console.error("Lỗi kết nối WebSocket POS:", error);
-    }
+    },
   );
 };
 
@@ -1582,7 +1586,7 @@ watch(
 
       if (!best) return;
 
-      if (!currentOrder.value.appliedVoucher) {
+      if (!currentOrder.value.appliedVoucher || !hasAutoAppliedOnce) {
         currentOrder.value.voucherCode = best.maPgg;
 
         const isPercent =
@@ -1599,6 +1603,7 @@ watch(
         };
 
         hasAutoAppliedOnce = true;
+        lastSuggestedVoucherCode = best.maPgg;
       }
     }, 300);
   },
@@ -1817,7 +1822,7 @@ const submitOrder = async () => {
     const payload = {
       loaiDon: order.deliveryType === "DELIVERY" ? 3 : 1,
       tongTienHang: subTotal.value,
-      phiShip: currentOrder.value.shippingFee || 0,
+      phiShip: order.deliveryType === "DELIVERY" ? order.shippingFee : 0,
 
       ghiChu:
         order.paymentMethod === "CASH"
@@ -2037,7 +2042,7 @@ watch(
 
 onMounted(async () => {
   isSettingAddress.value = true;
-  await getProvinces(); 
+  await getProvinces();
 
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -2067,19 +2072,13 @@ onMounted(async () => {
   }
 
   await fetchVouchers();
-
+  if (currentOrder.value?.appliedVoucher) {
+    hasAutoAppliedOnce = true;
+    lastSuggestedVoucherCode = currentOrder.value.appliedVoucher.code;
+  }
   isSettingAddress.value = false;
   isReady.value = true;
-
-  // 👉 1. XÓA ĐOẠN SET_INTERVAL CŨ NÀY ĐI
-  // autoRevalidateInterval = setInterval(async () => {
-  //   if (!currentOrder.value) return;
-  //   if (!currentOrder.value.cart.length) return;
-  //   await autoRevalidateSystem();
-  // }, 1000);
-
-  // 👉 2. THÊM DÒNG NÀY ĐỂ MỞ KẾT NỐI WEBSOCKET
-  connectWebSocket(); 
+  connectWebSocket();
 });
 
 onBeforeUnmount(async () => {
@@ -2087,13 +2086,6 @@ onBeforeUnmount(async () => {
     await qrScanner.stop();
     await qrScanner.clear();
   }
-
-  // 👉 3. XÓA ĐOẠN CLEAR_INTERVAL CŨ NÀY ĐI
-  // if (autoRevalidateInterval) {
-  //   clearInterval(autoRevalidateInterval);
-  // }
-
-  // 👉 4. THÊM DÒNG NÀY ĐỂ ĐÓNG WEBSOCKET KHI RỜI TRANG
   disconnectWebSocket();
 });
 
@@ -2361,14 +2353,38 @@ const autoRevalidateSystem = async () => {
         found.trangThai !== 1 ||
         (found.dieuKienDonHang && subTotal.value < found.dieuKienDonHang)
       ) {
+        const best = bestVoucherSuggestion.value;
+
         openConfirmModal(
           "Voucher không còn hợp lệ",
-          "Phiếu giảm giá không còn đủ điều kiện áp dụng.",
+          best
+            ? `Phiếu hiện tại không dùng được.\nÁp dụng mã tốt hơn ${best.maPgg} - giảm ${formatPrice(best.discountValue)}?`
+            : "Phiếu giảm giá không còn đủ điều kiện áp dụng.",
           () => {
-            currentOrder.value.appliedVoucher = null;
-            currentOrder.value.voucherCode = "";
+            if (best) {
+              currentOrder.value.voucherCode = best.maPgg;
+
+              const isPercent =
+                best.loaiGiam === "PERCENT" ||
+                best.loaiGiam === "PHAN_TRAM" ||
+                best.loaiGiam === 0;
+
+              currentOrder.value.appliedVoucher = {
+                code: best.maPgg,
+                percent: isPercent ? Number(best.giaTri) : 0,
+                amount: !isPercent ? Number(best.giaTri) : 0,
+                maxValue: best.giaTriToiDa,
+                message: best.tenPgg,
+              };
+
+              showToast("Đã tự động áp dụng voucher tốt hơn");
+            } else {
+              currentOrder.value.appliedVoucher = null;
+              currentOrder.value.voucherCode = "";
+            }
           },
         );
+
         return;
       }
     }
@@ -2405,7 +2421,7 @@ const autoRevalidateSystem = async () => {
 
     // nếu có voucher tốt hơn
     if (
-      hasAutoAppliedOnce &&
+      currentVoucher &&
       currentVoucher.code !== best.maPgg &&
       lastSuggestedVoucherCode !== best.maPgg
     ) {
@@ -2485,6 +2501,18 @@ const openConfirmModal = (title, message, cb) => {
   modal.value = { show: true, title, message, onConfirm: cb };
 };
 const closeConfirmModal = () => {
+  // 🔥 nếu voucher hiện tại đã invalid thì clear luôn
+  const current = currentOrder.value?.appliedVoucher;
+
+  if (current) {
+    const found = vouchers.value.find((v) => v.maPgg === current.code);
+
+    if (!found || found.trangThai !== 1) {
+      currentOrder.value.appliedVoucher = null;
+      currentOrder.value.voucherCode = "";
+    }
+  }
+
   modal.value.show = false;
 };
 const handleModalConfirm = () => {
@@ -2514,21 +2542,21 @@ const dongBoSangMobile = async () => {
 
   // 2. Đóng gói dữ liệu khớp 100% với các biến Flutter đang chờ
   const payload = {
-    maHoaDon: order.maHoaDon, 
-    
-    // 👉 ĐÃ THÊM 3 DÒNG NÀY ĐỂ TRUYỀN THÔNG TIN KHÁCH & VOUCHER SANG APP:
-    tenKhachHang: order.customer?.name || 'Khách lẻ',
-    soDienThoai: order.customer?.phone || '',
-    tenVoucher: order.appliedVoucher ? order.appliedVoucher.code : '',
+    maHoaDon: order.maHoaDon,
 
-    sanPhamList: order.cart.map(item => ({
-      tenSanPham: item.name || 'Sản phẩm', 
+    // 👉 ĐÃ THÊM 3 DÒNG NÀY ĐỂ TRUYỀN THÔNG TIN KHÁCH & VOUCHER SANG APP:
+    tenKhachHang: order.customer?.name || "Khách lẻ",
+    soDienThoai: order.customer?.phone || "",
+    tenVoucher: order.appliedVoucher ? order.appliedVoucher.code : "",
+
+    sanPhamList: order.cart.map((item) => ({
+      tenSanPham: item.name || "Sản phẩm",
       soLuong: item.quantity,
       donGia: item.price || 0,
-      hinhAnh: item.image || '',
-      maSanPham: item.code || '',
-      mauSac: item.color || '',
-      kichCo: item.size || ''
+      hinhAnh: item.image || "",
+      maSanPham: item.code || "",
+      mauSac: item.color || "",
+      kichCo: item.size || "",
     })),
     tongTienHang: subTotal.value || 0,
     giamGia: discount.value || 0,
@@ -2547,10 +2575,10 @@ const dongBoSangMobile = async () => {
 };
 watch(
   [
-    () => currentOrder.value?.cart,     // Theo dõi khi thêm/xóa/sửa sản phẩm
-    () => activeOrderIndex.value,       // Theo dõi khi nhân viên bấm sang Tab đơn khác
-    () => total.value,                // Theo dõi khi tổng tiền thay đổi (ví dụ do voucher tự động áp dụng)
-    () => currentOrder.value?.customer                   
+    () => currentOrder.value?.cart, // Theo dõi khi thêm/xóa/sửa sản phẩm
+    () => activeOrderIndex.value, // Theo dõi khi nhân viên bấm sang Tab đơn khác
+    () => total.value, // Theo dõi khi tổng tiền thay đổi (ví dụ do voucher tự động áp dụng)
+    () => currentOrder.value?.customer,
   ],
   () => {
     dongBoSangMobile();

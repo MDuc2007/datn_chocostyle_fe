@@ -115,7 +115,7 @@ const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
 const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
-    await fetch("https://formsubmit.co/ajax/hungbe0of@gmail.com", {
+    await fetch("https://formsubmit.co/ajax/truonglelamquyet12@gmail.com", {
       method: "POST",
       headers: { 
           'Content-Type': 'application/json',

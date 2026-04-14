@@ -485,30 +485,30 @@ const validate = () => {
   let valid = true;
 
   Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
-
-  if (!form.tenDotGiamGia.trim()) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
-    valid = false;
-  }
-
-  if (form.tenDotGiamGia.trim().length < 3) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá phải ít nhất 3 ký tự";
-    return false;
-  }
-
-  if (form.tenDotGiamGia.trim().length > 100) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
-    return false;
-  }
+  const name = form.tenDotGiamGia.trim();
 
   const regex = /^[a-zA-Z0-9À-ỹ\s]+$/;
 
-  if (!regex.test(form.tenDotGiamGia.trim())) {
-    errors.tenDotGiamGia = "Tên đợt giảm giá không được chứa ký tự đặc biệt";
-    return false;
+  if (!name) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá không được để trống";
+    valid = false;
+  } else if (name.length < 3) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá phải có ít nhất 3 ký tự";
+    valid = false;
+  } else if (name.length > 100) {
+    errors.tenDotGiamGia = "Tên đợt giảm giá tối đa 100 ký tự";
+    valid = false;
+  } else if (!regex.test(form.tenDotGiamGia.trim())) {
+    errors.tenDotGiamGia = "Tên không được chứa ký tự đặc biệt";
+    valid = false;
   }
 
-  if (!form.giaTriGiam || form.giaTriGiam < 1 || form.giaTriGiam > 100) {
+  const percentRegex = /^[0-9]+$/;
+
+  if (!percentRegex.test(String(form.giaTriGiam))) {
+    errors.giaTriGiam = "Giá trị giảm chỉ được chứa số";
+    valid = false;
+  } else if (form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
   }
@@ -533,7 +533,6 @@ const validate = () => {
 
   return valid;
 };
-
 const searchKeyword = ref("");
 
 const filteredSanPhamList = computed(() => {
@@ -598,14 +597,22 @@ const isAllSanPhamSelected = computed(() => {
     )
   );
 });
-
 const toggleAllSanPham = async () => {
   if (isAllSanPhamSelected.value) {
-    selectedSanPhamIds.value = [];
-    selectedChiTietIds.value = []; // ⭐ thêm dòng này
-    Object.keys(chiTietMap).forEach((k) => {
-      delete chiTietMap[k as any];
+    filteredSanPhamList.value.forEach((sp) => {
+      const index = selectedSanPhamIds.value.indexOf(sp.id);
+      if (index !== -1) selectedSanPhamIds.value.splice(index, 1);
+
+      delete chiTietMap[sp.id];
     });
+
+    selectedChiTietIds.value = selectedChiTietIds.value.filter(
+      (id) =>
+        !Object.values(chiTietMap)
+          .flat()
+          .some((ct) => ct.id === id),
+    );
+
     return;
   }
 
@@ -618,6 +625,7 @@ const toggleAllSanPham = async () => {
       const res = await axios.get(
         `http://localhost:8080/api/san-pham/${sp.id}`,
       );
+
       chiTietMap[sp.id] = res.data.bienTheList || [];
     }
 
@@ -782,7 +790,7 @@ const back = () => router.push("/admin/promotion");
 }
 
 .panel {
-  height: 480px;
+  min-height: 480px;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 20px;
@@ -1374,5 +1382,11 @@ th {
   background: linear-gradient(135deg, #6b3f23, #c89b6d);
   cursor: pointer;
   border: none;
+}
+.error {
+  color: red;
+  font-size: 13px;
+  margin-top: 5px;
+  display: block;
 }
 </style>

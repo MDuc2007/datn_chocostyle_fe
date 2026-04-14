@@ -170,7 +170,23 @@
             v-model="customerKeyword"
           />
         </div>
-
+        <div class="toolbar-item">
+          <label>Thống kê</label>
+          <div class="switch-group">
+            <button
+              :class="{ active: thongKeType === 'THANG' }"
+              @click="thongKeType = 'THANG'"
+            >
+              Tháng
+            </button>
+            <button
+              :class="{ active: thongKeType === 'NAM' }"
+              @click="thongKeType = 'NAM'"
+            >
+              Năm
+            </button>
+          </div>
+        </div>
         <div class="toolbar-item">
           <label>Sắp xếp</label>
           <select class="toolbar-input" v-model="sortBy">
@@ -224,9 +240,17 @@
             <td>{{ c.tenKhachHang }}</td>
             <td>{{ c.email }}</td>
             <td>{{ formatDateVN(c.ngaySinh) }}</td>
-            <td>{{ c.tongDonHang ?? 0 }}</td>
-            <td>{{ formatMoney(c.tongChiTieu) }}</td>
-            <td>{{ formatDateVN(c.lanMuaGanNhat) || "Chưa mua" }}</td>
+            <td>
+              {{ thongKeType === "THANG" ? c.tongDonHangThang : c.tongDonHang }}
+            </td>
+            <td>
+              {{
+                formatMoney(
+                  thongKeType === "THANG" ? c.tongChiTieuThang : c.tongChiTieu,
+                )
+              }}
+            </td>
+            <td>{{ formatDateVN(c.lanMuaGanNhat) }}</td>
           </tr>
         </tbody>
       </table>
@@ -496,8 +520,8 @@ const validateForm = () => {
   } else if (form.tenPgg.trim().length < 3) {
     errors.tenPgg = "Tên phải ít nhất 3 ký tự";
     valid = false;
-  } else if (form.tenPgg.trim().length > 100) {
-    errors.tenPgg = "Tên tối đa 100 ký tự";
+  } else if (form.tenPgg.trim().length > 50) {
+    errors.tenPgg = "Tên tối đa 50 ký tự";
     valid = false;
   } else if (!regex.test(form.tenPgg.trim())) {
     errors.tenPgg = "Tên không được chứa ký tự đặc biệt";
@@ -703,36 +727,54 @@ const submit = async () => {
     loading.value = false;
   }
 };
+const filter = reactive({
+  minSpend: null,
+});
+
+const thongKeType = ref("THANG");
 
 const filteredCustomers = computed(() => {
   let list = [...customers.value];
 
-  if (customerKeyword.value) {
-    const kw = customerKeyword.value.toLowerCase();
+  const kw = customerKeyword.value?.trim().toLowerCase();
+  if (kw) {
     list = list.filter(
       (c) =>
-        c.tenKhachHang.toLowerCase().includes(kw) ||
-        (c.email && c.email.toLowerCase().includes(kw)),
+        c.tenKhachHang?.toLowerCase().includes(kw) ||
+        c.email?.toLowerCase().includes(kw),
     );
   }
 
-  if (sortBy.value === "order-desc") {
-    list.sort((a, b) => (b.tongDonHang ?? 0) - (a.tongDonHang ?? 0));
+  if (filter.minSpend != null) {
+    list = list.filter((c) => (c.tongChiTieu ?? 0) >= filter.minSpend);
   }
 
-  if (sortBy.value === "order-asc") {
-    list.sort((a, b) => (a.tongDonHang ?? 0) - (b.tongDonHang ?? 0));
-  }
+  switch (sortBy.value) {
+    case "order-desc":
+      return list.sort((a, b) => (b.tongDonHang ?? 0) - (a.tongDonHang ?? 0));
 
-  if (sortBy.value === "spend-desc") {
-    list.sort((a, b) => (b.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
-  }
+    case "order-asc":
+      return list.sort((a, b) => (a.tongDonHang ?? 0) - (b.tongDonHang ?? 0));
 
-  if (sortBy.value === "spend-asc") {
-    list.sort((a, b) => (a.tongChiTieu ?? 0) - (b.tongChiTieu ?? 0));
-  }
+    case "spend-desc":
+      return list.sort((a, b) => (b.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
 
-  return list;
+    case "spend-asc":
+      return list.sort((a, b) => (a.tongChiTieu ?? 0) - (b.tongChiTieu ?? 0));
+
+    default:
+      if (thongKeType.value === "THANG") {
+        return list.sort(
+          (a, b) => (b.tongChiTieuThang ?? 0) - (a.tongChiTieuThang ?? 0),
+        );
+      } else {
+        return list.sort((a, b) => (b.tongChiTieu ?? 0) - (a.tongChiTieu ?? 0));
+      }
+  }
+});
+
+watch(thongKeType, () => {
+  customerCurrentPage.value = 1;
 });
 
 watch(filteredCustomers, () => {
@@ -1476,6 +1518,31 @@ const back = () => router.push("/admin/voucher");
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: zoomIn 0.25s ease;
+}
+.switch-group {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 42px;
+}
+
+.switch-group button {
+  height: 100%;
+  padding: 0 16px;
+  border: none;
+  background: #f3f3f3;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch-group button.active {
+  background: #fff;
+  color: #63391f;
+  font-weight: 600;
 }
 
 @keyframes zoomIn {

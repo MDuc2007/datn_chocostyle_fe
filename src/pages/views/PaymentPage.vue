@@ -1129,10 +1129,16 @@ const checkPriceAndVoucherUpdates = async () => {
   }
 
   // 6. Logic Voucher Thông Minh
+  // 6. Logic Voucher Thông Minh
   if (processedVouchers.value && processedVouchers.value.length > 0) {
     const bestVoucher = processedVouchers.value[0];
 
-    if (!selectedVoucher.value && bestVoucher.simulatedDiscount > 0) {
+    // CHỈ áp dụng nếu Voucher đầu tiên hợp lệ (isEligible)
+    if (
+      !selectedVoucher.value &&
+      bestVoucher.isEligible &&
+      bestVoucher.simulatedDiscount > 0
+    ) {
       selectedVoucher.value = bestVoucher;
       addNotification(
         `Đã tự động áp dụng mã ${bestVoucher.maPgg} tiết kiệm nhất!`,
@@ -1144,18 +1150,29 @@ const checkPriceAndVoucherUpdates = async () => {
         (v) => v.id === oldVoucherId,
       );
 
-      if (!currentValidVoucher || currentValidVoucher.simulatedDiscount === 0) {
+      // Nếu Voucher hiện tại đang dùng bị mất hiệu lực (không đủ điều kiện)
+      if (
+        !currentValidVoucher ||
+        !currentValidVoucher.isEligible ||
+        currentValidVoucher.simulatedDiscount === 0
+      ) {
+        // Đổi sang bestVoucher nếu nó hợp lệ, ngược lại gỡ bỏ Voucher hoàn toàn (null)
         selectedVoucher.value =
-          bestVoucher.simulatedDiscount > 0 ? bestVoucher : null;
+          bestVoucher.isEligible && bestVoucher.simulatedDiscount > 0
+            ? bestVoucher
+            : null;
+
         addNotification(
-          "Mã giảm giá cũ không còn hợp lệ, hệ thống đã tự động cập nhật!",
+          "Mã giảm giá cũ không còn hợp lệ do đơn hàng không đủ điều kiện, hệ thống đã tự động cập nhật!",
           "warning",
         );
         hasChanged = true;
       } else if (
         bestVoucher.id !== oldVoucherId &&
+        bestVoucher.isEligible &&
         bestVoucher.simulatedDiscount > currentValidVoucher.simulatedDiscount
       ) {
+        // Có Voucher khác tốt hơn thì tự đổi
         selectedVoucher.value = bestVoucher;
         addNotification(
           `Đã tự động đổi sang mã ${bestVoucher.maPgg} vì có mức giảm tốt hơn!`,
@@ -1205,30 +1222,45 @@ const finalTotal = computed(() => {
 });
 
 const processedVouchers = computed(() => {
+  // Đảm bảo lấy subTotal (Giá đã trừ Sale sản phẩm)
   const basePrice = subTotal.value;
+
   let list = availableVouchers.value.map((v) => {
-    const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
+    const dieuKien = v.dieuKienDonHang || v.dieueKienDonHang || 0;
+
+    // SO SÁNH GIÁ ĐÃ GIẢM VỚI ĐIỀU KIỆN
     const isEligible = basePrice >= dieuKien;
     let simulatedDiscount = 0;
+
     if (isEligible) {
       if (v.loaiGiam === "PERCENT") {
+        // TÍNH PHẦN TRĂM GIẢM GIÁ DỰA TRÊN GIÁ ĐÃ GIẢM
         simulatedDiscount = (basePrice * v.giaTri) / 100;
-        if (v.giaTriToiDa && simulatedDiscount > v.giaTriToiDa)
+        if (v.giaTriToiDa && simulatedDiscount > v.giaTriToiDa) {
           simulatedDiscount = v.giaTriToiDa;
+        }
       } else {
+        // Giảm thẳng tiền mặt
         simulatedDiscount = v.giaTri;
       }
     }
-    return { ...v, simulatedDiscount };
+
+    return { ...v, simulatedDiscount, isEligible };
   });
+
   list.sort((a, b) => b.simulatedDiscount - a.simulatedDiscount);
-  if (list.length > 0 && list[0].simulatedDiscount > 0) list[0].isBest = true;
+
+  if (list.length > 0 && list[0].isEligible && list[0].simulatedDiscount > 0) {
+    list[0].isBest = true;
+  }
+
   return list;
 });
-
 const selectVoucher = (v) => {
+  // Vẫn lấy Giá đã giảm (Sale) để check
   const basePrice = subTotal.value;
   const dieuKien = v.dieueKienDonHang || v.dieuKienDonHang || 0;
+
   if (basePrice < dieuKien) {
     addNotification(
       `Đơn hàng tối thiểu ${formatPrice(dieuKien)} để dùng mã này`,
@@ -1643,10 +1675,38 @@ onUnmounted(() => {
 watch(
   () => processedVouchers.value,
   (newVal) => {
+    // Trường hợp 1: Chưa có voucher nào được chọn -> Tự động tìm cái tốt nhất
     if (!selectedVoucher.value && newVal && newVal.length > 0) {
       const bestVoucher = newVal[0];
-      if (bestVoucher.simulatedDiscount > 0) {
+      if (bestVoucher.isEligible && bestVoucher.simulatedDiscount > 0) {
         selectedVoucher.value = bestVoucher;
+      }
+    }
+    // Trường hợp 2: Đã có voucher đang hiển thị -> Phải kiểm tra lại xem nó còn đủ điều kiện không
+    else if (selectedVoucher.value && newVal) {
+      // Tìm lại voucher đang chọn trong danh sách vừa tính toán lại
+      const currentVoucherInList = newVal.find(
+        (v) => v.id === selectedVoucher.value.id,
+      );
+
+      // Nếu voucher này không còn hợp lệ (isEligible = false) hoặc mức giảm tụt về 0
+      if (
+        !currentVoucherInList ||
+        !currentVoucherInList.isEligible ||
+        currentVoucherInList.simulatedDiscount === 0
+      ) {
+        // Thử tìm xem có mã nào khác hợp lệ để tự động thay thế không
+        const bestVoucher = newVal.length > 0 ? newVal[0] : null;
+
+        if (
+          bestVoucher &&
+          bestVoucher.isEligible &&
+          bestVoucher.simulatedDiscount > 0
+        ) {
+          selectedVoucher.value = bestVoucher; // Gán mã mới tốt hơn
+        } else {
+          selectedVoucher.value = null; // KHÔNG ĐỦ ĐIỀU KIỆN THÌ GỠ BỎ HOÀN TOÀN KHỎI MÀN HÌNH
+        }
       }
     }
   },
