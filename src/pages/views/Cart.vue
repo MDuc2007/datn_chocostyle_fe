@@ -7,14 +7,7 @@
         <div class="breadcrumb">
           <span class="home-link" @click="$router.push('/')">Trang chủ</span>
           <span class="separator">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </span>
           <span class="current">Giỏ hàng</span>
         </div>
@@ -25,18 +18,9 @@
 
         <div v-if="cartItems.length === 0" class="empty-cart fade-in">
           <div class="empty-icon-wrapper">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="empty-svg"
-            >
-              <path
-                d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
-              ></path>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" class="empty-svg">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <path d="M16 10a4 4 0 0 1-8 0"></path>
             </svg>
@@ -51,12 +35,7 @@
           <div class="cart-left">
             <div class="cart-actions-top">
               <label class="select-all-label">
-                <input
-                  type="checkbox"
-                  :checked="isAllSelected"
-                  @change="toggleSelectAll"
-                  class="custom-checkbox"
-                />
+                <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="custom-checkbox" />
                 <span>Chọn tất cả ({{ totalItems }} sản phẩm)</span>
               </label>
               <button class="btn-text-danger" @click="confirmClearCart">
@@ -66,37 +45,18 @@
 
             <div class="cart-list-body">
               <transition-group name="list" tag="div">
-                <div
-                  v-for="(item, index) in cartItems"
-                  :key="item.variantId + '-' + index"
-                  class="cart-item"
-                >
+                <div v-for="(item, index) in cartItems" :key="item.variantId + '-' + index" class="cart-item">
+                  
                   <div class="item-checkbox">
-                    <input
-                      type="checkbox"
-                      v-model="item.checked"
-                      class="custom-checkbox"
-                    />
+                    <input type="checkbox" v-model="item.checked" class="custom-checkbox" />
                   </div>
 
                   <div class="item-info">
-                    <div
-                      class="img-wrapper"
-                      @click="goToDetail(item.productId)"
-                    >
-                      <img
-                        :src="item.hinhAnh"
-                        :alt="item.tenSp"
-                        class="item-img"
-                        @error="handleImageError"
-                      />
-                      <span
-                        v-if="item.discountPercent > 0"
-                        class="discount-badge"
-                        >-{{ item.discountPercent }}%</span
-                      >
+                    <div class="img-wrapper" @click="goToDetail(item.productId)">
+                      <img :src="item.hinhAnh" :alt="item.tenSp" class="item-img" @error="handleImageError" />
+                      <span v-if="item.discountPercent > 0" class="discount-badge">-{{ item.discountPercent }}%</span>
                     </div>
-
+                    
                     <div class="item-details">
                       <h3 class="item-name" @click="goToDetail(item.productId)">
                         {{ item.tenSp }}
@@ -104,11 +64,7 @@
                       <div class="item-variant">
                         <span>{{ item.kichCo }}</span>
                         <span class="divider">•</span>
-                        <span class="color-text">{{
-                          item.mauSac?.tenMauSac ||
-                          item.mauSac?.tenMau ||
-                          "Mặc định"
-                        }}</span>
+                        <span class="color-text">{{ item.mauSac?.tenMauSac || item.mauSac?.tenMau || "Mặc định" }}</span>
                       </div>
 
                       <div class="item-price-mobile">
@@ -119,9 +75,7 @@
                   </div>
 
                   <div class="item-price desktop-only">
-                    <span class="current-price">{{
-                      formatPrice(item.giaBan)
-                    }}</span>
+                    <span class="current-price">{{ formatPrice(item.giaBan) }}</span>
                     <div v-if="item.discountPercent > 0" class="old-price">
                       {{ formatPrice(getOriginalPrice(item)) }}
                     </div>
@@ -129,32 +83,15 @@
 
                   <div class="item-qty">
                     <div class="qty-control">
-                      <button
-                        @click="decreaseQty(index)"
-                        :disabled="item.soLuong <= 1"
-                        class="qty-btn"
-                      >
+                      <button @click="decreaseQty(index)" :disabled="item.soLuong <= 1" class="qty-btn">
                         −
                       </button>
-                      <input
-                        type="number"
-                        v-model.number="item.soLuong"
-                        @change="validateQty(index)"
-                        class="qty-input"
-                      />
-                      <button
-                        @click="increaseQty(index)"
-                        :disabled="item.soLuong >= item.tonKho"
-                        class="qty-btn"
-                      >
+                      <input type="number" v-model.number="item.soLuong" @change="validateQty(index)" class="qty-input" />
+                      <button @click="increaseQty(index)" :disabled="item.soLuong >= item.tonKho" class="qty-btn">
                         +
                       </button>
                     </div>
-                    <span
-                      v-if="item.soLuong >= item.tonKho"
-                      class="stock-warning"
-                      >Đạt giới hạn kho</span
-                    >
+                    <span v-if="item.soLuong >= item.tonKho" class="stock-warning">Đạt giới hạn kho</span>
                   </div>
 
                   <div class="item-total desktop-only">
@@ -162,22 +99,10 @@
                   </div>
 
                   <div class="item-action">
-                    <button
-                      class="btn-remove"
-                      @click="openConfirmModal(index)"
-                      title="Xóa"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        class="icon-trash"
-                      >
+                    <button class="btn-remove" @click="openConfirmModal(index)" title="Xóa">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="icon-trash">
                         <polyline points="3 6 5 6 21 6"></polyline>
-                        <path
-                          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                        ></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                       </svg>
                     </button>
                   </div>
@@ -190,12 +115,8 @@
             <h3 class="summary-title">Thông tin đơn hàng</h3>
 
             <div class="summary-row">
-              <span class="text-muted"
-                >Tổng tiền gốc ({{ selectedItemsCount }} sản phẩm)</span
-              >
-              <span class="summary-val">{{
-                formatPrice(totalOriginalPriceSelected)
-              }}</span>
+              <span class="text-muted">Tổng tiền gốc ({{ selectedItemsCount }} sản phẩm)</span>
+              <span class="summary-val">{{ formatPrice(totalOriginalPriceSelected) }}</span>
             </div>
 
             <div class="summary-row" v-if="totalDiscountSelected > 0">
@@ -207,25 +128,16 @@
 
             <div class="summary-row total-row">
               <span>Tạm tính</span>
-              <span class="final-price">{{
-                formatPrice(totalPriceSelected)
-              }}</span>
+              <span class="final-price">{{ formatPrice(totalPriceSelected) }}</span>
             </div>
             <p class="vat-note">
               Phí vận chuyển sẽ được tính ở trang thanh toán
             </p>
 
-            <button
-              class="btn-checkout hover-effect"
-              @click="proceedToCheckout"
-              :disabled="selectedItemsCount === 0"
-            >
+            <button class="btn-checkout hover-effect" @click="proceedToCheckout" :disabled="selectedItemsCount === 0">
               Thanh toán ngay
             </button>
-            <button
-              class="btn-continue-shopping hover-effect"
-              @click="$router.push('/')"
-            >
+            <button class="btn-continue-shopping hover-effect" @click="$router.push('/')">
               Tiếp tục mua sắm
             </button>
           </div>
@@ -236,24 +148,11 @@
     <Footer></Footer>
 
     <transition name="fade-modal">
-      <div
-        v-if="modal.show"
-        class="modal-confirm"
-        @click.self="closeModalConfirm"
-      >
+      <div v-if="modal.show" class="modal-confirm" @click.self="closeModalConfirm">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="8" y1="8" x2="16" y2="16"></line>
               <line x1="16" y1="8" x2="8" y2="16"></line>
@@ -265,9 +164,7 @@
 
           <div class="confirm-actions">
             <button class="btn-cancel" @click="closeModalConfirm">Hủy</button>
-            <button class="btn-confirm" @click="handleModalConfirm">
-              Đồng ý
-            </button>
+            <button class="btn-confirm" @click="handleModalConfirm">Đồng ý</button>
           </div>
         </div>
       </div>
@@ -282,13 +179,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
-import SockJS from "sockjs-client/dist/sockjs";
-import Stomp from "stompjs";
 
 const router = useRouter();
 const cartItems = ref([]);
@@ -302,107 +197,6 @@ const modal = ref({
   type: "", // remove-one | clear-all
   index: null,
 });
-
-let stompClient = null;
-
-const connectWebSocket = () => {
-  const socket = new SockJS("http://localhost:8080/ws-chocostyle"); // Chú ý endpoint phải giống Backend
-  stompClient = Stomp.over(socket);
-  stompClient.debug = () => {}; // Tắt log console
-
-  stompClient.connect(
-    {},
-    (frame) => {
-      console.log("Cart: Đã kết nối WebSocket thành công!");
-
-      // Lắng nghe kênh thông báo chung
-      stompClient.subscribe("/topic/public-updates", (message) => {
-        console.log("Cart: Có cập nhật mới từ Admin, đang làm mới giỏ hàng...");
-        revalidateCart();
-      });
-    },
-    (error) => {
-      console.error("Lỗi kết nối WebSocket giỏ hàng:", error);
-    },
-  );
-};
-
-const disconnectWebSocket = () => {
-  if (stompClient !== null) {
-    stompClient.disconnect();
-  }
-};
-
-// Hàm tự động gọi API quét lại giá, tồn kho và trạng thái
-const revalidateCart = async () => {
-  if (cartItems.value.length === 0) return;
-
-  try {
-    // 1. Quét thông tin mới nhất của từng sản phẩm trong giỏ
-    const requests = cartItems.value.map((item) =>
-      axios.get(
-        `http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`,
-      ),
-    );
-    const responses = await Promise.all(requests);
-    let hasChanges = false;
-
-    responses.forEach((res, index) => {
-      const data = res.data;
-      const item = cartItems.value[index];
-
-      if (data) {
-        // Nếu Giá, Tồn kho hoặc Trạng thái bị đổi -> Cập nhật vào giỏ
-        if (
-          item.giaBan !== data.giaBan ||
-          item.tonKho !== data.soLuongTon ||
-          item.trangThai !== data.trangThai
-        ) {
-          item.giaBan = data.giaBan;
-          item.tonKho = data.soLuongTon;
-          item.trangThai = data.trangThai;
-          hasChanges = true;
-        }
-      }
-    });
-
-    // 2. Chặn và Xóa các sản phẩm đã NGỪNG BÁN hoặc HẾT HÀNG
-    const oldLength = cartItems.value.length;
-    cartItems.value = cartItems.value.filter(
-      (item) => item.trangThai === 1 && item.tonKho > 0,
-    );
-
-    if (cartItems.value.length < oldLength) {
-      showToast(
-        "Một số sản phẩm đã hết hàng/ngừng bán và bị tự động xóa khỏi giỏ!",
-        "error",
-      );
-      hasChanges = true;
-    }
-
-    // 3. Tự động ép số lượng mua xuống nếu Tồn kho Admin chỉnh nhỏ hơn Số lượng trong giỏ
-    cartItems.value.forEach((item) => {
-      if (item.soLuong > item.tonKho) {
-        item.soLuong = item.tonKho;
-        showToast(
-          `Sản phẩm ${item.tenSp} chỉ còn ${item.tonKho} cái, hệ thống đã tự điều chỉnh!`,
-          "warning",
-        );
-        hasChanges = true;
-      }
-    });
-
-    // 4. Lấy lại Đợt Sale mới nhất
-    await fetchPromotions();
-
-    // 5. Nếu có bất kỳ thay đổi nào, lưu lại vào LocalStorage
-    if (hasChanges) {
-      saveCart();
-    }
-  } catch (e) {
-    console.error("Lỗi cập nhật giỏ hàng:", e);
-  }
-};
 
 const fetchPromotions = async () => {
   try {
@@ -461,12 +255,6 @@ onMounted(async () => {
     }));
   }
   await fetchPromotions();
-  await revalidateCart();
-  connectWebSocket();
-});
-
-onUnmounted(() => {
-  disconnectWebSocket();
 });
 
 const formatPrice = (v) => {
@@ -616,7 +404,7 @@ const showToast = (msg, type = "success") => {
 
 <style scoped>
 /* ================= RESET & CƠ BẢN ================= */
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
 .app-container {
   display: flex;
@@ -654,7 +442,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .home-link:hover {
-  color: #63391f;
+  color: #63391F;
 }
 
 .separator {
@@ -670,7 +458,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .current {
-  color: #63391f;
+  color: #63391F;
   font-weight: 600;
   cursor: default;
 }
@@ -684,7 +472,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .cart-title {
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 28px;
   font-weight: 800;
   color: #1a1a1a;
@@ -706,7 +494,7 @@ const showToast = (msg, type = "success") => {
 .empty-cart {
   text-align: center;
   padding: 80px 20px;
-  background: #ffffff;
+  background: #FFFFFF;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
@@ -728,12 +516,12 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-continue {
-  background: #63391f;
-  color: #ffffff;
+  background: #63391F;
+  color: #FFFFFF;
   border: none;
   padding: 12px 35px;
   border-radius: 8px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   cursor: pointer;
   font-size: 15px;
@@ -760,9 +548,9 @@ const showToast = (msg, type = "success") => {
   justify-content: space-between;
   align-items: center;
   padding: 18px 24px;
-  background: #ffffff;
+  background: #FFFFFF;
   border-radius: 12px 12px 0 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -793,9 +581,9 @@ const showToast = (msg, type = "success") => {
 
 /* List Items */
 .cart-list-body {
-  background: #ffffff;
+  background: #FFFFFF;
   border-radius: 0 0 12px 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 
 .cart-item {
@@ -849,9 +637,9 @@ const showToast = (msg, type = "success") => {
   top: 0;
   left: 0;
   background: #d32f2f;
-  color: #ffffff;
+  color: #FFFFFF;
   font-size: 11px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   padding: 3px 8px;
   border-bottom-right-radius: 6px;
@@ -865,7 +653,7 @@ const showToast = (msg, type = "success") => {
 
 .item-name {
   font-size: 15px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 600;
   margin: 0 0 8px 0;
   cursor: pointer;
@@ -879,7 +667,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .item-name:hover {
-  color: #63391f;
+  color: #63391F;
 }
 
 .item-variant {
@@ -906,7 +694,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .current-price {
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-size: 16px;
   color: #1a1a1a;
@@ -949,7 +737,7 @@ const showToast = (msg, type = "success") => {
 
 .qty-btn:hover:not(:disabled) {
   background: #f3f4f6;
-  color: #63391f;
+  color: #63391F;
 }
 
 .qty-btn:disabled {
@@ -982,7 +770,7 @@ const showToast = (msg, type = "success") => {
   flex: 1;
   text-align: right;
   font-weight: 800;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 16px;
   color: #d32f2f;
 }
@@ -1018,16 +806,16 @@ const showToast = (msg, type = "success") => {
 
 /* ================= SUMMARY CARD ================= */
 .cart-summary {
-  background: #ffffff;
+  background: #FFFFFF;
   border-radius: 16px;
   padding: 30px;
   position: sticky;
   top: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
 
 .summary-title {
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 24px 0;
@@ -1074,7 +862,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .final-price {
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 24px;
   font-weight: 800;
   color: #d32f2f;
@@ -1091,11 +879,11 @@ const showToast = (msg, type = "success") => {
 .btn-checkout {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #63391f, #8b5328);
-  color: #ffffff;
+  background: linear-gradient(135deg, #63391F, #8b5328);
+  color: #FFFFFF;
   border: none;
   border-radius: 8px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
@@ -1121,11 +909,11 @@ const showToast = (msg, type = "success") => {
 .btn-continue-shopping {
   width: 100%;
   padding: 15px;
-  background: #ffffff;
-  color: #63391f;
-  border: 1px solid #63391f;
+  background: #FFFFFF;
+  color: #63391F;
+  border: 1px solid #63391F;
   border-radius: 8px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -1133,7 +921,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .btn-continue-shopping:hover {
-  background: #f7f7f7;
+  background: #F7F7F7;
 }
 
 /* ================= ANIMATIONS & MODALS ================= */
@@ -1162,7 +950,7 @@ const showToast = (msg, type = "success") => {
 }
 
 .confirm-box {
-  background: #ffffff;
+  background: #FFFFFF;
   padding: 35px 30px;
   border-radius: 20px;
   width: 400px;
@@ -1172,14 +960,8 @@ const showToast = (msg, type = "success") => {
 }
 
 @keyframes zoomIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .confirm-icon-wrapper {

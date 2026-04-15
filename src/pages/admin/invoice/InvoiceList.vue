@@ -159,42 +159,89 @@
     </div>
   </template>
 
-  <script setup lang="ts">
-  import { ref, reactive, onMounted, computed } from "vue";
-  // 👉 SỬA BƯỚC 1: Bổ sung useRoute để lấy đường dẫn hiện tại
+<script setup lang="ts">
+  import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
   import { useRouter, useRoute } from "vue-router"; 
   import invoiceService from "../../../services/invoiceService";
   import type { InvoiceResponse } from "../../../types/invoice";
 
-  // ✅ Thay bằng dòng này (Đi lùi ra 3 cấp thư mục để về thư mục src)
   import iconSearch from "../../../assets/icon/search.svg";
   import iconEdit from "../../../assets/icon/edit.svg";
 
-  const router = useRouter();
-  const route = useRoute(); // Khởi tạo route
+  // 👉 1. IMPORT THƯ VIỆN WEBSOCKET
+  import SockJS from "sockjs-client/dist/sockjs";
+  import { Client } from "@stomp/stompjs";
 
-  // --- Hàm lấy ngày hôm nay chuẩn YYYY-MM-DD ---
+  const router = useRouter();
+  const route = useRoute(); 
+
   const getToday = () => {
     const d = new Date();
-    // Trừ đi múi giờ để đảm bảo lấy đúng ngày ở VN, không bị lùi ngày
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     return d.toISOString().split('T')[0];
   };
 
-  // --- State ---
   const invoices = ref<InvoiceResponse[]>([]);
   const pagination = reactive({ page: 0, size: 8, total: 0, totalPages: 0 });
 
-  // --- Cập nhật startDate và endDate gọi hàm getToday() ---
   const filters = reactive({
     keyword: "",
-    trangThai: null,
-    loaiDon: null,
-    startDate: getToday(), // Mặc định là hôm nay
-    endDate: getToday(),   // Mặc định là hôm nay
+    trangThai: null as number | null,
+    loaiDon: null as number | null,
+    startDate: getToday(), 
+    endDate: getToday(),  
   });
 
   let searchTimeout: any = null;
+  let stompClient: Client | null = null; // Biến lưu kết nối WebSocket
+
+  // --- Lấy thông tin user đang đăng nhập (Khách hàng hoặc Admin) ---
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  // =========================================================
+  // 👉 2. HÀM KẾT NỐI WEBSOCKET ĐỂ BẮT SÓNG REAL-TIME
+  // =========================================================
+  const connectWebSocket = () => {
+    if (!currentUser || !currentUser.id) return;
+
+    stompClient = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws-chocostyle'),
+      debug: function (str) {
+        // Tắt comment dòng dưới nếu muốn xem log kết nối mạng
+        // console.log(str); 
+      },
+      onConnect: () => {
+        console.log('✅ Đã kết nối WebSocket thành công!');
+        
+        // ĐĂNG KÝ NGHE KÊNH (Tùy thuộc người dùng là ai)
+        // Nếu là Khách Hàng: Chỉ nghe kênh của riêng ID khách hàng đó
+        // Nếu bạn muốn làm cho Admin nghe được TẤT CẢ sự thay đổi, Backend cần phát thêm 1 kênh "/topic/public-updates"
+        const topicUrl = `/topic/orders/${currentUser.id}`;
+
+        stompClient?.subscribe(topicUrl, (message) => {
+          // Bắt được tin nhắn khi Backend gửi xuống!
+          const updatedOrder = JSON.parse(message.body);
+          
+          // CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC 
+          const index = invoices.value.findIndex(hd => hd.id === updatedOrder.id);
+          if (index !== -1) {
+            invoices.value[index].trangThai = updatedOrder.trangThai;
+            
+            // Bạn có thể cài đặt thêm thư viện Toast để hiện thông báo ting ting ở đây
+            // toast.success(`Đơn hàng ${updatedOrder.maHoaDon} vừa cập nhật trạng thái`);
+          } else {
+            // Nếu có đơn hàng hoàn toàn mới tinh vừa được tạo, thì fetch lại list
+            fetchInvoices();
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error('❌ Lỗi kết nối WebSocket:', frame.headers['message']);
+      }
+    });
+
+    stompClient.activate(); // Bắt đầu kết nối
+  };
 
   // --- Methods ---
   const handleSearch = () => {
@@ -228,7 +275,6 @@
     fetchInvoices();
   };
 
-  // --- Reset lại bộ lọc cũng tự động về ngày hôm nay ---
   const resetFilters = () => {
     filters.keyword = "";
     filters.trangThai = null;
@@ -239,12 +285,8 @@
     fetchInvoices();
   };
 
-  // 👉 SỬA BƯỚC 2: Cập nhật hàm goToDetail linh hoạt theo quyền (Admin / Staff)
   const goToDetail = (id: number) => {
-    // Kiểm tra xem user đang đứng ở URL có chứa /staff hay không
     const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
-    
-    // Chuyển trang theo đúng nhánh đó và đúng chuẩn URL "invoice/detail/:id"
     router.push(`${basePath}/invoice/detail/${id}`);
   };
 
@@ -278,13 +320,10 @@
     return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   };
 
-  // --- ĐÃ SỬA: Cập nhật hàm getStatusName để nhận thêm tham số trạng thái hủy chi tiết ---
   const getStatusName = (stt: number, huyChiTiet?: string) => {
-    // Nếu là đơn hủy và backend có trả về trạng thái chi tiết -> ưu tiên hiển thị chi tiết
     if (stt === 5 && huyChiTiet) {
       return huyChiTiet;
     }
-
     const map: Record<number, string> = {
       0: "Chờ xác nhận",
       1: "Đã xác nhận",
@@ -305,7 +344,6 @@
     return "status-text status-green";
   };
 
-  // --- Helper cho Loại Đơn ---
   const getLoaiDonName = (type: number) => {
     if (type === 1) return "Tại quầy";
     if (type === 0) return "Online";
@@ -320,8 +358,17 @@
     return "tag-offline";
   };
 
+  // 👉 3. GỌI KẾT NỐI KHI MỞ TRANG VÀ NGẮT KẾT NỐI KHI RỜI ĐI
   onMounted(() => {
     fetchInvoices();
+    connectWebSocket(); 
+  });
+
+  onUnmounted(() => {
+    if (stompClient !== null) {
+      stompClient.deactivate();
+      console.log('Đã ngắt kết nối WebSocket.');
+    }
   });
   </script>
 

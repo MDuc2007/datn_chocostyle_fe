@@ -99,19 +99,24 @@
     <Footer></Footer>
   </div>
 </template>
-
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Header from "../../layout/header/Header.vue";
 import Footer from "../../layout/footer/Footer.vue";
 import ClientSidebar from "../../pages/views/ClientSidebar.vue";
 
+// 👉 1. IMPORT THƯ VIỆN WEBSOCKET
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+
 const router = useRouter();
 const invoices = ref([]);
 const filters = ref({ trangThai: null });
-const isLoggedIn = ref(false); // Thêm state kiểm tra đăng nhập
+const isLoggedIn = ref(false);
+
+let stompClient = null; // Biến lưu trữ kết nối WebSocket
 
 const statusTabs = [
   { label: "Tất cả", value: null },
@@ -121,11 +126,53 @@ const statusTabs = [
   { label: "Đã hủy", value: 5 },
 ];
 
+// =========================================================
+// 👉 2. HÀM KẾT NỐI WEBSOCKET BẮT SÓNG REAL-TIME
+// =========================================================
+const connectWebSocket = () => {
+  const userStr = localStorage.getItem("user");
+  if (!userStr) return;
+  
+  const user = JSON.parse(userStr);
+  if (!user.id) return;
+
+  stompClient = new Client({
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws-chocostyle"),
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log(`✅ Đã kết nối WebSocket. Đang lắng nghe đơn hàng của Khách ID: ${user.id}`);
+
+      // Lắng nghe kênh dành riêng cho khách hàng này
+      stompClient?.subscribe(`/topic/orders/${user.id}`, (message) => {
+        console.log("⚡ Phát hiện thay đổi trạng thái đơn hàng từ Backend!");
+
+        const updatedOrder = JSON.parse(message.body);
+
+        // Tìm đơn hàng trong danh sách hiện tại và cập nhật trạng thái
+        const index = invoices.value.findIndex(hd => hd.id === updatedOrder.id);
+        if (index !== -1) {
+          invoices.value[index].trangThai = updatedOrder.trangThai;
+          
+          // Tùy chọn: Hiện thông báo cho khách hàng
+          // alert(`Đơn hàng ${updatedOrder.maHoaDon} vừa được cập nhật trạng thái!`);
+        } else {
+          // Nếu không tìm thấy (có thể là đơn mới tinh), gọi API load lại toàn bộ
+          fetchMyOrders();
+        }
+      });
+    },
+    onStompError: (frame) => {
+      console.error("❌ Lỗi STOMP: " + frame.headers["message"]);
+    },
+  });
+
+  stompClient.activate();
+};
+
 const fetchMyOrders = async () => {
   try {
     const userStr = localStorage.getItem("user");
 
-    // ĐÃ SỬA: Nếu không có user, không đá ra trang login nữa
     if (!userStr) {
       return;
     }
@@ -188,13 +235,21 @@ const getStatusClass = (stt) => {
   if (stt === 4) return "status-success";
   if (stt === 5) return "status-danger";
   if (stt === 0) return "status-warning";
-  return "status-info"; // Đang giao / Đã xác nhận
+  return "status-info"; 
 };
 
+// 👉 3. GỌI KẾT NỐI KHI VÀO TRANG VÀ NGẮT KẾT NỐI KHI RỜI ĐI
 onMounted(() => {
-  // Cập nhật trạng thái đăng nhập để render giao diện tương ứng
   isLoggedIn.value = !!localStorage.getItem("user");
   fetchMyOrders();
+  connectWebSocket(); // Bật bộ thu sóng
+});
+
+onUnmounted(() => {
+  if (stompClient) {
+    stompClient.deactivate(); // Tắt bộ thu sóng khi rời trang để tiết kiệm tài nguyên
+    console.log("Đã ngắt kết nối WebSocket danh sách đơn hàng.");
+  }
 });
 </script>
 
