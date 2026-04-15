@@ -536,15 +536,19 @@ const validate = () => {
 const searchKeyword = ref("");
 
 const filteredSanPhamList = computed(() => {
-  if (!searchKeyword.value.trim()) return sanPhamList;
+  const kw = searchKeyword.value.trim().toLowerCase();
 
-  const kw = searchKeyword.value.toLowerCase();
+  return sanPhamList.filter((sp) => {
+    // chỉ hiển thị sản phẩm đang bật
+    const isActive = sp.trangThai === 1; 
 
-  return sanPhamList.filter(
-    (sp) =>
+    const matchKeyword =
+      !kw ||
       sp.maSp?.toLowerCase().includes(kw) ||
-      sp.tenSp?.toLowerCase().includes(kw),
-  );
+      sp.tenSp?.toLowerCase().includes(kw);
+
+    return isActive && matchKeyword;
+  });
 });
 
 const sanPhamList = reactive<any[]>([]);
