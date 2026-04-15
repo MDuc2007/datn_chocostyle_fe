@@ -432,6 +432,9 @@ const router = createRouter({
 // 4. NAVIGATION GUARD (BẢO VỆ HỆ THỐNG)
 // =================================================================
 router.beforeEach((to, from, next) => {
+  // 1. In log ra ngoài mảng (Để theo dõi luồng đi của Vue Router)
+  console.log(`🚦 Đang chuyển từ ${from.path} sang ${to.path}`);
+
   const publicPages = [
     "/",
     "/cart",
@@ -450,7 +453,7 @@ router.beforeEach((to, from, next) => {
     "/ao-khoac", 
     "/tra-cuu", 
     "/payment-result", 
-    "/my-orders",
+    "/my-orders"
   ];
 
   const isPublic =
@@ -460,18 +463,33 @@ router.beforeEach((to, from, next) => {
 
   const authRequired = !isPublic;
 
+  // 2. Lấy TOÀN BỘ thông tin đăng nhập từ LocalStorage
+  const token = localStorage.getItem("token");
   const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
+  let user = null;
 
-  // 1. Chưa đăng nhập mà đòi vào trang yêu cầu Auth -> Đuổi ra Login
-  if (authRequired && !user) {
+  // Bọc Try-Catch để chống lỗi sập web nếu localStorage bị rác
+  try {
+    if (userStr) {
+      user = JSON.parse(userStr);
+    }
+  } catch (error) {
+    console.error("Dữ liệu User bị hỏng, tiến hành dọn dẹp...");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  }
+
+  // 3. CHẶN VÀO TRANG BẢO MẬT KHI CHƯA ĐĂNG NHẬP 
+  // (Bắt buộc phải có CẢ user VÀ token mới được coi là hợp lệ)
+  if (authRequired && (!user || !token)) {
+    console.warn("🚨 Ngăn chặn truy cập: Bắt buộc đăng nhập!");
     if (to.path.startsWith("/admin") || to.path.startsWith("/staff")) {
       return next("/admin/login");
     }
     return next("/login");
   }
 
-  // 2. Kiểm tra phân quyền Admin / Staff
+  // 4. KIỂM TRA PHÂN QUYỀN (Role)
   const authorizedRoles = to.matched
     .filter((record) => record.meta.authorize)
     .flatMap((record) => record.meta.authorize);
@@ -480,12 +498,13 @@ router.beforeEach((to, from, next) => {
     const userRole = user?.role;
 
     if (!authorizedRoles.includes(userRole)) {
+      console.warn(`🚨 Ngăn chặn truy cập: Quyền ${userRole} không được phép vào trang này!`);
       return next("/"); // Không đủ quyền thì đá về trang chủ
     }
   }
 
-// 3. Đã login mà cố tình vào lại trang Login -> Đẩy vào Dashboard tương ứng
-  if (user && ["/login", "/register", "/admin/login", "/login-admin"].includes(to.path)) {
+  // 5. ĐÃ ĐĂNG NHẬP MÀ CỐ TÌNH QUAY LẠI TRANG LOGIN -> ĐẨY VỀ DASHBOARD
+  if (user && token && ["/login", "/register", "/admin/login", "/login-admin"].includes(to.path)) {
     switch (user.role) {
       case "ROLE_ADMIN":
         return next("/admin/dashboard");
@@ -496,6 +515,7 @@ router.beforeEach((to, from, next) => {
     }
   }
 
+  // 6. MỌI ĐIỀU KIỆN ĐỀU HỢP LỆ -> CHO PHÉP CHUYỂN TRANG
   next();
 });
 

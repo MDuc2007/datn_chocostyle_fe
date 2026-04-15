@@ -610,7 +610,7 @@ const checkIn = async () => {
       confirmButtonText: "Đồng ý",
     });
 
-    location.reload();
+    close();
   } catch (error) {
     console.error("Lỗi check-in:", error);
     Swal.fire({
@@ -658,7 +658,7 @@ const checkOut = async () => {
       confirmButtonText: "Đồng ý",
     });
 
-    location.reload();
+    closeModal();
   } catch (error) {
     console.error("Lỗi check-out:", error);
     Swal.fire({
