@@ -845,11 +845,15 @@ const tongTienDaThu = computed(() => {
 
 const daThanhToan = computed(() => {
   if (!invoice.value?.thanhToanList) return 0;
-  return invoice.value.thanhToanList.reduce((sum, item) => {
-    return item.loaiGiaoDich === 2 ? sum - item.soTien : sum + item.soTien;
-  }, 0);
-});
 
+  return invoice.value.thanhToanList
+    .filter((item) => item.trangThai === 1) // chỉ lấy thanh toán thành công
+    .reduce((sum, item) => {
+      return item.loaiGiaoDich === 2
+        ? sum - item.soTien
+        : sum + item.soTien;
+    }, 0);
+}); 
 const isPaid = computed(() => {
   if (!invoice.value) return false;
   return daThanhToan.value >= invoice.value.tongThanhToan;
