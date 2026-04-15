@@ -716,33 +716,30 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
 let stompClient: Client | null = null;
-
+// 👉 HÀM KẾT NỐI WEBSOCKET (ĐÃ SỬA CHUẨN)
 const connectWebSocket = () => {
+  const idHoaDon = route.params.id; // Lấy ID hóa đơn hiện tại từ URL
+
   stompClient = new Client({
-    // Đường dẫn này phụ thuộc vào cách bạn cấu hình registry.addEndpoint() ở Backend
-    // Ví dụ: http://localhost:8080/ws
-    webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+    // Sửa 1: Đổi thành /ws-chocostyle cho khớp với Backend
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws-chocostyle"),
     reconnectDelay: 5000,
     onConnect: () => {
-      console.log("Đã kết nối WebSocket thành công!");
+      console.log(`✅ Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`);
 
-      // Lắng nghe đúng kênh bạn đã bắn từ Backend
-      stompClient?.subscribe("/topic/public-updates", (message) => {
-        if (message.body === "UPDATED") {
-          console.log(
-            "Phát hiện thay đổi dữ liệu từ Backend, đang load lại...",
-          );
+      // Sửa 2: Lắng nghe đúng kênh của đơn hàng này
+      stompClient?.subscribe(`/topic/order/${idHoaDon}`, (message) => {
+        console.log("⚡ Phát hiện thay đổi dữ liệu từ Backend, đang load lại...");
 
-          // Gọi lại hàm lấy dữ liệu để cập nhật giá mới ngay lập tức
-          fetchDetail();
+        // Gọi lại hàm lấy dữ liệu để cập nhật giao diện (Trạng thái, Timeline, Lịch sử...)
+        fetchDetail();
 
-          // Bạn có thể hiển thị thêm thông báo cho người dùng
-          showToast("Dữ liệu đơn hàng/sản phẩm vừa được cập nhật!", "success");
-        }
+        // Hiển thị thông báo (Có thể tắt dòng này nếu thấy nó báo nhiều quá)
+        showToast("Trạng thái đơn hàng vừa được cập nhật!", "success");
       });
     },
     onStompError: (frame) => {
-      console.error("Lỗi STOMP: " + frame.headers["message"]);
+      console.error("❌ Lỗi STOMP: " + frame.headers["message"]);
     },
   });
 

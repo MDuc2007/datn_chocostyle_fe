@@ -695,26 +695,25 @@ const connectWebSocket = () => {
   const idHoaDon = route.params.id; // Lấy ID hóa đơn từ URL
 
   stompClient = new Client({
-    webSocketFactory: () => new SockJS("http://localhost:8080/ws"), // Đổi port nếu cần
+    // 👉 SỬA Ở ĐÂY: Đổi "/ws" thành "/ws-chocostyle" cho khớp với Backend
+    webSocketFactory: () => new SockJS("http://localhost:8080/ws-chocostyle"), 
     reconnectDelay: 5000,
     onConnect: () => {
-      console.log(
-        `Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`,
-      );
+      console.log(`✅ Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`);
 
       // Backend đang bắn dữ liệu vào kênh: /topic/order/{id}
       stompClient?.subscribe(`/topic/order/${idHoaDon}`, (message) => {
-        console.log("Đã nhận được cập nhật realtime từ Backend!");
+        console.log("⚡ Đã nhận được cập nhật realtime từ Backend!");
 
-        // Backend của bạn truyền thẳng Object dataMoiNhat sang, nên ta có thể parse luôn
-        // hoặc gọi lại fetchDetail() cho chắc chắn. Ở đây mình gọi lại fetchDetail.
+        // Gọi lại hàm fetchDetail() là chuẩn nhất! 
+        // Vì trang chi tiết cần cập nhật lại cả Timeline, Lịch sử hóa đơn và Trạng thái thanh toán
         fetchDetail();
 
-        showToast("Trạng thái đơn hàng vừa được cập nhật tự động!", "success");
+        showToast("Dữ liệu đơn hàng vừa được cập nhật!", "success");
       });
     },
     onStompError: (frame) => {
-      console.error("Lỗi WebSocket STOMP: " + frame.headers["message"]);
+      console.error("❌ Lỗi WebSocket STOMP: " + frame.headers["message"]);
     },
   });
 
