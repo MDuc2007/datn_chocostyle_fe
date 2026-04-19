@@ -360,11 +360,11 @@ onMounted(async () => {
         }
       }
 
+// Sửa đoạn load avatar trong onMounted:
       let avatarUrl = data.avatar;
-      if (avatarUrl && !avatarUrl.startsWith("http")) {
+      if (avatarUrl && !avatarUrl.startsWith("http") && !avatarUrl.startsWith("data:image")) {
         avatarUrl = `http://localhost:8080/images/${avatarUrl}`;
       }
-
       userInfo.value = {
         id: data.id,
         fullName: data.tenNhanVien || data.hoTen,
@@ -477,20 +477,33 @@ const handleAvatarUpload = async (event) => {
   try {
     const token = localStorage.getItem("token");
     const formData = new FormData();
-    formData.append("avatarFile", file);
+    // Chú ý: Backend phải nhận parameter tên là "avatarFile"
+    formData.append("avatarFile", file); 
 
     const res = await axios.post(`http://localhost:8080/api/nhan-vien/${userInfo.value.id}/avatar`, formData, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data' // 👉 Thêm header này để báo cho Backend biết đang gửi File
       }
     });
 
-    if (res.data && res.data.avatar) {
+if (res.data && res.data.avatar) {
       let newAvatarUrl = res.data.avatar;
-      if (!newAvatarUrl.startsWith("http")) {
+      
+      // SỬA Ở ĐÂY: Nếu không bắt đầu bằng http VÀ không phải là Base64 thì mới nối URL
+      if (!newAvatarUrl.startsWith("http") && !newAvatarUrl.startsWith("data:image")) {
         newAvatarUrl = `http://localhost:8080/images/${newAvatarUrl}`;
       }
+      
       userInfo.value.avatar = newAvatarUrl;
+
+      // Đừng quên cập nhật LocalStorage để khi reload không bị mất ảnh mới
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        let ud = JSON.parse(userStr);
+        ud.avatar = newAvatarUrl; // Lưu URL mới vào
+        localStorage.setItem("user", JSON.stringify(ud));
+      }
     }
 
     showToast("Cập nhật ảnh đại diện thành công!", "success");

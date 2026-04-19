@@ -750,6 +750,7 @@ const connectWebSocket = () => {
 // --- INTERFACES ---
 interface InvoiceProduct {
   idSpct: number;
+  maSpct: string; // THÊM DÒNG NÀY
   tenSanPham: string;
   mauSac: string;
   kichCo: string;
