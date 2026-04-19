@@ -168,7 +168,6 @@
               {{ notificationCount > 99 ? "99+" : notificationCount }}
             </span>
 
-            <!-- DROPDOWN -->
             <div v-if="isNotificationOpen" class="notification-dropdown">
               <div class="notification-header">
                 <span>Thông báo</span>
@@ -412,6 +411,18 @@ const userMenuRef = ref<HTMLElement | null>(null);
 const currentUserName = ref("Admin");
 const currentUserAvatar = ref<string | null>(null);
 
+// 👉 ĐÃ SỬA: Hàm Helper chung để xử lý URL Ảnh
+const getFullImageUrl = (imagePath: string) => {
+  if (!imagePath) return null;
+  // Nếu là ảnh lấy từ Google hoặc đã lưu dạng Base64
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:image")) {
+    return imagePath; 
+  }
+  // Fallback nếu lưu tên file thông thường (tránh cache)
+  const timestamp = new Date().getTime();
+  return `http://localhost:8080/images/${imagePath}?t=${timestamp}`;
+};
+
 // Hàm chạy khi load trang để lấy thông tin từ LocalStorage
 onMounted(async () => {
   const userStr = localStorage.getItem("user");
@@ -428,6 +439,12 @@ onMounted(async () => {
         userData.username ||
         "Admin";
 
+      // 1. Gán ngay lập tức Avatar từ LocalStorage nếu có
+      if (userData.avatar) {
+          currentUserAvatar.value = getFullImageUrl(userData.avatar);
+      }
+
+      // 2. Fetch lại API để cập nhật nếu có thay đổi mới
       if (userData.id && token) {
         try {
           const res = await axios.get(
@@ -442,16 +459,15 @@ onMounted(async () => {
           if (res.data) {
             currentUserName.value =
               res.data.tenNhanVien || res.data.hoTen || currentUserName.value;
-          }
-
-          if (res.data && res.data.avatar) {
-            let avatarUrl = res.data.avatar;
-
-            if (!avatarUrl.startsWith("http")) {
-              avatarUrl = `http://localhost:8080/images/${avatarUrl}`;
+            
+            // Cập nhật lại avatar từ API
+            if (res.data.avatar) {
+              currentUserAvatar.value = getFullImageUrl(res.data.avatar);
+              
+              // Đồng bộ lại vào LocalStorage
+              userData.avatar = res.data.avatar;
+              localStorage.setItem("user", JSON.stringify(userData));
             }
-
-            currentUserAvatar.value = avatarUrl;
           }
         } catch (apiError) {
           console.error(
