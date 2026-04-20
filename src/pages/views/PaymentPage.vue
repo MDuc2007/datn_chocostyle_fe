@@ -1480,13 +1480,25 @@ const cancelVietQR = async () => {
 
 const updateOriginalCartAfterPurchase = () => {
   const savedCart = localStorage.getItem("cart");
-  if (savedCart && route.query.fromCart === "true") {
+  const checkoutData = localStorage.getItem("checkout_items");
+
+  // Chỉ cần có giỏ hàng và có đồ vừa thanh toán thì tiến hành xóa
+  if (savedCart && checkoutData) {
     let cart = JSON.parse(savedCart);
-    const boughtIds = checkoutItems.value.map((i) => i.variantId);
+    let checkoutList = JSON.parse(checkoutData);
+
+    // Lấy ra danh sách các variantId vừa được thanh toán
+    const boughtIds = checkoutList.map((i) => i.variantId);
+
+    // Lọc giỏ hàng: Chỉ giữ lại những món KHÔNG NẰM TRONG danh sách vừa mua
     cart = cart.filter((c) => !boughtIds.includes(c.variantId));
+
+    // Cập nhật lại Storage và giao diện
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("cartUpdated"));
   }
+
+  // Luôn luôn dọn dẹp biến tạm này sau khi thanh toán xong
   localStorage.removeItem("checkout_items");
 };
 
