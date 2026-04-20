@@ -385,7 +385,6 @@ const goToDetail = (productId) => {
 };
 
 const proceedToCheckout = () => {
-  // Lấy ra các sản phẩm đã được tick chọn
   const selectedItems = cartItems.value.filter((item) => item.checked);
 
   if (selectedItems.length === 0) {
@@ -393,16 +392,12 @@ const proceedToCheckout = () => {
     return;
   }
 
-  // 1. Lưu các sản phẩm đã chọn vào biến tạm để mang sang trang Payment
+  // 1. Chỉ copy các sản phẩm đã chọn sang một biến tạm để mang qua trang Thanh toán
   localStorage.setItem("checkout_items", JSON.stringify(selectedItems));
 
-  // 2. XÓA CÁC SẢN PHẨM ĐÃ CHỌN KHỎI GIỎ HÀNG BẰNG CÁCH GIỮ LẠI NHỮNG SP CHƯA CHỌN
-  cartItems.value = cartItems.value.filter((item) => !item.checked);
+  // KHÔNG XÓA GIỎ HÀNG Ở ĐÂY NỮA. Mọi thứ trong giỏ hàng vẫn còn nguyên!
 
-  // 3. Gọi hàm saveCart() để cập nhật lại LocalStorage và update icon giỏ hàng
-  saveCart();
-
-  // 4. Chuyển hướng người dùng sang trang thanh toán
+  // 2. Chuyển hướng người dùng sang trang thanh toán
   router.push({ path: "/payment", query: { fromCart: "true" } });
 };
 

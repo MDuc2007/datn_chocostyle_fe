@@ -407,9 +407,29 @@ const validateProfile = () => {
     valid = false;
   }
 
-  if (!userInfo.value.dob) {
+if (!userInfo.value.dob) {
     profileErrors.value.dob = "Vui lòng chọn ngày sinh";
     valid = false;
+  } else {
+    // Tính toán tuổi chính xác theo ngày tháng năm
+    const today = new Date();
+    const birthDate = new Date(userInfo.value.dob);
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    
+    // Nếu chưa tới tháng sinh, hoặc cùng tháng nhưng chưa tới ngày sinh thì trừ đi 1 tuổi
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      profileErrors.value.dob = "Bạn phải từ đủ 18 tuổi trở lên!";
+      valid = false;
+    } else if (age > 80) {
+      profileErrors.value.dob = "Tuổi không hợp lệ (vượt quá 80 tuổi)!";
+      valid = false;
+    }
   }
 
   return valid;

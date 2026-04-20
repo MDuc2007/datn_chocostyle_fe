@@ -156,6 +156,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: { authorize: ["ROLE_ADMIN"] },
     children: [
       // 2.0. Thống kê & Dashboard
+// 2.0. Thống kê & Dashboard
       {
         path: "dashboard",
         name: "Dashboard",
@@ -169,7 +170,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "statistic",
         name: "Statistic",
-        component: () => import("../pages/admin/dashboard/Dashboard.vue"),
+        component: () => import("../pages/admin/dashboard/statistical.vue"), // ✅ ĐÃ SỬA: Trỏ đúng vào file statistical.vue
       },
 
       // 2.1. Quản lý sản phẩm & Thuộc tính
