@@ -773,8 +773,6 @@ input:checked + .slider::before {
 Stashed changes
 
 
-
-
 /* arrow */
 .tooltip::before {
   content: "";

@@ -29,7 +29,9 @@
 
     <div class="messages-box" ref="msgBox">
       <div
-        v-for="msg in messages"
+        v-for="msg in messages.filter(
+          (m) => m.content && m.content.trim() !== '',
+        )"
         :key="msg.id"
         :class="[
           'msg-wrapper',
@@ -66,7 +68,11 @@
 
     <div
       class="input-area"
-      v-if="chatStatus === 'BOT' || chatStatus === 'ACTIVE'"
+      v-if="
+        chatStatus === 'BOT' ||
+        chatStatus === 'ACTIVE' ||
+        chatStatus === 'WAITING'
+      "
     >
       <div class="input-wrapper">
         <input
@@ -427,42 +433,42 @@ onMounted(async () => {
 const sendMessage = async () => {
   lastActivity.value = Date.now();
 
-  // Kiểm tra xem input có rỗng hoặc conversationId có tồn tại không
   if (!newMessage.value.trim() || !conversationId.value) return;
 
-  // Lấy nội dung từ ô input
   const content = newMessage.value.trim();
-
-  // Xóa input sau khi người dùng gửi
   newMessage.value = "";
 
-  // THÊM ĐOẠN NÀY: Đẩy tin nhắn của khách hàng lên màn hình ngay lập tức
   messages.value.push({
-    id: "user-" + Date.now(), // Tạo ID tạm thời để Vue render
+    id: "user-" + Date.now(),
     senderId: senderId.value,
-    senderType: senderType.value, // "KHACH_HANG"
+    senderType: senderType.value,
     content: content,
     sentAt: new Date(),
   });
-  scrollToBottom(); // Cuộn xuống để thấy tin nhắn vừa gửi
 
-  // Chặn gửi tin nhắn mới nếu đang đợi nhân viên
+  scrollToBottom();
+
+  if (chatStatus.value === "BOT") {
+    await callAI(content);
+    return;
+  }
+
   if (chatStatus.value === "WAITING") {
+    attemptSend(content);
+
     messages.value.push({
       id: Date.now(),
       senderType: "SYSTEM",
       senderName: "Hệ thống",
-      content: "Vui lòng chờ nhân viên kết nối để tiếp tục chat.",
+      content: "Tin nhắn đã được ghi nhận. Vui lòng chờ nhân viên kết nối.",
       sentAt: new Date(),
     });
+
     scrollToBottom();
     return;
   }
 
-  // Gửi tin nhắn đi xử lý
-  if (chatStatus.value === "BOT") {
-    await callAI(content);
-  } else {
+  if (chatStatus.value === "ACTIVE") {
     attemptSend(content);
   }
 };

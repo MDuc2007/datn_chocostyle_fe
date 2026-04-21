@@ -726,6 +726,12 @@ onMounted(() => {
   background: #fafafa;
 }
 
+.voucher-table td:nth-child(3) {
+  max-width: 220px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
 /* ================= DISCOUNT ================= */
 .discount-main {
   color: #e53935;

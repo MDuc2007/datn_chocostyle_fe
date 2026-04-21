@@ -432,6 +432,10 @@ watch(
       form.giaTriToiDa = null;
       errors.giaTriToiDa = "";
     }
+
+    if (isSubmitted.value) {
+      validateForm()
+    }
   },
 );
 
@@ -689,7 +693,11 @@ watch(
   { deep: true },
 );
 
+const isSubmitted = ref(false)
+
 const openConfirm = async () => {
+  isSubmitted.value = true
+
   if (!validateForm()) return;
 
   const ok = await checkTenTrung();

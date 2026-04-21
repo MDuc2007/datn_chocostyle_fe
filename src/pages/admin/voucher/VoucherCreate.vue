@@ -493,9 +493,11 @@ watch(
     errors.giaTri = "";
     errors.giaTriToiDa = "";
 
-    validateGiaTri();
-    validateGiaTriToiDa();
-    validateDieuKien();
+    if (isSubmitted.value) {
+      validateGiaTri();
+      validateGiaTriToiDa();
+      validateDieuKien();
+    }
   },
 );
 
@@ -717,9 +719,14 @@ const validateForm = async () => {
   return valid;
 };
 
+const isSubmitted = ref(false)
+
 const openConfirm = async () => {
+  isSubmitted.value = true
+
   const ok = await validateForm();
   if (!ok) return;
+
   showModal.value = true;
 };
 
