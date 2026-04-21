@@ -486,6 +486,10 @@ watch(
   () => {
     form.giaTri = null;
     form.giaTriToiDa = null;
+
+    giaTriDisplay.value = "";
+    giaTriToiDaDisplay.value = "";
+
     errors.giaTri = "";
     errors.giaTriToiDa = "";
 
