@@ -985,19 +985,19 @@ const saveModal = async () => {
       showNotification("Thêm dữ liệu thành công");
       switch (modalType.value) {
         case "xuat-xu":
-          xuatXuList.value.push(res.data);
+          xuatXuList.value.unshift(res.data);
           break;
         case "loai-ao":
-          loaiAoList.value.push(res.data);
+          loaiAoList.value.unshift(res.data);
           break;
         case "kieu-dang":
-          kieuDangList.value.push(res.data);
+          kieuDangList.value.unshift(res.data);
           break;
         case "phong-cach-mac":
-          phongCachList.value.push(res.data);
+          phongCachList.value.unshift(res.data);
           break;
         case "chat-lieu":
-          chatLieuList.value.push(res.data);
+          chatLieuList.value.unshift(res.data);
           break;
       }
       closeModal();

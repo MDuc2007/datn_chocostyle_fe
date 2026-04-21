@@ -990,13 +990,13 @@ const fetchPromotions = async () => {
       end.setHours(23, 59, 59, 999);
       return today >= start && today <= end;
     });
+    
     const isFromCart = route.query.fromCart === "true";
 
     checkoutItems.value.forEach((item) => {
+      // Tìm % giảm giá tốt nhất cho sản phẩm
       const itemPromos = validPromos.filter((p) =>
-        p.chiTietSanPhamIds?.some(
-          (id) => Number(id) === Number(item.variantId),
-        ),
+        p.chiTietSanPhamIds?.some((id) => Number(id) === Number(item.variantId)),
       );
       if (itemPromos.length > 0) {
         const best = itemPromos.reduce((max, cur) =>
@@ -1007,16 +1007,17 @@ const fetchPromotions = async () => {
         item.discountPercent = 0;
       }
 
-      if (isFromCart) {
-        item.giaCuoiCung = item.giaBan;
-        item.giaGoc =
-          item.discountPercent > 0
+      // TÍNH TOÁN GIÁ TIỀN:
+      if (isFromCart && !item.isSyncedWithDB) {
+        // TRƯỜNG HỢP 1: Lần đầu tiên vào trang (Lấy từ LocalStorage sang)
+        item.giaCuoiCung = item.giaBan; 
+        item.giaGoc = item.discountPercent > 0
             ? Math.round(item.giaCuoiCung / (1 - item.discountPercent / 100))
             : item.giaCuoiCung;
       } else {
-        item.giaGoc = item.giaBan;
-        item.giaCuoiCung =
-          item.discountPercent > 0
+        // TRƯỜNG HỢP 2: Đã đồng bộ qua WebSocket hoặc DB
+        // Luôn lấy Giá Gốc trừ đi % Sale => Ra Giá Cuối Cùng
+        item.giaCuoiCung = item.discountPercent > 0
             ? Math.round(item.giaGoc * (1 - item.discountPercent / 100))
             : item.giaGoc;
       }
@@ -1024,33 +1025,32 @@ const fetchPromotions = async () => {
   } catch (err) {
     checkoutItems.value.forEach((item) => {
       item.discountPercent = 0;
-      item.giaCuoiCung = item.giaBan;
-      item.giaGoc = item.giaBan;
+      if (item.giaGoc) {
+        item.giaCuoiCung = item.giaGoc;
+      } else {
+        item.giaCuoiCung = item.giaBan;
+        item.giaGoc = item.giaBan;
+      }
     });
   }
 };
-
 const fetchLatestPrices = async () => {
   try {
-    // Tạo mảng chứa các request gọi thẳng vào API chi tiết sản phẩm
     const requests = checkoutItems.value.map((item) =>
-      axios.get(
-        `http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`,
-      ),
+      axios.get(`http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`),
     );
 
-    // Promise.all giúp bắn tất cả API cùng lúc, chờ xong hết mới đi tiếp
     const responses = await Promise.all(requests);
 
-    // Map dữ liệu trả về tương ứng với từng item trong giỏ
     responses.forEach((res, index) => {
       const variantData = res.data;
       const item = checkoutItems.value[index];
 
       if (variantData) {
-        item.giaBan = variantData.giaBan; // Cập nhật giá gốc mới nhất
-        item.trangThai = variantData.trangThai; // Cập nhật trạng thái
-        item.tonKho = variantData.soLuongTon; // Lấy luôn tồn kho hiện tại để đối chiếu
+        item.giaGoc = variantData.giaBan; // Lưu chuẩn giá gốc từ DB
+        item.isSyncedWithDB = true;       // ĐÁNH DẤU: Đã lấy data thật từ DB
+        item.trangThai = variantData.trangThai;
+        item.tonKho = variantData.soLuongTon;
       }
     });
   } catch (e) {
