@@ -74,11 +74,6 @@ const routes: Array<RouteRecordRaw> = [
     name: "ClientOrderDetail",
     component: () => import("../pages/views/InvoiceDetail.vue"),
   },
-  {
-    path: "/order-detail/:id",
-    name: "ClientOrderDetail",
-    component: () => import("../pages/views/InvoiceDetail.vue"),
-  },
 
   {
     path: "/profile",
@@ -107,12 +102,6 @@ const routes: Array<RouteRecordRaw> = [
   // AUTHENTICATION ROUTES (Đăng nhập / Đăng ký / Quên Mật Khẩu)
   // =================================================================
   
-  // 👉 LUỒNG KHÁCH HÀNG
-  {
-    path: "/login",
-    name: "LoginCustomer",
-    component: () => import("../views/LoginView.vue"),
-  },
   {
     path: "/register",
     name: "Register",
@@ -244,12 +233,6 @@ const routes: Array<RouteRecordRaw> = [
         name: "InvoiceDetail",
         component: () => import("../pages/admin/invoice/InvoiceDetail.vue"),
         props: true,
-      },
-      // 2.3. Bán hàng tại quầy
-      {
-        path: "sales",
-        name: "CounterSales",
-        component: () => import("../pages/admin/sales/CounterSales.vue"),
       },
       // 2.3. Bán hàng tại quầy
       {
@@ -427,6 +410,18 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+
+    return {
+      top: 0,
+      left: 0,
+      behavior: "smooth"
+    };
+  }
 });
 
 // =================================================================

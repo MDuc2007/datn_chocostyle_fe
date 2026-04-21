@@ -50,19 +50,31 @@
         </header>
 
         <div class="messages-display" ref="msgBox">
-          <div
-            v-for="msg in messages"
+          <template
+            v-for="(msg, index) in messages.filter(
+              (m) =>
+                m.senderType === 'KHACH_HNG' ||
+                m.senderType === 'KHACH_HANG' ||
+                m.senderType === 'NHAN_VIEN',
+            )"
             :key="msg.id"
-            :class="[
-              'message-row',
-              msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
-            ]"
           >
-            <div class="message-bubble">
-              <div class="content">{{ msg.content }}</div>
-              <div class="msg-time">{{ formatTime(msg.sentAt) }}</div>
+            <div v-if="shouldShowDate(msg, index)" class="time-separator">
+              {{ formatFullDate(msg.sentAt) }}
             </div>
-          </div>
+
+            <div
+              :class="[
+                'message-row',
+                msg.senderType === 'NHAN_VIEN' ? 'mine' : 'theirs',
+              ]"
+            >
+              <div class="message-bubble">
+                <div class="content">{{ msg.content }}</div>
+                <div class="msg-time">{{ formatTime(msg.sentAt) }}</div>
+              </div>
+            </div>
+          </template>
         </div>
 
         <div class="chat-input-area">
@@ -126,6 +138,73 @@ const loadConversations = async () => {
   } catch (e) {
     console.error(e);
   }
+};
+
+const formatFullDate = (time) => {
+  if (!time) return "";
+
+  const messageDate = new Date(time);
+  const now = new Date();
+
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  const yesterday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 1
+  );
+
+  const messageDay = new Date(
+    messageDate.getFullYear(),
+    messageDate.getMonth(),
+    messageDate.getDate()
+  );
+
+  const timeOnly = messageDate.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (messageDay.getTime() === today.getTime()) {
+    return `Hôm nay ${timeOnly}`;
+  }
+
+  if (messageDay.getTime() === yesterday.getTime()) {
+    return `Hôm qua ${timeOnly}`;
+  }
+
+  return messageDate.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const shouldShowDate = (msg, index) => {
+  const filteredMessages = messages.value.filter(
+    (m) =>
+      m.senderType === "KHACH_HNG" ||
+      m.senderType === "KHACH_HANG" ||
+      m.senderType === "NHAN_VIEN"
+  );
+
+  if (index === 0) return true;
+
+  const prevMsg = filteredMessages[index - 1];
+  if (!prevMsg) return true;
+
+  const currentTime = new Date(msg.sentAt).getTime();
+  const prevTime = new Date(prevMsg.sentAt).getTime();
+
+  const diffMinutes = (currentTime - prevTime) / (1000 * 60);
+
+  return diffMinutes >= 30;
 };
 
 const selectConversation = async (conv) => {
@@ -494,5 +573,16 @@ onMounted(async () => {
 .empty-icon {
   font-size: 60px;
   margin-bottom: 20px;
+}
+
+.time-separator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 10px;
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  text-align: center;
 }
 </style>

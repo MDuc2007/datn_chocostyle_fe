@@ -393,8 +393,8 @@ const validateKichCo = (name, id = null) => {
     return "Tên kích cỡ không được quá 20 ký tự";
   }
 
-  if (!/^[a-zA-Z0-9À-ỹ\s]+$/.test(name)) {
-    return "Tên kích cỡ không hợp lệ";
+  if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(name)) {
+    return "Tên kích cỡ không được chứa số hoặc ký tự đặc biệt";
   }
 
   const isDuplicate = allColors.value.some(

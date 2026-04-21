@@ -511,7 +511,7 @@ const validate = () => {
   } else if (form.giaTriGiam < 1 || form.giaTriGiam > 100) {
     errors.giaTriGiam = "Giá trị giảm phải từ 1 – 100%";
     valid = false;
-  }
+  } 
 
   if (!form.ngayBatDau) {
     errors.ngayBatDau = "Ngày bắt đầu không được để trống";
