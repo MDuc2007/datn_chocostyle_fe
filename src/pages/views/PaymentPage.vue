@@ -990,13 +990,15 @@ const fetchPromotions = async () => {
       end.setHours(23, 59, 59, 999);
       return today >= start && today <= end;
     });
-    
+
     const isFromCart = route.query.fromCart === "true";
 
     checkoutItems.value.forEach((item) => {
       // Tìm % giảm giá tốt nhất cho sản phẩm
       const itemPromos = validPromos.filter((p) =>
-        p.chiTietSanPhamIds?.some((id) => Number(id) === Number(item.variantId)),
+        p.chiTietSanPhamIds?.some(
+          (id) => Number(id) === Number(item.variantId),
+        ),
       );
       if (itemPromos.length > 0) {
         const best = itemPromos.reduce((max, cur) =>
@@ -1010,14 +1012,16 @@ const fetchPromotions = async () => {
       // TÍNH TOÁN GIÁ TIỀN:
       if (isFromCart && !item.isSyncedWithDB) {
         // TRƯỜNG HỢP 1: Lần đầu tiên vào trang (Lấy từ LocalStorage sang)
-        item.giaCuoiCung = item.giaBan; 
-        item.giaGoc = item.discountPercent > 0
+        item.giaCuoiCung = item.giaBan;
+        item.giaGoc =
+          item.discountPercent > 0
             ? Math.round(item.giaCuoiCung / (1 - item.discountPercent / 100))
             : item.giaCuoiCung;
       } else {
         // TRƯỜNG HỢP 2: Đã đồng bộ qua WebSocket hoặc DB
         // Luôn lấy Giá Gốc trừ đi % Sale => Ra Giá Cuối Cùng
-        item.giaCuoiCung = item.discountPercent > 0
+        item.giaCuoiCung =
+          item.discountPercent > 0
             ? Math.round(item.giaGoc * (1 - item.discountPercent / 100))
             : item.giaGoc;
       }
@@ -1037,7 +1041,9 @@ const fetchPromotions = async () => {
 const fetchLatestPrices = async () => {
   try {
     const requests = checkoutItems.value.map((item) =>
-      axios.get(`http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`),
+      axios.get(
+        `http://localhost:8080/api/chi-tiet-san-pham/${item.variantId}`,
+      ),
     );
 
     const responses = await Promise.all(requests);
@@ -1048,7 +1054,7 @@ const fetchLatestPrices = async () => {
 
       if (variantData) {
         item.giaGoc = variantData.giaBan; // Lưu chuẩn giá gốc từ DB
-        item.isSyncedWithDB = true;       // ĐÁNH DẤU: Đã lấy data thật từ DB
+        item.isSyncedWithDB = true; // ĐÁNH DẤU: Đã lấy data thật từ DB
         item.trangThai = variantData.trangThai;
         item.tonKho = variantData.soLuongTon;
       }
@@ -1418,6 +1424,9 @@ const handleCheckout = async (gatewayType) => {
         null,
         { params: { hoaDonId } },
       );
+
+      // 👉 THÊM DÒNG NÀY: Lưu lại mã hóa đơn để trang PaymentResult biết mà xử lý giỏ hàng
+      localStorage.setItem("pending_order_id", hoaDonId);
 
       if (paymentRes.data) {
         window.location.href = paymentRes.data;
