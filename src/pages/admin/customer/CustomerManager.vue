@@ -8,30 +8,34 @@
 
       <div class="filter-controls">
         <div class="left-controls">
-          <div class="search-box input-wrapper">
-            <i class="search-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#9CA3AF"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </i>
-            <input
-              v-model="keyword"
-              @input="debouncedSearch"
-              type="text"
-              class="form-input ps-icon"
-              placeholder="Tìm theo mã hoặc tên"
-            />
+          <div class="status-box input-wrapper">
+            <span class="label-inside">Tìm kiếm</span>
+
+            <div class="search-box input-wrapper">
+              <i class="search-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9CA3AF"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </i>
+              <input
+                v-model="keyword"
+                @input="debouncedSearch"
+                type="text"
+                class="form-input ps-icon"
+                placeholder="Tìm theo mã hoặc tên"
+              />
+            </div>
           </div>
 
           <div class="status-box input-wrapper">
@@ -55,10 +59,7 @@
           <button class="btn btn-outline hover-effect" @click="exportExcel">
             Xuất Excel
           </button>
-          <button
-            class="btn btn-primary hover-effect"
-            @click="goToAdd"
-          >
+          <button class="btn btn-primary hover-effect" @click="goToAdd">
             + Thêm mới
           </button>
         </div>
@@ -153,17 +154,20 @@
                         class="btn-icon-action map-btn"
                         @click="openAddressModal(c)"
                       >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          width="18" height="18" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          stroke-width="2" 
-                          stroke-linecap="round" 
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
                           stroke-linejoin="round"
                         >
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <path
+                            d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+                          ></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
                       </button>
@@ -240,8 +244,16 @@
       <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
         <div class="confirm-box">
           <div class="confirm-icon-wrapper">
-             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="#f59e0b">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="40"
+              height="40"
+              fill="#f59e0b"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+              />
             </svg>
           </div>
           <h3 class="confirm-title">{{ modal.title }}</h3>
@@ -262,30 +274,64 @@
     </transition>
 
     <transition name="fade-modal">
-      <div v-if="addressModal.show" class="modal-overlay address-modal-overlay" @click.self="closeAddressModal">
+      <div
+        v-if="addressModal.show"
+        class="modal-overlay address-modal-overlay"
+        @click.self="closeAddressModal"
+      >
         <div class="address-box form-page-animation">
           <div class="address-header">
             <div class="header-left">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#63391F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#63391F"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
               <div>
                 <h3 class="address-title">Sổ địa chỉ khách hàng</h3>
-                <p class="address-subtitle">{{ addressModal.customer?.tenKhachHang }} • {{ addressModal.customer?.maKhachHang }}</p>
+                <p class="address-subtitle">
+                  {{ addressModal.customer?.tenKhachHang }} •
+                  {{ addressModal.customer?.maKhachHang }}
+                </p>
               </div>
             </div>
             <div class="header-right">
-               <button class="icon-btn close-btn" @click="closeAddressModal" title="Đóng">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-               </button>
+              <button
+                class="icon-btn close-btn"
+                @click="closeAddressModal"
+                title="Đóng"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
           </div>
 
           <div class="address-body">
             <div class="address-list-col">
               <div class="col-title-clean">Danh sách địa chỉ</div>
-              
+
               <table class="address-table-clean">
                 <thead>
                   <tr>
@@ -299,17 +345,20 @@
                     <td>{{ idx + 1 }}</td>
                     <td>
                       <div class="addr-detail-clean">
-                        {{ addr.diaChiCuThe }}, {{ addr.phuong }}, {{ addr.quan }}, {{ addr.thanhPho }}
+                        {{ addr.diaChiCuThe }}, {{ addr.phuong }},
+                        {{ addr.quan }}, {{ addr.thanhPho }}
                       </div>
                       <div class="addr-sub-clean">
                         Người nhận: {{ addr.nguoiNhan }} • SĐT: {{ addr.sdt }}
                       </div>
                     </td>
                     <td class="text-right">
-                      <span v-if="addr.isDefault" class="default-badge">Mặc định</span>
-                      <button 
-                        v-else 
-                        class="btn-set-default" 
+                      <span v-if="addr.isDefault" class="default-badge"
+                        >Mặc định</span
+                      >
+                      <button
+                        v-else
+                        class="btn-set-default"
                         @click="setDefaultAddress(addr)"
                       >
                         Đặt mặc định
@@ -317,7 +366,9 @@
                     </td>
                   </tr>
                   <tr v-if="addressModal.addresses.length === 0">
-                    <td colspan="3" class="text-center text-muted py-5">Chưa có địa chỉ nào</td>
+                    <td colspan="3" class="text-center text-muted py-5">
+                      Chưa có địa chỉ nào
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -325,68 +376,120 @@
 
             <div class="address-form-col">
               <div class="col-title-clean form-title">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
                 Thêm nhanh địa chỉ
               </div>
-              
+
               <div class="form-grid-clean">
                 <div class="input-wrapper-clean">
                   <label class="label-clean">Họ tên người nhận</label>
-                  <input 
-                    v-model="addressForm.hoTen" 
-                    type="text" 
-                    class="input-clean input-disabled" 
+                  <input
+                    v-model="addressForm.hoTen"
+                    type="text"
+                    class="input-clean input-disabled"
                     disabled
                   />
                 </div>
 
                 <div class="input-wrapper-clean">
                   <label class="label-clean">Số điện thoại</label>
-                  <input 
-                    v-model="addressForm.soDienThoai" 
-                    type="text" 
-                    class="input-clean input-disabled" 
+                  <input
+                    v-model="addressForm.soDienThoai"
+                    type="text"
+                    class="input-clean input-disabled"
                     disabled
                   />
                 </div>
-                
-                <div class="input-wrapper-clean" :class="{'has-error': addressErrors.tinhThanh}">
+
+                <div
+                  class="input-wrapper-clean"
+                  :class="{ 'has-error': addressErrors.tinhThanh }"
+                >
                   <label class="label-clean">Thành phố/Tỉnh</label>
-                  <select class="select2-tinhthanh" style="width: 100%;">
+                  <select class="select2-tinhthanh" style="width: 100%">
                     <option value="">Chọn hoặc tìm tỉnh/thành</option>
-                    <option v-for="p in provinces" :key="p.code" :value="p.code">{{ p.name }}</option>
+                    <option
+                      v-for="p in provinces"
+                      :key="p.code"
+                      :value="p.code"
+                    >
+                      {{ p.name }}
+                    </option>
                   </select>
-                  <span v-if="addressErrors.tinhThanh" class="error-text">{{ addressErrors.tinhThanh }}</span>
+                  <span v-if="addressErrors.tinhThanh" class="error-text">{{
+                    addressErrors.tinhThanh
+                  }}</span>
                 </div>
 
-                <div class="input-wrapper-clean" :class="{'has-error': addressErrors.quanHuyen}">
+                <div
+                  class="input-wrapper-clean"
+                  :class="{ 'has-error': addressErrors.quanHuyen }"
+                >
                   <label class="label-clean">Quận/Huyện</label>
-                  <select class="select2-quanhuyen" style="width: 100%;" :disabled="!selectedProvinceCode">
+                  <select
+                    class="select2-quanhuyen"
+                    style="width: 100%"
+                    :disabled="!selectedProvinceCode"
+                  >
                     <option value="">Chọn hoặc tìm quận/huyện</option>
-                    <option v-for="d in districts" :key="d.code" :value="d.code">{{ d.name }}</option>
+                    <option
+                      v-for="d in districts"
+                      :key="d.code"
+                      :value="d.code"
+                    >
+                      {{ d.name }}
+                    </option>
                   </select>
-                  <span v-if="addressErrors.quanHuyen" class="error-text">{{ addressErrors.quanHuyen }}</span>
+                  <span v-if="addressErrors.quanHuyen" class="error-text">{{
+                    addressErrors.quanHuyen
+                  }}</span>
                 </div>
 
-                <div class="input-wrapper-clean" :class="{'has-error': addressErrors.phuongXa}">
+                <div
+                  class="input-wrapper-clean"
+                  :class="{ 'has-error': addressErrors.phuongXa }"
+                >
                   <label class="label-clean">Phường/Xã</label>
-                  <select class="select2-phuongxa" style="width: 100%;" :disabled="!selectedDistrictCode">
+                  <select
+                    class="select2-phuongxa"
+                    style="width: 100%"
+                    :disabled="!selectedDistrictCode"
+                  >
                     <option value="">Chọn hoặc tìm phường/xã</option>
-                    <option v-for="w in wards" :key="w.code" :value="w.code">{{ w.name }}</option>
+                    <option v-for="w in wards" :key="w.code" :value="w.code">
+                      {{ w.name }}
+                    </option>
                   </select>
-                  <span v-if="addressErrors.phuongXa" class="error-text">{{ addressErrors.phuongXa }}</span>
+                  <span v-if="addressErrors.phuongXa" class="error-text">{{
+                    addressErrors.phuongXa
+                  }}</span>
                 </div>
 
                 <div class="input-wrapper-clean">
                   <label class="label-clean">Địa chỉ cụ thể</label>
-                  <input 
-                    v-model="addressForm.diaChiCuThe" 
-                    type="text" 
+                  <input
+                    v-model="addressForm.diaChiCuThe"
+                    type="text"
                     class="input-clean"
-                    :class="{'input-error': addressErrors.diaChiCuThe}" 
-                    placeholder="Số nhà, đường..." 
+                    :class="{ 'input-error': addressErrors.diaChiCuThe }"
+                    placeholder="Số nhà, đường..."
                   />
-                  <span v-if="addressErrors.diaChiCuThe" class="error-text">{{ addressErrors.diaChiCuThe }}</span>
+                  <span v-if="addressErrors.diaChiCuThe" class="error-text">{{
+                    addressErrors.diaChiCuThe
+                  }}</span>
                 </div>
               </div>
 
@@ -395,14 +498,15 @@
                   <input v-model="addressForm.isDefault" type="checkbox" />
                   <span>Đặt làm địa chỉ mặc định</span>
                 </label>
-                <button class="btn-submit-brown hover-effect" @click="submitAddressForm">
+                <button
+                  class="btn-submit-brown hover-effect"
+                  @click="submitAddressForm"
+                >
                   Thêm nhanh
                 </button>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </transition>
@@ -447,13 +551,13 @@ const isActive = (c) => Number(c.trangThai) === 1;
 
 // 👉 HÀM 1: CHUYỂN SANG TRANG THÊM MỚI (Tự động nhận diện Admin hay Staff)
 const goToAdd = () => {
-  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  const basePath = route.path.includes("/staff") ? "/staff" : "/admin";
   router.push(`${basePath}/customer/add`);
 };
 
 // 👉 HÀM 2: CHUYỂN SANG TRANG CHỈNH SỬA
 const goToEdit = (id) => {
-  const basePath = route.path.includes('/staff') ? '/staff' : '/admin';
+  const basePath = route.path.includes("/staff") ? "/staff" : "/admin";
   router.push(`${basePath}/customer/edit/${id}`);
 };
 
@@ -473,7 +577,7 @@ const initSelect2 = (selector, placeholder, modelRef, onChangeCallback) => {
     width: "100%",
     placeholder,
     allowClear: true,
-    dropdownParent: window.$('.address-modal-overlay') 
+    dropdownParent: window.$(".address-modal-overlay"),
   });
 
   if (modelRef.value) {
@@ -631,22 +735,28 @@ const fetchDistricts = async () => {
   selectedWardCode.value = "";
   districts.value = [];
   wards.value = [];
-  
-  window.$(".select2-quanhuyen").val(null).trigger('change.select2');
-  window.$(".select2-phuongxa").val(null).trigger('change.select2');
 
-  const p = provinces.value.find(x => x.code == selectedProvinceCode.value);
+  window.$(".select2-quanhuyen").val(null).trigger("change.select2");
+  window.$(".select2-phuongxa").val(null).trigger("change.select2");
+
+  const p = provinces.value.find((x) => x.code == selectedProvinceCode.value);
   addressForm.value.tinhThanh = p ? p.name : "";
 
   if (!selectedProvinceCode.value) return;
 
   try {
-    const res = await axios.get(`https://provinces.open-api.vn/api/p/${selectedProvinceCode.value}?depth=2`);
+    const res = await axios.get(
+      `https://provinces.open-api.vn/api/p/${selectedProvinceCode.value}?depth=2`,
+    );
     districts.value = res.data.districts;
-    
-    await nextTick();
-    initSelect2(".select2-quanhuyen", "Chọn hoặc tìm quận/huyện", selectedDistrictCode, fetchWards);
 
+    await nextTick();
+    initSelect2(
+      ".select2-quanhuyen",
+      "Chọn hoặc tìm quận/huyện",
+      selectedDistrictCode,
+      fetchWards,
+    );
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu quận huyện:", error);
   }
@@ -656,34 +766,40 @@ const fetchWards = async () => {
   selectedWardCode.value = "";
   wards.value = [];
 
-  window.$(".select2-phuongxa").val(null).trigger('change.select2');
+  window.$(".select2-phuongxa").val(null).trigger("change.select2");
 
-  const d = districts.value.find(x => x.code == selectedDistrictCode.value);
+  const d = districts.value.find((x) => x.code == selectedDistrictCode.value);
   addressForm.value.quanHuyen = d ? d.name : "";
 
   if (!selectedDistrictCode.value) return;
 
   try {
-    const res = await axios.get(`https://provinces.open-api.vn/api/d/${selectedDistrictCode.value}?depth=2`);
+    const res = await axios.get(
+      `https://provinces.open-api.vn/api/d/${selectedDistrictCode.value}?depth=2`,
+    );
     wards.value = res.data.wards;
 
     await nextTick();
-    initSelect2(".select2-phuongxa", "Chọn hoặc tìm phường/xã", selectedWardCode, onWardChange);
-
+    initSelect2(
+      ".select2-phuongxa",
+      "Chọn hoặc tìm phường/xã",
+      selectedWardCode,
+      onWardChange,
+    );
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu phường xã:", error);
   }
 };
 
 const onWardChange = () => {
-  const w = wards.value.find(x => x.code == selectedWardCode.value);
+  const w = wards.value.find((x) => x.code == selectedWardCode.value);
   addressForm.value.phuongXa = w ? w.name : "";
 };
 
 const addressModal = ref({
   show: false,
   customer: null,
-  addresses: [] 
+  addresses: [],
 });
 
 const addressForm = ref({
@@ -693,7 +809,7 @@ const addressForm = ref({
   quanHuyen: "",
   phuongXa: "",
   diaChiCuThe: "",
-  isDefault: false
+  isDefault: false,
 });
 
 const addressErrors = ref({
@@ -706,42 +822,44 @@ const addressErrors = ref({
 });
 
 const resetAddressForm = () => {
-  addressForm.value = { 
-    hoTen: addressModal.value.customer?.tenKhachHang || "", 
-    soDienThoai: addressModal.value.customer?.soDienThoai || "", 
-    tinhThanh: "", 
-    quanHuyen: "", 
-    phuongXa: "", 
-    diaChiCuThe: "", 
-    isDefault: false 
+  addressForm.value = {
+    hoTen: addressModal.value.customer?.tenKhachHang || "",
+    soDienThoai: addressModal.value.customer?.soDienThoai || "",
+    tinhThanh: "",
+    quanHuyen: "",
+    phuongXa: "",
+    diaChiCuThe: "",
+    isDefault: false,
   };
-  
+
   selectedProvinceCode.value = "";
   selectedDistrictCode.value = "";
   selectedWardCode.value = "";
   districts.value = [];
   wards.value = [];
-  
-  window.$(".select2-tinhthanh").val(null).trigger('change.select2');
-  window.$(".select2-quanhuyen").val(null).trigger('change.select2');
-  window.$(".select2-phuongxa").val(null).trigger('change.select2');
 
-  Object.keys(addressErrors.value).forEach(key => addressErrors.value[key] = "");
+  window.$(".select2-tinhthanh").val(null).trigger("change.select2");
+  window.$(".select2-quanhuyen").val(null).trigger("change.select2");
+  window.$(".select2-phuongxa").val(null).trigger("change.select2");
+
+  Object.keys(addressErrors.value).forEach(
+    (key) => (addressErrors.value[key] = ""),
+  );
 };
 
 const loadCustomerAddresses = async (customerId) => {
   try {
     const res = await customerService.getAddressesByCustomer(customerId);
     const addressesData = res.data.content || res.data || [];
-    addressModal.value.addresses = addressesData.map(addr => ({
+    addressModal.value.addresses = addressesData.map((addr) => ({
       id: addr.id,
       diaChiCuThe: addr.diaChiCuThe,
       phuong: addr.phuong,
       quan: addr.quan,
       thanhPho: addr.thanhPho,
-      nguoiNhan: addr.tenDiaChi || addressModal.value.customer?.tenKhachHang, 
+      nguoiNhan: addr.tenDiaChi || addressModal.value.customer?.tenKhachHang,
       sdt: addressModal.value.customer?.soDienThoai,
-      isDefault: addr.macDinh === true || addr.macDinh === 1 
+      isDefault: addr.macDinh === true || addr.macDinh === 1,
     }));
   } catch (error) {
     console.error("Lỗi tải danh sách địa chỉ:", error);
@@ -754,30 +872,48 @@ const openAddressModal = async (customer) => {
   addressModal.value.show = true;
   addressForm.value.hoTen = customer.tenKhachHang || "";
   addressForm.value.soDienThoai = customer.soDienThoai || "";
-  
+
   await loadCustomerAddresses(customer.id);
 
   await nextTick();
-  initSelect2(".select2-tinhthanh", "Chọn hoặc tìm tỉnh/thành", selectedProvinceCode, fetchDistricts);
-  initSelect2(".select2-quanhuyen", "Chọn hoặc tìm quận/huyện", selectedDistrictCode, fetchWards);
-  initSelect2(".select2-phuongxa", "Chọn hoặc tìm phường/xã", selectedWardCode, onWardChange);
+  initSelect2(
+    ".select2-tinhthanh",
+    "Chọn hoặc tìm tỉnh/thành",
+    selectedProvinceCode,
+    fetchDistricts,
+  );
+  initSelect2(
+    ".select2-quanhuyen",
+    "Chọn hoặc tìm quận/huyện",
+    selectedDistrictCode,
+    fetchWards,
+  );
+  initSelect2(
+    ".select2-phuongxa",
+    "Chọn hoặc tìm phường/xã",
+    selectedWardCode,
+    onWardChange,
+  );
 };
 
 const closeAddressModal = () => {
   addressModal.value.show = false;
   addressModal.value.customer = null;
-  resetAddressForm(); 
+  resetAddressForm();
 };
 
 const setDefaultAddress = async (addr) => {
   try {
-    addressModal.value.addresses = addressModal.value.addresses.map(item => ({
+    addressModal.value.addresses = addressModal.value.addresses.map((item) => ({
       ...item,
-      isDefault: item.id === addr.id 
+      isDefault: item.id === addr.id,
     }));
-    await customerService.setDefaultAddress(addr.id, addressModal.value.customer.id);
+    await customerService.setDefaultAddress(
+      addr.id,
+      addressModal.value.customer.id,
+    );
     showToast("Đã thay đổi địa chỉ mặc định");
-    fetchCustomers(); 
+    fetchCustomers();
   } catch (error) {
     showToast("Không thể đặt mặc định trên hệ thống", "error");
     console.error("Lỗi Set Default:", error);
@@ -787,7 +923,9 @@ const setDefaultAddress = async (addr) => {
 
 const validateAddressForm = () => {
   let isValid = true;
-  Object.keys(addressErrors.value).forEach(key => addressErrors.value[key] = "");
+  Object.keys(addressErrors.value).forEach(
+    (key) => (addressErrors.value[key] = ""),
+  );
 
   if (!selectedProvinceCode.value) {
     addressErrors.value.tinhThanh = "Vui lòng chọn Tỉnh/Thành phố.";
@@ -807,15 +945,18 @@ const validateAddressForm = () => {
   }
 
   if (isValid) {
-    const isDuplicate = addressModal.value.addresses.some(addr => 
-      addr.thanhPho === addressForm.value.tinhThanh &&
-      addr.quan === addressForm.value.quanHuyen &&
-      addr.phuong === addressForm.value.phuongXa &&
-      addr.diaChiCuThe.trim().toLowerCase() === addressForm.value.diaChiCuThe.trim().toLowerCase()
+    const isDuplicate = addressModal.value.addresses.some(
+      (addr) =>
+        addr.thanhPho === addressForm.value.tinhThanh &&
+        addr.quan === addressForm.value.quanHuyen &&
+        addr.phuong === addressForm.value.phuongXa &&
+        addr.diaChiCuThe.trim().toLowerCase() ===
+          addressForm.value.diaChiCuThe.trim().toLowerCase(),
     );
 
     if (isDuplicate) {
-      addressErrors.value.diaChiCuThe = "Địa chỉ này đã tồn tại trong danh sách.";
+      addressErrors.value.diaChiCuThe =
+        "Địa chỉ này đã tồn tại trong danh sách.";
       isValid = false;
     }
   }
@@ -829,13 +970,13 @@ const submitAddressForm = async () => {
   }
   try {
     const payload = {
-      khachHangId: addressModal.value.customer.id, 
+      khachHangId: addressModal.value.customer.id,
       tenDiaChi: addressForm.value.hoTen,
       thanhPho: addressForm.value.tinhThanh,
       quan: addressForm.value.quanHuyen,
       phuong: addressForm.value.phuongXa,
       diaChiCuThe: addressForm.value.diaChiCuThe,
-      macDinh: addressForm.value.isDefault ? true : false
+      macDinh: addressForm.value.isDefault ? true : false,
     };
 
     await customerService.addAddress(payload);
@@ -843,7 +984,6 @@ const submitAddressForm = async () => {
     await loadCustomerAddresses(addressModal.value.customer.id);
     fetchCustomers();
     resetAddressForm();
-
   } catch (error) {
     console.error("Lỗi khi thêm địa chỉ:", error);
     const errorMsg = error.response?.data?.message || "Thêm địa chỉ thất bại";
@@ -860,8 +1000,8 @@ onMounted(() => {
 <style scoped>
 .page-container {
   --primary-brown: #63391f;
-  --bg-main: #F7F7F7;
-  --white: #FFFFFF;
+  --bg-main: #f7f7f7;
+  --white: #ffffff;
   --text-main: #484848;
   --border-color: #e0e0e0;
   --success-green: #27ae60;
@@ -873,62 +1013,310 @@ onMounted(() => {
   min-height: 100vh;
 }
 
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-@keyframes spin { to { transform: rotate(360deg); } }
-.form-page-animation { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.form-page-animation {
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-.card-section { background: var(--white); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-bottom: 24px; overflow: hidden; transition: box-shadow 0.3s ease; }
-.card-section:hover { box-shadow: var(--shadow-md); }
-.filter-card { padding: 24px; }
-.table-card { padding: 10px; }
-.title { margin: 15px; color: var(--primary-brown); font-weight: 700;}
+.card-section {
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+.card-section:hover {
+  box-shadow: var(--shadow-md);
+}
+.filter-card {
+  padding: 24px;
+}
+.table-card {
+  padding: 10px;
+}
+.title {
+  margin: 15px;
+  color: var(--primary-brown);
+  font-weight: 700;
+}
 
-.filter-controls { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 15px 12px; gap: 16px;}
-.left-controls { display: flex; gap: 15px; flex: 1; align-items: flex-end; }
-.right-controls { display: flex; gap: 10px; align-self: flex-end; }
-.input-wrapper { display: flex; flex-direction: column; gap: 6px; }
-.label-inside { font-size: 13px; font-weight: 600; color: var(--text-main); }
-.search-box { position: relative; width: 300px; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: flex; pointer-events: none; }
-.form-input, .form-select { height: 42px; border: 1px solid #d1d5db; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; background-color: var(--white); transition: 0.3s;}
-.form-input.ps-icon { padding-left: 40px; }
-.form-input:focus, .form-select:focus { border-color: var(--primary-brown); }
-.btn { height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-.hover-effect:active { transform: scale(0.96); }
-.btn-primary { background-color: var(--white); color: var(--text-main); border: 1px solid #d1d5db; }
-.btn-primary:hover { border-color: var(--primary-brown); color: var(--primary-brown); }
-.btn-outline { background-color: var(--white); color: var(--text-main); border: 1px solid #d1d5db; }
-.btn-outline:hover { border-color: var(--primary-brown); color: var(--primary-brown); }
+.filter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 15px 12px;
+  gap: 16px;
+}
+.left-controls {
+  display: flex;
+  gap: 15px;
+  flex: 1;
+  align-items: flex-end;
+}
+.right-controls {
+  display: flex;
+  gap: 10px;
+  align-self: flex-end;
+}
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label-inside {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.search-box {
+  position: relative;
+  width: 300px;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  pointer-events: none;
+}
+.form-input,
+.form-select {
+  height: 42px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  outline: none;
+  background-color: var(--white);
+  transition: 0.3s;
+}
+.form-input.ps-icon {
+  padding-left: 40px;
+}
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--primary-brown);
+}
+.btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s;
+}
+.hover-effect:active {
+  transform: scale(0.96);
+}
+.btn-primary {
+  background-color: var(--white);
+  color: var(--text-main);
+  border: 1px solid #d1d5db;
+}
+.btn-primary:hover {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+}
+.btn-outline {
+  background-color: var(--white);
+  color: var(--text-main);
+  border: 1px solid #d1d5db;
+}
+.btn-outline:hover {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+}
 
-.table-responsive { width: 100%; overflow-x: auto; }
-.custom-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; table-layout: fixed; }
-.custom-table th { font-weight: 700; padding: 16px 12px; text-align: left; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; color: #6b7280;}
-.custom-table td { padding: 16px 12px; font-size: 15px; color: var(--text-main); vertical-align: middle; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
-.table-row-hover:hover td { background-color: #fdf8f6; }
-.text-dark-bold { color: #1f2937; font-weight: 600; }
-.text-center { text-align: center !important; }
-.truncate-text, .address-text { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; min-width: 130px; text-align: center;}
-.status-active { color: var(--success-green); background: #f0fdf4; }
-.status-inactive { color: var(--danger-red); background: #fef2f2; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1000px;
+  table-layout: fixed;
+}
+.custom-table th {
+  font-weight: 700;
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 14px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #edf2f7;
+  color: #6b7280;
+}
+.custom-table td {
+  padding: 16px 12px;
+  font-size: 15px;
+  color: var(--text-main);
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  transition: 0.2s;
+}
+.table-row-hover:hover td {
+  background-color: #fdf8f6;
+}
+.text-dark-bold {
+  color: #1f2937;
+  font-weight: 600;
+}
+.text-center {
+  text-align: center !important;
+}
+.truncate-text,
+.address-text {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 130px;
+  text-align: center;
+}
+.status-active {
+  color: var(--success-green);
+  background: #f0fdf4;
+}
+.status-inactive {
+  color: var(--danger-red);
+  background: #fef2f2;
+}
 
-.actions-group { display: flex; justify-content: center; align-items: center; gap: 10px; }
-.btn-icon-action { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 8px; background: #f3f4f6; color: #6b7280; cursor: pointer; transition: 0.2s; }
-.edit-btn:hover { background: var(--primary-brown); color: var(--white); transform: translateY(-2px); }
-.map-btn:hover { background: #3b82f6; color: var(--white); transform: translateY(-2px); }
-.switch { position: relative; width: 46px; height: 24px; }
-.switch input { display: none; }
-.slider { position: absolute; cursor: pointer; inset: 0; background-color: #d1d5db; transition: 0.4s; border-radius: 24px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-input:checked + .slider { background-color: var(--primary-brown); }
-input:checked + .slider:before { transform: translateX(22px); }
+.actions-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.btn-icon-action {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.edit-btn:hover {
+  background: var(--primary-brown);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+.map-btn:hover {
+  background: #3b82f6;
+  color: var(--white);
+  transform: translateY(-2px);
+}
+.switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+}
+.switch input {
+  display: none;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #d1d5db;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+input:checked + .slider {
+  background-color: var(--primary-brown);
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
 
-.pagination-footer { display: flex; justify-content: center; gap: 8px; padding: 20px 0; }
-.p-btn { min-width: 38px; height: 38px; background: var(--white); border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.p-btn:hover:not(:disabled) { border-color: var(--primary-brown); color: var(--primary-brown); }
-.p-btn.active { background: var(--primary-brown); color: var(--white); border-color: var(--primary-brown); }
-.p-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination-footer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0;
+}
+.p-btn {
+  min-width: 38px;
+  height: 38px;
+  background: var(--white);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.p-btn:hover:not(:disabled) {
+  border-color: var(--primary-brown);
+  color: var(--primary-brown);
+}
+.p-btn.active {
+  background: var(--primary-brown);
+  color: var(--white);
+  border-color: var(--primary-brown);
+}
+.p-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .modal-overlay {
   position: fixed;
@@ -940,18 +1328,63 @@ input:checked + .slider:before { transform: translateX(22px); }
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
 }
-.confirm-box { background: var(--white); padding: 30px; border-radius: 20px; width: 400px; text-align: center; animation: zoomIn 0.3s ease-out; }
-.confirm-icon-wrapper { width: 80px; height: 80px; border-radius: 50%; background-color: #FEF3C7; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
-.confirm-title { color: var(--primary-brown); margin-bottom: 10px; font-size: 20px; font-weight: 700; }
-.confirm-desc { color: #666; margin-bottom: 25px; line-height: 1.5; }
-.confirm-actions { display: flex; gap: 15px; }
-.confirm-actions button { flex: 1; height: 42px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; }
-.btn-confirm { background-color: #a88164; color: var(--white); transition: 0.2s; }
-.btn-confirm:hover { background: var(--primary-brown); }
-.btn-cancel { background: #f1f5f9; color: #475569; transition: 0.2s; }
+.confirm-box {
+  background: var(--white);
+  padding: 30px;
+  border-radius: 20px;
+  width: 400px;
+  text-align: center;
+  animation: zoomIn 0.3s ease-out;
+}
+.confirm-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #fef3c7;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-title {
+  color: var(--primary-brown);
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.confirm-desc {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 15px;
+}
+.confirm-actions button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.btn-confirm {
+  background-color: #a88164;
+  color: var(--white);
+  transition: 0.2s;
+}
+.btn-confirm:hover {
+  background: var(--primary-brown);
+}
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+  transition: 0.2s;
+}
 
 .address-box {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   width: 1050px;
   max-width: 95%;
@@ -968,28 +1401,45 @@ input:checked + .slider:before { transform: translateX(22px); }
   padding: 16px 24px;
   border-bottom: 1px solid #f3f4f6;
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .address-title {
   font-size: 18px;
   font-weight: 700;
-  color: #63391F;
+  color: #63391f;
 }
-.address-subtitle { font-size: 12px; color: #9ca3af; margin: 4px 0 0 0; }
-.icon-btn { background: none; border: none; color: #9ca3af; cursor: pointer; transition: 0.2s; padding: 4px;}
-.close-btn:hover { color: var(--danger-red); }
+.address-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 4px 0 0 0;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: 0.2s;
+  padding: 4px;
+}
+.close-btn:hover {
+  color: var(--danger-red);
+}
 
 /* 👉 BỎ OVERFLOW HIDDEN TẠI ĐÂY LÀ QUAN TRỌNG NHẤT */
-.address-body { 
-  display: flex; 
-  flex: 1; 
-  overflow: visible; 
+.address-body {
+  display: flex;
+  flex: 1;
+  overflow: visible;
 }
 
 .address-list-col {
   flex: 1.2;
   padding: 24px;
   overflow-y: auto;
-  background: #FFFFFF;
+  background: #ffffff;
 }
 .col-title-clean {
   font-size: 14px;
@@ -1005,16 +1455,41 @@ input:checked + .slider:before { transform: translateX(22px); }
   background: rgba(99, 57, 31, 0.02);
   transition: 0.2s;
 }
-.address-table-clean { width: 100%; border-collapse: collapse; font-size: 13px; }
-.address-table-clean th { text-align: left; padding: 10px 0; border-bottom: 1px dashed #e5e7eb; color: #9ca3af; font-weight: 500;}
-.address-table-clean th.text-right { text-align: right; }
-.address-table-clean td { padding: 16px 0; border-bottom: 1px dashed #e5e7eb; vertical-align: middle; }
-.addr-detail-clean { font-weight: 500; color: #1f2937; margin-bottom: 6px; line-height: 1.5; padding-right: 15px;}
-.addr-sub-clean { color: #9ca3af; font-size: 12px;}
+.address-table-clean {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.address-table-clean th {
+  text-align: left;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e5e7eb;
+  color: #9ca3af;
+  font-weight: 500;
+}
+.address-table-clean th.text-right {
+  text-align: right;
+}
+.address-table-clean td {
+  padding: 16px 0;
+  border-bottom: 1px dashed #e5e7eb;
+  vertical-align: middle;
+}
+.addr-detail-clean {
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 6px;
+  line-height: 1.5;
+  padding-right: 15px;
+}
+.addr-sub-clean {
+  color: #9ca3af;
+  font-size: 12px;
+}
 
 .default-badge {
   color: #b45309;
-  background: #FEF3C7;
+  background: #fef3c7;
   padding: 6px 12px;
   border-radius: 4px;
   font-weight: 600;
@@ -1032,8 +1507,8 @@ input:checked + .slider:before { transform: translateX(22px); }
   transition: 0.2s;
 }
 .btn-set-default:hover {
-  border-color: #63391F;
-  color: #63391F;
+  border-color: #63391f;
+  color: #63391f;
   background: rgba(99, 57, 31, 0.05);
 }
 
@@ -1041,9 +1516,9 @@ input:checked + .slider:before { transform: translateX(22px); }
 .address-form-col {
   flex: 1;
   padding: 24px;
-  overflow: visible; 
+  overflow: visible;
   border-left: 1px solid #e5e7eb;
-  background: #FFFFFF;
+  background: #ffffff;
 }
 
 .form-grid-clean {
@@ -1052,8 +1527,16 @@ input:checked + .slider:before { transform: translateX(22px); }
   gap: 16px 12px;
 }
 
-.input-wrapper-clean { display: flex; flex-direction: column; gap: 6px; position: relative;}
-.label-clean { font-size: 12px; color: #6b7280; }
+.input-wrapper-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+.label-clean {
+  font-size: 12px;
+  color: #6b7280;
+}
 
 .input-clean {
   height: 40px;
@@ -1066,10 +1549,10 @@ input:checked + .slider:before { transform: translateX(22px); }
   color: #1f2937;
   transition: 0.3s;
 }
-.input-clean:focus { 
-  border-bottom-color: #63391F;
+.input-clean:focus {
+  border-bottom-color: #63391f;
   border-bottom-width: 2px;
-  background: rgba(99, 57, 31, 0.02); 
+  background: rgba(99, 57, 31, 0.02);
 }
 .input-disabled {
   background: #f9fafb;
@@ -1098,9 +1581,14 @@ input:checked + .slider:before { transform: translateX(22px); }
   transition: 0.3s;
 }
 
-:deep(.select2-container--default.select2-container--focus .select2-selection--single),
-:deep(.select2-container--default.select2-container--open .select2-selection--single) {
-  border-bottom: 2px solid #63391F;
+:deep(
+  .select2-container--default.select2-container--focus
+    .select2-selection--single
+),
+:deep(
+  .select2-container--default.select2-container--open .select2-selection--single
+) {
+  border-bottom: 2px solid #63391f;
   background: rgba(99, 57, 31, 0.02);
   box-shadow: none;
 }
@@ -1128,7 +1616,7 @@ input:checked + .slider:before { transform: translateX(22px); }
 :deep(.select2-dropdown) {
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   margin-top: 5px;
   background: #fff;
   z-index: 10005 !important; /* Lớn hơn z-index của modal (9999) */
@@ -1142,11 +1630,11 @@ input:checked + .slider:before { transform: translateX(22px); }
 }
 
 :deep(.select2-search__field:focus) {
-  border-color: #63391F !important;
+  border-color: #63391f !important;
 }
 
 :deep(.select2-results__option--highlighted) {
-  background-color: #63391F !important;
+  background-color: #63391f !important;
   color: white !important;
 }
 
@@ -1171,11 +1659,15 @@ input:checked + .slider:before { transform: translateX(22px); }
   color: #6b7280;
   cursor: pointer;
 }
-.checkbox-wrapper-clean input { width: 15px; height: 15px; accent-color: var(--primary-brown); }
+.checkbox-wrapper-clean input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary-brown);
+}
 
 .btn-submit-brown {
-  background: #63391F;
-  color: #FFFFFF;
+  background: #63391f;
+  color: #ffffff;
   border-radius: 10px;
   padding: 11px 26px;
   font-weight: 600;
@@ -1187,7 +1679,9 @@ input:checked + .slider:before { transform: translateX(22px); }
   background: #4a2a17;
 }
 
-.input-error { border-bottom-color: #ef4444 !important; }
+.input-error {
+  border-bottom-color: #ef4444 !important;
+}
 
 /* =========================================
    TOAST NOTIFICATION (NEW CSS)
@@ -1225,16 +1719,73 @@ input:checked + .slider:before { transform: translateX(22px); }
   border-left: 4px solid #28a745;
 }
 
-.toast-content { margin-left: 10px; }
-.fade-modal-enter-active, .fade-modal-leave-active { transition: opacity 0.3s; }
-.fade-modal-enter-from, .fade-modal-leave-to { opacity: 0; }
-.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.4s; }
-.toast-slide-enter-from, .toast-slide-leave-to { transform: translateX(120%); opacity: 0; }
-.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-brown); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle; }
+.toast-content {
+  margin-left: 10px;
+}
+.fade-modal-enter-active,
+.fade-modal-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-modal-enter-from,
+.fade-modal-leave-to {
+  opacity: 0;
+}
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s;
+}
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  transform: translateX(120%);
+  opacity: 0;
+}
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-brown);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+  vertical-align: middle;
+}
 
 /* Tooltip */
-.tooltip-container { position: relative; }
-.tooltip-container:hover::after, .tooltip-container:hover::before { opacity: 1; transform: translate(-50%, -5px); }
-.tooltip-container::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translate(-50%, 5px); background: #1f2937; color: var(--white); font-size: 12px; padding: 6px 12px; border-radius: 6px; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s; z-index: 10; }
-.tooltip-container::before { content: ""; position: absolute; bottom: 115%; left: 50%; transform: translate(-50%, 5px); border: 6px solid transparent; border-top-color: #1f2937; opacity: 0; transition: 0.2s; }
+.tooltip-container {
+  position: relative;
+}
+.tooltip-container:hover::after,
+.tooltip-container:hover::before {
+  opacity: 1;
+  transform: translate(-50%, -5px);
+}
+.tooltip-container::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translate(-50%, 5px);
+  background: #1f2937;
+  color: var(--white);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  z-index: 10;
+}
+.tooltip-container::before {
+  content: "";
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translate(-50%, 5px);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+  opacity: 0;
+  transition: 0.2s;
+}
 </style>

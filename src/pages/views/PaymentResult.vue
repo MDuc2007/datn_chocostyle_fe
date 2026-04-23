@@ -137,6 +137,28 @@ const orderId = ref(null);
 const orderDetails = ref(null);
 const isLoading = ref(true);
 
+// 👉 BƯỚC 1: THÊM HÀM DỌN DẸP GIỎ HÀNG Ở ĐÂY
+const cleanCartAfterSuccess = () => {
+  const savedCart = localStorage.getItem("cart");
+  const checkoutData = localStorage.getItem("checkout_items");
+
+  if (savedCart && checkoutData) {
+    let cart = JSON.parse(savedCart);
+    let checkoutList = JSON.parse(checkoutData);
+
+    // Lọc bỏ những món đã mua thành công
+    const boughtIds = checkoutList.map((i) => i.variantId);
+    cart = cart.filter((c) => !boughtIds.includes(c.variantId));
+
+    // Cập nhật lại giỏ hàng và báo cho Header biết
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cartUpdated"));
+  }
+
+  // Luôn xóa biến tạm
+  localStorage.removeItem("checkout_items");
+};
+
 onMounted(async () => {
   const params = route.query;
 
@@ -151,6 +173,7 @@ onMounted(async () => {
     isSuccess.value = false;
   }
 
+  // NẾU THẤT BẠI: XÓA ĐƠN NHÁP
   if (!isSuccess.value) {
     const pendingOrderId = localStorage.getItem("pending_order_id");
     if (pendingOrderId) {
@@ -172,8 +195,9 @@ onMounted(async () => {
     return;
   }
 
+  // 👉 BƯỚC 2: GỌI HÀM DỌN DẸP KHI XÁC NHẬN LÀ THÀNH CÔNG
+  cleanCartAfterSuccess();
   localStorage.removeItem("pending_order_id");
-  window.dispatchEvent(new Event("cartUpdated"));
 
   vnpRef.value =
     params.vnp_TxnRef ||
@@ -239,13 +263,20 @@ const goToDetail = () => {
   }
 };
 </script>
-
 <style scoped>
 .result-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* Đồng bộ font chữ cho toàn bộ container */
+  font-family: 'Times New Roman', Times, serif;
 }
+
+.result-container * {
+  /* Ép tất cả các thẻ con (kể cả button, strong) dùng chung font */
+  font-family: 'Times New Roman', Times, serif;
+}
+
 .content-wrapper {
   flex: 1;
   display: flex;
@@ -255,6 +286,7 @@ const goToDetail = () => {
   min-height: 500px;
   padding: 40px 20px;
 }
+
 .result-card {
   background: white;
   padding: 50px 40px;
@@ -265,6 +297,7 @@ const goToDetail = () => {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   animation: slideUp 0.5s ease-out;
 }
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -287,10 +320,12 @@ const goToDetail = () => {
   color: white;
   margin: 0 auto 24px;
 }
+
 .success {
   background: #22c55e;
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
+
 .error {
   background: #ef4444;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
@@ -302,6 +337,7 @@ const goToDetail = () => {
   font-weight: 700;
   font-size: 24px;
 }
+
 .message {
   color: #64748b;
   margin-bottom: 30px;
@@ -317,6 +353,7 @@ const goToDetail = () => {
   text-align: left;
   border: 1px solid #e2e8f0;
 }
+
 .box-title {
   font-size: 16px;
   font-weight: 700;
@@ -327,48 +364,62 @@ const goToDetail = () => {
   border-bottom: 2px solid #e2e8f0;
   text-align: center;
 }
+
+/* --- PHẦN CĂN CHỈNH CHI TIẾT GIAO DỊCH --- */
 .info-row {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #475569;
+  margin-bottom: 14px;
+  font-size: 15px;
+  line-height: 1.5;
 }
+
 .info-row:last-child {
   margin-bottom: 0;
 }
+
 .info-row span {
   flex-shrink: 0;
-  margin-right: 15px;
+  width: 130px; /* Độ rộng cố định tạo thành cột thẳng hàng */
+  color: #64748b;
+  font-weight: 500;
 }
+
 .info-row strong {
   color: #1e293b;
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+  word-break: break-word; /* Tự xuống dòng gọn gàng nếu địa chỉ dài */
 }
-.text-right {
-  text-align: right;
-  line-height: 1.5;
-}
-.highlight-price {
-  color: #d32f2f !important;
-  font-size: 16px;
-  font-weight: 800;
-}
+/* ------------------------------------------ */
+
 .divider {
   border-top: 1px solid #e2e8f0;
   margin: 15px 0;
 }
+
 .divider.dashed {
   border-top-style: dashed;
 }
+
 .total-row {
-  margin-top: 10px;
+  margin-top: 16px;
   align-items: center;
 }
+
 .total-row span {
   font-weight: 600;
   color: #1e293b;
-  font-size: 15px;
+  font-size: 16px;
 }
+
+.highlight-price {
+  color: #d32f2f !important;
+  font-size: 18px;
+  font-weight: 800;
+}
+
 .text-danger {
   color: #ef4444;
   font-weight: bold;
@@ -384,6 +435,7 @@ const goToDetail = () => {
   font-size: 14px;
   margin-bottom: 20px;
 }
+
 .loader {
   border: 2px solid #e2e8f0;
   border-top: 2px solid #6b3f1e;
@@ -392,6 +444,7 @@ const goToDetail = () => {
   height: 16px;
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -406,12 +459,14 @@ const goToDetail = () => {
   flex-direction: column;
   gap: 12px;
 }
+
 @media (min-width: 480px) {
   .action-buttons {
     flex-direction: row;
     justify-content: center;
   }
 }
+
 .btn-primary {
   background: #6b3f1e;
   color: white;
@@ -423,9 +478,11 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
+
 .btn-primary:hover {
   background: #5a3218;
 }
+
 .btn-outline {
   background: white;
   border: 1px solid #cbd5e1;
@@ -437,6 +494,7 @@ const goToDetail = () => {
   transition: 0.2s;
   flex: 1;
 }
+
 .btn-outline:hover {
   border-color: #6b3f1e;
   color: #6b3f1e;

@@ -559,6 +559,12 @@
       </div>
     </div>
   </div>
+  <transition name="fade-modal">
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p class="loading-text">Đang xử lý, vui lòng đợi...</p>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -584,6 +590,7 @@ const quickAllSoLuong = ref(null);
 const errors = ref({});
 
 const showConfirmModal = ref(false);
+const isLoading = ref(false);
 const modal = ref({
   show: false,
   title: "",
@@ -1398,6 +1405,7 @@ const validateBeforeSubmit = () => {
 /* --- SUBMIT --- */
 const submit = async () => {
   showConfirmModal.value = false;
+  isLoading.value = true;
 
   const payload = {
     id: productId || null,
@@ -1435,6 +1443,7 @@ const submit = async () => {
       productId ? "Cập nhật thành công!" : "Thêm mới thành công!",
     );
     setTimeout(() => {
+      isLoading.value = false;
       router.push("/admin/product");
     }, 1000);
   } catch (error) {
@@ -1443,6 +1452,7 @@ const submit = async () => {
       error.response?.data?.message || "Lỗi khi lưu sản phẩm",
       "error",
     );
+    isLoading.value = false;
   }
 };
 
@@ -2513,5 +2523,41 @@ textarea.is-invalid:focus {
   background: #6b3f23;
   color: white;
   opacity: 0.7;
+}
+/* ===== LOADING OVERLAY ===== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e8e0d8; /* Màu nền nhạt */
+  border-top: 5px solid #6b3f23; /* Màu nâu chủ đạo */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.loading-text {
+  color: #6b3f23;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
