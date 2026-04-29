@@ -598,6 +598,7 @@ onMounted(() => {
 /* ================= SEARCH ================= */
 .search-row {
   margin-bottom: 12px;
+  margin-top: 30px;
 }
 
 .search-item {

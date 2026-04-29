@@ -1439,20 +1439,28 @@ const submit = async () => {
       data: payload,
     });
 
+    // Tắt loading ngay lập tức khi lưu thành công
+    isLoading.value = false;
+
+    // Sau đó mới hiện thông báo
     showNotification(
       productId ? "Cập nhật thành công!" : "Thêm mới thành công!",
     );
+
+    // Chờ 1 giây để người dùng đọc thông báo rồi mới chuyển trang
     setTimeout(() => {
-      isLoading.value = false;
       router.push("/admin/product");
     }, 1000);
   } catch (error) {
     console.error("Error saving product:", error);
+
+    // Tắt loading nếu có lỗi
+    isLoading.value = false;
+
     showNotification(
       error.response?.data?.message || "Lỗi khi lưu sản phẩm",
       "error",
     );
-    isLoading.value = false;
   }
 };
 

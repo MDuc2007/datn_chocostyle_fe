@@ -725,11 +725,15 @@ const connectWebSocket = () => {
     webSocketFactory: () => new SockJS("http://localhost:8080/ws-chocostyle"),
     reconnectDelay: 5000,
     onConnect: () => {
-      console.log(`✅ Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`);
+      console.log(
+        `✅ Đã kết nối WebSocket. Đang lắng nghe đơn hàng ID: ${idHoaDon}`,
+      );
 
       // Sửa 2: Lắng nghe đúng kênh của đơn hàng này
       stompClient?.subscribe(`/topic/order/${idHoaDon}`, (message) => {
-        console.log("⚡ Phát hiện thay đổi dữ liệu từ Backend, đang load lại...");
+        console.log(
+          "⚡ Phát hiện thay đổi dữ liệu từ Backend, đang load lại...",
+        );
 
         // Gọi lại hàm lấy dữ liệu để cập nhật giao diện (Trạng thái, Timeline, Lịch sử...)
         fetchDetail();
@@ -745,7 +749,6 @@ const connectWebSocket = () => {
 
   stompClient.activate();
 };
-
 
 // --- INTERFACES ---
 interface InvoiceProduct {
@@ -2648,7 +2651,7 @@ onUnmounted(() => {
 }
 
 .old-price-strike {
-  text-decoration: none; /* Trong hình của bạn gạch dưới hoặc gạch ngang, tôi set gạch dưới cho giống hình, có thể đổi thành line-through */
+  text-decoration: line-through;
   opacity: 0.9;
 }
 </style>

@@ -1056,7 +1056,7 @@ onMounted(() => {
   box-shadow: var(--shadow-md);
 }
 .filter-card {
-  padding: 24px;
+  padding: 4px;
 }
 .table-card {
   padding: 10px;
@@ -1073,6 +1073,7 @@ onMounted(() => {
   align-items: flex-end;
   padding: 0 15px 12px;
   gap: 16px;
+  margin-top: 30px;
 }
 .left-controls {
   display: flex;

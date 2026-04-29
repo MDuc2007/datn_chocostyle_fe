@@ -936,7 +936,7 @@ const showNotification = (message, type = "success") => {
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 16px;
-  padding-top: 10px;
+  margin-top: 30px;
 }
 
 .left-controls {
