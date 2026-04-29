@@ -134,7 +134,11 @@
         <!-- HÀNG 5 -->
         <div class="form-group">
           <label> Ngày bắt đầu <span class="required">*</span> </label>
-          <input type="date" v-model="form.ngayBatDau" @blur="validateNgay" />
+          <input
+            type="date"
+            v-model="form.ngayBatDau"
+            @change="errors.ngayBatDau = ''"
+          />
           <small v-if="errors.ngayBatDau" class="error-text">
             {{ errors.ngayBatDau }}
           </small>
@@ -142,7 +146,11 @@
 
         <div class="form-group">
           <label> Ngày kết thúc <span class="required">*</span> </label>
-          <input type="date" v-model="form.ngayKetThuc" @blur="validateNgay" />
+          <input
+            type="date"
+            v-model="form.ngayKetThuc"
+            @change="errors.ngayKetThuc = ''"
+          />
           <small v-if="errors.ngayKetThuc" class="error-text">
             {{ errors.ngayKetThuc }}
           </small>
@@ -719,10 +727,10 @@ const validateForm = async () => {
   return valid;
 };
 
-const isSubmitted = ref(false)
+const isSubmitted = ref(false);
 
 const openConfirm = async () => {
-  isSubmitted.value = true
+  isSubmitted.value = true;
 
   const ok = await validateForm();
   if (!ok) return;
@@ -1573,32 +1581,45 @@ const back = () => router.push("/admin/voucher");
   line-height: 1.5;
 }
 
+/* Khung chứa 2 nút trong Modal dãn full */
 .confirm-actions {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   gap: 16px;
+  width: 100%;
 }
 
-.btn-cancel,
-.btn-confirm {
-  min-width: 120px;
+/* CHỈ dãn full đối với nút Hủy và Đồng ý nằm TRONG MODAL */
+.confirm-actions .btn-cancel,
+.confirm-actions .btn-confirm {
+  flex: 1;
   height: 42px;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s ease;
+  padding: 0;
+  min-width: unset; /* Xóa min-width mặc định nếu có để nút dãn chuẩn */
+}
+
+/* KHÔI PHỤC LẠI kích thước cho nút Hủy ở form bên ngoài (không có flex: 1) */
+.btn-cancel {
+  min-width: 100px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
   padding: 0 20px;
 }
 
-.btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  border: none;
+.btn-cancel:hover {
+  background: #e0e0e0;
 }
 
-.btn-cancel:hover {
-  background: #e5e7eb;
-}
 
 .btn-confirm {
   background: #63391f;
